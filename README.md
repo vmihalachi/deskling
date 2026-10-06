@@ -1,0 +1,60 @@
+# Deskling
+
+Building blocks for little desktop apps that live in the menu bar or the tray: the parts every such app needs
+and nobody wants to write twice. Swift for macOS, .NET for Windows. MIT.
+
+Deskling grew out of [mybackhurts](https://mybackhurts.app) and powers sunnysays; both apps ship it. It is
+`0.x` until the second app has settled the API, so minor versions may change public types.
+
+## What's inside
+
+| Swift product | .NET package | What it does |
+|---|---|---|
+| `DesklingCore` | `Deskling.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. `KeyShortcut`. No OS or UI dependencies, so it builds anywhere Swift or .NET runs. |
+| `DesklingSystem` | `Deskling.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
+| `DesklingShell` | `Deskling.Windows` | Menu bar / tray app plumbing. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a global hotkey that needs no Accessibility permission (Carbon on macOS, `RegisterHotKey` on Windows), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
+| `DesklingStore` | — | A StoreKit 2 purchase store for one-time unlockables and tips, with the backend behind a protocol so tests use a mock. |
+| `DesklingTesting` | — | Fakes for every protocol and helpers for the shared conformance vectors, for the apps' own test targets. |
+
+Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
+
+## Install
+
+**Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
+
+```swift
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.1.0")
+```
+
+**.NET** (10), from NuGet.org:
+
+```sh
+dotnet add package Deskling.Core
+dotnet add package Deskling.Windows   # net10.0-windows; the tray, hotkey, idle and busy services
+```
+
+## The two implementations stay identical
+
+The Swift code is the reference. `conformance/` holds JSON vectors generated from it, and `dotnet/Deskling.Core.Tests`
+replays every one, so a change in behavior on one side fails the other side's tests. See `conformance/README.md`.
+
+## Develop
+
+```sh
+swift build && swift test                       # macOS: the package and its tests
+scripts/conformance.sh                          # regenerate conformance/ from the Swift code
+cd dotnet && dotnet build && dotnet test        # .NET: Core builds and tests anywhere; Deskling.Windows compiles anywhere, runs on Windows
+scripts/verify.sh                               # the checks that apply to what you changed
+```
+
+Formatting: `xcrun swift-format format -i --configuration .swift-format <files>` and `dotnet format whitespace dotnet --folder`.
+Coding agents: read `AGENTS.md`.
+
+## Releases
+
+One tag versions both sides. `git tag v0.1.0 && git push --tags` runs `release.yml`: it packs and pushes the NuGet
+packages and drafts a GitHub release from `CHANGELOG.md`.
+
+## License
+
+[MIT](LICENSE). © 2026 Vlad Mihalachi.

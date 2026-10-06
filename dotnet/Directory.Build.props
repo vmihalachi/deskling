@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- One version for every package, set by the release workflow from the tag (vX.Y.Z). -->
+    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.0.1</DesklingVersion>
+    <Version>$(DesklingVersion)</Version>
+    <Authors>Vlad Mihalachi</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/vmihalachi/deskling</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vmihalachi/deskling</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>tray;menubar;desktop;idle;busy;scheduler;hotkey;winui</PackageTags>
+  </PropertyGroup>
+</Project>

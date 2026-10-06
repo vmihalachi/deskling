@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+.swiftpm/
+*.xcodeproj
+Package.resolved
+build/
+bin/
+obj/
+artifacts/
+__pycache__/

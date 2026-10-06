@@ -1,0 +1,57 @@
+name: Swift
+
+# Builds and tests the Swift package (the reference implementation) and checks that the committed
+# conformance vectors are current. macOS minutes bill at 10x, so the paths stay narrow.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
+      - "conformance/**"
+      - ".swift-format"
+      - ".github/workflows/swift.yml"
+  pull_request:
+    paths:
+      - "Package.swift"
+      - "Sources/**"
+      - "Tests/**"
+      - "conformance/**"
+      - ".swift-format"
+      - ".github/workflows/swift.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Check Swift formatting (.swift-format)
+        run: xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      - name: Check the conformance vectors are current
+        run: |
+          scripts/conformance.sh
+          git add -N conformance
+          git diff --exit-code --stat -- conformance

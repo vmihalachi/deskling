@@ -1,0 +1,8 @@
+# Style for `dotnet format whitespace` (run by scripts/verify.sh and CI).
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+csharp_indent_case_contents_when_block = false
