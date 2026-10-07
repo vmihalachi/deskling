@@ -1,7 +1,7 @@
 import Foundation
 
 /// The repo's `conformance/` folder, found by walking up from this source file. SwiftPM tests aren't
-/// sandboxed, so the generator writes there directly (`DESKLING_WRITE_CONFORMANCE=1 swift test`).
+/// sandboxed, so the generator writes there directly (`DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance`).
 enum ConformanceRoot {
     static let url: URL = {
         var folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()

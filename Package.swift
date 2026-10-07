@@ -29,6 +29,5 @@ let package = Package(
         .target(name: "DesklingStore"),
         .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore"]),
         .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore", "DesklingTesting"]),
-        .testTarget(name: "ConformanceTests", dependencies: ["DesklingCore", "DesklingTesting"]),
     ]
 )

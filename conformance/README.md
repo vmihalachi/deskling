@@ -1,13 +1,13 @@
 # Conformance vectors
 
 Language-neutral test data that keeps the Swift package and the .NET port behaving the same. The Swift code
-is the reference: every file here is **generated** by `Tests/ConformanceTests` and replayed by
-`dotnet/Deskling.Core.Tests`.
+is the reference: every file here is **generated** by `Tests/DesklingCoreTests/Conformance` and replayed by
+`dotnet/Deskling.Core.Tests/Conformance`.
 
 **Never edit a vector by hand.** Change the Swift code, then regenerate:
 
 ```sh
-scripts/conformance.sh        # DESKLING_WRITE_CONFORMANCE=1 swift test --filter ConformanceTests
+scripts/conformance.sh        # DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance
 ```
 
 `ConformanceTests` fails whenever the committed files differ from what the Swift code generates, and it

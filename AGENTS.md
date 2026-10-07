@@ -12,11 +12,11 @@ conformance vectors.
 | Path | Contents |
 |---|---|
 | `Package.swift`, `Sources/Deskling{Core,System,Shell,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only. |
-| `Tests/<Product>Tests/`, `Tests/ConformanceTests/` | XCTest. `ConformanceTests` generates and replays `conformance/`. |
+| `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
 | `conformance/` | Generated vectors (`schedule/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file. `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Compiles on Linux and macOS with `EnableWindowsTargeting`. |
-| `dotnet/Deskling.Core.Tests/` | xUnit; replays every vector. |
+| `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release). |
 
@@ -24,7 +24,7 @@ conformance vectors.
 
 ```sh
 swift build && swift test                      # needs macOS (DesklingSystem/Shell/Store import AppKit, CoreAudio, StoreKit)
-DESKLING_WRITE_CONFORMANCE=1 swift test --filter ConformanceTests   # or scripts/conformance.sh
+DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance   # or scripts/conformance.sh
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet build && dotnet test       # anywhere with the .NET 10 SDK
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
@@ -46,7 +46,10 @@ read the failed job's log).
 - **Behavior changes are additive and vector-tested.** New scheduler behavior gets a config field whose default keeps
   every existing vector byte-identical, a unit test, a vector case, and the C# port in the same change
   (`cd dotnet && dotnet test` tells you what to port).
-- **C# mirrors Swift** file for file and name for name (`ReminderScheduler.swift` ↔ `ReminderScheduler.cs`).
+- **C# mirrors Swift** folder for folder and file for file (`Sources/DesklingCore/Scheduling/ReminderScheduler.swift` ↔
+  `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Input/`. `DesklingSystem`
+  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. Tests mirror the same folders, with
+  `Conformance/` in each Core test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under

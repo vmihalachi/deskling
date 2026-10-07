@@ -3,5 +3,5 @@
 # SwiftPM tests aren't sandboxed, so ConformanceTests writes straight into the repo when asked to.
 set -eu
 cd "$(dirname "$0")/.."
-DESKLING_WRITE_CONFORMANCE=1 swift test --filter ConformanceTests
+DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance
 echo "Updated conformance/ from the Swift code"
