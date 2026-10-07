@@ -24,7 +24,7 @@ conformance vectors.
 
 ```sh
 swift build && swift test                      # needs macOS (DesklingSystem/Shell/Store import AppKit, CoreAudio, StoreKit)
-DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance   # or scripts/conformance.sh
+DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'   # or scripts/conformance.sh
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet build && dotnet test       # anywhere with the .NET 10 SDK
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)

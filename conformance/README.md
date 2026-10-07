@@ -7,7 +7,7 @@ is the reference: every file here is **generated** by `Tests/DesklingCoreTests/C
 **Never edit a vector by hand.** Change the Swift code, then regenerate:
 
 ```sh
-scripts/conformance.sh        # DESKLING_WRITE_CONFORMANCE=1 swift test --filter Conformance
+scripts/conformance.sh        # DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'
 ```
 
 `ConformanceTests` fails whenever the committed files differ from what the Swift code generates, and it

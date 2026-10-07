@@ -5,16 +5,16 @@ final class SplitMix64Tests: XCTestCase {
     // Reference values of the published SplitMix64 algorithm (seed 0 is the sequence most implementations print).
     func testSeedZeroMatchesTheReference() {
         var g = SplitMix64(seed: 0)
-        XCTAssertEqual(g.next(), 16294208416658607535)
-        XCTAssertEqual(g.next(), 7960286522194355700)
-        XCTAssertEqual(g.next(), 487617019471545679)
+        XCTAssertEqual(g.next(), 0xE220_A839_7B1D_CDAF)
+        XCTAssertEqual(g.next(), 0x6E78_9E6A_A1B9_65F4)
+        XCTAssertEqual(g.next(), 0x06C4_5D18_8009_454F)
     }
 
     func testSeed42MatchesTheReference() {
         var g = SplitMix64(seed: 42)
-        XCTAssertEqual(g.next(), 13679457532755275413)
-        XCTAssertEqual(g.next(), 2949826092126892291)
-        XCTAssertEqual(g.next(), 5139283748462763858)
+        XCTAssertEqual(g.next(), 0xBDD7_3226_2FEB_6E95)
+        XCTAssertEqual(g.next(), 0x28EF_E333_B266_F103)
+        XCTAssertEqual(g.next(), 0x4752_6757_130F_9F52)
     }
 
     func testUnitsAreTheTop53BitsOverTwoToThe53() {
