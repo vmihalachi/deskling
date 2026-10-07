@@ -15,7 +15,7 @@ conformance vectors.
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
 | `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file. `IsAotCompatible`. |
-| `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores and compiles on Linux and macOS with `EnableWindowsTargeting` (PRI generation off); `dotnet.yml`'s windows job is the authoritative build. `System/` and `Shell/` (with `Shell/Localization/`). |
+| `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release). |
@@ -26,7 +26,7 @@ conformance vectors.
 swift build && swift test                      # needs macOS (DesklingSystem/Shell/Store import AppKit, CoreAudio, StoreKit)
 DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'   # or scripts/conformance.sh
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
-cd dotnet && dotnet build && dotnet test       # anywhere with the .NET 10 SDK
+cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
 ```

@@ -66,7 +66,7 @@ replays every one, so a change in behavior on one side fails the other side's te
 ```sh
 swift build && swift test                       # macOS: the package and its tests
 scripts/conformance.sh                          # regenerate conformance/ from the Swift code
-cd dotnet && dotnet build && dotnet test        # .NET: Core builds and tests anywhere; Deskling.Windows needs Windows (its PRI tooling)
+cd dotnet && dotnet test Deskling.Core.Tests    # .NET: Core builds and tests anywhere; Deskling.Windows builds on Windows (its PRI tooling)
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
 
