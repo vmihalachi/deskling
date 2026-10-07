@@ -2,11 +2,18 @@ name: Release
 
 # A vX.Y.Z tag versions both sides: this packs and pushes the NuGet packages (NUGET_API_KEY secret) and
 # drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
-# the tag itself.
+# the tag itself. Run it from Actions with a version to have it create the tag on master (for sessions
+# whose credentials can't push tags), or push the tag yourself.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to tag and release, without the v (must match a CHANGELOG.md section)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -25,8 +32,27 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Version from the tag
-        run: echo "DESKLING_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Version from the tag or the input
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "DESKLING_VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "DESKLING_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Check CHANGELOG.md has the section and tag master (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          grep -q "^## $DESKLING_VERSION " CHANGELOG.md || { echo "CHANGELOG.md has no '## $DESKLING_VERSION' section"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$DESKLING_VERSION" -m "Deskling $DESKLING_VERSION"
+          git push origin "v$DESKLING_VERSION"
+          echo "RELEASE_TAG=v$DESKLING_VERSION" >> "$GITHUB_ENV"
+
+      - name: Tag from the push
+        if: github.event_name != 'workflow_dispatch'
+        run: echo "RELEASE_TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
 
       - name: Test
         run: dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -c Release
@@ -59,4 +85,4 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dotnet/artifacts/*.nupkg --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+        run: gh release create "$RELEASE_TAG" dotnet/artifacts/*.nupkg --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md"
