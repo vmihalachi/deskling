@@ -14,6 +14,11 @@ on:
         description: "Version to tag and release, without the v (must match a CHANGELOG.md section)"
         required: true
         type: string
+      move_tag:
+        description: "Move the tag if it already exists at another commit (only before anyone depends on it)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -23,7 +28,43 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  nuget:
+  # Decides the version and, for manual runs, puts the tag on this commit.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: v
+        name: Version from the tag or the input
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then v="${{ inputs.version }}"; else v="${GITHUB_REF_NAME#v}"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Releasing $v"
+
+      - name: Check CHANGELOG.md has the section and tag this commit (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          v="${{ steps.v.outputs.version }}"
+          grep -q "^## $v " CHANGELOG.md || { echo "CHANGELOG.md has no '## $v' section"; exit 1; }
+          existing=$(git ls-remote --tags origin "refs/tags/v$v^{}" | cut -f1)
+          [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$v" | cut -f1)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -z "$existing" ]; then
+            git tag -a "v$v" -m "Deskling $v" && git push origin "v$v"
+          elif [ "$existing" = "$GITHUB_SHA" ]; then
+            echo "v$v already points here"
+          elif [ "${{ inputs.move_tag }}" = "true" ]; then
+            git tag -f -a "v$v" -m "Deskling $v" && git push -f origin "v$v"
+          else
+            echo "v$v already exists at $existing; run again with move_tag to move it here"; exit 1
+          fi
+
+  # Deskling.Core: tests and the package, on Linux.
+  core:
+    needs: version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -32,42 +73,65 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Version from the tag or the input
-        run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            echo "DESKLING_VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
-          else
-            echo "DESKLING_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Check CHANGELOG.md has the section and tag master (manual runs)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          grep -q "^## $DESKLING_VERSION " CHANGELOG.md || { echo "CHANGELOG.md has no '## $DESKLING_VERSION' section"; exit 1; }
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$DESKLING_VERSION" -m "Deskling $DESKLING_VERSION"
-          git push origin "v$DESKLING_VERSION"
-          echo "RELEASE_TAG=v$DESKLING_VERSION" >> "$GITHUB_ENV"
-
-      - name: Tag from the push
-        if: github.event_name != 'workflow_dispatch'
-        run: echo "RELEASE_TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
-
       - name: Test
         run: dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -c Release
 
-      - name: Pack
+      - name: Pack Deskling.Core
         run: >
-          dotnet pack dotnet/Deskling.Core/Deskling.Core.csproj dotnet/Deskling.Windows/Deskling.Windows.csproj
-          -c Release -p:DesklingVersion=$DESKLING_VERSION -o dotnet/artifacts
+          dotnet pack dotnet/Deskling.Core/Deskling.Core.csproj -c Release
+          -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nupkg-core
+          path: dotnet/artifacts/*.nupkg
+
+  # Deskling.Windows needs the Windows App SDK's MakePri.exe, so it packs on Windows.
+  windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Pack Deskling.Windows
+        run: >
+          dotnet pack dotnet/Deskling.Windows/Deskling.Windows.csproj -c Release
+          -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nupkg-windows
+          path: dotnet/artifacts/*.nupkg
+
+  publish:
+    needs: [version, core, windows]
+    runs-on: ubuntu-latest
+    env:
+      DESKLING_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: nupkg-*
+          path: dotnet/artifacts
+          merge-multiple: true
 
       # Without the secret the packages still land on the GitHub release below; add NUGET_API_KEY (an API key from
-      # nuget.org scoped to Deskling.*) and re-run this job to publish them.
+      # nuget.org scoped to Deskling.*) and re-run this workflow to publish them.
       - name: Push to NuGet.org
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
+          ls -l dotnet/artifacts
           if [ -z "$NUGET_API_KEY" ]; then
             echo "::warning::NUGET_API_KEY is not set: the packages were packed but not pushed to NuGet.org."
             exit 0
@@ -85,4 +149,10 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_TAG" dotnet/artifacts/*.nupkg --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md"
+        run: |
+          if gh release view "v$DESKLING_VERSION" >/dev/null 2>&1; then
+            gh release upload "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg --clobber
+          else
+            gh release create "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg --title "v$DESKLING_VERSION" \
+              --notes-file "$RUNNER_TEMP/notes.md"
+          fi
