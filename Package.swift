@@ -29,5 +29,9 @@ let package = Package(
         .target(name: "DesklingStore"),
         .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore"]),
         .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore", "DesklingTesting"]),
+        // The three below are macOS-only (every file is wrapped in `#if os(macOS)`), so they build empty on Linux.
+        .testTarget(name: "DesklingSystemTests", dependencies: ["DesklingSystem", "DesklingCore"]),
+        .testTarget(name: "DesklingShellTests", dependencies: ["DesklingShell", "DesklingCore"]),
+        .testTarget(name: "DesklingStoreTests", dependencies: ["DesklingStore", "DesklingTesting"]),
     ]
 )

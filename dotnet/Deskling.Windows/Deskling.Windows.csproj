@@ -5,13 +5,16 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Windows</PackageId>
-    <Description>Windows services for little tray apps: a raw Shell_NotifyIcon tray icon host with a native menu, RegisterHotKey, GetLastInputInfo idle time, call and full-screen detection without opening a device, StartupTask, LocalSettings store, WAV player, app notifications, .resw lookup.</Description>
+    <Description>Windows services for little tray apps: a raw Shell_NotifyIcon tray icon host with a native menu, RegisterHotKey, GetLastInputInfo idle time, call and full-screen detection without opening a device, power source, output mute, appearance and session-lock signals, StartupTask, LocalSettings store, WAV player, app notifications, single instance, .resw lookup.</Description>
     <!-- Compiles on Linux and macOS too (no XAML), so CI and local checks don't need a Windows machine. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Fixed buffers in Win32 structs and the source-generated COM interfaces (Core Audio). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <ProjectReference Include="../Deskling.Core/Deskling.Core.csproj" />
+    <!-- DispatcherQueue (tray menu commands), AppNotificationManager, AppInstance (single instance), MRT Core (.resw lookup), MarkupExtension. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
   </ItemGroup>
 </Project>
