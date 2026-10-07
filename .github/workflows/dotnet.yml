@@ -41,6 +41,8 @@ jobs:
       - name: Check C# formatting (dotnet/.editorconfig)
         run: dotnet format whitespace dotnet --folder --verify-no-changes
 
+      # The whole solution, Deskling.Windows included (EnableWindowsTargeting); the Windows job below is the
+      # authoritative build of that package.
       - name: Build
         run: dotnet build dotnet/Deskling.sln -c Release
 

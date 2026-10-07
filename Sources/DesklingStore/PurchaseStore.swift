@@ -46,12 +46,14 @@
         private let logger: Logger
         private var started = false
 
+        /// `backend` nil means StoreKit 2 (the default can't be written inline: `StoreKitBackend` is main-actor
+        /// isolated and default arguments aren't, in Swift 5 mode).
         public init(
-            catalog: ProductCatalog, backend: StoreBackend = StoreKitBackend(), defaults: UserDefaults = .standard,
+            catalog: ProductCatalog, backend: StoreBackend? = nil, defaults: UserDefaults = .standard,
             cacheKey: String = "deskling.ownedProducts", logger: Logger = Logger(subsystem: "deskling", category: "store")
         ) {
             self.catalog = catalog
-            self.backend = backend
+            self.backend = backend ?? StoreKitBackend(logger: logger)
             self.defaults = defaults
             self.cacheKey = cacheKey
             self.logger = logger

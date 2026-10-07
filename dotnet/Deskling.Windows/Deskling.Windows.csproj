@@ -6,8 +6,12 @@
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Windows</PackageId>
     <Description>Windows services for little tray apps: a raw Shell_NotifyIcon tray icon host with a native menu, RegisterHotKey, GetLastInputInfo idle time, call and full-screen detection without opening a device, power source, output mute, appearance and session-lock signals, StartupTask, LocalSettings store, WAV player, app notifications, single instance, .resw lookup.</Description>
-    <!-- Compiles on Linux and macOS too (no XAML), so CI and local checks don't need a Windows machine. -->
+    <!-- Restores and compiles on Linux and macOS too (no XAML). The Windows App SDK's PRI tooling (MakePri.exe) only
+         runs on Windows, and this library ships no resources of its own, so PRI generation is off. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <GenerateProjectPriFile>false</GenerateProjectPriFile>
+    <EnablePriGenTooling>false</EnablePriGenTooling>
+    <EnableMsixTooling>false</EnableMsixTooling>
     <!-- Fixed buffers in Win32 structs and the source-generated COM interfaces (Core Audio). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
