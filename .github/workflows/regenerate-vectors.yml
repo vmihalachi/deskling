@@ -1,0 +1,39 @@
+name: Regenerate vectors
+
+# Runs the Swift vector generator on a Mac (the reference platform) and commits the result when it differs,
+# for sessions that have no Mac at hand. Manual only: Actions → Regenerate vectors → Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Regenerate conformance/
+        run: scripts/conformance.sh
+
+      - name: Commit and push if anything changed
+        run: |
+          git add -A conformance
+          if git diff --cached --quiet; then
+            echo "conformance/ is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Regenerate conformance vectors" -m "From the Swift reference on $(sw_vers -productVersion) with $(xcodebuild -version | head -1)."
+          git push
