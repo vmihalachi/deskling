@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.1.1 - 2026-10-07
+
+### Changed
+- The release workflow publishes to NuGet.org through Trusted Publishing (OIDC) instead of a stored API key, and
+  creates the tag itself when run by hand. No code changes; 0.1.0's packages were never pushed to NuGet.org.
+
 ## 0.1.0 - 2026-10-07
 
 The first release: the generic parts of mybackhurts, extracted and generalized, for mybackhurts and sunnysays.

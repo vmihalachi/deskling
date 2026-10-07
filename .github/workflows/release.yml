@@ -16,11 +16,6 @@ on:
         description: "Version to tag and release, without the v (must match a CHANGELOG.md section)"
         required: true
         type: string
-      move_tag:
-        description: "Move the tag if it already exists at another commit (only before anyone depends on it)"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -58,10 +53,8 @@ jobs:
             git tag -a "v$v" -m "Deskling $v" && git push origin "v$v"
           elif [ "$existing" = "$GITHUB_SHA" ]; then
             echo "v$v already points here"
-          elif [ "${{ inputs.move_tag }}" = "true" ]; then
-            git tag -f -a "v$v" -m "Deskling $v" && git push -f origin "v$v"
           else
-            echo "v$v already exists at $existing; run again with move_tag to move it here"; exit 1
+            echo "v$v already exists at $existing (tags are protected and never move): release the next version"; exit 1
           fi
 
   # Deskling.Core: tests and the package, on Linux.
