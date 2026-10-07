@@ -1,0 +1,89 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalJitterSeconds" : 600,
+    "intervalSeconds" : 1800,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "A ±10 minute jitter on a 30 minute interval, drawn from the seeded SplitMix64 source in whole seconds.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:34:50Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:34:50Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "jitter-seeded",
+  "seed" : 42,
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 150,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 35
+          },
+          {
+            "decision" : "remind",
+            "tick" : 59
+          },
+          {
+            "decision" : "remind",
+            "tick" : 85
+          },
+          {
+            "decision" : "remind",
+            "tick" : 112
+          },
+          {
+            "decision" : "remind",
+            "tick" : 133
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T12:50:22Z",
+          "now" : "2026-09-28T12:30:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T12:50:22Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}
