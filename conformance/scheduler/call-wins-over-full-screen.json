@@ -1,0 +1,76 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "With both reasons, the status reports the call.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:45:00Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:45:00Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "call-wins-over-full-screen",
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+        "call",
+        "fullScreen"
+      ],
+      "count" : 46,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 45
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 46
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:45:00Z",
+          "now" : "2026-09-28T10:46:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

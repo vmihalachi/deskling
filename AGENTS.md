@@ -11,9 +11,9 @@ conformance vectors.
 
 | Path | Contents |
 |---|---|
-| `Package.swift`, `Sources/Deskling{Core,System,Shell,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only. |
+| `Package.swift`, `Sources/Deskling{Core,System,Shell,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`. |
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
-| `conformance/` | Generated vectors (`schedule/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
+| `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file. `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Compiles on Linux and macOS with `EnableWindowsTargeting`. |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |

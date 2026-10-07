@@ -1,0 +1,66 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "No reminders on inactive weekdays (Saturday).",
+  "initialState" : {
+    "endOfToday" : "2026-09-27T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : null,
+    "now" : "2026-09-26T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "type" : "outsideActiveHours"
+    }
+  },
+  "name" : "weekend",
+  "start" : "2026-09-26T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 200,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-27T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-26T13:20:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "type" : "outsideActiveHours"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

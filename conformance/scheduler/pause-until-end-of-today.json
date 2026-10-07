@@ -1,0 +1,130 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "\"Pause for the rest of today\" lasts until the next midnight.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : null,
+    "now" : "2026-09-28T23:30:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "type" : "outsideActiveHours"
+    }
+  },
+  "name" : "pause-until-end-of-today",
+  "start" : "2026-09-28T23:30:00Z",
+  "steps" : [
+    {
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T23:30:00Z",
+          "pausedUntil" : "2026-09-29T00:00:00Z",
+          "status" : {
+            "date" : "2026-09-29T00:00:00Z",
+            "type" : "paused"
+          }
+        }
+      },
+      "op" : "pauseUntilEndOfToday"
+    },
+    {
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T23:59:00Z",
+          "pausedUntil" : "2026-09-29T00:00:00Z",
+          "status" : {
+            "date" : "2026-09-29T00:00:00Z",
+            "type" : "paused"
+          }
+        }
+      },
+      "op" : "setTime",
+      "time" : "2026-09-28T23:59:00Z"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 1,
+      "everySeconds" : 0,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T23:59:00Z",
+          "pausedUntil" : "2026-09-29T00:00:00Z",
+          "status" : {
+            "date" : "2026-09-29T00:00:00Z",
+            "type" : "paused"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 5,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-30T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-29T00:04:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "type" : "outsideActiveHours"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

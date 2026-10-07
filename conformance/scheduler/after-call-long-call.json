@@ -1,0 +1,275 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "\"After this call\" waits for a call that lasts past the fallback.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:45:00Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:45:00Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "after-call-long-call",
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : true,
+          "nextFireDate" : "2026-09-28T10:15:00Z",
+          "now" : "2026-09-28T10:00:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T10:15:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "op" : "snoozeUntilAfterCall"
+    },
+    {
+      "busy" : [
+        "call"
+      ],
+      "count" : 40,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 1
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 2
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 3
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 4
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 5
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 6
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 7
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 8
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 9
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 10
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 11
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 12
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 13
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 14
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 15
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 16
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 17
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 18
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 19
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 20
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 21
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 22
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 23
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 24
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 25
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 26
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 27
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 28
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 29
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 30
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 31
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 32
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 33
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 34
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 35
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 36
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 37
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 38
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 39
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 40
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:15:00Z",
+          "now" : "2026-09-28T10:40:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 1,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 1
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T11:26:00Z",
+          "now" : "2026-09-28T10:41:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:26:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

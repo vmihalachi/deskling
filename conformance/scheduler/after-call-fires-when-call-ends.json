@@ -1,0 +1,184 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "\"After this call\" fires once the next call ends.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:45:00Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:45:00Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "after-call-fires-when-call-ends",
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 45,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 45
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T11:30:00Z",
+          "now" : "2026-09-28T10:45:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:30:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : true,
+          "nextFireDate" : "2026-09-28T11:00:00Z",
+          "now" : "2026-09-28T10:45:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:00:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "op" : "snoozeUntilAfterCall"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 2,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : true,
+          "nextFireDate" : "2026-09-28T11:00:00Z",
+          "now" : "2026-09-28T10:47:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:00:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+        "call"
+      ],
+      "count" : 3,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 1
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 2
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 3
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T11:00:00Z",
+          "now" : "2026-09-28T10:50:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 1,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 1
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T11:36:00Z",
+          "now" : "2026-09-28T10:51:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:36:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

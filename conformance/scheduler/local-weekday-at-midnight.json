@@ -1,0 +1,69 @@
+{
+  "config" : {
+    "activeEndMinute" : 120,
+    "activeStartMinute" : 0,
+    "activeWeekdays" : [
+      2
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "Weekdays and hours are local: Monday 00:00 in Bucharest is still Sunday in UTC.",
+  "initialState" : {
+    "endOfToday" : "2026-09-28T00:00:00+03:00",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : null,
+    "now" : "2026-09-27T23:30:00+03:00",
+    "pausedUntil" : null,
+    "status" : {
+      "type" : "outsideActiveHours"
+    }
+  },
+  "name" : "local-weekday-at-midnight",
+  "start" : "2026-09-27T23:30:00+03:00",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 180,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 75
+          },
+          {
+            "decision" : "remind",
+            "tick" : 120
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00+03:00",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T02:30:00+03:00",
+          "pausedUntil" : null,
+          "status" : {
+            "type" : "outsideActiveHours"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "Europe/Bucharest"
+}

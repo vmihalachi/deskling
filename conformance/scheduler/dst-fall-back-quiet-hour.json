@@ -1,0 +1,77 @@
+{
+  "config" : {
+    "activeEndMinute" : 1440,
+    "activeStartMinute" : 0,
+    "activeWeekdays" : [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+      3
+    ]
+  },
+  "description" : "Daylight saving ends in Bucharest at 04:00 on 2026-10-25, so the quiet 03:00 hour happens twice.",
+  "initialState" : {
+    "endOfToday" : "2026-10-26T00:00:00+02:00",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-10-25T02:45:00+03:00",
+    "now" : "2026-10-25T02:00:00+03:00",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-10-25T02:45:00+03:00",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "dst-fall-back-quiet-hour",
+  "start" : "2026-10-25T02:00:00+03:00",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 240,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 45
+          },
+          {
+            "decision" : "remind",
+            "tick" : 225
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-10-26T00:00:00+02:00",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-10-25T05:30:00+02:00",
+          "now" : "2026-10-25T05:00:00+02:00",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-10-25T05:30:00+02:00",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "Europe/Bucharest"
+}

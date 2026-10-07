@@ -1,0 +1,152 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "A held reminder is dropped when active hours end.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T17:45:00Z",
+    "now" : "2026-09-28T17:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T17:45:00Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "held-reminder-dropped-at-end-of-hours",
+  "start" : "2026-09-28T17:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+        "call"
+      ],
+      "count" : 65,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 45
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 46
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 47
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 48
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 49
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 50
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 51
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 52
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 53
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 54
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 55
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 56
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 57
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 58
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 59
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T18:05:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "type" : "outsideActiveHours"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 120,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : null,
+          "now" : "2026-09-28T20:05:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "type" : "outsideActiveHours"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}
