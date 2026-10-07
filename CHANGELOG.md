@@ -6,6 +6,10 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.1.0 - 2026-10-07
+
+The first release: the generic parts of mybackhurts, extracted and generalized, for mybackhurts and sunnysays.
+
 ### Added
 - `DesklingCore`: `ReminderScheduler`, `SchedulerConfig`, `Clock`, `IdleTimeProvider`, `BusyStateProvider` and the
   `BusyReason`s, moved from mybackhurts with the same names and behavior (its 37 scheduler vectors replay byte for
@@ -31,6 +35,7 @@ package and the NuGet packages together.
   `GlobalHotKey` (Carbon masks mapped onto `MOD_*`), `StartupService`, `LocalSettingsStore`, `WavPlayer`,
   `AppNotifier<TAction>`, `SingleInstance`, `Loc` / `LocExtension` / `Formats` with injected `FormatKeys`, a shared
   `MessageWindow`, and the new signals `PowerSource`, `OutputMute`, `AppearanceWatcher`, `SessionLockWatcher`.
-- Repository bootstrap: Swift package layout (`DesklingCore`, `DesklingSystem`, `DesklingShell`,
-  `DesklingStore`, `DesklingTesting`), .NET solution (`Deskling.Core`, `Deskling.Windows`,
-  `Deskling.Core.Tests`), CI and release workflows. No API yet.
+- Repository: Swift package layout (`DesklingCore`, `DesklingSystem`, `DesklingShell`, `DesklingStore`,
+  `DesklingTesting`), .NET solution (`Deskling.Core`, `Deskling.Windows`, `Deskling.Core.Tests`), conformance
+  vectors, CI (`swift.yml` on macOS, `dotnet.yml` on Ubuntu and Windows, `regenerate-vectors.yml`) and the
+  release workflow.
