@@ -8,3 +8,5 @@ bin/
 obj/
 artifacts/
 __pycache__/
+.claude/
+.impeccable/
