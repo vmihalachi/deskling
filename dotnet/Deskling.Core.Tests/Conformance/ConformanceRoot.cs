@@ -8,8 +8,10 @@ public static class ConformanceRoot
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
+            // The marker is conformance/README.md, not the folder: on Windows (case-insensitive) the test
+            // project's own Conformance/ folder would otherwise match.
             var candidate = Path.Combine(dir.FullName, "conformance");
-            if (Directory.Exists(candidate))
+            if (File.Exists(Path.Combine(candidate, "README.md")))
                 return candidate;
             dir = dir.Parent;
         }
