@@ -1,7 +1,9 @@
 name: Release
 
-# A vX.Y.Z tag versions both sides: this packs and pushes the NuGet packages (NUGET_API_KEY secret) and
-# drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
+# A vX.Y.Z tag versions both sides: this packs the NuGet packages, pushes them to NuGet.org through Trusted
+# Publishing (OIDC: no stored key; nuget.org → your account → Trusted Publishing → a policy for repository
+# vmihalachi/deskling and workflow file release.yml, plus the NUGET_USER repository variable set to your nuget.org
+# username) and drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
 # the tag itself. Run it from Actions with a version to have it create the tag on master (for sessions
 # whose credentials can't push tags), or push the tag yourself.
 on:
@@ -110,6 +112,9 @@ jobs:
   publish:
     needs: [version, core, windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     env:
       DESKLING_VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -125,15 +130,23 @@ jobs:
           path: dotnet/artifacts
           merge-multiple: true
 
-      # Without the secret the packages still land on the GitHub release below; add NUGET_API_KEY (an API key from
-      # nuget.org scoped to Deskling.*) and re-run this workflow to publish them.
+      # Trusted Publishing: GitHub's OIDC token is exchanged for a one-hour NuGet.org API key scoped to this run.
+      # Without the NUGET_USER variable the packages still land on the GitHub release below; set it (and the
+      # nuget.org policy) and re-run this workflow to publish them.
+      - name: Log in to NuGet.org (Trusted Publishing)
+        if: vars.NUGET_USER != ''
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
       - name: Push to NuGet.org
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
           ls -l dotnet/artifacts
           if [ -z "$NUGET_API_KEY" ]; then
-            echo "::warning::NUGET_API_KEY is not set: the packages were packed but not pushed to NuGet.org."
+            echo "::warning::Not pushed to NuGet.org: set the NUGET_USER repository variable to your nuget.org username and add a Trusted Publishing policy there for vmihalachi/deskling, workflow release.yml."
             exit 0
           fi
           dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
