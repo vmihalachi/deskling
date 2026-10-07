@@ -25,6 +25,12 @@ package and the NuGet packages together.
 - `DesklingStore`: `ProductCatalog`, `PurchaseStore` (`owned`, `isOwned`, `error: PurchaseError?`, injected cache key
   and logger), `StoreBackend`, `StoreKitBackend`.
 - `DesklingTesting`: `MockStoreBackend`.
+- `Deskling.Core` (.NET): the file-for-file mirror of `DesklingCore` plus `Localization/PluralRules`, `ReswName` and
+  `Settings/ISettingsStore` from mybackhurts; `Deskling.Core.Tests` replays every scheduler vector.
+- `Deskling.Windows` (.NET): `SystemIdleTimeProvider`, `SystemBusyStateProvider`, `TrayIconHost`, `TrayMenuItem`,
+  `GlobalHotKey` (Carbon masks mapped onto `MOD_*`), `StartupService`, `LocalSettingsStore`, `WavPlayer`,
+  `AppNotifier<TAction>`, `SingleInstance`, `Loc` / `LocExtension` / `Formats` with injected `FormatKeys`, a shared
+  `MessageWindow`, and the new signals `PowerSource`, `OutputMute`, `AppearanceWatcher`, `SessionLockWatcher`.
 - Repository bootstrap: Swift package layout (`DesklingCore`, `DesklingSystem`, `DesklingShell`,
   `DesklingStore`, `DesklingTesting`), .NET solution (`Deskling.Core`, `Deskling.Windows`,
   `Deskling.Core.Tests`), CI and release workflows. No API yet.

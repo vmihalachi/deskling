@@ -36,10 +36,18 @@ jobs:
           dotnet pack dotnet/Deskling.Core/Deskling.Core.csproj dotnet/Deskling.Windows/Deskling.Windows.csproj
           -c Release -p:DesklingVersion=$DESKLING_VERSION -o dotnet/artifacts
 
+      # Without the secret the packages still land on the GitHub release below; add NUGET_API_KEY (an API key from
+      # nuget.org scoped to Deskling.*) and re-run this job to publish them.
       - name: Push to NuGet.org
-        run: >
-          dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}"
-          --source https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::warning::NUGET_API_KEY is not set: the packages were packed but not pushed to NuGet.org."
+            exit 0
+          fi
+          dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Release notes from CHANGELOG.md
         run: |

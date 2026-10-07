@@ -33,6 +33,29 @@ dotnet add package Deskling.Core
 dotnet add package Deskling.Windows   # net10.0-windows; the tray, hotkey, idle and busy services
 ```
 
+## Using it
+
+The package ships no strings, product ids or window lists: the app passes them in.
+
+- **Scheduling.** `ReminderScheduler(config:clock:idle:busy:calendar:random:)`; call `tick()` every 20 s or so and
+  act on `.remind`. `SchedulerConfig.intervalJitter` (seconds, default 0) randomizes each interval from the injected
+  `RandomSource`; pass `SplitMix64(seed:)` to replay a run.
+- **Signals (macOS).** `SystemBusyStateProvider(cameraCheck:)`: `.avFoundation` (default), `.coreMediaIO` for a sandboxed
+  app without the camera entitlement, or `.off` (the microphone check alone catches nearly every call).
+  `SystemPowerSource`, `SystemAudioOutput`, `AppearanceWatcher` and `ScreenLockWatcher` expose a current value and an
+  `onChange` callback.
+- **Shell (macOS).** `WindowManager<MyWindow>` takes an enum conforming to `WindowID` (title, size, placement, exclusivity)
+  and a content provider; `NotificationPoster(categories:)` takes action ids with already localized titles and reports
+  `onAction(categoryID, actionID)`; `GlobalHotKey(signature:)` registers `KeyShortcut`s by id; `LoginItem` and
+  `LaunchContext.launchedAsLoginItem()` cover start-at-login.
+- **Store (macOS).** `PurchaseStore(catalog: ProductCatalog(unlockables:tips:))`; `owned`, `isOwned(_:)`, `buy`, `tip`,
+  `restore`; `error: PurchaseError?` is for the app to put into words. Tests use `MockStoreBackend`.
+- **Windows.** The same shapes in `Deskling.Windows`: `TrayIconHost`, `GlobalHotKey` (`KeyShortcut` keeps the Mac
+  shape; Carbon masks map onto `MOD_*`), `AppNotifier<TAction>`, `StartupService(taskId)`, `LocalSettingsStore`,
+  `SingleInstance.Claim(key)`, `WavPlayer`, and the signals `PowerSource`, `OutputMute`, `AppearanceWatcher`,
+  `SessionLockWatcher`. String lookup is `Loc` (`Loc.Configure("Resources")`, `Loc.UseLanguage(...)` at launch) and
+  `Formats.Configure(new FormatKeys(...))` names the six catalog keys the formatters need.
+
 ## The two implementations stay identical
 
 The Swift code is the reference. `conformance/` holds JSON vectors generated from it, and `dotnet/Deskling.Core.Tests`
@@ -43,7 +66,7 @@ replays every one, so a change in behavior on one side fails the other side's te
 ```sh
 swift build && swift test                       # macOS: the package and its tests
 scripts/conformance.sh                          # regenerate conformance/ from the Swift code
-cd dotnet && dotnet build && dotnet test        # .NET: Core builds and tests anywhere; Deskling.Windows compiles anywhere, runs on Windows
+cd dotnet && dotnet build && dotnet test        # .NET: Core builds and tests anywhere; Deskling.Windows needs Windows (its PRI tooling)
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
 
@@ -52,8 +75,9 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.1.0 && git push --tags` runs `release.yml`: it packs and pushes the NuGet
-packages and drafts a GitHub release from `CHANGELOG.md`.
+One tag versions both sides. `git tag v0.1.0 && git push --tags` runs `release.yml`: it packs the NuGet packages, pushes
+them when the `NUGET_API_KEY` secret is set (otherwise it says so and attaches them to the release instead) and drafts a
+GitHub release from `CHANGELOG.md`.
 
 ## License
 
