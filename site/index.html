@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deskling: building blocks for menu bar and tray apps</title>
+<meta name="description" content="Deskling is an MIT Swift package and .NET packages with the parts every menu bar or tray app needs: a reminder scheduler, permission-free system signals, app-shell plumbing and a StoreKit store.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Deskling">
+<meta property="og:description" content="Building blocks for menu bar and tray apps. Swift for macOS, .NET for Windows. MIT.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="./" aria-label="Deskling home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/><rect x="7" y="9" width="18" height="3" rx="1.5" fill="var(--bg)"/><circle cx="21.5" cy="19.5" r="3.5" fill="var(--accent-on-mark)"/></svg>
+      <span>Deskling</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#parts">Parts</a></li>
+        <li><a href="#signals">Signals</a></li>
+        <li><a href="#conformance">Conformance</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a class="gh" href="https://github.com/vmihalachi/deskling"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.1.1</a><span>Swift · .NET · MIT</span></p>
+      <h1>Building blocks for menu bar and tray apps</h1>
+      <p class="lede">The parts every little desktop app needs and nobody wants to write twice: a reminder scheduler, permission-free system signals and app-shell plumbing. Swift for macOS, .NET for Windows.</p>
+
+      <div class="install" data-tabs>
+        <div class="tablist" role="tablist" aria-label="Install with">
+          <button role="tab" id="i-swift" aria-selected="true" aria-controls="ip-swift">Swift</button>
+          <button role="tab" id="i-net" aria-selected="false" aria-controls="ip-net" tabindex="-1">.NET</button>
+        </div>
+        <div class="install-line" role="tabpanel" id="ip-swift" aria-labelledby="i-swift">
+          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.1.1")</code>
+          <button class="copy" type="button" aria-label="Copy the Swift package line">Copy</button>
+        </div>
+        <div class="install-line" role="tabpanel" id="ip-net" aria-labelledby="i-net" hidden>
+          <code>dotnet add package Deskling.Core</code>
+          <button class="copy" type="button" aria-label="Copy the dotnet command">Copy</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/vmihalachi/deskling">View on GitHub</a>
+        <a class="btn" href="#parts">What's inside</a>
+      </div>
+    </div>
+
+    <div class="hero-code" data-tabs>
+      <div class="code-head">
+        <div class="tablist" role="tablist" aria-label="Language">
+          <button role="tab" id="c-swift" aria-selected="true" aria-controls="cp-swift">Swift</button>
+          <button role="tab" id="c-cs" aria-selected="false" aria-controls="cp-cs" tabindex="-1">C#</button>
+        </div>
+        <span class="code-file">same scheduler, same decisions</span>
+      </div>
+<pre role="tabpanel" id="cp-swift" aria-labelledby="c-swift" tabindex="0"><code><span class="k">import</span> DesklingCore
+<span class="k">import</span> DesklingSystem
+
+<span class="k">let</span> scheduler = <span class="t">ReminderScheduler</span>(
+    config: <span class="t">SchedulerConfig</span>(
+        interval: <span class="n">45</span> * <span class="n">60</span>,
+        quietHours: [<span class="n">12</span>]
+    ),
+    clock: <span class="t">SystemClock</span>(),
+    idle: <span class="t">SystemIdleTimeProvider</span>(),
+    <span class="c">// Mic or camera in use: hold the reminder.</span>
+    busy: <span class="t">SystemBusyStateProvider</span>()
+)
+
+<span class="c">// Call every 20 s or so.</span>
+<span class="k">if</span> scheduler.tick() == .remind {
+    showBreak()
+}</code></pre>
+<pre role="tabpanel" id="cp-cs" aria-labelledby="c-cs" tabindex="0" hidden><code><span class="k">using</span> Deskling.Core.Scheduling;
+<span class="k">using</span> Deskling.Windows.System;
+
+<span class="k">var</span> scheduler = <span class="k">new</span> <span class="t">ReminderScheduler</span>(
+    <span class="k">new</span> <span class="t">SchedulerConfig</span> {
+        IntervalSeconds = <span class="n">45</span> * <span class="n">60</span>,
+        QuietHours = <span class="k">new</span> <span class="t">HashSet</span>&lt;<span class="k">int</span>&gt; { <span class="n">12</span> },
+    },
+    <span class="k">new</span> <span class="t">SystemClock</span>(),
+    <span class="k">new</span> <span class="t">SystemIdleTimeProvider</span>(),
+    <span class="c">// Mic or camera in use: hold the reminder.</span>
+    <span class="k">new</span> <span class="t">SystemBusyStateProvider</span>());
+
+<span class="c">// Call every 20 s or so.</span>
+<span class="k">if</span> (scheduler.Tick() == <span class="t">SchedulerDecision</span>.Remind)
+    ShowBreak();</code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="promises" aria-label="Principles">
+  <div class="wrap promise-grid">
+    <div>
+      <h2>Never prompts</h2>
+      <p>Every system signal reads device and window state. Nothing opens the camera or microphone, nothing asks for Accessibility, nothing needs an entitlement you would have to explain.</p>
+    </div>
+    <div>
+      <h2>Never phones home</h2>
+      <p>No network code anywhere in the package: no analytics, no update checks, no telemetry. The Swift package has no dependencies at all.</p>
+    </div>
+    <div>
+      <h2>One behavior, two platforms</h2>
+      <p>The Swift code is the reference. JSON vectors generated from it are replayed by the C# port, so the two cannot quietly drift.</p>
+    </div>
+  </div>
+</section>
+
+<section id="parts" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>What's inside</h2>
+      <p>Five Swift products and two NuGet packages. Take the pure logic alone, or the whole shell.</p>
+    </div>
+
+    <div class="parts" role="table" aria-label="Products">
+      <div class="parts-row parts-th" role="row">
+        <span role="columnheader">macOS (Swift)</span>
+        <span role="columnheader">Windows (.NET)</span>
+        <span role="columnheader">What it does</span>
+      </div>
+
+      <div class="parts-row" role="row">
+        <div role="cell" class="pkg"><code>DesklingCore</code></div>
+        <div role="cell" class="pkg"><code>Deskling.Core</code></div>
+        <div role="cell">
+          <h3>Scheduling and pure logic</h3>
+          <p>An interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. Runs on an injected clock, so it builds and tests anywhere Swift or .NET runs.</p>
+          <p class="types"><code>ReminderScheduler</code> <code>SchedulerConfig</code> <code>Clock</code> <code>IdleTimeProvider</code> <code>BusyStateProvider</code> <code>SplitMix64</code> <code>KeyShortcut</code></p>
+        </div>
+      </div>
+
+      <div class="parts-row" role="row">
+        <div role="cell" class="pkg"><code>DesklingSystem</code></div>
+        <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
+        <div role="cell">
+          <h3>System signals</h3>
+          <p>Idle time since the last input. Whether another app is using the camera or microphone. Full-screen apps, power source and battery level, output muted and route, screen locked, light and dark appearance. Each exposes a current value and a change callback.</p>
+          <p class="types"><code>SystemIdleTimeProvider</code> <code>SystemBusyStateProvider</code> <code>SystemPowerSource</code> <code>SystemAudioOutput</code> <code>ScreenLockWatcher</code> <code>AppearanceWatcher</code></p>
+        </div>
+      </div>
+
+      <div class="parts-row" role="row">
+        <div role="cell" class="pkg"><code>DesklingShell</code></div>
+        <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
+        <div role="cell">
+          <h3>App shell</h3>
+          <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a global hotkey without Accessibility permission, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble.</p>
+          <p class="types"><code>WindowManager</code> <code>NotificationPoster</code> <code>GlobalHotKey</code> <code>LoginItem</code> <code>TrayIconHost</code> <code>SingleInstance</code></p>
+        </div>
+      </div>
+
+      <div class="parts-row" role="row">
+        <div role="cell" class="pkg"><code>DesklingStore</code></div>
+        <div role="cell" class="pkg none"><span>macOS only</span></div>
+        <div role="cell">
+          <h3>Purchases</h3>
+          <p>A StoreKit 2 store for one-time unlockables and tips, with the backend behind a protocol so your tests use a mock.</p>
+          <p class="types"><code>PurchaseStore</code> <code>ProductCatalog</code> <code>StoreBackend</code></p>
+        </div>
+      </div>
+
+      <div class="parts-row" role="row">
+        <div role="cell" class="pkg"><code>DesklingTesting</code></div>
+        <div role="cell" class="pkg none"><span>Swift only</span></div>
+        <div role="cell">
+          <h3>Fakes for your tests</h3>
+          <p>A fake for every protocol and helpers for the shared conformance vectors, for your app's own test target.</p>
+          <p class="types"><code>MockClock</code> <code>MockIdle</code> <code>MockBusy</code> <code>MockStoreBackend</code></p>
+        </div>
+      </div>
+    </div>
+
+    <p class="footnote">The package ships no strings, product ids or window lists. Your app passes them in, already localized.</p>
+  </div>
+</section>
+
+<section id="signals" class="section alt">
+  <div class="wrap split">
+    <div class="split-copy">
+      <h2>Knows you're on a call. Never asks.</h2>
+      <p>A break reminder that pops up mid-meeting gets uninstalled. Deskling holds a due reminder while another app is using the camera or the microphone, and it finds out without ever opening a device, so there is no permission dialog and nothing for a reviewer to question.</p>
+      <p>If a device can't be read, it reads as not busy. Your app never blocks on a signal.</p>
+    </div>
+    <dl class="sources">
+      <div>
+        <dt><span class="os">macOS</span> Microphone</dt>
+        <dd>CoreAudio's list of processes using an input device.</dd>
+      </div>
+      <div>
+        <dt><span class="os">macOS</span> Camera</dt>
+        <dd>AVFoundation device state by default, CoreMediaIO for a sandboxed app without the camera entitlement, or off. The microphone alone catches nearly every call.</dd>
+      </div>
+      <div>
+        <dt><span class="os">Windows</span> Camera and microphone</dt>
+        <dd>The capability access consent store: Windows records when each app starts and stops using a device, and a start without a stop means it is in use now. No manifest capability needed.</dd>
+      </div>
+      <div>
+        <dt><span class="os">Both</span> Full screen</dt>
+        <dd>A full-screen app, game or presentation holds the reminder too.</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section id="conformance" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Proven the same on both sides</h2>
+      <p>Each scheduler behavior is written down once, as a JSON timeline generated from the Swift code. XCTest checks the Swift side reproduces it, xUnit replays every vector against the C# port. A change on one side fails the other side's build.</p>
+    </div>
+
+    <figure class="vector" id="vector">
+      <figcaption>
+        <code>conformance/scheduler/call-postpones-then-grace.json</code>
+        <span>A call holds a due reminder; it fires once the call has been over for the grace period.</span>
+      </figcaption>
+
+      <div class="timeline" aria-hidden="true">
+        <div class="lane lane-call"><span class="lane-label">Call</span><div class="track"><span class="bar" style="left:25%;width:12.5%"></span></div></div>
+        <div class="lane lane-events">
+          <span class="lane-label">Decision</span>
+          <div class="track">
+            <span class="ev due" style="left:28.125%"><i></i><b>10:45 due<br><em>postpone</em></b></span>
+            <span class="ev remind" style="left:37.92%"><i></i><b>11:00:40<br><em>remind</em></b></span>
+            <span class="ev remind" style="left:66.04%"><i></i><b>11:45:40<br><em>remind</em></b></span>
+            <span class="ev next" style="left:94.17%"><i></i><b>12:30:40<br><em>next</em></b></span>
+          </div>
+        </div>
+        <div class="axis"><span style="left:0">10:00</span><span style="left:18.75%">10:30</span><span style="left:37.5%">11:00</span><span style="left:56.25%">11:30</span><span style="left:75%">12:00</span><span style="left:93.75%">12:30</span></div>
+        <div class="playhead"></div>
+      </div>
+
+      <ol class="steps">
+        <li><time>10:00</time> Scheduler starts with a 45-minute interval. Next reminder 10:45.</li>
+        <li><time>10:40</time> A call starts. At 10:45 the reminder is due: every tick returns <code>postpone</code>, status <code>postponed(call)</code>.</li>
+        <li><time>11:00</time> The call ends. The 30-second grace period runs.</li>
+        <li><time>11:00:40</time> <code>remind</code>. The next interval starts from here: 11:45:40.</li>
+      </ol>
+
+      <div class="verdict">
+        <span class="pass"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Swift, XCTest</span>
+        <span class="pass"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>C#, xUnit</span>
+        <span class="verdict-note">Same decision on every one of 109 ticks, same state after every step. One of 39 vectors.</span>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="install" class="section alt">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Install</h2>
+      <p>One tag versions both sides. Deskling is <code>0.x</code> until the second app has settled the API, so pin an exact version: minor releases may change public types.</p>
+    </div>
+    <div class="install-grid">
+      <div class="install-card">
+        <h3>Swift Package Manager</h3>
+        <p class="req">macOS 14+, Swift 5 language mode, no dependencies</p>
+<pre tabindex="0"><code><span class="c">// Package.swift</span>
+.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.1.1"</span>)
+
+<span class="c">// then, per target</span>
+.product(name: <span class="s">"DesklingCore"</span>, package: <span class="s">"deskling"</span>)</code></pre>
+        <p>Or in Xcode: File › Add Package Dependencies, paste the repository URL, pick <em>Exact Version</em>.</p>
+      </div>
+      <div class="install-card">
+        <h3>NuGet</h3>
+        <p class="req">.NET 10; Deskling.Core is Native AOT compatible</p>
+<pre tabindex="0"><code>dotnet add package Deskling.Core
+dotnet add package Deskling.Windows   <span class="c"># net10.0-windows</span></code></pre>
+        <p><code>Deskling.Core</code> builds anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, hotkey, idle and busy services.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="origin">
+  <div class="wrap origin-inner">
+    <p>Deskling grew out of <a href="https://mybackhurts.app">mybackhurts</a>, a break reminder for the menu bar, and also powers sunnysays. Both ship it.</p>
+    <a class="btn primary" href="https://github.com/vmihalachi/deskling">Star it on GitHub</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <p>MIT licensed. © 2026 Vlad Mihalachi.</p>
+    <ul>
+      <li><a href="https://github.com/vmihalachi/deskling">Source</a></li>
+      <li><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">Changelog</a></li>
+      <li><a href="https://www.nuget.org/packages/Deskling.Core">NuGet</a></li>
+      <li><a href="https://github.com/vmihalachi/deskling/blob/master/LICENSE">License</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>
