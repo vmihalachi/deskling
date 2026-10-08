@@ -21,6 +21,7 @@ public sealed class AppNotifier<TAction> : IDisposable
     private readonly string tag;
     private readonly string group;
     private readonly AppNotificationManager manager = AppNotificationManager.Default;
+    private bool registered;
 
     /// <param name="actions">Action keys (short, stable, ASCII: they travel in the notification's arguments) to actions.</param>
     /// <param name="defaultAction">
@@ -45,11 +46,24 @@ public sealed class AppNotifier<TAction> : IDisposable
     /// <summary>Notifications are turned off for the app (or entirely), so nothing posted can show.</summary>
     public bool IsDenied => manager.Setting != AppNotificationSetting.Enabled;
 
-    /// <summary>Subscribes and registers with Windows; call once at launch, before posting.</summary>
+    /// <summary>
+    /// Subscribes and registers with Windows; call once at launch, before posting. A second call does nothing.
+    /// </summary>
     public void Register()
     {
+        if (registered)
+            return;
         manager.NotificationInvoked += OnInvoked;
-        manager.Register();
+        try
+        {
+            manager.Register();
+        }
+        catch
+        {
+            manager.NotificationInvoked -= OnInvoked;
+            throw;
+        }
+        registered = true;
     }
 
     /// <summary>The action a notification click carried, for the activation Windows launched the app with.</summary>
@@ -93,10 +107,24 @@ public sealed class AppNotifier<TAction> : IDisposable
         }
     }
 
+    /// <summary>
+    /// Unsubscribes and unregisters, only if <see cref="Register"/> did register: Windows throws when a process
+    /// that never registered unregisters and the package has no registration left. Never throws.
+    /// </summary>
     public void Dispose()
     {
+        if (!registered)
+            return;
+        registered = false;
         manager.NotificationInvoked -= OnInvoked;
-        manager.Unregister();
+        try
+        {
+            manager.Unregister();
+        }
+        catch (COMException)
+        {
+            // Windows already dropped the registration ("Not Registered for App Notifications!").
+        }
     }
 
     private void OnInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args) =>

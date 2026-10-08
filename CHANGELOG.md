@@ -6,6 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.2.1 - 2026-10-08
+
+### Fixed
+- `AppNotifier<TAction>.Dispose()` (.NET) unregisters only when `Register()` did, and never throws. Disposing a
+  notifier that was never registered (an app's screenshot or test mode, say) threw `COMException` 0x80070490
+  "Not Registered for App Notifications!" whenever Windows had no registration left for the package.
+  `Register()` is idempotent and leaves nothing subscribed when Windows refuses the registration.
+
 ## 0.2.0 - 2026-10-08
 
 ### Changed
