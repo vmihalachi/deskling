@@ -8,5 +8,6 @@ bin/
 obj/
 artifacts/
 __pycache__/
-.claude/
+.claude/settings.local.json
+.claude/worktrees/
 .impeccable/

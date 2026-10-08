@@ -17,8 +17,9 @@ conformance vectors.
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file. `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
-| `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`. |
-| `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release). |
+| `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
+| `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
+| `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
 
@@ -32,7 +33,24 @@ scripts/verify.sh                              # runs what applies to your chang
 ```
 
 In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
-read the failed job's log).
+read the failed job's log). Vectors need the Swift code to regenerate: without a Mac, dispatch `regenerate-vectors.yml`
+on your branch and pull the commit it pushes.
+
+## Finding code
+
+The layout above is the map: every Swift file has a C# twin at the same relative path, so `grep -rn` on a type name
+finds both sides. If `jbcontext` is installed (JetBrains Context; optional, not every environment has it),
+`jbcontext search "<what the code does>"` finds code by meaning and `jbcontext search -p <dir> "<query>"` narrows it.
+Use it when you don't know where something lives; grep once you have a name.
+
+## Skills
+
+Step-by-step procedures for the multi-step changes live in `.agents/skills/` (symlinked as `.claude/skills/` and
+`.github/skills/`). Read the matching `SKILL.md` before starting:
+
+- `add-scheduler-behavior`: new or changed `ReminderScheduler` behavior, from config field to C# port.
+- `port-to-csharp`: mirroring any Swift change in `dotnet/`.
+- `release`: cutting `vX.Y.Z`.
 
 ## Conventions
 
@@ -59,37 +77,3 @@ read the failed job's log).
   header and both `exact:` install snippets). Move *Unreleased* to the new section. `scripts/verify.sh` fails when
   these disagree, so run it before committing.
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.
-
-<!-- jbcontext-instructions-start -->
-# Tools
-
-## Semantic Code Search (jbcontext)
-
-You have access to `jbcontext search` for searching the codebase semantically.
-Use the `/context-search` skill or run `jbcontext search "<query>"` to find code by meaning, not just keywords.
-
-### Query Tips
-
-- Be descriptive: "Where is a function that validates user email addresses" > "email"
-- Include context: "Find error handling middleware for HTTP requests with logging"
-- Specify what you're looking for: "React component that renders a modal dialog"
-
-### When to use
-
-`jbcontext search` is a **code-discovery** tool. Reach for it only when a task requires finding or understanding code whose location you don't already know.
-
-Skip it — go straight to the right tool — when:
-- the task names the exact file, class, or symbol (keyword grep is faster);
-- the relevant file is already open or identified;
-- the task doesn't involve locating code at all — git operations (rebase, merge, commit), running tests or builds, shell/statusline/config setup, or reviewing a diff you already have.
-
-### How to use it
-- Start with `jbcontext search` before planning, editing, or exact search in unfamiliar code when you do not yet know the right file, subsystem, implementation, or related test.
-- Use one focused natural-language query per search.
-- Do not start with grep, ripgrep, or find when the search problem is still semantic or exploratory.
-- Inspect the first relevant file or directory before issuing another broad semantic search.
-- Use another broad `jbcontext search` only if the local path stops being productive.
-- Once you know the relevant file, symbol, or directory, switch to direct file reads or exact search for local inspection.
-- If you search again after finding a relevant area, narrow with `-p <path>`.
-
-<!-- jbcontext-instructions-end -->

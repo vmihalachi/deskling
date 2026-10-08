@@ -1,0 +1,15 @@
+# Deskling's own checks: local builds and tests, no network beyond what the toolchains already do.
+
+prefix_rule(
+    pattern = ["scripts/verify.sh"],
+    decision = "allow",
+    justification = "Runs the repo's format, build and test checks for the changed paths",
+    match = ["scripts/verify.sh --fast"],
+)
+
+prefix_rule(
+    pattern = ["scripts/conformance.sh"],
+    decision = "allow",
+    justification = "Regenerates conformance/ from the Swift code",
+    match = ["scripts/conformance.sh"],
+)
