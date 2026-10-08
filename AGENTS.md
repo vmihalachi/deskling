@@ -53,5 +53,9 @@ read the failed job's log).
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under
-  *Unreleased*. Bump `Deskling.version` and `DesklingInfo.Version` with the tag.
+  *Unreleased*. Bump the version in the same change as the tag, in all four places: `Deskling.version`
+  (`Sources/DesklingCore/Deskling.swift`), `DesklingInfo.Version` (`dotnet/Deskling.Core/DesklingInfo.cs`),
+  the `DesklingVersion` default in `dotnet/Directory.Build.props`, and `site/index.html` (the `vX.Y.Z` label in the
+  header and both `exact:` install snippets). Move *Unreleased* to the new section. `scripts/verify.sh` fails when
+  these disagree, so run it before committing.
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.

@@ -9,6 +9,7 @@
 # Path → checks:
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
+#   version sources, site/**            every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -53,6 +54,28 @@ vectors_current() {
     return 1
   fi
 }
+
+versions_agree() {
+  local found distinct
+  found="$( {
+    sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/DesklingCore/Deskling.swift
+    sed -n 's/.*public const string Version = "\([^"]*\)".*/\1/p' dotnet/Deskling.Core/DesklingInfo.cs
+    sed -n 's/.*<DesklingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
+    grep -oE 'class="version"><a [^>]*>v[0-9]+\.[0-9]+\.[0-9]+|exact: (<span class="s">)?"[0-9]+\.[0-9]+\.[0-9]+"' site/index.html |
+      grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+  } )"
+  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, and the site's version label and two install snippets.
+  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 6 ]; then
+    echo "expected 6 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
+  fi
+  distinct="$(printf '%s\n' "$found" | sort -u)"
+  if [ "$(printf '%s\n' "$distinct" | wc -l)" -ne 1 ]; then
+    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, site/index.html):"
+    printf '%s\n' "$found" | sort | uniq -c | sed 's/^/  /'; return 1
+  fi
+}
+
+check "versions agree" versions_agree
 
 if touched "$swift"; then
   if [ "$darwin" = 1 ]; then
