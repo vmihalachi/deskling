@@ -311,9 +311,6 @@ pre ::selection { background: #2c6b5f; color: #fff; }
 .section-head p code { background: var(--bg); }
 
 /* Origin + footer */
-.origin { padding: 96px 0; }
-.origin-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
-.origin p { font-size: clamp(1.25rem, 2.2vw, 1.6rem); line-height: 1.35; letter-spacing: -.02em; max-width: 30em; font-weight: 500; }
 
 .footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 14px; color: var(--fg-3); }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -363,5 +360,4 @@ pre ::selection { background: #2c6b5f; color: #fff; }
   .steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .vector figcaption { padding: 16px; }
   .verdict { padding: 14px 16px; }
-  .origin { padding: 72px 0; }
 }

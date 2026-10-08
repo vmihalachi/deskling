@@ -41,7 +41,7 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.2.0</a><span>Swift · .NET · MIT</span></p>
+      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.2.1</a><span>Swift · .NET · MIT</span></p>
       <h1>Building blocks for menu bar and tray apps</h1>
       <p class="lede">The parts every little desktop app needs and nobody wants to write twice: a reminder scheduler, permission-free system signals and app-shell plumbing. Swift for macOS, .NET for Windows.</p>
 
@@ -51,7 +51,7 @@
           <button role="tab" id="i-net" aria-selected="false" aria-controls="ip-net" tabindex="-1">.NET</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-swift" aria-labelledby="i-swift">
-          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.2.0")</code>
+          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.2.1")</code>
           <button class="copy" type="button" aria-label="Copy the Swift package line">Copy</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-net" aria-labelledby="i-net" hidden>
@@ -281,7 +281,7 @@
         <h3>Swift Package Manager</h3>
         <p class="req">macOS 14+, Swift 6 language mode, no dependencies</p>
 <pre tabindex="0"><code><span class="c">// Package.swift</span>
-.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.2.0"</span>)
+.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.2.1"</span>)
 
 <span class="c">// then, per target</span>
 .product(name: <span class="s">"DesklingCore"</span>, package: <span class="s">"deskling"</span>)</code></pre>
@@ -298,10 +298,27 @@ dotnet add package Deskling.Windows   <span class="c"># net10.0-windows</span></
   </div>
 </section>
 
-<section class="origin">
-  <div class="wrap origin-inner">
-    <p>Deskling grew out of <a href="https://mybackhurts.app">mybackhurts</a>, a break reminder for the menu bar, and also powers <a href="https://sunnysays.app">sunnysays</a>. Both ship it.</p>
-    <a class="btn primary" href="https://github.com/vmihalachi/deskling">Star it on GitHub</a>
+<section id="used-by" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Used by</h2>
+      <p>Deskling was extracted from mybackhurts, and sunnysays runs on it too. Both ship it today.</p>
+    </div>
+    <div class="install-grid">
+      <div class="install-card">
+        <h3><a href="https://mybackhurts.app">mybackhurts</a></h3>
+        <p class="req">A break reminder for the menu bar</p>
+        <p>The first app to use Deskling. Its scheduler, system signals and shell plumbing were generalized into the package, and its 37 scheduler vectors are the first ones in the conformance suite.</p>
+      </div>
+      <div class="install-card">
+        <h3><a href="https://sunnysays.app">sunnysays</a></h3>
+        <p class="req">Built on Deskling</p>
+        <p>Ships Deskling as its shared base, the same packages described on this page.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/vmihalachi/deskling">Star it on GitHub</a>
+    </div>
   </div>
 </section>
 
