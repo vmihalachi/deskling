@@ -20,7 +20,7 @@
         public private(set) var restores = 0
         private var onUpdate: (@MainActor (TransactionUpdate) -> Void)?
 
-        public struct Failure: Error {
+        public struct Failure: Error, Sendable {
             public init() {}
         }
 

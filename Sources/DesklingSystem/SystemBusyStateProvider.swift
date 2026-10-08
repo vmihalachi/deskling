@@ -17,7 +17,7 @@
     /// (and `NSCameraUsageDescription`) may see no devices at all there, so its calls would go unnoticed.
     /// `.coreMediaIO` reads every CoreMediaIO device's "running somewhere" flag instead, which needs no
     /// entitlement. `.off` skips the camera and relies on the microphone, which every call uses anyway.
-    public struct SystemBusyStateProvider: BusyStateProvider {
+    public struct SystemBusyStateProvider: BusyStateProvider, Sendable {
         /// How to find out whether another app is using the camera.
         public enum CameraCheck: Equatable, Sendable {
             /// `AVCaptureDevice.DiscoverySession` and `isInUseByAnotherApplication`. Needs the camera entitlement in

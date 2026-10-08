@@ -271,14 +271,14 @@ enum SchedulerVectors {
         mutating func isWithinActiveHours(_ date: Date) { steps.append(Step(op: "isWithinActiveHours", time: iso(date))) }
     }
 
-    struct Case {
+    struct Case: Sendable {
         var name: String
         var description: String
         var timeZone = "UTC"
         var config = SchedulerConfig()
         var seed: UInt64?
-        var start: (Script) -> Date
-        var build: (inout Script) -> Void
+        var start: @Sendable (Script) -> Date
+        var build: @Sendable (inout Script) -> Void
     }
 
     static func config(_ change: (inout SchedulerConfig) -> Void) -> SchedulerConfig {

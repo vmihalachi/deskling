@@ -33,7 +33,7 @@ public final class MockBusy: BusyStateProvider {
 }
 
 /// A random source that returns the given unit values in order, then repeats the last one.
-public struct ScriptedRandom: RandomSource {
+public struct ScriptedRandom: RandomSource, Sendable {
     public var values: [Double]
     public private(set) var reads = 0
 

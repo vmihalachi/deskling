@@ -36,6 +36,7 @@
             _ = output.isOutputMuted()
         }
 
+        @MainActor
         func testScreenStartsUnlocked() {
             let watcher = ScreenLockWatcher()
             XCTAssertFalse(watcher.isLocked)

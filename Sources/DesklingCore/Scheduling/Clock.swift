@@ -6,7 +6,7 @@ public protocol Clock {
 }
 
 /// The wall clock.
-public struct SystemClock: Clock {
+public struct SystemClock: Clock, Sendable {
     public init() {}
     public var now: Date { Date() }
 }

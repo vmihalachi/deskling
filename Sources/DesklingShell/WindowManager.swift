@@ -217,18 +217,14 @@
         var onResize: (@MainActor (NSWindow) -> Void)?
         var onWillClose: (@MainActor (NSWindow) -> Void)?
 
-        nonisolated func windowDidResize(_ notification: Notification) {
-            MainActor.assumeIsolated {
-                guard let window = notification.object as? NSWindow else { return }
-                onResize?(window)
-            }
+        func windowDidResize(_ notification: Notification) {
+            guard let window = notification.object as? NSWindow else { return }
+            onResize?(window)
         }
 
-        nonisolated func windowWillClose(_ notification: Notification) {
-            MainActor.assumeIsolated {
-                guard let window = notification.object as? NSWindow else { return }
-                onWillClose?(window)
-            }
+        func windowWillClose(_ notification: Notification) {
+            guard let window = notification.object as? NSWindow else { return }
+            onWillClose?(window)
         }
     }
 #endif

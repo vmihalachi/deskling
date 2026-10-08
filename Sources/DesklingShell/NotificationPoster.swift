@@ -4,7 +4,7 @@
     import UserNotifications
 
     /// One button on a notification. `title` is already localized by the app: the package ships no strings.
-    public struct NotificationActionSpec: Equatable {
+    public struct NotificationActionSpec: Equatable, Sendable {
         public var id: String
         public var title: String
         public var options: UNNotificationActionOptions
@@ -22,7 +22,7 @@
 
     /// A notification category: its buttons, and which action id a tap on the banner itself reports
     /// (`nil` ignores taps).
-    public struct NotificationCategorySpec: Equatable {
+    public struct NotificationCategorySpec: Equatable, Sendable {
         public var id: String
         public var actions: [NotificationActionSpec]
         public var defaultActionID: String?
@@ -101,12 +101,9 @@
         // MARK: UNUserNotificationCenterDelegate
 
         public nonisolated func userNotificationCenter(
-            _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
-            withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-        ) {
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated { completionHandler(self.presentationOptions) }
-            }
+            _ center: UNUserNotificationCenter, willPresent notification: UNNotification
+        ) async -> UNNotificationPresentationOptions {
+            await presentationOptions
         }
 
         public nonisolated func userNotificationCenter(

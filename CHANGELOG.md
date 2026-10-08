@@ -6,6 +6,18 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.2.0 - 2026-10-08
+
+### Changed
+- The Swift package builds in the Swift 6 language mode (`swift-tools-version: 6.0`), with strict concurrency checking.
+  Apps in either language mode can use it; Swift 6 apps no longer need `@preconcurrency import` for its types.
+- `NotificationActionSpec`, `NotificationCategorySpec`, `SystemClock`, `NeverBusy`, `SystemRandom`,
+  `SystemIdleTimeProvider`, `SystemBusyStateProvider` and the `DesklingTesting` helpers `ScriptedRandom`,
+  `MockStoreBackend.Failure` and `ConformanceSupport.VectorError` are `Sendable`.
+- `NotificationPoster` answers `willPresent` through the async delegate method; behavior is unchanged.
+- **Breaking:** `ScreenLockWatcher` is `@MainActor` (its callback always ran on the main queue). Create and read it
+  from the main actor; `lockedName` and `unlockedName` stay usable anywhere.
+
 ## 0.1.1 - 2026-10-07
 
 ### Changed

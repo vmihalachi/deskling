@@ -6,7 +6,7 @@ public protocol RandomSource {
 }
 
 /// The system's random generator.
-public struct SystemRandom: RandomSource {
+public struct SystemRandom: RandomSource, Sendable {
     public init() {}
     public mutating func nextUnit() -> Double { Double.random(in: 0..<1) }
 }

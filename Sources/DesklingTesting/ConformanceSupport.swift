@@ -3,7 +3,7 @@ import Foundation
 /// Shared helpers for conformance vectors: JSON in the one format every generator uses, and the date,
 /// time zone and calendar conventions (`conformance/README.md`). Apps' test targets use these too.
 public enum ConformanceSupport {
-    public struct VectorError: Error, CustomStringConvertible {
+    public struct VectorError: Error, CustomStringConvertible, Sendable {
         public let description: String
 
         public init(_ description: String) {

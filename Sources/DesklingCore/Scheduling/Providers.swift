@@ -19,7 +19,7 @@ public protocol BusyStateProvider {
 }
 
 /// Never busy. The default when no provider is injected.
-public struct NeverBusy: BusyStateProvider {
+public struct NeverBusy: BusyStateProvider, Sendable {
     public init() {}
     public func currentBusyReasons() -> Set<BusyReason> { [] }
 }

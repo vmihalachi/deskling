@@ -39,7 +39,7 @@ read the failed job's log).
 - **Public API is deliberate.** Every public type gets a doc comment saying what it does, what it needs and what it
   never does (for example "never prompts for a permission"). Keep type names that mybackhurts already uses
   (`ReminderScheduler`, `SchedulerConfig`, `Clock`, `BusyStateProvider`…) so adopting the package is an import swap.
-- **Swift 5 language mode**, macOS 14+, no dependencies. `DesklingCore` stays Foundation-only; anything that imports
+- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+, no dependencies. `DesklingCore` stays Foundation-only; anything that imports
   AppKit, CoreAudio, AVFoundation, IOKit or Carbon goes in `DesklingSystem` or `DesklingShell`.
 - **No permission prompts, no network.** System signals read device and window state. If an API would prompt the user
   or touch the network, it doesn't belong here.
