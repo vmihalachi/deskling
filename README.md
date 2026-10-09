@@ -6,6 +6,9 @@ and nobody wants to write twice. Swift for macOS, .NET for Windows. MIT.
 Deskling grew out of [mybackhurts](https://mybackhurts.app) and powers sunnysays; both apps ship it. It is
 `0.x` until the second app has settled the API, so minor versions may change public types.
 
+**No support.** Deskling is shared as is, for anyone to use, but it is built for these two apps: issues and pull
+requests aren't monitored, and releases follow what the apps need.
+
 ## What's inside
 
 | Swift product | .NET package | What it does |
