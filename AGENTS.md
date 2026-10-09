@@ -18,7 +18,7 @@ conformance vectors.
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
-| `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
+| `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
@@ -41,12 +41,11 @@ on your branch and pull the commit it pushes.
 The layout above is the map: every Swift file has a C# twin at the same relative path, so `grep -rn` on a type name
 finds both sides. If `jbcontext` is installed (JetBrains Context; optional, not every environment has it),
 `jbcontext search "<what the code does>"` finds code by meaning and `jbcontext search -p <dir> "<query>"` narrows it.
-Use it when you don't know where something lives; grep once you have a name.
+Use it when you don't know where something lives; grep once you have a name. The `context-search` skill and `context-explorer` agent are installed per user, not in this repository.
 
 ## Skills
 
-Step-by-step procedures for the multi-step changes live in `.agents/skills/` (symlinked as `.claude/skills/` and
-`.github/skills/`). Read the matching `SKILL.md` before starting:
+Step-by-step procedures for the multi-step changes live in `.agents/skills/` (symlinked as `.claude/skills/`, `.junie/skills/` and `.github/skills/`). Read the matching `SKILL.md` before starting:
 
 - `add-scheduler-behavior`: new or changed `ReminderScheduler` behavior, from config field to C# port.
 - `port-to-csharp`: mirroring any Swift change in `dotnet/`.
