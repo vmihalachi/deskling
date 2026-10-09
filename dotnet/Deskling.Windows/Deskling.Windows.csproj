@@ -5,7 +5,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Windows</PackageId>
-    <Description>Windows services for little tray apps: a raw Shell_NotifyIcon tray icon host with a native menu, RegisterHotKey, GetLastInputInfo idle time, call and full-screen detection without opening a device, power source, output mute, appearance and session-lock signals, StartupTask, LocalSettings store, WAV player, app notifications, single instance, .resw lookup.</Description>
+    <Description>Windows services for little tray apps: a raw Shell_NotifyIcon tray icon host with a native menu, RegisterHotKey, GetLastInputInfo idle time, call and full-screen detection without opening a device, power source, output mute, appearance and session-lock signals, StartupTask, LocalSettings store, WAV player, app notifications, single instance, .resw lookup, Microsoft Store purchases (StoreContext).</Description>
     <!-- Restores and compiles on Linux and macOS too (no XAML), so an IDE there can work on it. The Windows App SDK's
          PRI step (MakePri.exe) runs only on Windows, so CI builds this project on windows-latest (dotnet.yml). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

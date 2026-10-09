@@ -6,6 +6,18 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.3.0 - 2026-10-09
+
+### Added
+- .NET: the purchase store, mirroring `DesklingStore`. `Deskling.Core.Store` has `ProductCatalog`, `PurchaseStore`
+  (owned set cached in an `ISettingsStore`, load state, prices, purchasing/restoring/pending, tip thanks, errors,
+  one `Changed` event), `IStoreBackend` and `MockStoreBackend`. The mock ships in `Deskling.Core` (the Swift one is in
+  `DesklingTesting`) because apps use it in Debug screenshot and preview modes as well as tests.
+- .NET: `Deskling.Windows.Shell.StoreContextBackend`, the Microsoft Store backend over `Windows.Services.Store`.
+  Matches add-ons by Partner Center Product ID (`InAppOfferToken`), parents the purchase dialog to a window you name,
+  reports consumables fulfilled right after purchase so they can be bought again, and turns `OfflineLicensesChanged`
+  into a transaction update on the UI thread. Needs no manifest capability.
+
 ## 0.2.1 - 2026-10-08
 
 ### Fixed

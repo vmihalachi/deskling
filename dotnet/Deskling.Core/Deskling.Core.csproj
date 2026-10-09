@@ -5,7 +5,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Core</PackageId>
-    <Description>Pure building blocks for little desktop apps: an interval scheduler with active hours, quiet hours, idle reset and busy hold; clock, idle and busy provider interfaces; a seeded random source. No OS or UI dependencies.</Description>
+    <Description>Pure building blocks for little desktop apps: an interval scheduler with active hours, quiet hours, idle reset and busy hold; clock, idle and busy provider interfaces; a seeded random source; a purchase store for unlockables and tips over a store backend interface. No OS or UI dependencies.</Description>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />

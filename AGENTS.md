@@ -14,7 +14,7 @@ conformance vectors.
 | `Package.swift`, `Sources/Deskling{Core,System,Shell,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`. |
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
 | `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
-| `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file. `IsAotCompatible`. |
+| `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
