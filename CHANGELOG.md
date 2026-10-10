@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.3.1 - 2026-10-10
+
+### Added
+- .NET: `PluralRules` knows Czech, Danish, Dutch, Japanese, Korean, Norwegian (Bokmål), Polish, Swedish, Turkish and
+  Chinese. Polish counts take one/few/many, Czech one/few/other, and Japanese, Korean and Chinese always take
+  "other". Before, these languages fell back to the English rule.
+
 ## 0.3.0 - 2026-10-09
 
 ### Added

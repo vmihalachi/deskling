@@ -5,8 +5,9 @@ using System.Text;
 namespace Deskling.Core.Localization;
 
 /// <summary>
-/// CLDR plural categories for integers in the languages the apps ship (en, de, es, it, fr, pt-BR, ro), so a count
-/// picks the same variant of a string as Foundation does on the Mac. Unknown languages use the English rule.
+/// CLDR plural categories for integers in the languages the apps ship (cs, da, de, en, es, fr, it, ja, ko, nb, nl,
+/// pl, pt-BR, ro, sv, tr, zh), so a count picks the same variant of a string as Foundation does on the Mac. Unknown
+/// languages use the English rule.
 /// </summary>
 public static class PluralRules
 {
@@ -21,7 +22,13 @@ public static class PluralRules
         switch (lang.Split('-')[0])
         {
             case "en":
+            case "da":
             case "de":
+            case "nb":
+            case "nl":
+            case "no":
+            case "sv":
+            case "tr":
                 return OneOrOther(n, zeroIsOne: false);
             case "es":
             case "it":
@@ -30,6 +37,14 @@ public static class PluralRules
                 return Million(n) ? "many" : OneOrOther(n, zeroIsOne: true);
             case "ro":
                 return Romanian(n);
+            case "pl":
+                return Polish(n);
+            case "cs":
+                return n == 1 ? "one" : n is >= 2 and <= 4 ? "few" : "other";
+            case "ja":
+            case "ko":
+            case "zh":
+                return "other";
             default:
                 return OneOrOther(n, zeroIsOne: false);
         }
@@ -60,6 +75,15 @@ public static class PluralRules
             return "one";
         var mod100 = n % 100;
         return n == 0 || (mod100 >= 1 && mod100 <= 19) ? "few" : "other";
+    }
+
+    private static string Polish(int n)
+    {
+        if (n == 1)
+            return "one";
+        var mod10 = n % 10;
+        var mod100 = n % 100;
+        return mod10 is >= 2 and <= 4 && mod100 is not (>= 12 and <= 14) ? "few" : "many";
     }
 }
 

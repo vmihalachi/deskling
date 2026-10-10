@@ -48,6 +48,38 @@ public sealed class PluralRulesTests
     [InlineData("ro", 1_020, "other")]
     [InlineData("ro", 1_000_000, "other")]
     [InlineData("ro", 1_000_001, "few")]
+    [InlineData("pl", 0, "many")]
+    [InlineData("pl", 1, "one")]
+    [InlineData("pl", 2, "few")]
+    [InlineData("pl", 4, "few")]
+    [InlineData("pl", 5, "many")]
+    [InlineData("pl", 11, "many")]
+    [InlineData("pl", 12, "many")]
+    [InlineData("pl", 14, "many")]
+    [InlineData("pl", 21, "many")]
+    [InlineData("pl", 22, "few")]
+    [InlineData("pl", 112, "many")]
+    [InlineData("pl", 1_000_000, "many")]
+    [InlineData("cs", 0, "other")]
+    [InlineData("cs", 1, "one")]
+    [InlineData("cs", 2, "few")]
+    [InlineData("cs", 4, "few")]
+    [InlineData("cs", 5, "other")]
+    [InlineData("cs", 22, "other")]
+    [InlineData("nl", 1, "one")]
+    [InlineData("nl", 0, "other")]
+    [InlineData("sv", 1, "one")]
+    [InlineData("sv", 2, "other")]
+    [InlineData("da", 1, "one")]
+    [InlineData("da", 0, "other")]
+    [InlineData("nb", 1, "one")]
+    [InlineData("nb", 21, "other")]
+    [InlineData("tr", 1, "one")]
+    [InlineData("tr", 2, "other")]
+    [InlineData("ja", 1, "other")]
+    [InlineData("ko", 1, "other")]
+    [InlineData("zh-Hans", 1, "other")]
+    [InlineData("zh-Hans", 2, "other")]
     public void TestCategoriesMatchCldr(string language, int n, string expected)
     {
         Assert.Equal(expected, PluralRules.Category(language, n));
@@ -61,14 +93,17 @@ public sealed class PluralRulesTests
     [InlineData("pt", 0, "other")]
     [InlineData("pt-PT", 1, "one")]
     [InlineData("ro-RO", 5, "few")]
+    [InlineData("zh", 1, "other")]
+    [InlineData("zh-Hant", 1, "other")]
+    [InlineData("pl-PL", 3, "few")]
     public void TestLanguageTagsIgnoreCaseAndRegion(string language, int n, string expected)
     {
         Assert.Equal(expected, PluralRules.Category(language, n));
     }
 
     [Theory]
-    [InlineData("ja", 1, "one")]
-    [InlineData("ja", 2, "other")]
+    [InlineData("eo", 1, "one")]
+    [InlineData("eo", 2, "other")]
     [InlineData("", 0, "other")]
     public void TestUnknownLanguagesUseTheEnglishRule(string language, int n, string expected)
     {
