@@ -6,6 +6,20 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.4.0 - 2026-10-10
+
+### Added
+- Swift (macOS): `FloatingWindow` in `DesklingShell`, a small borderless window that floats above other apps' windows
+  on every Space but full-screen ones, for a desktop pet or a sticky note. It never becomes key and never activates
+  the app (no Dock icon for an `LSUIElement` app; it isn't one of `WindowManager`'s windows). It stands on an anchor
+  (the middle of its bottom edge) so a size change grows it upward in place, stays wholly on a screen when displays
+  change, reports clicks, drags, a right or Control click menu and trackpad pinch steps, fades in and out, and can
+  carry a second window beside it (`attach(to:)`, for a speech bubble). No Windows twin yet; it comes with the first
+  app that needs one.
+- Swift (macOS): `FloatingPlacement`, the pure rectangle math behind it: anchor ↔ frame, the default bottom-right
+  spot, clamping onto the nearest screen, the side of a window with more room, and a platform-neutral top-left origin
+  for storing a position.
+
 ## 0.3.1 - 2026-10-10
 
 ### Added

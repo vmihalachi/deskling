@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- One version for every package, set by the release workflow from the tag (vX.Y.Z). -->
-    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.3.1</DesklingVersion>
+    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.4.0</DesklingVersion>
     <Version>$(DesklingVersion)</Version>
     <Authors>Vlad Mihalachi</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

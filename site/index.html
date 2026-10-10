@@ -41,7 +41,7 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.3.1</a><span>Swift · .NET · MIT</span></p>
+      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.4.0</a><span>Swift · .NET · MIT</span></p>
       <h1>Building blocks for menu bar and tray apps</h1>
       <p class="lede">The parts every little desktop app needs and nobody wants to write twice: a reminder scheduler, permission-free system signals and app-shell plumbing. Swift for macOS, .NET for Windows.</p>
 
@@ -51,7 +51,7 @@
           <button role="tab" id="i-net" aria-selected="false" aria-controls="ip-net" tabindex="-1">.NET</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-swift" aria-labelledby="i-swift">
-          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.3.1")</code>
+          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.4.0")</code>
           <button class="copy" type="button" aria-label="Copy the Swift package line">Copy</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-net" aria-labelledby="i-net" hidden>
@@ -168,8 +168,8 @@
         <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
         <div role="cell">
           <h3>App shell</h3>
-          <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a global hotkey without Accessibility permission, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble.</p>
-          <p class="types"><code>WindowManager</code> <code>NotificationPoster</code> <code>GlobalHotKey</code> <code>LoginItem</code> <code>TrayIconHost</code> <code>SingleInstance</code></p>
+          <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a global hotkey without Accessibility permission, a floating desktop window for a pet or a sticky note, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble.</p>
+          <p class="types"><code>WindowManager</code> <code>NotificationPoster</code> <code>GlobalHotKey</code> <code>LoginItem</code> <code>FloatingWindow</code> <code>TrayIconHost</code> <code>SingleInstance</code></p>
         </div>
       </div>
 
@@ -281,7 +281,7 @@
         <h3>Swift Package Manager</h3>
         <p class="req">macOS 14+, Swift 6 language mode, no dependencies</p>
 <pre tabindex="0"><code><span class="c">// Package.swift</span>
-.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.3.1"</span>)
+.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.4.0"</span>)
 
 <span class="c">// then, per target</span>
 .product(name: <span class="s">"DesklingCore"</span>, package: <span class="s">"deskling"</span>)</code></pre>
