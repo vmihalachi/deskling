@@ -9,6 +9,7 @@
 # Path → checks:
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
+#   tools/**, Tests/Fixtures/**         the tools' Python tests
 #   version sources, site/**            every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +21,7 @@ while [ $# -gt 0 ]; do
     --fast) fast=1 ;;
     --all) all=1 ;;
     --staged) mode=staged ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown argument: $1 (see --help)" >&2; exit 2 ;;
   esac
   shift
@@ -45,6 +46,7 @@ skip() { notes+=("$1"); }
 
 swift='^Package\.swift$|^Sources/|^Tests/|^\.swift-format$'
 dotnet='^dotnet/|^conformance/'
+tools='^tools/|^Tests/Fixtures/'
 
 vectors_current() {
   scripts/conformance.sh || return 1
@@ -85,6 +87,10 @@ fi
 if touched "$dotnet"; then
   if has dotnet; then check "dotnet format whitespace" dotnet format whitespace dotnet --folder --verify-no-changes
   else skip "dotnet format: needs the .NET SDK"; fi
+fi
+if touched "$tools"; then
+  if has python3; then check "tools tests" python3 tools/tests/test_character.py
+  else skip "tools tests: needs python3"; fi
 fi
 if [ "$fast" = 0 ]; then
   if touched "$swift|^conformance/"; then

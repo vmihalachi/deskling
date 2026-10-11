@@ -1,0 +1,34 @@
+name: Tools
+
+# Tests the Python tools in tools/ (standard library only, so no setup beyond the runner's python3).
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "tools/**"
+      - "Tests/Fixtures/**"
+      - ".github/workflows/tools.yml"
+  pull_request:
+    paths:
+      - "tools/**"
+      - "Tests/Fixtures/**"
+      - ".github/workflows/tools.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test character.py
+        run: python3 tools/tests/test_character.py

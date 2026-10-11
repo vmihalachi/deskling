@@ -1,0 +1,41 @@
+{
+  "viewBox": [100, 100],
+  "pivots": {"neck": [50, 62], "base": [50, 92], "face": [50, 40]},
+  "layers": {
+    "stem": {"frame": [45, 60, 10, 32]},
+    "head": {"frame": [24, 14, 52, 52]},
+    "eyes-open": {"frame": [40, 33, 20, 8]},
+    "eyes-closed": {"frame": [40, 35, 20, 4]},
+    "mouth-smile": {"frame": [44, 43, 12, 6]},
+    "mouth-talk-1": {"frame": [45, 43, 10, 6]},
+    "mouth-talk-2": {"frame": [46, 44, 8, 3]},
+    "cheeks": {"frame": [34, 41, 32, 6]},
+    "zz": {"frame": [70, 6, 12, 12]}
+  },
+  "period": 4,
+  "stillTime": 1,
+  "always": ["stem", "head"],
+  "head": {"pivot": "neck", "parts": ["head"]},
+  "stem": {"pivot": "base", "parts": ["stem"], "follow": 0.25},
+  "pulse": {"pivot": "face", "parts": ["head"]},
+  "blink": {"duration": 0.12, "intervals": [4.2, 5.6], "closedEyes": "eyes-closed"},
+  "moods": {
+    "awake": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "cheeks": true, "blink": true, "sway": 4},
+    "talking": {"eyes": "eyes-open", "mouth": ["mouth-talk-1", "mouth-talk-2"], "mouthRate": 6, "pulse": 0.03, "cheeks": true, "blink": true, "sway": 4},
+    "shushed": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "droop": 14, "sink": 2},
+    "hushedForCall": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "blink": true},
+    "hushedFullScreen": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "blink": true},
+    "asleep": {"eyes": "eyes-closed", "mouth": ["mouth-talk-2"], "cheeks": true, "zz": true, "droop": 24, "sink": 4, "sway": 1.5, "swayPeriod": 6},
+    "offHours": {"eyes": "eyes-closed", "mouth": ["mouth-talk-2"], "droop": 10}
+  },
+  "glyph": {
+    "awake": ["idle"],
+    "talking": ["talk-1", "talk-2"],
+    "shushed": ["idle"],
+    "hushedForCall": ["idle"],
+    "hushedFullScreen": ["idle"],
+    "asleep": ["asleep"],
+    "offHours": ["asleep"]
+  },
+  "bubble": {"pivot": "face", "tuck": 0.1}
+}

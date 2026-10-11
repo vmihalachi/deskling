@@ -1,0 +1,28 @@
+{
+  "period": 4,
+  "stillTime": 1,
+  "always": ["stem", "head", "face"],
+  "head": {"pivot": "neck", "parts": ["head", "face"]},
+  "stem": {"pivot": "base", "parts": ["stem"], "follow": 0.25},
+  "pulse": {"pivot": "face", "parts": ["head"]},
+  "blink": {"duration": 0.12, "intervals": [4.2, 5.6, 3.8], "closedEyes": "eyes-closed"},
+  "moods": {
+    "awake": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "cheeks": true, "blink": true, "sway": 4},
+    "talking": {"eyes": "eyes-wide", "mouth": ["mouth-talk-1", "mouth-talk-2"], "mouthRate": 6, "pulse": 0.03, "cheeks": true, "blink": true, "sway": 4},
+    "shushed": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "headExtras": ["cheeks"], "droop": 14, "sink": 2},
+    "hushedForCall": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "blink": true},
+    "hushedFullScreen": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "blink": true},
+    "asleep": {"eyes": "eyes-closed", "mouth": ["mouth-flat"], "headExtras": ["cheeks"], "overlays": ["zz"], "droop": 24, "sink": 4, "sway": 1.5, "swayPeriod": 6},
+    "offHours": {"eyes": "eyes-closed", "mouth": ["mouth-flat"], "zz": false, "droop": 10}
+  },
+  "glyph": {
+    "awake": ["idle"],
+    "talking": ["talk-1", "talk-2"],
+    "shushed": ["idle"],
+    "hushedForCall": ["idle"],
+    "hushedFullScreen": ["idle"],
+    "asleep": ["asleep"],
+    "offHours": ["asleep"]
+  },
+  "bubble": {"pivot": "face", "tuck": 0.1}
+}

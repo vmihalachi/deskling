@@ -13,15 +13,17 @@ conformance vectors.
 |---|---|
 | `Package.swift`, `Sources/Deskling{Core,System,Shell,Companion,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`. `DesklingCompanion` imports Foundation and Observation only: `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`; it and `DesklingTesting` (`Fixtures/`) build on Linux. |
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
+| `Tests/Fixtures/characters/` | Art sources for the fixture skins (`fixture-vector`: SVGs; `fixture-raster`: layer PNGs), compiled by `tools/character.py`. |
 | `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `dotnet/Deskling.Windows.Tests/` | xUnit for `Deskling.Windows`; runs only in `dotnet.yml`'s windows job. |
+| `tools/` | Python tools for companion apps (standard library only): `character.py` compiles a skin's art and rig. Tests in `tools/tests/`. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
 | `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it. |
-| `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
+| `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `tools.yml` (the Python tools' tests), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
 
@@ -31,6 +33,7 @@ DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVect
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
+python3 tools/tests/test_character.py          # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
 ```
 

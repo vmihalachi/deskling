@@ -27,6 +27,12 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   `Phrase.Kind.line(english:)` is now `line(source:)`.
 - Swift: `DesklingTesting` depends on `DesklingCompanion` and has `Fixtures/`: `PhraseBank.fixture`, `FixtureIDs`
   (flavors a/b/c, skins `fixture-vector` and `fixture-raster`) and `CompanionDefaults.fixture`.
+- `tools/character.py`: compiles a skin's art and rig into the `CharacterArt` JSON and Swift source, from
+  arguments (`--design --skin --out --swift-out --module --mode vector|raster --assets --windows-assets --check`)
+  instead of sunnysays' constants. Rigs take `headExtras`/`overlays` (`cheeks: true`/`zz: true` stay as sugar) and
+  require `bubble: {pivot, tuck}`. Raster skins draw parts from `layers/<part>@2x.png` (+ `@3x`), sized frame ×
+  scale, and get an imageset per layer and Windows `scale-200`/`scale-300` PNGs. Tests in `tools/tests/`, run by
+  the new `tools.yml`; fixture skins in `Tests/Fixtures/characters/`.
 
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
