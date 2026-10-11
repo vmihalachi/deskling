@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Deskling.Core" Version="0.5.0" />
+    <PackageReference Include="Deskling.Companion" Version="0.5.0" />
+  </ItemGroup>
+</Project>

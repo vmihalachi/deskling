@@ -53,7 +53,8 @@ class ScriptTests(unittest.TestCase):
     def run_script(self, script: str, *args: str, env: dict | None = None, cwd: Path | None = None):
         environment = {**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", **(env or {})}
         return subprocess.run(
-            ["sh" if script.endswith(".sh") else sys.executable, str(TOOLS / script), *args], cwd=cwd or self.root,
+            [str(TOOLS / script), *args] if script.endswith(".sh") else [sys.executable, str(TOOLS / script), *args],
+            cwd=cwd or self.root,
             env=environment, capture_output=True, text=True,
         )
 
@@ -94,6 +95,21 @@ chmod +x "$app/Fixture"
         self.assertIn("-project Fixture.xcodeproj -scheme Fixture -configuration Debug", self.log.read_text())
         self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"])
         self.assertIn("1 screenshots in", result.stdout)
+
+    def test_verify_runs_what_the_paths_need(self):
+        result = self.run_script("verify.sh", "--fast", "--", "conformance/phrases.json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            [line.split(None, 1)[1] for line in result.stdout.splitlines() if line.startswith("ok")],
+            ["Deskling pins agree", "phrases.py check", "voice.py check"],
+        )
+        strings = self.run_script("verify.sh", "--fast", "--", "macos/Fixture/Resources/Localizable.xcstrings")
+        self.assertEqual(strings.returncode, 1, "the fixture's German has gaps")
+        self.assertIn("FAIL  l10n.py check", strings.stdout)
+        self.assertIn("de: app 3", strings.stdout)
+        quiet = self.run_script("verify.sh", "--", "notes.md")
+        self.assertEqual(quiet.returncode, 0, quiet.stdout)
+        self.assertEqual(quiet.stdout.strip(), "ok    Deskling pins agree")
 
     @unittest.skipUnless(sys.platform == "darwin", "ditto and lsregister are macOS tools")
     def test_install_dev_copies_the_debug_build(self):

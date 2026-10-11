@@ -154,8 +154,10 @@ class ExportTests(L10nTestCase):
             self.assertEqual(text.count("msgid_plural"), 1, path)
 
     def test_check_flags_stale_exports(self):
-        l10n.WINDOWS_STRINGS = self.root / "windows" / "Fixture.App" / "Strings"
+        l10n.WINDOWS_STRINGS = self.root / "port" / "Fixture.App" / "Strings"
         self.assertEqual(l10n.stale_exports(), [], "no port folder yet: nothing to check")
+        (self.root / "port").mkdir()
+        self.assertEqual(len(l10n.stale_exports()), 3, "the port exists: its exports must too")
         quiet(l10n.write_export, l10n.windows_files(), False)
         self.assertEqual(l10n.stale_exports(), [])
         stale = l10n.WINDOWS_STRINGS / "de" / "Resources.resw"

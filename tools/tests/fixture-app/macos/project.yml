@@ -1,0 +1,11 @@
+name: Fixture
+packages:
+  Deskling:
+    url: https://github.com/vmihalachi/deskling
+    exactVersion: 0.5.0
+  FixtureCore:
+    path: FixtureCore
+targets:
+  Fixture:
+    type: application
+    platform: macOS
