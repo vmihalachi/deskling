@@ -858,11 +858,14 @@ def site_files(config: dict, manifest: dict) -> dict[Path, str]:
     files[site / "robots.txt"] = "User-agent: *\nDisallow: /\n"
     files[site / ".nojekyll"] = ""
     name, display = APP.require("name"), APP.require("displayName")
+    # "<character>, in <app>"; just the character when the app is named after it.
+    whose = CHARACTER if CHARACTER == display else f"{CHARACTER}, in {display}"
+    holder = APP.get("voice.copyrightHolder") or display
     repo = APP.get("voice.repo")
     pages = f": https://{repo.split('/')[0]}.github.io/{repo.split('/')[1]}/" if repo and "/" in repo else ""
     files[site / "README.md"] = (
         f"# {CHARACTER}'s voices\n\n"
-        f"The recorded lines of {CHARACTER}, in {display}, made with ElevenLabs:\n\n"
+        f"The recorded lines of {whose}, made with ElevenLabs:\n\n"
         "- `Voice/<lang>/<voice>/<id>.m4a` and `Voice/manifest.json`, bundled by the app (this repository is the "
         f"`voices` submodule of {name}, shared by its Mac and Windows apps).\n"
         f"- `review/<lang>.html`, a page for friends to listen through and flag what sounds off{pages}\n\n"
@@ -870,7 +873,7 @@ def site_files(config: dict, manifest: dict) -> dict[Path, str]:
         "`publish`); don't edit it by hand.\n\n"
         f"## License\n\n{SITE_NOTICE} See [LICENSE](LICENSE).\n")
     files[site / "LICENSE"] = (
-        f"Copyright (c) {display}. All rights reserved.\n\n"
+        f"Copyright (c) {holder}. All rights reserved.\n\n"
         "The recordings, texts and pages in this repository are published only so friends can review them. No license "
         "is granted to copy, modify, redistribute, or otherwise reuse them, including to train or evaluate machine "
         "learning models.\n")

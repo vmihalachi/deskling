@@ -120,6 +120,19 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("<title>Fixy's voice review</title>", (site / "index.html").read_text("utf8"))
         self.assertIn("Copyright (c) Fixture", (site / "LICENSE").read_text("utf8"))
         self.assertIn("`deskling/tools/voice.py` in fixture", (site / "README.md").read_text("utf8"))
+        self.assertIn("The recorded lines of Fixy, in Fixture, made with ElevenLabs:", (site / "README.md").read_text("utf8"))
+
+    def test_site_for_an_app_named_after_its_character(self):
+        path = self.root / "companion.json"
+        data = json.loads(path.read_text("utf8"))
+        data["character"] = data["displayName"]
+        data["voice"]["copyrightHolder"] = "2026 Jane Doe"
+        path.write_text(json.dumps(data), "utf8")
+        voice.configure(companion.load())
+        voice.sync_site(voice.load_config(), voice.load_manifest())
+        site = voice.VOICE.parent
+        self.assertIn("The recorded lines of Fixture, made with ElevenLabs:", (site / "README.md").read_text("utf8"))
+        self.assertTrue((site / "LICENSE").read_text("utf8").startswith("Copyright (c) 2026 Jane Doe. All rights reserved."))
 
     def test_review_page_lists_a_jokes_parts_under_it(self):
         self.add_clip("joke.1")

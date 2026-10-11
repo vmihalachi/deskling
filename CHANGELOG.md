@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+### Fixed
+- `tools/dev-icon.swift` makes `AppIcon-Dev.appiconset` (starting from `AppIcon`'s `Contents.json`) when an app doesn't
+  have one yet, instead of failing with "Can't write".
+- `tools/voice.py site`: the README says "The recorded lines of <character>" without ", in <app>" when the app is
+  named after its character, and the LICENSE names `voice.copyrightHolder` (new, optional; default `displayName`).
+
 ## 0.5.0 - 2026-10-11
 
 The companion layer: everything under sunnysays' character, made generic so a second companion app can be built on

@@ -175,7 +175,7 @@ class DevIconTests(unittest.TestCase):
             catalog = Path(temp) / "Assets.xcassets"
             for size in (32, 128):
                 png(catalog / "AppIcon.appiconset" / f"icon_{size}.png", size)
-            (catalog / "AppIcon-Dev.appiconset").mkdir()
+            (catalog / "AppIcon.appiconset" / "Contents.json").write_text('{"images": []}')
             result = subprocess.run(
                 ["swift", str(TOOLS / "dev-icon.swift"), str(catalog), "#123456", "#FFFFFF"], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -183,6 +183,8 @@ class DevIconTests(unittest.TestCase):
             for size in (32, 128):
                 stamped = (catalog / "AppIcon-Dev.appiconset" / f"icon_{size}.png").read_bytes()
                 self.assertNotEqual(stamped, (catalog / "AppIcon.appiconset" / f"icon_{size}.png").read_bytes())
+            # A fresh catalog gets the Dev set made, starting from AppIcon's Contents.json.
+            self.assertEqual((catalog / "AppIcon-Dev.appiconset" / "Contents.json").read_text(), '{"images": []}')
 
 
 class SharedFilesTests(unittest.TestCase):

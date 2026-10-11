@@ -121,6 +121,7 @@
         "keychainService": { "type": "string" },
         "reviewTitle": { "type": "string" },
         "siteCopyright": { "type": "string", "description": "The rights sentence on the review site, after \"Shared with friends who help review <character>'s voice.\" (default: © displayName, all rights reserved)." },
+        "copyrightHolder": { "type": "string", "description": "Who holds the copyright in the voices repository's LICENSE line, e.g. \"2026 Jane Doe\" (default: displayName)." },
         "extraClips": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Clip id → source text of clips that aren't phrases." },
         "required": { "type": "array", "items": { "type": "string" }, "description": "Clip ids every voiced language must have before shipping." }
       }
