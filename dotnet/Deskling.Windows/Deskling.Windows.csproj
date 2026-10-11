@@ -15,6 +15,7 @@
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <ProjectReference Include="../Deskling.Core/Deskling.Core.csproj" />
+    <InternalsVisibleTo Include="Deskling.Windows.Tests" />
     <!-- DispatcherQueue (tray menu commands), AppNotificationManager, AppInstance (single instance), MRT Core (.resw lookup), MarkupExtension. -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
   </ItemGroup>

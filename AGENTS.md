@@ -17,6 +17,7 @@ conformance vectors.
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
+| `dotnet/Deskling.Windows.Tests/` | xUnit for `Deskling.Windows`; runs only in `dotnet.yml`'s windows job. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
 | `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it. |

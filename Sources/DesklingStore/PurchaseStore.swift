@@ -1,4 +1,5 @@
 #if os(macOS)
+    import DesklingCore
     import Foundation
     import os
 
@@ -11,14 +12,15 @@
     }
 
     /// Ownership of the catalog's unlockables plus tips, over a `StoreBackend`. The last known `owned` set is
-    /// cached in `defaults` under `cacheKey` so the UI doesn't flash locked at launch before StoreKit answers.
+    /// cached in `settings` under `cacheKey` (as strings) so the UI doesn't flash locked at launch before StoreKit
+    /// answers.
     /// Needs `start()` once; it then follows transaction updates (Ask to Buy approvals, refunds, purchases on
     /// another device). Never shows UI of its own and never charges without `buy` or `tip`.
     @MainActor
     public final class PurchaseStore: ObservableObject {
         /// The unlockables the user owns, verified and unrevoked. Tips never appear here.
         @Published public private(set) var owned: Set<String> {
-            didSet { defaults.set(owned.sorted(), forKey: cacheKey) }
+            didSet { settings.set(strings: owned.sorted(), forKey: cacheKey) }
         }
         @Published public private(set) var products: [String: StoreProduct] = [:]
         /// Product being bought, to disable the buttons meanwhile.
@@ -41,7 +43,7 @@
 
         public let catalog: ProductCatalog
         private let backend: StoreBackend
-        private let defaults: UserDefaults
+        private let settings: any SettingsStore
         private let cacheKey: String
         private let logger: Logger
         private var started = false
@@ -49,16 +51,26 @@
         /// `backend` nil means StoreKit 2 (the default can't be written inline: `StoreKitBackend` is main-actor
         /// isolated and default arguments aren't, in Swift 5 mode).
         public init(
-            catalog: ProductCatalog, backend: StoreBackend? = nil, defaults: UserDefaults = .standard,
+            catalog: ProductCatalog, backend: StoreBackend? = nil, settings: any SettingsStore = UserDefaultsSettingsStore(),
             cacheKey: String = "deskling.ownedProducts", logger: Logger = Logger(subsystem: "deskling", category: "store")
         ) {
             self.catalog = catalog
             self.backend = backend ?? StoreKitBackend(logger: logger)
-            self.defaults = defaults
+            self.settings = settings
             self.cacheKey = cacheKey
             self.logger = logger
             // Last known state, so the UI doesn't flash at launch.
-            owned = Set(defaults.stringArray(forKey: cacheKey) ?? [])
+            owned = Set(settings.strings(forKey: cacheKey) ?? [])
+        }
+
+        /// Caches in a `UserDefaults` suite of your choice; the same as `settings: UserDefaultsSettingsStore(defaults:)`.
+        public convenience init(
+            catalog: ProductCatalog, backend: StoreBackend? = nil, defaults: UserDefaults,
+            cacheKey: String = "deskling.ownedProducts", logger: Logger = Logger(subsystem: "deskling", category: "store")
+        ) {
+            self.init(
+                catalog: catalog, backend: backend, settings: UserDefaultsSettingsStore(defaults: defaults), cacheKey: cacheKey,
+                logger: logger)
         }
 
         public func isOwned(_ id: String) -> Bool { owned.contains(id) }

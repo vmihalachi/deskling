@@ -11,6 +11,20 @@ The 0.5.0 companion layer is being built in six sequences (`plans/0.5/`): a type
 skins), `DesklingCompanionUI`, Shell speech and status item, `Deskling.Testing`, `tools/`. Breaking changes land here as
 each sequence commits; the migration list is in `plans/0.5/README.md`.
 
+### Changed (breaking)
+- Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
+  `set(…:forKey:)` and `remove(forKey:)`), `InMemorySettingsStore` and `UserDefaultsSettingsStore` are in
+  `DesklingCore`. `DesklingStore` now depends on `DesklingCore`, and `PurchaseStore` caches owned ids through a
+  `SettingsStore`: `PurchaseStore(catalog:backend:settings:cacheKey:logger:)`, `UserDefaultsSettingsStore()` by
+  default. `PurchaseStore(catalog:backend:defaults:…)` stays as a convenience and reads the same cache key. Migration:
+  none unless you passed `defaults:` without a value; apps that had their own `SettingsStore` protocol can drop it.
+- .NET: `ISettingsStore` is typed (`GetBool`/`GetInteger`/`GetDouble`/`GetString`/`GetStrings`/`GetIntegers`, the
+  matching setters, `Remove`); `object? Get(key)` and `Set(key, object)` are gone, and so is `DateTimeOffset`.
+  `LocalSettingsStore` implements it (scalars native, lists in the same JSON composite as before, `double` added),
+  so stored values stay readable. Migration: `Get(key) as string[]` → `GetStrings(key)`, `Get(key) as int?` →
+  `GetInteger(key)`, `Set(key, value)` → the typed setter; a stored `DateTimeOffset` becomes a `double` of Unix
+  seconds (`SetDouble(key, date.ToUnixTimeMilliseconds() / 1000.0)`).
+
 ## 0.4.0 - 2026-10-10
 
 ### Added

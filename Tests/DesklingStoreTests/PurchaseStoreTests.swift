@@ -1,4 +1,5 @@
 #if os(macOS)
+    import DesklingCore
     import DesklingStore
     import DesklingTesting
     import XCTest
@@ -10,14 +11,10 @@
         private let mediumTip = "test.tip.medium"
         private var catalog: ProductCatalog { ProductCatalog(unlockables: [supporter], tips: [smallTip, mediumTip]) }
 
-        private func makeDefaults() -> UserDefaults {
-            UserDefaults(suiteName: "deskling.tests.\(UUID().uuidString)")!
-        }
-
         private func makeBackend() -> MockStoreBackend { MockStoreBackend(catalog: catalog) }
 
-        private func makeStore(_ backend: MockStoreBackend, defaults: UserDefaults? = nil) -> PurchaseStore {
-            PurchaseStore(catalog: catalog, backend: backend, defaults: defaults ?? makeDefaults(), cacheKey: "test.owned")
+        private func makeStore(_ backend: MockStoreBackend, settings: SettingsStore? = nil) -> PurchaseStore {
+            PurchaseStore(catalog: catalog, backend: backend, settings: settings ?? InMemorySettingsStore(), cacheKey: "test.owned")
         }
 
         /// Lets the store's `Task { refreshEntitlements() }` from an update run.
@@ -50,18 +47,28 @@
         }
 
         func testOwnershipIsCachedForNextLaunch() async {
-            let defaults = makeDefaults()
+            let settings = InMemorySettingsStore()
             let backend = makeBackend()
             backend.owned = [supporter]
-            let first = makeStore(backend, defaults: defaults)
+            let first = makeStore(backend, settings: settings)
             await first.start()
             XCTAssertTrue(first.isOwned(supporter))
             // Before StoreKit answers, the cached value keeps the unlock steady.
-            XCTAssertTrue(makeStore(makeBackend(), defaults: defaults).isOwned(supporter))
-            XCTAssertEqual(defaults.stringArray(forKey: "test.owned"), [supporter])
+            XCTAssertTrue(makeStore(makeBackend(), settings: settings).isOwned(supporter))
+            XCTAssertEqual(settings.strings(forKey: "test.owned"), [supporter])
             // Another key is another cache.
-            let other = PurchaseStore(catalog: catalog, backend: makeBackend(), defaults: defaults, cacheKey: "other")
+            let other = PurchaseStore(catalog: catalog, backend: makeBackend(), settings: settings, cacheKey: "other")
             XCTAssertFalse(other.isOwned(supporter))
+        }
+
+        func testUserDefaultsConvenienceCachesInTheSuite() async {
+            let defaults = UserDefaults(suiteName: "deskling.tests.\(UUID().uuidString)")!
+            let backend = makeBackend()
+            backend.owned = [supporter]
+            await PurchaseStore(catalog: catalog, backend: backend, defaults: defaults, cacheKey: "test.owned").start()
+            XCTAssertEqual(defaults.stringArray(forKey: "test.owned"), [supporter])
+            let settings = UserDefaultsSettingsStore(defaults: defaults)
+            XCTAssertTrue(makeStore(makeBackend(), settings: settings).isOwned(supporter))
         }
 
         func testRefundLocksAgain() async {
@@ -177,13 +184,13 @@
         func testCatalogWithoutUnlockablesLoadsWhenAnythingLoads() async {
             let tipsOnly = ProductCatalog(unlockables: [], tips: [smallTip])
             let backend = MockStoreBackend(catalog: tipsOnly)
-            let store = PurchaseStore(catalog: tipsOnly, backend: backend, defaults: makeDefaults(), cacheKey: "test.owned")
+            let store = PurchaseStore(catalog: tipsOnly, backend: backend, settings: InMemorySettingsStore(), cacheKey: "test.owned")
             await store.start()
             XCTAssertEqual(store.loadState, .loaded)
 
             let empty = MockStoreBackend(catalog: tipsOnly)
             empty.missingProducts = [smallTip]
-            let failed = PurchaseStore(catalog: tipsOnly, backend: empty, defaults: makeDefaults(), cacheKey: "test.owned")
+            let failed = PurchaseStore(catalog: tipsOnly, backend: empty, settings: InMemorySettingsStore(), cacheKey: "test.owned")
             await failed.start()
             XCTAssertEqual(failed.loadState, .failed)
         }

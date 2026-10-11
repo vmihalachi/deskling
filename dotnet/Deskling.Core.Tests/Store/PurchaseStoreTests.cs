@@ -54,7 +54,7 @@ public sealed class PurchaseStoreTests
         Assert.True(first.IsOwned(Supporter));
         // Before the store answers, the cached value keeps the unlock steady.
         Assert.True(MakeStore(MakeBackend(), settings).IsOwned(Supporter));
-        Assert.Equal(new[] { Supporter }, settings.Get("test.owned"));
+        Assert.Equal([Supporter], settings.GetStrings("test.owned"));
         // Another key is another cache.
         var other = new PurchaseStore(Catalog, MakeBackend(), settings, cacheKey: "other");
         Assert.False(other.IsOwned(Supporter));

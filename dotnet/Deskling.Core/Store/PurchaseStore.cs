@@ -42,7 +42,7 @@ public sealed class PurchaseStore
 
     /// <param name="catalog">The products to sell.</param>
     /// <param name="backend">The store.</param>
-    /// <param name="settings">Where the last known ownership is cached (as a <c>string[]</c>).</param>
+    /// <param name="settings">Where the last known ownership is cached (as strings).</param>
     /// <param name="cacheKey">The cache's key.</param>
     /// <param name="log">Diagnostics (ids and counts only), or nothing.</param>
     public PurchaseStore(
@@ -59,7 +59,7 @@ public sealed class PurchaseStore
         this.cacheKey = cacheKey;
         this.log = log ?? (_ => { });
         // Last known state, so the UI doesn't flash at launch.
-        owned = settings.Get(cacheKey) is IEnumerable<string> cached ? cached.ToHashSet() : new HashSet<string>();
+        owned = settings.GetStrings(cacheKey)?.ToHashSet() ?? new HashSet<string>();
     }
 
     /// <summary>Raised after any state below changes.</summary>
@@ -74,7 +74,7 @@ public sealed class PurchaseStore
         private set
         {
             owned = value;
-            settings.Set(cacheKey, value.Order(StringComparer.Ordinal).ToArray());
+            settings.SetStrings(cacheKey, value.Order(StringComparer.Ordinal).ToArray());
         }
     }
 
