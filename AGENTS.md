@@ -19,6 +19,7 @@ conformance vectors.
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
+| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands

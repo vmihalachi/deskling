@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+The 0.5.0 companion layer is being built in six sequences (`plans/0.5/`): a typed settings store, `DesklingCompanion` /
+`Deskling.Companion` (phrases, cadence, rules, settings, coordinator, desktop presence, vector and raster character rigs,
+skins), `DesklingCompanionUI`, Shell speech and status item, `Deskling.Testing`, `tools/`. Breaking changes land here as
+each sequence commits; the migration list is in `plans/0.5/README.md`.
+
 ## 0.4.0 - 2026-10-10
 
 ### Added
