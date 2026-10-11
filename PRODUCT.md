@@ -32,8 +32,9 @@ visitor understands what is inside, trusts the permission-free and cross-platfor
   never prompts for a permission. Nothing in it touches the network.
 - One behavior on two platforms: the Swift code is the reference, JSON conformance vectors are generated from it and the
   C# port replays every one.
-- Extracted from two shipping apps (mybackhurts, sunnysays), not designed in the abstract. The companion layer is
-  sunnysays' character skeleton made generic so a second companion app can be built on it.
+- Extracted from two real apps (mybackhurts, which ships it, and sunnysays, in development), not designed in the
+  abstract. The companion layer is sunnysays' character skeleton made generic so a second companion app, Mister
+  Pagliacci (in design), can be built on it.
 
 ## Capabilities and Constraints
 
@@ -55,7 +56,7 @@ twice"). No logo exists yet.
 ## Evidence on Hand
 
 README, CHANGELOG (0.1.0 to 0.5.0), the 39 scheduler conformance vectors in `conformance/scheduler/` and the 55
-companion vectors in `conformance/companion/`, mybackhurts.app, sunnysays.app.
+companion vectors in `conformance/companion/`, mybackhurts.app, sunnysays.app, pagliacci.app.
 No testimonials, download counts, benchmarks or third-party adopters: never invent them.
 
 ## Product Principles

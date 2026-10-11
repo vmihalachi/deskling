@@ -302,6 +302,7 @@ pre ::selection { background: #2c6b5f; color: #fff; }
 
 /* Install */
 .install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.install-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .install-card { background: var(--bg); border: 1px solid var(--line-2); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
 .install-card h3 { font-size: 19px; font-weight: 600; letter-spacing: -.015em; }
 .install-card .req { color: var(--fg-3); font-size: 14.5px; margin-top: -8px; }
@@ -350,7 +351,7 @@ pre ::selection { background: #2c6b5f; color: #fff; }
   .section { padding: 76px 0; }
   .section-head { margin-bottom: 36px; }
   .lede { font-size: 17px; }
-  .install-grid { grid-template-columns: minmax(0, 1fr); }
+  .install-grid, .install-grid.three { grid-template-columns: minmax(0, 1fr); }
   .install-card { padding: 22px 18px; }
   pre { font-size: 12.5px; padding: 18px; }
   .timeline { padding: 28px 20px 14px 20px; overflow-x: auto; }

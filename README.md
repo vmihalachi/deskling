@@ -3,10 +3,12 @@
 Building blocks for little desktop apps that live in the menu bar or the tray: the parts every such app needs
 and nobody wants to write twice. Swift for macOS, .NET for Windows. MIT.
 
-Deskling grew out of [mybackhurts](https://mybackhurts.app) and powers sunnysays; both apps ship it. It is
-`0.x` until the second app has settled the API, so minor versions may change public types.
+Deskling grew out of [mybackhurts](https://mybackhurts.app), which ships it, and [sunnysays](https://sunnysays.app), a
+desk companion in development whose character became the companion layer. [Mister Pagliacci](https://pagliacci.app), a
+clown who tells jokes from the menu bar, is the second companion app built on that layer (in design). It is `0.x` until
+the second app has settled the API, so minor versions may change public types.
 
-**No support.** Deskling is shared as is, for anyone to use, but it is built for these two apps: issues and pull
+**No support.** Deskling is shared as is, for anyone to use, but it is built for these apps: issues and pull
 requests aren't monitored, and releases follow what the apps need.
 
 ## What's inside

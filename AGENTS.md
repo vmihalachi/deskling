@@ -5,7 +5,7 @@ Guide for coding agents (Claude Code reads it through `CLAUDE.md`). Humans start
 **What it is:** an MIT Swift package plus .NET packages with the generic parts of a menu bar / tray app:
 pure scheduling (`DesklingCore` / `Deskling.Core`), permission-free system signals, app-shell plumbing, a
 StoreKit store, and the layer a desk companion app is built on (`DesklingCompanion` / `Deskling.Companion`, its UI
-and `tools/`). Used by mybackhurts and sunnysays. The Swift code is the reference; the C# port replays its
+and `tools/`). Used by mybackhurts, sunnysays and Mister Pagliacci. The Swift code is the reference; the C# port replays its
 conformance vectors.
 
 ## Layout
