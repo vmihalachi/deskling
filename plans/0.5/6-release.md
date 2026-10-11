@@ -7,8 +7,8 @@
 > `Deskling.Core`. C# names that differ from the Swift: `FlavorId`/`SkinId`, `PartContent.Vector` (Swift `.shapes`),
 > `IDrawableCharacter`, `Transform.Then` (`concatenating`), `PhraseTiming.PartBeatSeconds`/`PartDelaySeconds`, a
 > `TimeZoneInfo` where Swift takes a `Calendar`; no `VoiceId` yet (Swift's `VoiceID` arrives in Shell with sequence 4).
-> Still open for the owner before tagging: the NuGet Trusted Publishing policy and the `Deskling.` prefix reservation
-> must cover `Deskling.Companion` and `Deskling.Testing`.
+> The owner confirmed (2026-10-11) that the NuGet Trusted Publishing policy and the `Deskling.` prefix reservation cover
+> `Deskling.Companion` and `Deskling.Testing`.
 
 ## Read only these
 

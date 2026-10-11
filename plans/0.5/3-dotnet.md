@@ -35,5 +35,5 @@
 ## Finish
 
 `cd dotnet && dotnet format whitespace dotnet --folder --verify-no-changes && dotnet test` green (every companion
-vector replays); `dotnet.yml` green on both runners; `scripts/verify.sh --all` ok. Owner: confirm the NuGet Trusted
-Publishing policy and the `Deskling.` prefix reservation cover the two new package ids before sequence 6 tags.
+vector replays); `dotnet.yml` green on both runners; `scripts/verify.sh --all` ok. Owner confirmed (2026-10-11)
+that the NuGet Trusted Publishing policy and the `Deskling.` prefix reservation cover the two new package ids.
