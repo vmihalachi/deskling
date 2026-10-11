@@ -1,0 +1,106 @@
+{
+  "$comment": "A draft of sunnysays' companion.json for its M9 (Deskling 0.5), kept here so the schema is checked against both apps. Paths are relative to sunnysays' root.",
+  "name": "sunnysays",
+  "displayName": "sunnysays",
+  "character": "Sunny",
+  "bundleId": "app.sunnysays",
+  "devBundleId": "app.sunnysays.dev",
+  "domain": "sunnysays.app",
+  "deskling": { "tag": "v0.5.0", "path": "deskling" },
+  "mac": {
+    "dir": "macos",
+    "project": "SunnySays.xcodeproj",
+    "projectSpec": "project.yml",
+    "scheme": "SunnySays",
+    "app": "SunnySays",
+    "core": "SunnySaysCore",
+    "coreModule": "SunnySaysCore",
+    "tests": "SunnySaysTests",
+    "devAppName": "sunnysays Dev",
+    "hotkeySignature": "SNNY",
+    "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
+    "derivedData": "macos/build/dd.noindex"
+  },
+  "windows": {
+    "dir": "windows",
+    "core": "SunnySays.Core",
+    "coreTests": "SunnySays.Core.Tests",
+    "app": "SunnySays.App",
+    "sln": "SunnySays.sln",
+    "strings": "windows/SunnySays.App/Strings"
+  },
+  "languages": { "source": "en", "all": ["en", "de", "es", "fr", "it", "pt-BR", "ro"] },
+  "l10n": {
+    "catalog": "macos/SunnySays/Resources/Localizable.xcstrings",
+    "plist": "macos/SunnySays/Resources/InfoPlist.xcstrings",
+    "landing": "landing/src/i18n",
+    "glossaryKeys": ["Say something", "Shh", "Support Sunny…"],
+    "keepNames": ["sunnysays", "Sunny"],
+    "rulesFile": "macos/scripts/l10n-rules.md",
+    "pluralCategories": { "ro": ["one", "few", "other"] },
+    "linuxPo": "linux/po",
+    "phraseComment": "{character} says this aloud ({tags}). Flavor {flavorNote}. Keep it short and natural to say, never an instruction, and never mark {character}'s own grammatical gender: a male and a female voice speak the same text.",
+    "flavorNotes": {
+      "playful": "playful: it should make the listener smile",
+      "warm": "warm: it keeps the listener company",
+      "wonder": "small wonder: it opens a little window on the world",
+      "calm": "calm: it slows the moment down"
+    }
+  },
+  "conformance": { "dir": "conformance", "writeFlag": "SUNNY_WRITE_CONFORMANCE", "corePackagePath": "macos/SunnySaysCore" },
+  "characters": {
+    "design": "design/characters",
+    "swiftOut": "macos/SunnySaysCore/Sources/SunnySaysCore/Figures/Art",
+    "swiftModule": "SunnySaysCore",
+    "assets": "macos/SunnySays/Resources/Characters",
+    "windowsAssets": "windows/SunnySays.App/Assets/Characters",
+    "moods": ["awake", "talking", "shushed", "hushedForCall", "hushedFullScreen", "asleep", "offHours"],
+    "paletteFile": "design/characters/palette.json",
+    "mode": "vector"
+  },
+  "voice": {
+    "dir": "voices",
+    "repo": "vmihalachi/sunnysays-voices",
+    "config": "macos/scripts/voice-config.json",
+    "direction": "macos/scripts/voice-direction.json",
+    "voices": ["male", "female"],
+    "defaultVoice": "male",
+    "keychainService": "sunnysays-elevenlabs",
+    "reviewTitle": "Sunny's voice",
+    "siteCopyright": "Shared with friends who help review Sunny's voice. The recordings and texts are © sunnysays, all rights reserved.",
+    "extraClips": { "ui-test-voice": "Hi! This is how I sound." },
+    "required": ["ui-test-voice"]
+  },
+  "sounds": { "out": "macos/SunnySays/Resources/Sounds", "recipes": "macos/scripts/sounds.py" },
+  "fonts": {
+    "out": "macos/SunnySays/Resources/Fonts",
+    "family": "Fredoka",
+    "font": ["https://raw.githubusercontent.com/google/fonts/main/ofl/fredoka/Fredoka%5Bwdth,wght%5D.ttf", "2ba02e68b152868aef9ba28e24b3648c7d457fe6f25c761f2c2c53fb61a73fc8"],
+    "license": ["https://raw.githubusercontent.com/google/fonts/main/ofl/fredoka/OFL.txt", "5c9e7eee5c6b25f4b05b8d53b2e470ea4962f9ced742d044a98f7d95d1375bab"],
+    "licenseFile": "OFL-Fredoka.txt",
+    "weights": { "Medium": 500, "SemiBold": 600 },
+    "required": "ĂăÂâÎîȘșȚțÄäÖöÜüßÉéÈèÊêÀàÇçÑñÃãÕõÓóÚúÍíÌìÒòÙù’…",
+    "compose": { "Ă": ["A", "breve"], "ă": ["a", "breve"], "Ș": ["S", "commaaccent"], "ș": ["s", "commaaccent"], "Ț": ["T", "commaaccent"], "ț": ["t", "commaaccent"] },
+    "dropSpaceKerning": true
+  },
+  "screenshots": {
+    "out": "screenshots/macos",
+    "shots": ["home", "onboarding", "settings", "support", "panel", "character", "desktop"],
+    "store": {
+      "captions": "macos/scripts/store-screenshot-captions.json",
+      "out": "store-listing/apple/screenshots",
+      "size": [2880, 1800],
+      "font": "macos/SunnySays/Resources/Fonts/Fredoka-SemiBold.ttf",
+      "palette": {
+        "light": { "paper": "#FFF8E7", "ink": "#4A2E1A", "accent": "#F7C948", "accentText": "#8A5A00" },
+        "dark": { "paper": "#1F1A14", "ink": "#C9BCA5", "accent": "#E0B43C", "accentText": "#F2C75C" }
+      }
+    }
+  },
+  "landing": { "dir": "landing", "tool": "vp" },
+  "hooks": {
+    "guardedExtra": ["^conformance/plurals\\.json$"],
+    "macUI": "^macos/SunnySays/(Views|Character|Channels|App)/(?!ScreenshotMode\\.swift$).*\\.swift$",
+    "windowsUI": "^windows/SunnySays\\.(App|Core)/"
+  }
+}

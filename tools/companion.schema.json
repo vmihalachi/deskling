@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vmihalachi/deskling/tools/companion.schema.json",
+  "title": "companion.json",
+  "description": "A Deskling companion app's facts for tools/*: names, paths (relative to the file), languages and the tool settings. tools/companion.py validates it with the subset of JSON Schema used here (type, required, properties, additionalProperties, items, enum, pattern, minItems).",
+  "type": "object",
+  "required": ["name", "displayName", "character", "bundleId", "deskling", "mac", "languages", "l10n", "conformance"],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": { "type": "string" },
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Short lowercase name (repo, keychain and log prefixes)." },
+    "displayName": { "type": "string", "description": "The app's name as users see it." },
+    "character": { "type": "string", "description": "The character's name, used in comments and review pages." },
+    "bundleId": { "type": "string" },
+    "devBundleId": { "type": "string" },
+    "domain": { "type": "string" },
+    "deskling": {
+      "type": "object",
+      "required": ["tag", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "The Deskling release the app pins everywhere." },
+        "path": { "type": "string", "description": "The Deskling submodule (tools and skills)." }
+      }
+    },
+    "mac": {
+      "type": "object",
+      "required": ["dir", "project", "scheme", "app", "core", "tests"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string" },
+        "project": { "type": "string", "description": "The .xcodeproj, relative to mac.dir." },
+        "projectSpec": { "type": "string", "description": "The XcodeGen spec, relative to mac.dir." },
+        "scheme": { "type": "string" },
+        "app": { "type": "string", "description": "The app target's folder, relative to mac.dir." },
+        "core": { "type": "string", "description": "The core Swift package's folder, relative to mac.dir." },
+        "coreModule": { "type": "string" },
+        "tests": { "type": "string", "description": "The app's test target folder, relative to mac.dir." },
+        "devAppName": { "type": "string", "description": "The Debug app's name (install-dev, dev icon)." },
+        "hotkeySignature": { "type": "string", "pattern": "^.{4}$" },
+        "screenshotEnv": { "type": "string", "description": "The environment variable that starts a screenshot run." },
+        "derivedData": { "type": "string", "description": "xcodebuild's -derivedDataPath, relative to the root." }
+      }
+    },
+    "windows": {
+      "type": "object",
+      "required": ["dir"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string" },
+        "core": { "type": "string" },
+        "coreTests": { "type": "string" },
+        "app": { "type": "string" },
+        "sln": { "type": "string" },
+        "strings": { "type": "string", "description": "Where l10n.py export-windows writes <lang>/Resources.resw." }
+      }
+    },
+    "languages": {
+      "type": "object",
+      "required": ["source", "all"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "all": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Every language the app ships, the source included." }
+      }
+    },
+    "l10n": {
+      "type": "object",
+      "required": ["catalog"],
+      "additionalProperties": false,
+      "properties": {
+        "catalog": { "type": "string", "description": "Localizable.xcstrings." },
+        "plist": { "type": ["string", "null"], "description": "InfoPlist.xcstrings." },
+        "landing": { "type": ["string", "null"], "description": "The landing page's i18n folder (<lang>.json, languages.ts)." },
+        "glossaryKeys": { "type": "array", "items": { "type": "string" }, "description": "Catalog keys whose translations work files repeat as a glossary." },
+        "keepNames": { "type": "array", "items": { "type": "string" }, "description": "Names translators keep as they are." },
+        "rulesFile": { "type": ["string", "null"], "description": "Markdown with the app's transcreation rules, sent with every work file." },
+        "pluralCategories": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+        "linuxPo": { "type": ["string", "null"], "description": "Where export-linux writes <lang>.po, or null for no Linux port." },
+        "stringsdataFilter": { "type": "string", "description": "A path fragment the app's .stringsdata files contain (default <mac.scheme>.build)." },
+        "phraseComment": { "type": "string", "description": "The translator comment of a phrase key: {character}, {tags}, {flavor}, {flavorNote}, {part}." },
+        "flavorNotes": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Flavor id → what it does for the listener." }
+      }
+    },
+    "conformance": {
+      "type": "object",
+      "required": ["dir"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string", "description": "The vectors folder (phrases.json lives here)." },
+        "writeFlag": { "type": "string", "description": "The environment variable that makes the Swift tests write the vectors." },
+        "corePackagePath": { "type": "string", "description": "The Swift package whose tests generate the vectors." }
+      }
+    },
+    "characters": {
+      "type": "object",
+      "required": ["design"],
+      "additionalProperties": false,
+      "properties": {
+        "design": { "type": "string" },
+        "swiftOut": { "type": "string" },
+        "swiftModule": { "type": "string" },
+        "assets": { "type": "string" },
+        "windowsAssets": { "type": "string" },
+        "moods": { "type": "array", "items": { "type": "string" } },
+        "paletteFile": { "type": "string" },
+        "mode": { "enum": ["vector", "raster"] }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "required": ["dir", "config", "voices", "defaultVoice"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string", "description": "The voices checkout (a submodule holding Voice/)." },
+        "repo": { "type": "string" },
+        "config": { "type": "string", "description": "voice-config.json: the voice settings per language and voice." },
+        "direction": { "type": "string", "description": "voice-direction.json: delivery notes per line." },
+        "voices": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "defaultVoice": { "type": "string" },
+        "keychainService": { "type": "string" },
+        "reviewTitle": { "type": "string" },
+        "siteCopyright": { "type": "string" },
+        "extraClips": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Clip id → source text of clips that aren't phrases." },
+        "required": { "type": "array", "items": { "type": "string" }, "description": "Clip ids every voiced language must have before shipping." }
+      }
+    },
+    "sounds": {
+      "type": "object",
+      "required": ["out", "recipes"],
+      "additionalProperties": false,
+      "properties": {
+        "out": { "type": "string" },
+        "recipes": { "type": "string", "description": "A Python module defining RECIPES: name → function(engine) returning samples." }
+      }
+    },
+    "fonts": {
+      "type": ["object", "null"],
+      "required": ["out", "font", "license", "weights", "family"],
+      "additionalProperties": false,
+      "properties": {
+        "out": { "type": "string" },
+        "family": { "type": "string" },
+        "font": { "type": "array", "items": { "type": "string" }, "minItems": 2, "description": "[url, sha256] of the variable font." },
+        "license": { "type": "array", "items": { "type": "string" }, "minItems": 2, "description": "[url, sha256] of its license." },
+        "licenseFile": { "type": "string" },
+        "weights": { "type": "object", "additionalProperties": { "type": "number" } },
+        "required": { "type": "string", "description": "Characters every shipped language needs from the face." },
+        "compose": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } }, "description": "Character → [base glyph, mark glyph] to compose when missing." },
+        "dropSpaceKerning": { "type": "boolean" }
+      }
+    },
+    "screenshots": {
+      "type": "object",
+      "required": ["out"],
+      "additionalProperties": false,
+      "properties": {
+        "out": { "type": "string" },
+        "shots": { "type": "array", "items": { "type": "string" } },
+        "store": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["captions", "out"],
+          "properties": {
+            "captions": { "type": "string" },
+            "out": { "type": "string" },
+            "size": { "type": "array", "items": { "type": "number" } },
+            "font": { "type": "string", "description": "The headline font file." },
+            "palette": { "type": "object", "description": "light/dark → {paper, ink, accent, accentText} hex colors." }
+          }
+        }
+      }
+    },
+    "landing": {
+      "type": ["object", "null"],
+      "required": ["dir"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string" },
+        "tool": { "type": "string", "description": "The landing page's build command (vp, npm)." }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "guardedExtra": { "type": "array", "items": { "type": "string" }, "description": "More paths (regular expressions) agents must not edit by hand." },
+        "macUI": { "type": ["string", "null"], "description": "A path regex for Mac UI files; editing one reminds of the Windows twin." },
+        "windowsUI": { "type": ["string", "null"], "description": "The same for Windows UI files." }
+      }
+    }
+  }
+}

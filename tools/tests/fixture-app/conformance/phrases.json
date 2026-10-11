@@ -1,0 +1,125 @@
+{
+  "dayparts" : {
+    "afternoon" : [
+      12,
+      16
+    ],
+    "evening" : [
+      17,
+      21
+    ],
+    "morning" : [
+      5,
+      11
+    ],
+    "night" : [
+      0,
+      23
+    ]
+  },
+  "eventTags" : [
+    "afterCall",
+    "batteryLow",
+    "buttonPress",
+    "charging",
+    "shushEnd",
+    "unplugged",
+    "welcomeBack",
+    "wentDark",
+    "wentLight"
+  ],
+  "flavors" : [
+    "a",
+    "b"
+  ],
+  "phrases" : [
+    {
+      "english" : "Hello there.",
+      "flavor" : "a",
+      "id" : "hello",
+      "key" : "phrase.hello",
+      "kind" : "line",
+      "skins" : [],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "flavor" : "b",
+      "id" : "joke",
+      "keys" : [
+        "phrase.joke.1",
+        "phrase.joke.2"
+      ],
+      "kind" : "sequence",
+      "parts" : [
+        "Why did the clown sit down?",
+        "His feet were tired."
+      ],
+      "skins" : [],
+      "tags" : [
+        "buttonPress",
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Ciao a tutti!",
+      "flavor" : "a",
+      "id" : "ciao",
+      "key" : "phrase.ciao",
+      "kind" : "line",
+      "languages" : [
+        "it"
+      ],
+      "skins" : [],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "id" : "tune-1",
+      "kind" : "tune",
+      "skins" : [],
+      "sound" : "tune-1",
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    }
+  ],
+  "recentWindow" : 12,
+  "tags" : [
+    "general",
+    "morning",
+    "afternoon",
+    "evening",
+    "night",
+    "monday",
+    "friday",
+    "weekend",
+    "welcomeBack",
+    "afterCall",
+    "shushEnd",
+    "buttonPress",
+    "batteryLow",
+    "charging",
+    "unplugged",
+    "wentDark",
+    "wentLight"
+  ],
+  "weekdays" : {
+    "friday" : [
+      6
+    ],
+    "monday" : [
+      2
+    ],
+    "weekend" : [
+      1,
+      7
+    ]
+  }
+}

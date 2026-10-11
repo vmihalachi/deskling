@@ -32,8 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Test character.py
-        run: python3 tools/tests/test_character.py
+      - name: Test the tools (tools/tests/run.py)
+        run: python3 tools/tests/run.py
 
       - name: Check the fixture art is current
         run: scripts/fixture-art.sh --check

@@ -90,7 +90,7 @@ if touched "$dotnet"; then
 fi
 if touched "$tools"; then
   if has python3; then
-    check "tools tests" python3 tools/tests/test_character.py
+    check "tools tests" python3 tools/tests/run.py
     check "fixture art current" scripts/fixture-art.sh --check
   else skip "tools tests: needs python3"; fi
 fi

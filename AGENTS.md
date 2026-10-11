@@ -36,7 +36,7 @@ xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
 cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, the same anywhere
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
-python3 tools/tests/test_character.py          # the tools' tests
+python3 tools/tests/run.py                     # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
 ```
 
