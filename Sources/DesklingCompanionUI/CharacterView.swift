@@ -5,7 +5,7 @@
 
     /// A character drawn from its compiled art on a `Canvas`: the pose (sway, blink, the talking mouth and the pulse)
     /// comes from the mood and the seconds since the view appeared, and everything holds the still pose when `animated`
-    /// is false or Reduce Motion is on. Waking from Shh springs from the drooped pose back over 0.6 s. Vector parts are
+    /// is false, Reduce Motion is on or a `ScreenshotCapture` run is going (so shots are the same every run). Waking from Shh springs from the drooped pose back over 0.6 s. Vector parts are
     /// filled and stroked with the `companionPalette`'s paints; image parts are drawn from `artBundle`'s assets
     /// (`<skin>.<part>`) under the rig's transform. VoiceOver reads `line`, else `accessibilityLabel` (the app's words).
     public struct CharacterView: View {
@@ -41,7 +41,7 @@
             self.accessibilityLabel = accessibilityLabel
         }
 
-        private var paused: Bool { reduceMotion || !animated }
+        private var paused: Bool { reduceMotion || !animated || ScreenshotCapture.isEnabled }
 
         public var body: some View {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: paused)) { timeline in

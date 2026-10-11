@@ -11,7 +11,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `l10n.py` | String Catalog gaps, work files for translators, apply with validation, `.resw`/`.po` exports; language-scoped phrases. |
 | `phrases.py` | Keeps the catalog's `phrase.<id>` (and `.n` for jokes) keys in step with `phrases.json`. |
 | `voice.py`, `voice-review.html` | Records, reviews and publishes the character's voices with ElevenLabs; a clip per joke part. |
-| `character.py` | Compiles a skin's art and rig (vector or raster) to the JSON and Swift both cores draw from. |
+| `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
 | `fonts.py` | Builds the display face from a pinned variable font (needs fontTools). |
 | `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark; App Store images (needs Pillow). |

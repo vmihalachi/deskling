@@ -67,7 +67,7 @@
     "defaultVoice": "male",
     "keychainService": "sunnysays-elevenlabs",
     "reviewTitle": "Sunny's voice",
-    "siteCopyright": "Shared with friends who help review Sunny's voice. The recordings and texts are © sunnysays, all rights reserved.",
+    "siteCopyright": "The recordings and texts are © sunnysays, all rights reserved",
     "extraClips": { "ui-test-voice": "Hi! This is how I sound." },
     "required": ["ui-test-voice"]
   },

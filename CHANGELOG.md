@@ -45,7 +45,7 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   (flavors a/b/c, skins `fixture-vector` and `fixture-raster`) and `CompanionDefaults.fixture`.
 - `tools/character.py`: compiles a skin's art and rig into the `CharacterArt` JSON and Swift source, from
   arguments (`--design --skin --out --swift-out --module --mode vector|raster --assets --windows-assets --check`)
-  instead of sunnysays' constants. Rigs take `headExtras`/`overlays` (`cheeks: true`/`zz: true` stay as sugar) and
+  instead of sunnysays' constants, or, without `--design`, every skin from the app's `companion.json`. Rigs take `headExtras`/`overlays` (`cheeks: true`/`zz: true` stay as sugar) and
   require `bubble: {pivot, tuck}`. Raster skins draw parts from `layers/<part>@2x.png` (+ `@3x`), sized frame ×
   scale, and get an imageset per layer and Windows `scale-200`/`scale-300` PNGs. Tests in `tools/tests/`, run by
   the new `tools.yml`; fixture skins in `Tests/Fixtures/characters/`.
@@ -93,7 +93,8 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   `unavailableIDs(voice:)`), `VoiceLibrary.pendingIDs(in:voice:text:)`, `CompanionNotifier`, `NotificationPermission`,
   `Theme/`: `CompanionPalette` (`EnvironmentValues.companionPalette`, `.companionDisplayFont`), `Space`, `SpeechBubble`,
   `BubbleShape`, `BubbleCountdown`, `StatusPill`; and `ScreenshotCapture` (`DESKLING_SCREENSHOT_MODE`/`_DIR`) with
-  `FixedClock`, `ConstantIdle`, `SilentSpeaker`, `SilentChime` and `FixedPriceBackend`.
+  `FixedClock`, `ConstantIdle`, `SilentSpeaker`, `SilentChime` and `FixedPriceBackend`. During a capture run
+  `CharacterView` holds the still pose, so the same build shoots the same pixels every time.
 - `tools/` for companion apps (vendored as a `deskling/` submodule pinned to the release): `companion.py` and
   `companion.schema.json` (each app's `companion.json`: names, paths, languages, tool settings; `env`, `pins`),
   `l10n.py` and `phrases.py` (language-scoped phrases; a joke's parts as `phrase.<id>.n` keys), `voice.py` and
