@@ -23,7 +23,9 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parents[1]
 FIXTURES = TOOLS.parent / "Tests" / "Fixtures" / "characters"
 sys.path.insert(0, str(TOOLS))
+sys.path.insert(0, str(TOOLS / "tests"))
 import character  # noqa: E402
+from support import fixture_app  # noqa: E402
 
 PALETTE = {
     "#FFD25A": "petal",
@@ -390,6 +392,50 @@ class RasterCommandLineTests(unittest.TestCase):
         data = json.loads(path.read_text())
         change(data)
         path.write_text(json.dumps(data))
+
+
+class AppConfigTests(unittest.TestCase):
+    """Without --design, the skins come from the app's companion.json."""
+
+    def configure(self, root: Path, **characters):
+        path = root / "companion.json"
+        data = json.loads(path.read_text())
+        data["characters"] = {"design": "design/characters", **characters}
+        path.write_text(json.dumps(data))
+
+    def test_every_skin_goes_where_companion_json_says(self):
+        with fixture_app() as root:
+            write_skin(root / "design" / "characters", "tiny")
+            write_skin(root / "design" / "characters", "big-cat")
+            self.configure(root, swiftOut="macos/FixtureCore/Sources/FixtureCore/Art", swiftModule="FixtureCore")
+            self.assertEqual(run()[0], 0)
+            vectors = root / "conformance" / "characters"
+            self.assertTrue((vectors / "tiny.json").is_file())
+            self.assertTrue((vectors / "big-cat.json").is_file())
+            swift = root / "macos/FixtureCore/Sources/FixtureCore/Art/BigCatArt.swift"
+            self.assertIn("import DesklingCompanion\n", swift.read_text())
+            self.assertIn("public static let bigCat = CharacterArt(", swift.read_text())
+            self.assertEqual(run("--check")[0], 0)
+            (vectors / "tiny.json").write_text("{}")
+            code, stderr = run("--check", "--skin", "tiny")
+            self.assertEqual(code, 1)
+            self.assertIn("tiny.json is stale", stderr)
+
+    def test_raster_skins_get_their_assets(self):
+        with fixture_app() as root:
+            write_raster_skin(root / "design" / "characters", "pixel")
+            self.configure(root, mode="raster", assets="macos/App/Characters", windowsAssets="windows/App/Characters")
+            self.assertEqual(run("--skin", "pixel")[0], 0)
+            self.assertTrue((root / "macos/App/Characters/pixel.face.imageset/Contents.json").is_file())
+            self.assertTrue((root / "windows/App/Characters/pixel.face.scale-300.png").is_file())
+
+    def test_an_unknown_skin_is_an_error(self):
+        with fixture_app() as root:
+            write_skin(root / "design" / "characters", "tiny")
+            self.configure(root)
+            code, stderr = run("--skin", "nope")
+            self.assertEqual(code, 2)
+            self.assertIn("no skin 'nope'", stderr)
 
 
 class SwiftOutputTests(unittest.TestCase):

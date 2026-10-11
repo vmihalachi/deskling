@@ -6,10 +6,26 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-The 0.5.0 companion layer is being built in six sequences (`plans/0.5/`): a typed settings store, `DesklingCompanion` /
-`Deskling.Companion` (phrases, cadence, rules, settings, coordinator, desktop presence, vector and raster character rigs,
-skins), `DesklingCompanionUI`, Shell speech and status item, `Deskling.Testing`, `tools/`. Breaking changes land here as
-each sequence commits; the migration list is in `plans/0.5/README.md`.
+## 0.5.0 - 2026-10-11
+
+The companion layer: everything under sunnysays' character, made generic so a second companion app can be built on
+it. A typed settings store, `DesklingCompanion` / `Deskling.Companion` (phrases, cadence, quiet rules, settings,
+coordinator, desktop presence, vector and raster character rigs, skins), `DesklingCompanionUI`, speech and a status
+item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 14 and Windows, as before.
+
+### Migration
+- **Apps on 0.4 without the companion layer** (mybackhurts): only the settings store is breaking. Swift: drop an
+  app-local `SettingsStore` protocol for `DesklingCore`'s; `PurchaseStore(…defaults:)` keeps working. .NET: move
+  `ISettingsStore` callers to the typed getters and setters (below). Staying on 0.4.0 until then is fine.
+- **Moving a companion app onto it** (sunnysays): import `DesklingCompanion` in place of the app's own copies. The raw
+  values, settings keys and vector formats are unchanged, so committed vectors stay byte-identical. Renames: `Character`
+  → `DrawableCharacter`, `Shape` → `PathShape`, `PaletteRole` → `PaintRole`, `Phrase.Kind.line(english:)` →
+  `line(source:)`, a mood's `cheeks`/`zz` flags → `headExtras`/`overlays` (the rig JSON still accepts the flags), and
+  in C# `PartContent.Vector` for Swift's `.shapes`. The app now injects what the package no longer names: its
+  `PhraseBank`, `CompanionDefaults(skin:phraseFlavors:sayShortcut:)`, `SkinCatalog`, `CompanionPalette` and voices.
+  App-only preferences go in a `CompanionSettings` subclass. Content vectors are generated with `DesklingTesting`'s
+  generators and replayed with `Deskling.Testing`; the app's `cadence/` and `desktop.json` vectors retire (they are
+  pinned here now). `tools/README.md` has the steps for the `deskling/` submodule and `companion.json`.
 
 ### Added
 - Swift: `DesklingCompanion`, the pure core of a desk companion (Foundation and Observation only; builds and tests
@@ -29,7 +45,7 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   (flavors a/b/c, skins `fixture-vector` and `fixture-raster`) and `CompanionDefaults.fixture`.
 - `tools/character.py`: compiles a skin's art and rig into the `CharacterArt` JSON and Swift source, from
   arguments (`--design --skin --out --swift-out --module --mode vector|raster --assets --windows-assets --check`)
-  instead of sunnysays' constants. Rigs take `headExtras`/`overlays` (`cheeks: true`/`zz: true` stay as sugar) and
+  instead of sunnysays' constants, or, without `--design`, every skin from the app's `companion.json`. Rigs take `headExtras`/`overlays` (`cheeks: true`/`zz: true` stay as sugar) and
   require `bubble: {pivot, tuck}`. Raster skins draw parts from `layers/<part>@2x.png` (+ `@3x`), sized frame ×
   scale, and get an imageset per layer and Windows `scale-200`/`scale-300` PNGs. Tests in `tools/tests/`, run by
   the new `tools.yml`; fixture skins in `Tests/Fixtures/characters/`.
@@ -77,7 +93,8 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   `unavailableIDs(voice:)`), `VoiceLibrary.pendingIDs(in:voice:text:)`, `CompanionNotifier`, `NotificationPermission`,
   `Theme/`: `CompanionPalette` (`EnvironmentValues.companionPalette`, `.companionDisplayFont`), `Space`, `SpeechBubble`,
   `BubbleShape`, `BubbleCountdown`, `StatusPill`; and `ScreenshotCapture` (`DESKLING_SCREENSHOT_MODE`/`_DIR`) with
-  `FixedClock`, `ConstantIdle`, `SilentSpeaker`, `SilentChime` and `FixedPriceBackend`.
+  `FixedClock`, `ConstantIdle`, `SilentSpeaker`, `SilentChime` and `FixedPriceBackend`. During a capture run
+  `CharacterView` holds the still pose, so the same build shoots the same pixels every time.
 - `tools/` for companion apps (vendored as a `deskling/` submodule pinned to the release): `companion.py` and
   `companion.schema.json` (each app's `companion.json`: names, paths, languages, tool settings; `env`, `pins`),
   `l10n.py` and `phrases.py` (language-scoped phrases; a joke's parts as `phrase.<id>.n` keys), `voice.py` and

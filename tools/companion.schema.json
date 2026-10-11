@@ -97,13 +97,13 @@
       "required": ["design"],
       "additionalProperties": false,
       "properties": {
-        "design": { "type": "string" },
-        "swiftOut": { "type": "string" },
-        "swiftModule": { "type": "string" },
-        "assets": { "type": "string" },
-        "windowsAssets": { "type": "string" },
-        "moods": { "type": "array", "items": { "type": "string" } },
-        "paletteFile": { "type": "string" },
+        "design": { "type": "string", "description": "The folder of skin folders (<skin>/<skin>.rig.json); character.py compiles each." },
+        "swiftOut": { "type": "string", "description": "The folder that gets <Skin>Art.swift for each skin (it imports DesklingCompanion)." },
+        "swiftModule": { "type": "string", "description": "The app module those Swift files are compiled into, for reference." },
+        "assets": { "type": "string", "description": "Raster: the asset catalog folder that gets an imageset per layer." },
+        "windowsAssets": { "type": "string", "description": "Raster: the folder that gets the scale-200/300 PNGs." },
+        "moods": { "type": "array", "items": { "type": "string" }, "description": "The Mood cases in order (default: the package's seven)." },
+        "paletteFile": { "type": "string", "description": "Hex → paint role (default: <design>/palette.json)." },
         "mode": { "enum": ["vector", "raster"] }
       }
     },
@@ -120,7 +120,7 @@
         "defaultVoice": { "type": "string" },
         "keychainService": { "type": "string" },
         "reviewTitle": { "type": "string" },
-        "siteCopyright": { "type": "string" },
+        "siteCopyright": { "type": "string", "description": "The rights sentence on the review site, after \"Shared with friends who help review <character>'s voice.\" (default: © displayName, all rights reserved)." },
         "extraClips": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Clip id → source text of clips that aren't phrases." },
         "required": { "type": "array", "items": { "type": "string" }, "description": "Clip ids every voiced language must have before shipping." }
       }

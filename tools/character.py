@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """Compiles a companion's character art and rig into the data both cores draw from.
 
+    python3 deskling/tools/character.py [--skin NAME …] [--check]   # an app's skins, from companion.json
     python3 tools/character.py --design DIR --skin NAME --out JSON [--swift-out FILE --module NAME] [--mode vector|raster]
                                [--assets DIR --windows-assets DIR] [--palette FILE] [--moods a,b,…] [--check]
     python3 tools/character.py preview --design DIR --skin NAME OUT.svg [--mode raster] [--png]   # the review sheet
+
+Without `--design` it reads the app's `companion.json`: every skin folder under `characters.design` (or the `--skin`s
+named) goes to `<conformance.dir>/characters/<skin>.json` and, with `characters.swiftOut`, to
+`<swiftOut>/<Skin>Art.swift`, in `characters.mode` with `characters.moods`, `characters.paletteFile` and, for raster
+skins, `characters.assets` and `characters.windowsAssets`.
 
 A skin is a folder `<design>/<skin>/` with `glyph.svg` (the menu bar frames, a black vector line drawing for every
 skin) and `<skin>.rig.json`. `--out` gets the art as JSON (the format `CharacterArtJSON` reads), `--swift-out` the same
@@ -38,6 +44,9 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import companion  # noqa: E402
 
 MOODS = ["awake", "talking", "shushed", "hushedForCall", "hushedFullScreen", "asleep", "offHours"]
 SCALES = (2, 3)
@@ -1103,10 +1112,45 @@ def preview(argv) -> int:
     return 0
 
 
+def app_runs(config: companion.Config, skins: list[str] | None, check: bool) -> list[argparse.Namespace]:
+    """One `outputs` run per skin of the app, from companion.json's `characters` section."""
+    design = config.require_path("characters.design")
+    mode = config.get("characters.mode", "vector")
+    found = sorted(p.name for p in design.iterdir() if (p / f"{p.name}.rig.json").exists()) if design.is_dir() else []
+    for skin in skins or []:
+        if skin not in found:
+            raise CompileError(f"no skin '{skin}' in {design} (a folder with {skin}.rig.json)")
+    if not found:
+        raise CompileError(f"no skins in {design}")
+    characters = config.require_path("conformance.dir") / "characters"
+    swift_out = config.path("characters.swiftOut")
+    runs = []
+    for skin in skins or found:
+        name = swift_name(skin)
+        runs.append(argparse.Namespace(
+            design=design, skin=skin, mode=mode, palette=config.path("characters.paletteFile"),
+            moods=config.get("characters.moods", MOODS), out=characters / f"{skin}.json",
+            swift_out=swift_out / f"{name[0].upper()}{name[1:]}Art.swift" if swift_out else None, module="DesklingCompanion",
+            assets=config.path("characters.assets") if mode == "raster" else None,
+            windows_assets=config.path("characters.windowsAssets") if mode == "raster" else None, check=check))
+    return runs
+
+
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv and argv[0] == "preview":
         return preview(argv[1:])
+    if "--design" not in argv and not any(a.startswith("--design=") for a in argv):
+        parser = argparse.ArgumentParser(description="Compile the app's skins, as its companion.json says.")
+        parser.add_argument("--skin", action="append", help="only this skin (repeatable; default: every skin folder)")
+        parser.add_argument("--check", action="store_true", help="write nothing; exit 1 if an output is stale")
+        args = parser.parse_args(argv)
+        try:
+            runs = app_runs(companion.load(), args.skin, args.check)
+        except CompileError as error:
+            print(f"character.py: {error}", file=sys.stderr)
+            return 2
+        return max(write(run) for run in runs)
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     _common(parser)
     parser.add_argument("--out", type=Path, required=True, help="the art as JSON (conformance/…/characters/<skin>.json)")
@@ -1118,6 +1162,11 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if (args.assets or args.windows_assets) and args.mode != "raster":
         parser.error("--assets and --windows-assets need --mode raster")
+    return write(args)
+
+
+def write(args) -> int:
+    """Writes (or with `check`, compares) every output of one run; 1 when something was stale, 2 on a compile error."""
     try:
         files = outputs(args)
     except CompileError as error:
