@@ -9,7 +9,8 @@ import PackageDescription
 //   DesklingSystem   The macOS implementations of those providers (CoreAudio, AVFoundation,
 //                    CoreGraphics, IOKit), all without permission prompts.
 //   DesklingShell    Menu bar app plumbing: window manager with the activation-policy dance, login item,
-//                    launch context, notification poster, global hotkey, drawing helpers.
+//                    launch context, notification poster, global hotkey, drawing helpers, the status item,
+//                    and speech (system voice or recorded clips, jokes in beats) and chimes.
 //   DesklingCompanion  Foundation and Observation only. The pure core of a desk companion: the phrase bank and
 //                    picker, chatter cadence, quiet rules and mood. Builds and tests anywhere Swift runs.
 //   DesklingStore    StoreKit 2 purchase store for unlockables and tips, caching ownership in a SettingsStore.
@@ -38,7 +39,7 @@ let package = Package(
             resources: [.copy("Resources")]),
         // The three below are macOS-only (every file is wrapped in `#if os(macOS)`), so they build empty on Linux.
         .testTarget(name: "DesklingSystemTests", dependencies: ["DesklingSystem", "DesklingCore"]),
-        .testTarget(name: "DesklingShellTests", dependencies: ["DesklingShell", "DesklingCore"]),
+        .testTarget(name: "DesklingShellTests", dependencies: ["DesklingShell", "DesklingCore"], resources: [.copy("Resources")]),
         .testTarget(name: "DesklingStoreTests", dependencies: ["DesklingStore", "DesklingTesting"]),
     ]
 )

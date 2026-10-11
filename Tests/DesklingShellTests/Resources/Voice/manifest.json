@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "languages": {
+    "en": {
+      "default": "male",
+      "status": "testing",
+      "voices": {
+        "male": {
+          "clips": {
+            "hello": {
+              "duration": 1.0,
+              "mouth": "0120",
+              "renderHash": "r",
+              "textHash": "2d8bd7d9bb5f85ba643f0110d50cb506a1fe439e769a22503193ea6046bb87f7"
+            }
+          }
+        }
+      }
+    },
+    "it": {
+      "default": "male",
+      "status": "shipping",
+      "voices": {
+        "female": {
+          "clips": {
+            "hello": {
+              "duration": 1.0,
+              "mouth": "0110",
+              "renderHash": "r",
+              "textHash": "3cc2c633532ade44baaadc14c01ca78bf0c8a07121404746e1fe7b20f841ad0f"
+            }
+          }
+        },
+        "male": {
+          "clips": {
+            "hello": {
+              "duration": 1.0,
+              "mouth": "0120",
+              "renderHash": "r",
+              "textHash": "3cc2c633532ade44baaadc14c01ca78bf0c8a07121404746e1fe7b20f841ad0f"
+            },
+            "joke.1": {
+              "duration": 1.6,
+              "mouth": "0231",
+              "renderHash": "r",
+              "textHash": "df38f287e188c8c1bbece642d6395f3b8db49a649814c2ddb117c8d8a29383b1"
+            },
+            "joke.2": {
+              "duration": 1.2,
+              "mouth": "1320",
+              "renderHash": "r",
+              "textHash": "09d05bb42f3ec3b47a02bab8107a46541fd26374b5faed400c53a64da2c033a0"
+            },
+            "nofile": {
+              "duration": 1.0,
+              "mouth": "0120",
+              "renderHash": "r",
+              "textHash": "dbab72836bbf1408128d81bdf86cc08ec261502a94f3da8347b437000c78bc52"
+            },
+            "stale": {
+              "duration": 1.0,
+              "mouth": "0120",
+              "renderHash": "r",
+              "textHash": "1d8fe81db974e36fae8a4ddf2fb8d510ac11e8e01ca390341e08364121de5dba"
+            }
+          }
+        }
+      }
+    }
+  },
+  "mouthFPS": 12.5
+}
