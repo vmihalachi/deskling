@@ -9,6 +9,14 @@
 > `TimeZoneInfo` where Swift takes a `Calendar`; no `VoiceId` yet (Swift's `VoiceID` arrives in Shell with sequence 4).
 > The owner confirmed (2026-10-11) that the NuGet Trusted Publishing policy and the `Deskling.` prefix reservation cover
 > `Deskling.Companion` and `Deskling.Testing`.
+>
+> From sequence 4 (done 2026-10-11, branch `0.5-shell-ui`): `DesklingShell` has `StatusItemController` and `Speech/`;
+> `DesklingCompanionUI` exists (it also depends on `DesklingStore`, for `ScreenshotCapture`'s `FixedPriceBackend`). The
+> palette, `Space` and the speech bubble landed in 4.2 with the views that draw them. For 6.1: every file in
+> `DesklingSystem`, `DesklingShell`, `DesklingStore`, `DesklingCompanionUI` and their test targets (41 sources) already
+> starts with `#if os(macOS)`, so the iOS step is `platforms` plus the `swift.yml` simulator build. `CharacterView`
+> draws image parts through `Bundle.image(forResource:)` (SwiftUI's `Image(_:bundle:)` draws nothing in a `Canvas` for
+> a dotted asset name); on iOS that will need `UIImage(named:in:with:)`.
 
 ## Read only these
 

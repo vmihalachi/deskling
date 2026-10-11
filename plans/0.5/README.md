@@ -115,6 +115,7 @@ Sequence 2 (2026-10-11) shipped `Figures/`, `Skins/`, the generators and `confor
 generators rewrote sunnysays' picker, quiet, cadence, desktop, phrases and settings vectors byte for byte.
 Sequence 3 (2026-10-11) shipped `Deskling.Companion`, `Deskling.Testing` and `Deskling.Companion.Tests`; every
 companion vector replays on .NET.
+Sequence 4 (2026-10-11) shipped the Shell status item and speech and `DesklingCompanionUI`.
 
 ### Skins/ (`SkinCatalog.swift`)
 
