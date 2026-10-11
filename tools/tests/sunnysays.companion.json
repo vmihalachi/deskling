@@ -80,7 +80,11 @@
     "licenseFile": "OFL-Fredoka.txt",
     "weights": { "Medium": 500, "SemiBold": 600 },
     "required": "ĂăÂâÎîȘșȚțÄäÖöÜüßÉéÈèÊêÀàÇçÑñÃãÕõÓóÚúÍíÌìÒòÙù’…",
-    "compose": { "Ă": ["A", "breve"], "ă": ["a", "breve"], "Ș": ["S", "commaaccent"], "ș": ["s", "commaaccent"], "Ț": ["T", "commaaccent"], "ț": ["t", "commaaccent"] },
+    "compose": {
+      "Ă": ["A", "breve", "above"], "ă": ["a", "breve", "above"],
+      "Ș": ["S", "comma", "below", "Ş"], "ș": ["s", "comma", "below", "ş"],
+      "Ț": ["T", "comma", "below", "Ţ"], "ț": ["t", "comma", "below", "ţ"]
+    },
     "dropSpaceKerning": true
   },
   "screenshots": {
@@ -91,6 +95,7 @@
       "out": "store-listing/apple/screenshots",
       "size": [2880, 1800],
       "font": "macos/SunnySays/Resources/Fonts/Fredoka-SemiBold.ttf",
+      "noteFont": "macos/SunnySays/Resources/Fonts/Fredoka-Medium.ttf",
       "palette": {
         "light": { "paper": "#FFF8E7", "ink": "#4A2E1A", "accent": "#F7C948", "accentText": "#8A5A00" },
         "dark": { "paper": "#1F1A14", "ink": "#C9BCA5", "accent": "#E0B43C", "accentText": "#F2C75C" }

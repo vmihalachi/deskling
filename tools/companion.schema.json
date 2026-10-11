@@ -131,7 +131,7 @@
       "additionalProperties": false,
       "properties": {
         "out": { "type": "string" },
-        "recipes": { "type": "string", "description": "A Python module defining RECIPES: name → function(engine) returning samples." }
+        "recipes": { "type": "string", "description": "A Python module defining sounds(engine) → {name: samples}, built from tools/synth.py." }
       }
     },
     "fonts": {
@@ -146,7 +146,7 @@
         "licenseFile": { "type": "string" },
         "weights": { "type": "object", "additionalProperties": { "type": "number" } },
         "required": { "type": "string", "description": "Characters every shipped language needs from the face." },
-        "compose": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } }, "description": "Character → [base glyph, mark glyph] to compose when missing." },
+        "compose": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } }, "description": "Character → [base glyph, mark glyph, \"above\" or \"below\", alias characters…] to compose when missing." },
         "dropSpaceKerning": { "type": "boolean" }
       }
     },
@@ -166,6 +166,7 @@
             "out": { "type": "string" },
             "size": { "type": "array", "items": { "type": "number" } },
             "font": { "type": "string", "description": "The headline font file." },
+            "noteFont": { "type": "string", "description": "The note's font file (the headline's when absent)." },
             "palette": { "type": "object", "description": "light/dark → {paper, ink, accent, accentText} hex colors." }
           }
         }
