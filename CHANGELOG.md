@@ -6,10 +6,26 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-The 0.5.0 companion layer is being built in six sequences (`plans/0.5/`): a typed settings store, `DesklingCompanion` /
-`Deskling.Companion` (phrases, cadence, rules, settings, coordinator, desktop presence, vector and raster character rigs,
-skins), `DesklingCompanionUI`, Shell speech and status item, `Deskling.Testing`, `tools/`. Breaking changes land here as
-each sequence commits; the migration list is in `plans/0.5/README.md`.
+## 0.5.0 - 2026-10-11
+
+The companion layer: everything under sunnysays' character, made generic so a second companion app can be built on
+it. A typed settings store, `DesklingCompanion` / `Deskling.Companion` (phrases, cadence, quiet rules, settings,
+coordinator, desktop presence, vector and raster character rigs, skins), `DesklingCompanionUI`, speech and a status
+item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 14 and Windows, as before.
+
+### Migration
+- **Apps on 0.4 without the companion layer** (mybackhurts): only the settings store is breaking. Swift: drop an
+  app-local `SettingsStore` protocol for `DesklingCore`'s; `PurchaseStore(…defaults:)` keeps working. .NET: move
+  `ISettingsStore` callers to the typed getters and setters (below). Staying on 0.4.0 until then is fine.
+- **Moving a companion app onto it** (sunnysays): import `DesklingCompanion` in place of the app's own copies. The raw
+  values, settings keys and vector formats are unchanged, so committed vectors stay byte-identical. Renames: `Character`
+  → `DrawableCharacter`, `Shape` → `PathShape`, `PaletteRole` → `PaintRole`, `Phrase.Kind.line(english:)` →
+  `line(source:)`, a mood's `cheeks`/`zz` flags → `headExtras`/`overlays` (the rig JSON still accepts the flags), and
+  in C# `PartContent.Vector` for Swift's `.shapes`. The app now injects what the package no longer names: its
+  `PhraseBank`, `CompanionDefaults(skin:phraseFlavors:sayShortcut:)`, `SkinCatalog`, `CompanionPalette` and voices.
+  App-only preferences go in a `CompanionSettings` subclass. Content vectors are generated with `DesklingTesting`'s
+  generators and replayed with `Deskling.Testing`; the app's `cadence/` and `desktop.json` vectors retire (they are
+  pinned here now). `tools/README.md` has the steps for the `deskling/` submodule and `companion.json`.
 
 ### Added
 - Swift: `DesklingCompanion`, the pure core of a desk companion (Foundation and Observation only; builds and tests
