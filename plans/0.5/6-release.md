@@ -46,3 +46,28 @@
 
 `scripts/verify.sh --all` ok; `swift.yml`, `dotnet.yml`, `release.yml` green; the dry run's gates passed (say which
 API changes it forced). sunnysays' M9 and Pagliacci's M0 can start.
+
+## Outcome (2026-10-11, branch `0.5-release`)
+
+- **6.1 dropped** at the owner's call: Deskling stays desktop-only (phone apps would get a package of their own), so
+  `platforms` is macOS 14 and there is no iOS Simulator build. The wrapping had worked (the whole package built for
+  the iOS Simulator); the CHANGELOG doesn't mention iOS.
+- **6.2, 6.3** done: docs, `0.5.0: the companion layer` (not tagged), `scripts/verify.sh --all` ok.
+- **6.4** on sunnysays' `m9-dry-run` (two commits; pins point at `../deskling` and a local NuGet pack, so it is not for
+  master as is):
+  - Gate A: `phrases.json`, `picker/*` and `quiet/*` byte-identical. Two format changes, checked equal in meaning:
+    `settings.json` gains `recentWindow`, `partBeatSeconds`, `reappearDelaySeconds`, `hourHideSeconds` (the
+    Windows replay requires them; the values match `phrases.json` and the retired `desktop.json`), and
+    `sunflower-poses.json` writes `headExtras`/`overlays` lists where it had `cheeks`/`zz` (identical once mapped).
+    `cadence/` and `desktop.json` deleted.
+  - Gate B: `SunnySays.Core.Tests` 57 green on the packed 0.5.0 (147 before; the mechanism tests moved here).
+    `SunnySays.App` not ported (Windows only).
+  - Gate C: 24/24 screenshots pixel-identical to the pre-migration build, once both hold the character's still pose;
+    before that, two runs of the *same* build differed wherever the character swayed.
+  - Forced in Deskling (`M9 dry run: …` commit): `CharacterView` holds the still pose during a `ScreenshotCapture`
+    run; `tools/character.py` reads `companion.json` without `--design`; the sunnysays draft's
+    `voice.siteCopyright` fixed. No Swift or C# API changed.
+  - Tools checked against sunnysays' data: `phrases.py`, `character.py --check` clean; `l10n.py` and `voice.py` differ
+    only in generated headers and the review site's generic markup (M9 commits the regenerated files); `synth.py`
+    waits for M9's `macos/scripts/sounds.py`.
+- **6.5** waits for the owner: push and merge, CI, then the tag.
