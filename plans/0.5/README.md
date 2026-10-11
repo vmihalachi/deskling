@@ -109,8 +109,8 @@ public struct CompanionDefaults: Equatable, Sendable {  // today's numbers as pa
 // SettingChoices.swift: AppearanceSetting, DesktopSize, DesktopPosition (from SS/Settings/Skin.swift minus Skin)
 ```
 An app subclasses: `@Observable final class AppSettings: CompanionSettings` adds its own keys (sunnysays: `sunnyVoice`).
-Sequence 1 spikes cross-module `@Observable` subclassing first; the fallback is a `CompanionSettingsProviding`
-protocol plus `SettingsCodec` helpers, each app keeping its own `@Observable final class`.
+Sequence 1 spiked cross-module `@Observable` subclassing first: it passed (macOS and Linux, 2026-10-11), so the
+class design above is what shipped and the `CompanionSettingsProviding` fallback was not needed.
 
 ### Skins/ (`SkinCatalog.swift`)
 

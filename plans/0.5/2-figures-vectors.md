@@ -1,6 +1,11 @@
 # 2: Figures (vector and raster), Skins, the companion vectors
 
 > Sequence 2 of `README.md` (read *Figures/*, *Skins/*, *Vectors* and *Two-part jokes*). Needs 1. One session.
+>
+> From sequence 1 (done 2026-10-11): the `@Observable` spike passed, so `CompanionSettings` is the `open` class
+> (`settings.json` reads its 23 properties and `CompanionDefaults.fixture`). `PhraseTiming` already exists
+> (`Phrases/PhraseTiming.swift`) for `desktop.json`'s `partDelays[]`. The Swift `swift.yml` linux job runs
+> `swift test --filter DesklingCompanionTests` in `swift:6.1`, so the vector generators must build there too.
 
 ## Read only these
 
