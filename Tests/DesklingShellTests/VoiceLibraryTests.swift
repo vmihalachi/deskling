@@ -6,8 +6,9 @@
     /// Over `Resources/Voice`: Italian shipping with male (default) and female, English testing.
     @MainActor
     final class VoiceLibraryTests: XCTestCase {
+        /// Found by name, as the Companion tests find theirs: the bundle's layout differs between toolchains.
         private var folder: URL {
-            Bundle.module.resourceURL!.appendingPathComponent("Resources/Voice", isDirectory: true)
+            Bundle.module.url(forResource: "Resources/Voice", withExtension: nil)!
         }
 
         private func library(_ language: String = "it", allowTesting: Bool = false, fallback: Bool = false) -> VoiceLibrary {
