@@ -20,6 +20,7 @@ requests aren't monitored, and releases follow what the apps need.
 | `DesklingCompanionUI` | — | macOS: the companion on screen, over `DesklingCompanion`. `SignalHub` (the snapshot and the events from the system signals), the menu bar glyph, `CharacterView` (vector and image parts, the wake spring), `DesktopCompanion` (the character and its speech bubble on the desktop), `DeliveryPerformer` (bubble, blip, speech in beats, the notification), `CompanionNotifier`, a `CompanionPalette` the app sets, the speech bubble and status pill, and `ScreenshotCapture` for screenshot runs. The Windows twins come with the apps' ports. |
 | `DesklingStore` | `Deskling.Core` (`Store/`) + `Deskling.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
 | `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). |
+| `tools/` | `tools/` | Not a package: Python tools, shell scripts and agent skills for companion apps, which vendor this repo as a `deskling/` git submodule pinned to the release. Localization, phrase sync, recorded voices, character art compiling, sounds, fonts, screenshots, verification (including a check that every Deskling pin agrees) and agent hooks, all driven by the app's `companion.json`. See [`tools/README.md`](tools/README.md). |
 
 Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
 
@@ -28,7 +29,7 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.1.0")
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.5.0")
 ```
 
 **.NET** (10), from NuGet.org:
@@ -63,7 +64,22 @@ The package ships no strings, product ids or window lists: the app passes them i
   same store (`Deskling.Core.Store`) runs over `StoreContextBackend(dispatcher, windowHandle)`, which matches add-ons by
   their Partner Center Product ID and reports consumables fulfilled so tips can be bought again; `MockStoreBackend`
   ships in `Deskling.Core` there, for tests and an app's preview modes.
-- **Windows.** The same shapes in `Deskling.Windows`: `TrayIconHost`, `GlobalHotKey` (`KeyShortcut` keeps the Mac
+- **A companion's profile.** `CompanionDefaults(skin:phraseFlavors:sayShortcut:)` states the three product choices
+  (the default skin, the flavors on, the "Say something" shortcut); the package's numbers fill the rest. Subclass
+  `CompanionSettings(store:defaults:)` (an `@Observable open class` over any `SettingsStore`) to add the app's own
+  keys beside the 23 generic ones. `CompanionCoordinator(settings:bank:language:clock:idle:busy:calendar:seed:)` takes
+  your `PhraseBank`; call `tick(snapshot:)` every 20 s and deliver what it returns (`DeliveryPerformer` on the Mac).
+- **Skins.** `SkinCatalog([SkinEntry(art:unlockedBy:)])`: the first entry is the default, and a skin whose
+  `unlockedBy` product isn't owned (or was refunded) draws the default. Art is vector shapes or raster layers
+  (`tools/character.py` compiles both to `CharacterArt`); `CharacterView` draws image parts from `artBundle`, colors
+  vector parts through the `companionPalette` you set in the environment. A phrase's `skins` limits who can say it.
+- **Sequences.** `Phrase.Kind.sequence(source:)` is a joke in beats (two or more parts, catalog keys
+  `phrase.<id>.1`, `.2`…), spaced by `PhraseTiming`, spoken by `SpeechSequencer`; it counts as one phrase for recents
+  and muting, and the notification shows it once, at the punchline.
+- **Languages.** `PhraseContext` takes the app's language: a phrase with `languages` set (`["it"]`) is only picked
+  in those, so a joke that only works in Italian is written in Italian. The bank holds source text; the app's String
+  Catalog (`phrase.<id>`) supplies the words on screen.
+- **Windows. in `Deskling.Windows`: `TrayIconHost`, `GlobalHotKey` (`KeyShortcut` keeps the Mac
   shape; Carbon masks map onto `MOD_*`), `AppNotifier<TAction>`, `StartupService(taskId)`, `LocalSettingsStore`,
   `SingleInstance.Claim(key)`, `WavPlayer`, and the signals `PowerSource`, `OutputMute`, `AppearanceWatcher`,
   `SessionLockWatcher`. String lookup is `Loc` (`Loc.Configure("Resources")`, `Loc.UseLanguage(...)` at launch) and
@@ -71,8 +87,10 @@ The package ships no strings, product ids or window lists: the app passes them i
 
 ## The two implementations stay identical
 
-The Swift code is the reference. `conformance/` holds JSON vectors generated from it, and `dotnet/Deskling.Core.Tests`
-replays every one, so a change in behavior on one side fails the other side's tests. See `conformance/README.md`.
+The Swift code is the reference. `conformance/` holds JSON vectors generated from it (`scheduler/`, and `companion/`
+over the fixture bank and skins), and `dotnet/Deskling.Core.Tests` and `dotnet/Deskling.Companion.Tests` replay every
+one, so a change in behavior on one side fails the other side's tests. Apps generate their own content vectors with
+`DesklingTesting` and replay them through `Deskling.Testing`. See `conformance/README.md`.
 
 ## Develop
 
@@ -80,6 +98,8 @@ replays every one, so a change in behavior on one side fails the other side's te
 swift build && swift test                       # macOS: the package and its tests
 scripts/conformance.sh                          # regenerate conformance/ from the Swift code
 cd dotnet && dotnet test Deskling.Core.Tests    # .NET: Core builds and tests anywhere; Deskling.Windows builds on Windows (its PRI tooling)
+cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, anywhere
+python3 tools/tests/run.py                      # the tools' tests
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
 
@@ -88,7 +108,7 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.1.0 && git push --tags` (or Actions → Release → Run workflow with the version, which
+One tag versions both sides. `git tag v0.5.0 && git push --tags` (or Actions → Release → Run workflow with the version, which
 creates the tag on master) runs `release.yml`: it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org

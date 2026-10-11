@@ -3,8 +3,9 @@
 Guide for coding agents (Claude Code reads it through `CLAUDE.md`). Humans start at `README.md`.
 
 **What it is:** an MIT Swift package plus .NET packages with the generic parts of a menu bar / tray app:
-pure scheduling (`DesklingCore` / `Deskling.Core`), permission-free system signals, app-shell plumbing and a
-StoreKit store. Used by mybackhurts and sunnysays. The Swift code is the reference; the C# port replays its
+pure scheduling (`DesklingCore` / `Deskling.Core`), permission-free system signals, app-shell plumbing, a
+StoreKit store, and the layer a desk companion app is built on (`DesklingCompanion` / `Deskling.Companion`, its UI
+and `tools/`). Used by mybackhurts and sunnysays. The Swift code is the reference; the C# port replays its
 conformance vectors.
 
 ## Layout
@@ -64,17 +65,29 @@ Step-by-step procedures for the multi-step changes live in `.agents/skills/` (sy
 - **Public API is deliberate.** Every public type gets a doc comment saying what it does, what it needs and what it
   never does (for example "never prompts for a permission"). Keep type names that mybackhurts already uses
   (`ReminderScheduler`, `SchedulerConfig`, `Clock`, `BusyStateProvider`…) so adopting the package is an import swap.
-- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+, no dependencies. `DesklingCore` stays Foundation-only; anything that imports
-  AppKit, CoreAudio, AVFoundation, IOKit or Carbon goes in `DesklingSystem` or `DesklingShell`.
+- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+ (desktop only: no iOS), no dependencies. `DesklingCore` stays Foundation-only and `DesklingCompanion`
+  Foundation and Observation only (both build on Linux); anything that imports AppKit, SwiftUI, CoreAudio, AVFoundation,
+  IOKit or Carbon goes in `DesklingSystem`, `DesklingShell` or `DesklingCompanionUI`.
+- **Package code never names an app.** No app's skins, phrase bank, product ids, palette or voices, and no app name in
+  a doc comment or a fixture: apps inject their bank, defaults, skins, palette and voices. The same goes for `tools/`,
+  which reads everything app-specific from the app's `companion.json`.
 - **No permission prompts, no network.** System signals read device and window state. If an API would prompt the user
   or touch the network, it doesn't belong here.
 - **Behavior changes are additive and vector-tested.** New scheduler behavior gets a config field whose default keeps
   every existing vector byte-identical, a unit test, a vector case, and the C# port in the same change
-  (`cd dotnet && dotnet test` tells you what to port).
+  (`cd dotnet && dotnet test` tells you what to port). New fields in a companion vector are optional and omitted at
+  their default, so the apps' committed vectors stay byte-identical; the C# loaders read an absent field as the default.
+- **`conformance/companion` pins mechanism, over fixtures.** The picker, cadence, quiet rules, coordinator, desktop
+  presence and rig are pinned here over `DesklingTesting`'s fixture bank, defaults and skins; each app pins its own
+  content (bank, defaults, picks, poses) with the same generators and replays.
+- **Rasters never shear.** A character's transforms are rotation, translation and uniform scale only, so an image part
+  draws under the same `affine` as a vector one. Pose vectors pin each layer's name, the six affine numbers and the
+  content kind, never pixels; the menu bar glyph stays a vector line drawing for every skin.
 - **C# mirrors Swift** folder for folder and file for file (`Sources/DesklingCore/Scheduling/ReminderScheduler.swift` ↔
-  `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Input/`. `DesklingSystem`
+  `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`; Companion folders:
+  `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`. `DesklingSystem`
   and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. Tests mirror the same folders, with
-  `Conformance/` in each Core test project.
+  `Conformance/` in each Core and Companion test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under
