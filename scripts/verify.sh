@@ -45,7 +45,7 @@ check() {
 skip() { notes+=("$1"); }
 
 swift='^Package\.swift$|^Sources/|^Tests/|^\.swift-format$'
-dotnet='^dotnet/|^conformance/'
+dotnet='^dotnet/|^conformance/|^Tests/DesklingCompanionTests/Resources/'
 tools='^tools/|^Tests/Fixtures/'
 
 vectors_current() {
@@ -102,7 +102,9 @@ if [ "$fast" = 0 ]; then
     else skip "swift test: needs macOS (push and run swift.yml)"; fi
   fi
   if touched "$dotnet"; then
-    if has dotnet; then check "dotnet build + test" dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -v q --nologo
+    if has dotnet; then
+      check "dotnet build + test (Core)" dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -v q --nologo
+      check "dotnet build + test (Companion)" dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -v q --nologo
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
 fi

@@ -1,6 +1,6 @@
 name: Copilot setup steps
 
-# Prepares GitHub Copilot's cloud coding agent (Ubuntu): the .NET 10 SDK and a restored Deskling.Core.Tests, so
+# Prepares GitHub Copilot's cloud coding agent (Ubuntu): the .NET 10 SDK and the restored test projects, so
 # `dotnet test` works once the agent's firewall is up. Swift needs macOS; the agent verifies it through swift.yml
 # (see AGENTS.md). Also runs when edited, so a broken setup shows up in the PR.
 on:
@@ -31,5 +31,7 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore Deskling.Core.Tests
-        run: dotnet restore dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj
+      - name: Restore the test projects
+        run: |
+          dotnet restore dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj
+          dotnet restore dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj

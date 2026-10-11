@@ -57,7 +57,7 @@ jobs:
             echo "v$v already exists at $existing (tags are protected and never move): release the next version"; exit 1
           fi
 
-  # Deskling.Core: tests and the package, on Linux.
+  # Deskling.Core, Deskling.Companion and Deskling.Testing: tests and the packages, on Linux.
   core:
     needs: version
     runs-on: ubuntu-latest
@@ -69,12 +69,16 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Test
-        run: dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -c Release
+        run: |
+          dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -c Release
+          dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -c Release
 
-      - name: Pack Deskling.Core
-        run: >
-          dotnet pack dotnet/Deskling.Core/Deskling.Core.csproj -c Release
-          -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+      - name: Pack Deskling.Core, Deskling.Companion, Deskling.Testing
+        run: |
+          for project in Deskling.Core Deskling.Companion Deskling.Testing; do
+            dotnet pack "dotnet/$project/$project.csproj" -c Release \
+              -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+          done
 
       - uses: actions/upload-artifact@v7
         with:

@@ -31,20 +31,20 @@ public sealed partial record CharacterArt
 
     private static CharacterArt ArtFile(JsonElement root)
     {
-        var viewBox = Numbers(root.GetProperty("viewBox"));
+        var viewBox = Numbers(Get(root, "viewBox"));
         if (viewBox.Length != 2)
             throw new InvalidDataException("viewBox needs 2 numbers");
-        var pivots = root.GetProperty("pivots").EnumerateObject().ToDictionary(p => p.Name, p => PointOf(p.Value, $"pivot '{p.Name}'"));
-        var parts = root.GetProperty("parts").EnumerateObject().ToDictionary(p => p.Name, p => Content(p.Value, p.Name));
-        var glyph = root.GetProperty("glyph");
+        var pivots = Get(root, "pivots").EnumerateObject().ToDictionary(p => p.Name, p => PointOf(p.Value, $"pivot '{p.Name}'"));
+        var parts = Get(root, "parts").EnumerateObject().ToDictionary(p => p.Name, p => Content(p.Value, p.Name));
+        var glyph = Get(root, "glyph");
         return new CharacterArt(
-            new SkinId(root.GetProperty("skin").GetString()!),
+            new SkinId(Get(root, "skin").GetString()!),
             new Size(viewBox[0], viewBox[1]),
             pivots,
             parts,
-            RigOf(root.GetProperty("rig")),
-            glyph.GetProperty("size").GetDouble(),
-            glyph.GetProperty("frames").EnumerateObject().ToDictionary(p => p.Name, p => (IReadOnlyList<PathShape>)ShapeList(p.Value))
+            RigOf(Get(root, "rig")),
+            Get(glyph, "size").GetDouble(),
+            Get(glyph, "frames").EnumerateObject().ToDictionary(p => p.Name, p => (IReadOnlyList<PathShape>)ShapeList(p.Value))
         );
     }
 
@@ -52,22 +52,22 @@ public sealed partial record CharacterArt
     {
         if (e.ValueKind == JsonValueKind.Array)
             return new PartContent.Vector(ShapeList(e));
-        var frame = Numbers(e.GetProperty("frame"));
+        var frame = Numbers(Get(e, "frame"));
         if (frame.Length != 4)
             throw new InvalidDataException($"part '{name}': frame needs 4 numbers");
-        return new PartContent.Image(e.GetProperty("image").GetString()!, new Rect(frame[0], frame[1], frame[2], frame[3]));
+        return new PartContent.Image(Get(e, "image").GetString()!, new Rect(frame[0], frame[1], frame[2], frame[3]));
     }
 
     private static PathShape[] ShapeList(JsonElement e) => e.EnumerateArray().Select(ShapeOf).ToArray();
 
     private static PathShape ShapeOf(JsonElement e) =>
         new(
-            e.GetProperty("d").EnumerateArray().Select(CommandOf).ToArray(),
+            Get(e, "d").EnumerateArray().Select(CommandOf).ToArray(),
             Role(e, "fill"),
             Role(e, "stroke"),
-            e.GetProperty("strokeWidth").GetDouble(),
-            e.GetProperty("opacity").GetDouble(),
-            e.GetProperty("evenOdd").GetBoolean()
+            Get(e, "strokeWidth").GetDouble(),
+            Get(e, "opacity").GetDouble(),
+            Get(e, "evenOdd").GetBoolean()
         );
 
     private static PathCommand CommandOf(JsonElement e)
@@ -103,39 +103,39 @@ public sealed partial record CharacterArt
 
     private static Rig RigOf(JsonElement e)
     {
-        var blink = e.GetProperty("blink");
-        var bubble = e.GetProperty("bubble");
+        var blink = Get(e, "blink");
+        var bubble = Get(e, "bubble");
         return new Rig(
-            e.GetProperty("period").GetDouble(),
-            e.GetProperty("stillTime").GetDouble(),
-            Strings(e.GetProperty("always")),
-            Group(e.GetProperty("head")),
-            Group(e.GetProperty("stem")),
-            Group(e.GetProperty("pulse")),
-            new Blink(blink.GetProperty("duration").GetDouble(), Numbers(blink.GetProperty("intervals")), blink.GetProperty("closedEyes").GetString()!),
-            e.GetProperty("moods").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => MoodRigOf(p.Value)),
-            e.GetProperty("glyph").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => (IReadOnlyList<string>)Strings(p.Value)),
-            new BubbleAnchor(bubble.GetProperty("pivot").GetString()!, bubble.GetProperty("tuck").GetDouble())
+            Get(e, "period").GetDouble(),
+            Get(e, "stillTime").GetDouble(),
+            Strings(Get(e, "always")),
+            Group(Get(e, "head")),
+            Group(Get(e, "stem")),
+            Group(Get(e, "pulse")),
+            new Blink(Get(blink, "duration").GetDouble(), Numbers(Get(blink, "intervals")), Get(blink, "closedEyes").GetString()!),
+            Get(e, "moods").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => MoodRigOf(p.Value)),
+            Get(e, "glyph").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => (IReadOnlyList<string>)Strings(p.Value)),
+            new BubbleAnchor(Get(bubble, "pivot").GetString()!, Get(bubble, "tuck").GetDouble())
         );
     }
 
     private static MoodRig MoodRigOf(JsonElement e) =>
         new(
-            e.GetProperty("eyes").GetString()!,
-            Strings(e.GetProperty("mouth")),
-            e.GetProperty("mouthRate").GetDouble(),
-            Strings(e.GetProperty("headExtras")),
-            Strings(e.GetProperty("overlays")),
-            e.GetProperty("blink").GetBoolean(),
-            e.GetProperty("droop").GetDouble(),
-            e.GetProperty("sink").GetDouble(),
-            e.GetProperty("sway").GetDouble(),
-            e.GetProperty("swayPeriod").GetDouble(),
-            e.GetProperty("pulse").GetDouble()
+            Get(e, "eyes").GetString()!,
+            Strings(Get(e, "mouth")),
+            Get(e, "mouthRate").GetDouble(),
+            Strings(Get(e, "headExtras")),
+            Strings(Get(e, "overlays")),
+            Get(e, "blink").GetBoolean(),
+            Get(e, "droop").GetDouble(),
+            Get(e, "sink").GetDouble(),
+            Get(e, "sway").GetDouble(),
+            Get(e, "swayPeriod").GetDouble(),
+            Get(e, "pulse").GetDouble()
         );
 
     private static RigGroup Group(JsonElement e) =>
-        new(e.GetProperty("pivot").GetString()!, Strings(e.GetProperty("parts")), e.GetProperty("follow").GetDouble());
+        new(Get(e, "pivot").GetString()!, Strings(Get(e, "parts")), Get(e, "follow").GetDouble());
 
     private static Mood MoodNamed(string name) => Moods.Parse(name) ?? throw new InvalidDataException($"unknown mood '{name}'");
 
@@ -144,6 +144,12 @@ public sealed partial record CharacterArt
         var numbers = Numbers(e);
         return numbers.Length == 2 ? new Point(numbers[0], numbers[1]) : throw new InvalidDataException($"{what} needs 2 numbers");
     }
+
+    /// <summary>The member <paramref name="name"/>, or an error that names it.</summary>
+    private static JsonElement Get(JsonElement e, string name) =>
+        e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var value)
+            ? value
+            : throw new InvalidDataException($"missing '{name}'");
 
     private static double[] Numbers(JsonElement e) => e.EnumerateArray().Select(n => n.GetDouble()).ToArray();
 
