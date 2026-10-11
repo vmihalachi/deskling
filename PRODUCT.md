@@ -37,7 +37,8 @@ Products: `DesklingCore` / `Deskling.Core` (scheduler, clock/idle/busy protocols
 `DesklingCompanion` / `Deskling.Companion` (a desk companion's phrases, cadence, quiet rules, settings, coordinator,
 desktop presence, skins and vector or raster character rigs), `DesklingSystem` / `Deskling.Windows` (idle, busy, full-screen, power, audio output, screen lock, appearance),
 `DesklingShell` / `Deskling.Windows` (window manager, login item, notifications, global hotkey, tray icon, single
-instance, drawing helpers), `DesklingStore` (StoreKit 2, macOS only), `DesklingTesting` / `Deskling.Testing` (fakes, fixtures, conformance generators and replays).
+instance, drawing helpers; on the Mac also the status item, speech and chimes), `DesklingCompanionUI` (macOS: the
+companion's views, desktop presence and delivery), `DesklingStore` (StoreKit 2, macOS only), `DesklingTesting` / `Deskling.Testing` (fakes, fixtures, conformance generators and replays).
 macOS 14+, .NET 10. Version 0.x: minor versions may change public types. The package ships no strings.
 
 ## Brand Commitments
