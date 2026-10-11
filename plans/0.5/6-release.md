@@ -17,6 +17,13 @@
 > starts with `#if os(macOS)`, so the iOS step is `platforms` plus the `swift.yml` simulator build. `CharacterView`
 > draws image parts through `Bundle.image(forResource:)` (SwiftUI's `Image(_:bundle:)` draws nothing in a `Canvas` for
 > a dotted asset name); on iOS that will need `UIImage(named:in:with:)`.
+>
+> From sequence 5 (done 2026-10-11, branch `0.5-tools`): `tools/` is complete (`tools/README.md` has the adoption
+> steps for sunnysays' M9 and Pagliacci's M0). `companion.json` gained a few optional keys over the README's list:
+> `l10n.{phraseComment,flavorNotes,stringsdataFilter}`, a structured `fonts` section and
+> `screenshots.store.{font,noteFont,palette}`. A draft of sunnysays' file is `tools/tests/sunnysays.companion.json`;
+> both it and `../pagliacci/companion.json` validate. Not run end to end here: `fonts.py` (needs fontTools and a
+> download) and `store-screenshots.py` (needs Pillow); their tests skip without them.
 
 ## Read only these
 

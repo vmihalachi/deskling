@@ -116,6 +116,7 @@ generators rewrote sunnysays' picker, quiet, cadence, desktop, phrases and setti
 Sequence 3 (2026-10-11) shipped `Deskling.Companion`, `Deskling.Testing` and `Deskling.Companion.Tests`; every
 companion vector replays on .NET.
 Sequence 4 (2026-10-11) shipped the Shell status item and speech and `DesklingCompanionUI`.
+Sequence 5 (2026-10-11) shipped `tools/`: `companion.json` and its schema, the moved scripts, the hook and the skills.
 
 ### Skins/ (`SkinCatalog.swift`)
 
