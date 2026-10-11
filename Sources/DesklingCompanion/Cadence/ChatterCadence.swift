@@ -27,4 +27,11 @@ public enum ChatterCadence {
             postponeDuringCalls: true, postponeDuringFullScreen: hushInFullScreen, busyGrace: busyGrace,
             intervalJitter: frequency.jitter)
     }
+
+    public static func config(for settings: CompanionSettings) -> SchedulerConfig {
+        config(
+            frequency: settings.frequency, activeStartMinute: settings.activeStartMinute,
+            activeEndMinute: settings.activeEndMinute, activeWeekdays: settings.activeWeekdays,
+            quietHours: settings.quietHours, hushInFullScreen: settings.hushInFullScreen)
+    }
 }

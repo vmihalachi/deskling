@@ -1,5 +1,6 @@
 import DesklingCompanion
 import DesklingCore
+import DesklingTesting
 import XCTest
 
 final class ChatterCadenceTests: XCTestCase {
@@ -26,5 +27,14 @@ final class ChatterCadenceTests: XCTestCase {
         XCTAssertTrue(config.postponeDuringCalls)
         XCTAssertFalse(config.postponeDuringFullScreen)
         XCTAssertEqual(config.busyGrace, 30)
+    }
+
+    func testDefaultSettingsGiveTheDefaultConfig() {
+        let settings = CompanionSettings(store: InMemorySettingsStore(), defaults: .fixture)
+        let config = ChatterCadence.config(for: settings)
+        XCTAssertEqual(config.interval, 1800)
+        XCTAssertEqual(config.intervalJitter, 600)
+        XCTAssertEqual(config.activeWeekdays, [2, 3, 4, 5, 6])
+        XCTAssertTrue(config.postponeDuringFullScreen)
     }
 }

@@ -18,10 +18,15 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   phrase to the languages it exists in), `PhraseBank` (a container: the app injects its lines), `PhraseContext`
   (skin and language required) and `PhrasePicker` (drops phrases outside the context's language first).
   `Cadence/`: `Frequency`, `ChatterCadence`. `Rules/`: `Snapshot`, `Channels`, `Trigger`, `ChannelPlan`,
-  `SkipReason`, `Outcome`, `Manners`, `QuietRules`, `Mood`, `CompanionState`. Moved from sunnysays with the same raw
-  values; `Phrase.Kind.line(english:)` is now `line(source:)`.
-- Swift: `DesklingTesting` depends on `DesklingCompanion` and has `Fixtures/`: `PhraseBank.fixture` and `FixtureIDs`
-  (flavors a/b/c, skins `fixture-vector` and `fixture-raster`).
+  `SkipReason`, `Outcome`, `Manners`, `QuietRules`, `Mood`, `CompanionState`. `Settings/`: `SettingsKeys` (the 23
+  generic keys, same strings), `CompanionDefaults` (the package's numbers; skin, flavors and shortcut required),
+  `CompanionSettings` (an `@Observable open class` with the 23 write-through properties and `manners`, which an app
+  subclasses to add its own keys), `AppearanceSetting`, `DesktopSize`, `DesktopPosition`. `Coordination/`:
+  `Delivery`, `CompanionCoordinator` (bank and language injected). `Desktop/`: `DesktopPresence`. `PhraseTiming`
+  spaces the parts of a sequence. Moved from sunnysays with the same raw values and keys;
+  `Phrase.Kind.line(english:)` is now `line(source:)`.
+- Swift: `DesklingTesting` depends on `DesklingCompanion` and has `Fixtures/`: `PhraseBank.fixture`, `FixtureIDs`
+  (flavors a/b/c, skins `fixture-vector` and `fixture-raster`) and `CompanionDefaults.fixture`.
 
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
