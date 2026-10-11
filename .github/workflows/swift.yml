@@ -1,7 +1,8 @@
 name: Swift
 
 # Builds and tests the Swift package (the reference implementation) and checks that the committed
-# conformance vectors are current. macOS minutes bill at 10x, so the paths stay narrow.
+# conformance vectors are current. macOS minutes bill at 10x, so the paths stay narrow. The linux job proves
+# the pure products (Core, Companion, Testing) build and pass without Apple frameworks.
 on:
   push:
     branches:
@@ -55,3 +56,16 @@ jobs:
           scripts/conformance.sh
           git add -N conformance
           git diff --exit-code --stat -- conformance
+
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build DesklingCompanion
+        run: swift build --product DesklingCompanion
+
+      - name: Test DesklingCompanion
+        run: swift test --filter DesklingCompanionTests

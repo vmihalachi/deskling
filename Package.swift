@@ -10,8 +10,10 @@ import PackageDescription
 //                    CoreGraphics, IOKit), all without permission prompts.
 //   DesklingShell    Menu bar app plumbing: window manager with the activation-policy dance, login item,
 //                    launch context, notification poster, global hotkey, drawing helpers.
+//   DesklingCompanion  Foundation and Observation only. The pure core of a desk companion: the phrase bank and
+//                    picker, chatter cadence, quiet rules and mood. Builds and tests anywhere Swift runs.
 //   DesklingStore    StoreKit 2 purchase store for unlockables and tips, caching ownership in a SettingsStore.
-//   DesklingTesting  Fakes for every protocol plus conformance-vector helpers, for the apps' test targets.
+//   DesklingTesting  Fakes for every protocol, fixture data and conformance-vector helpers, for the apps' test targets.
 let package = Package(
     name: "Deskling",
     platforms: [.macOS(.v14)],
@@ -19,6 +21,7 @@ let package = Package(
         .library(name: "DesklingCore", targets: ["DesklingCore"]),
         .library(name: "DesklingSystem", targets: ["DesklingSystem"]),
         .library(name: "DesklingShell", targets: ["DesklingShell"]),
+        .library(name: "DesklingCompanion", targets: ["DesklingCompanion"]),
         .library(name: "DesklingStore", targets: ["DesklingStore"]),
         .library(name: "DesklingTesting", targets: ["DesklingTesting"]),
     ],
@@ -26,9 +29,11 @@ let package = Package(
         .target(name: "DesklingCore"),
         .target(name: "DesklingSystem", dependencies: ["DesklingCore"]),
         .target(name: "DesklingShell", dependencies: ["DesklingCore"]),
+        .target(name: "DesklingCompanion", dependencies: ["DesklingCore"]),
         .target(name: "DesklingStore", dependencies: ["DesklingCore"]),
-        .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore"]),
+        .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore", "DesklingCompanion"]),
         .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore", "DesklingTesting"]),
+        .testTarget(name: "DesklingCompanionTests", dependencies: ["DesklingCompanion", "DesklingCore", "DesklingTesting"]),
         // The three below are macOS-only (every file is wrapped in `#if os(macOS)`), so they build empty on Linux.
         .testTarget(name: "DesklingSystemTests", dependencies: ["DesklingSystem", "DesklingCore"]),
         .testTarget(name: "DesklingShellTests", dependencies: ["DesklingShell", "DesklingCore"]),

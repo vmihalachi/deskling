@@ -11,7 +11,7 @@ conformance vectors.
 
 | Path | Contents |
 |---|---|
-| `Package.swift`, `Sources/Deskling{Core,System,Shell,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`. |
+| `Package.swift`, `Sources/Deskling{Core,System,Shell,Companion,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`. `DesklingCompanion` imports Foundation and Observation only: `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`; it and `DesklingTesting` (`Fixtures/`) build on Linux. |
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
 | `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |

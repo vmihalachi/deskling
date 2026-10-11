@@ -11,6 +11,18 @@ The 0.5.0 companion layer is being built in six sequences (`plans/0.5/`): a type
 skins), `DesklingCompanionUI`, Shell speech and status item, `Deskling.Testing`, `tools/`. Breaking changes land here as
 each sequence commits; the migration list is in `plans/0.5/README.md`.
 
+### Added
+- Swift: `DesklingCompanion`, the pure core of a desk companion (Foundation and Observation only; builds and tests
+  on Linux, now a job in `swift.yml`). `Phrases/`: `Tag`, `FlavorID` and `SkinID` (app-named string ids), `Phrase`
+  (a line, a tune, or a `sequence` of two or more parts with keys `phrase.<id>.1`, `.2`…; `languages` scopes a
+  phrase to the languages it exists in), `PhraseBank` (a container: the app injects its lines), `PhraseContext`
+  (skin and language required) and `PhrasePicker` (drops phrases outside the context's language first).
+  `Cadence/`: `Frequency`, `ChatterCadence`. `Rules/`: `Snapshot`, `Channels`, `Trigger`, `ChannelPlan`,
+  `SkipReason`, `Outcome`, `Manners`, `QuietRules`, `Mood`, `CompanionState`. Moved from sunnysays with the same raw
+  values; `Phrase.Kind.line(english:)` is now `line(source:)`.
+- Swift: `DesklingTesting` depends on `DesklingCompanion` and has `Fixtures/`: `PhraseBank.fixture` and `FixtureIDs`
+  (flavors a/b/c, skins `fixture-vector` and `fixture-raster`).
+
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
   `set(…:forKey:)` and `remove(forKey:)`), `InMemorySettingsStore` and `UserDefaultsSettingsStore` are in
