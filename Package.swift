@@ -35,7 +35,9 @@ let package = Package(
         .target(name: "DesklingSystem", dependencies: ["DesklingCore"]),
         .target(name: "DesklingShell", dependencies: ["DesklingCore"]),
         .target(name: "DesklingCompanion", dependencies: ["DesklingCore"]),
-        .target(name: "DesklingCompanionUI", dependencies: ["DesklingCompanion", "DesklingCore", "DesklingSystem", "DesklingShell"]),
+        .target(
+            name: "DesklingCompanionUI",
+            dependencies: ["DesklingCompanion", "DesklingCore", "DesklingSystem", "DesklingShell", "DesklingStore"]),
         .target(name: "DesklingStore", dependencies: ["DesklingCore"]),
         .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore", "DesklingCompanion"]),
         .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore", "DesklingTesting"]),
