@@ -113,6 +113,8 @@ Sequence 1 spiked cross-module `@Observable` subclassing first: it passed (macOS
 class design above is what shipped and the `CompanionSettingsProviding` fallback was not needed.
 Sequence 2 (2026-10-11) shipped `Figures/`, `Skins/`, the generators and `conformance/companion/`; the moved
 generators rewrote sunnysays' picker, quiet, cadence, desktop, phrases and settings vectors byte for byte.
+Sequence 3 (2026-10-11) shipped `Deskling.Companion`, `Deskling.Testing` and `Deskling.Companion.Tests`; every
+companion vector replays on .NET.
 
 ### Skins/ (`SkinCatalog.swift`)
 

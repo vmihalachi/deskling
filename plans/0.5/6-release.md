@@ -1,6 +1,14 @@
 # 6: iOS platform, docs, site, changelog, the M9 dry run, `v0.5.0`
 
 > Sequence 6 of `README.md`. Needs 1–5. One session, macOS. Use the `release` skill for the version mechanics.
+>
+> From sequence 3 (done 2026-10-11, branch `0.5-dotnet`): `Deskling.Companion` and `Deskling.Testing` exist, pack, and
+> replay every `conformance/companion` vector (`dotnet/Deskling.Companion.Tests`); `release.yml` packs both beside
+> `Deskling.Core`. C# names that differ from the Swift: `FlavorId`/`SkinId`, `PartContent.Vector` (Swift `.shapes`),
+> `IDrawableCharacter`, `Transform.Then` (`concatenating`), `PhraseTiming.PartBeatSeconds`/`PartDelaySeconds`, a
+> `TimeZoneInfo` where Swift takes a `Calendar`; no `VoiceId` yet (Swift's `VoiceID` arrives in Shell with sequence 4).
+> Still open for the owner before tagging: the NuGet Trusted Publishing policy and the `Deskling.` prefix reservation
+> must cover `Deskling.Companion` and `Deskling.Testing`.
 
 ## Read only these
 
