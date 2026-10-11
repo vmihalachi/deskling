@@ -12,10 +12,13 @@ The C# side mirrors Swift folder for folder and file for file. Port in the same 
 | Swift | C# |
 |---|---|
 | `Sources/DesklingCore/<Folder>/<Name>.swift` | `dotnet/Deskling.Core/<Folder>/<Name>.cs` |
+| `Sources/DesklingCompanion/<Folder>/<Name>.swift` | `dotnet/Deskling.Companion/<Folder>/<Name>.cs` |
+| `Sources/DesklingTesting/<Folder>/<Name>.swift` | `dotnet/Deskling.Testing/<Folder>/<Name>.cs` (generators stay Swift; .NET gets the replay bodies in `Conformance/Companion/`) |
 | `Sources/DesklingSystem/<Name>.swift` | `dotnet/Deskling.Windows/System/<Name>.cs` |
 | `Sources/DesklingShell/<Name>.swift` | `dotnet/Deskling.Windows/Shell/<Name>.cs` |
 | `Tests/DesklingCoreTests/<Folder>/<Name>Tests.swift` | `dotnet/Deskling.Core.Tests/<Folder>/<Name>Tests.cs` |
 | `Tests/DesklingCoreTests/Conformance/` | `dotnet/Deskling.Core.Tests/Conformance/` |
+| `Tests/DesklingCompanionTests/<Folder>/<Name>Tests.swift` | `dotnet/Deskling.Companion.Tests/<Folder>/<Name>Tests.cs` |
 
 System and Shell names follow the platform where the concept differs (`ScreenLockWatcher` ↔ `SessionLockWatcher`).
 Some files exist on one side only (`DesklingStore`, `TrayIconHost`); don't invent a twin for those.
@@ -36,7 +39,8 @@ Some files exist on one side only (`DesklingStore`, `TrayIconHost`); don't inven
 ## Verify
 
 ```sh
-cd dotnet && dotnet test Deskling.Core.Tests   # replays every vector; failures name the vector and step
+cd dotnet && dotnet test Deskling.Core.Tests        # replays conformance/scheduler; failures name the vector and step
+dotnet test Deskling.Companion.Tests               # replays conformance/companion
 dotnet format whitespace dotnet --folder
 ```
 

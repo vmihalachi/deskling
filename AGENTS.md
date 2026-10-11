@@ -16,8 +16,10 @@ conformance vectors.
 | `Tests/Fixtures/characters/` | Art sources for the fixture skins (`fixture-vector`: SVGs; `fixture-raster`: layer PNGs), compiled by `scripts/fixture-art.sh` into `DesklingTesting/Fixtures/Fixture*Art.swift` and `conformance/companion/characters/`. |
 | `conformance/` | Generated vectors (`scheduler/`, `companion/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
+| `dotnet/Deskling.Companion/` | Pure C# mirror of `DesklingCompanion`, folder for folder, plus the loaders `Phrases/PhraseBankJson.cs` and `Figures/CharacterArtJson.cs`. `IsAotCompatible`. |
+| `dotnet/Deskling.Testing/` | Mirrors `DesklingTesting` for .NET apps' test projects (no xunit): mocks, `Conformance/` (root, support, `Companion/*Replay.cs` bodies) and `Fixtures/` loading `conformance/companion/`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
-| `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |
+| `dotnet/Deskling.Core.Tests/`, `dotnet/Deskling.Companion.Tests/` | xUnit; `Conformance/` replays every vector (`scheduler/`, `companion/`). |
 | `dotnet/Deskling.Windows.Tests/` | xUnit for `Deskling.Windows`; runs only in `dotnet.yml`'s windows job. |
 | `tools/` | Python tools for companion apps (standard library only): `character.py` compiles a skin's art and rig. Tests in `tools/tests/`. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `fixture-art.sh` (compiles the fixture skins; `--check`), `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
@@ -32,6 +34,7 @@ swift build && swift test                      # needs macOS (DesklingSystem/She
 DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'   # or scripts/conformance.sh
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
+cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, the same anywhere
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 python3 tools/tests/test_character.py          # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything

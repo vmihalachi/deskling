@@ -14,10 +14,11 @@ requests aren't monitored, and releases follow what the apps need.
 | Swift product | .NET package | What it does |
 |---|---|---|
 | `DesklingCore` | `Deskling.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. `KeyShortcut`. No OS or UI dependencies, so it builds anywhere Swift or .NET runs. |
+| `DesklingCompanion` | `Deskling.Companion` | The pure core of a desk companion: a phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence presets, quiet rules and mood, write-through settings an app subclasses, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or raster character art. The app injects its lines, defaults, skins and palette; the .NET side loads them from the JSON the Swift side writes (`PhraseBank.Parse`, `CharacterArt.Parse`). |
 | `DesklingSystem` | `Deskling.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
 | `DesklingShell` | `Deskling.Windows` | Menu bar / tray app plumbing. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a global hotkey that needs no Accessibility permission (Carbon on macOS, `RegisterHotKey` on Windows), a floating desktop window (macOS), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
 | `DesklingStore` | `Deskling.Core` (`Store/`) + `Deskling.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
-| `DesklingTesting` | — | Fakes for every protocol and helpers for the shared conformance vectors, for the apps' own test targets. |
+| `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). |
 
 Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
 
@@ -33,7 +34,9 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 
 ```sh
 dotnet add package Deskling.Core
+dotnet add package Deskling.Companion  # the desk companion layer
 dotnet add package Deskling.Windows   # net10.0-windows; the tray, hotkey, idle and busy services
+dotnet add package Deskling.Testing   # in test projects: fakes, fixtures, vector replays
 ```
 
 ## Using it
