@@ -68,6 +68,13 @@ func stamp(_ image: CGImage) -> CGImage {
     return context.makeImage()!
 }
 
+// A fresh app has no AppIcon-Dev yet: start it from AppIcon's Contents.json (the same file names).
+try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+let contents = target.appendingPathComponent("Contents.json")
+if !FileManager.default.fileExists(atPath: contents.path) {
+    try FileManager.default.copyItem(at: source.appendingPathComponent("Contents.json"), to: contents)
+}
+
 let files = try FileManager.default.contentsOfDirectory(atPath: source.path).filter { $0.hasSuffix(".png") }.sorted()
 for name in files {
     guard let input = CGImageSourceCreateWithURL(source.appendingPathComponent(name) as CFURL, nil),
