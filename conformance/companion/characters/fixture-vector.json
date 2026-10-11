@@ -1,0 +1,355 @@
+{
+  "glyph": {
+    "frames": {
+      "asleep": [
+        {
+          "d": [["M", 0, 0], ["L", 18, 0], ["L", 18, 18], ["L", 0, 18], ["Z"], ["M", 4, 4], ["L", 14, 4], ["L", 14, 14], ["L", 4, 14], ["Z"]],
+          "evenOdd": true,
+          "fill": "ink",
+          "opacity": 1,
+          "stroke": null,
+          "strokeWidth": 0
+        }
+      ],
+      "idle": [
+        {
+          "d": [["M", 14, 7], ["C", 14, 9.761, 11.761, 12, 9, 12], ["C", 6.239, 12, 4, 9.761, 4, 7], ["C", 4, 4.239, 6.239, 2, 9, 2], ["C", 11.761, 2, 14, 4.239, 14, 7], ["Z"]],
+          "evenOdd": false,
+          "fill": null,
+          "opacity": 1,
+          "stroke": "ink",
+          "strokeWidth": 1.25
+        },
+        {
+          "d": [["M", 9, 12], ["L", 9, 17]],
+          "evenOdd": false,
+          "fill": null,
+          "opacity": 1,
+          "stroke": "ink",
+          "strokeWidth": 1.25
+        }
+      ],
+      "talk-1": [
+        {
+          "d": [["M", 14, 7], ["C", 14, 9.761, 11.761, 12, 9, 12], ["C", 6.239, 12, 4, 9.761, 4, 7], ["C", 4, 4.239, 6.239, 2, 9, 2], ["C", 11.761, 2, 14, 4.239, 14, 7], ["Z"]],
+          "evenOdd": false,
+          "fill": null,
+          "opacity": 1,
+          "stroke": "ink",
+          "strokeWidth": 1.25
+        },
+        {
+          "d": [["M", 10.5, 8], ["C", 10.5, 8.828, 9.828, 9.5, 9, 9.5], ["C", 8.172, 9.5, 7.5, 8.828, 7.5, 8], ["C", 7.5, 7.172, 8.172, 6.5, 9, 6.5], ["C", 9.828, 6.5, 10.5, 7.172, 10.5, 8], ["Z"]],
+          "evenOdd": false,
+          "fill": "ink",
+          "opacity": 1,
+          "stroke": null,
+          "strokeWidth": 0
+        }
+      ],
+      "talk-2": [
+        {
+          "d": [["M", 14, 7], ["C", 14, 9.761, 11.761, 12, 9, 12], ["C", 6.239, 12, 4, 9.761, 4, 7], ["C", 4, 4.239, 6.239, 2, 9, 2], ["C", 11.761, 2, 14, 4.239, 14, 7], ["Z"]],
+          "evenOdd": false,
+          "fill": null,
+          "opacity": 1,
+          "stroke": "ink",
+          "strokeWidth": 1.25
+        },
+        {
+          "d": [["M", 7.5, 8], ["L", 10.5, 8]],
+          "evenOdd": false,
+          "fill": null,
+          "opacity": 1,
+          "stroke": "ink",
+          "strokeWidth": 1
+        }
+      ]
+    },
+    "size": 18
+  },
+  "parts": {
+    "cheeks": [
+      {
+        "d": [["M", 41, 44], ["C", 41, 45.657, 39.657, 47, 38, 47], ["C", 36.343, 47, 35, 45.657, 35, 44], ["C", 35, 42.343, 36.343, 41, 38, 41], ["C", 39.657, 41, 41, 42.343, 41, 44], ["Z"]],
+        "evenOdd": false,
+        "fill": "blush",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      },
+      {
+        "d": [["M", 65, 44], ["C", 65, 45.657, 63.657, 47, 62, 47], ["C", 60.343, 47, 59, 45.657, 59, 44], ["C", 59, 42.343, 60.343, 41, 62, 41], ["C", 63.657, 41, 65, 42.343, 65, 44], ["Z"]],
+        "evenOdd": false,
+        "fill": "blush",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "eyes-closed": [
+      {
+        "d": [["M", 41, 37], ["C", 43, 38.333, 45, 38.333, 47, 37], ["M", 53, 37], ["C", 55, 38.333, 57, 38.333, 59, 37]],
+        "evenOdd": false,
+        "fill": null,
+        "opacity": 1,
+        "stroke": "eye",
+        "strokeWidth": 1.2
+      }
+    ],
+    "eyes-open": [
+      {
+        "d": [["M", 46, 37], ["C", 46, 38.105, 45.105, 39, 44, 39], ["C", 42.895, 39, 42, 38.105, 42, 37], ["C", 42, 35.895, 42.895, 35, 44, 35], ["C", 45.105, 35, 46, 35.895, 46, 37], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      },
+      {
+        "d": [["M", 58, 37], ["C", 58, 38.105, 57.105, 39, 56, 39], ["C", 54.895, 39, 54, 38.105, 54, 37], ["C", 54, 35.895, 54.895, 35, 56, 35], ["C", 57.105, 35, 58, 35.895, 58, 37], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "eyes-wide": [
+      {
+        "d": [["M", 47, 36], ["C", 47, 37.657, 45.657, 39, 44, 39], ["C", 42.343, 39, 41, 37.657, 41, 36], ["C", 41, 34.343, 42.343, 33, 44, 33], ["C", 45.657, 33, 47, 34.343, 47, 36], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      },
+      {
+        "d": [["M", 59, 36], ["C", 59, 37.657, 57.657, 39, 56, 39], ["C", 54.343, 39, 53, 37.657, 53, 36], ["C", 53, 34.343, 54.343, 33, 56, 33], ["C", 57.657, 33, 59, 34.343, 59, 36], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "face": [
+      {
+        "d": [["M", 66, 40], ["C", 66, 47.732, 58.837, 54, 50, 54], ["C", 41.163, 54, 34, 47.732, 34, 40], ["C", 34, 32.268, 41.163, 26, 50, 26], ["C", 58.837, 26, 66, 32.268, 66, 40], ["Z"]],
+        "evenOdd": false,
+        "fill": "edge",
+        "opacity": 0.5,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "head": [
+      {
+        "d": [["M", 76, 40], ["C", 76, 54.359, 64.359, 66, 50, 66], ["C", 35.641, 66, 24, 54.359, 24, 40], ["C", 24, 25.641, 35.641, 14, 50, 14], ["C", 64.359, 14, 76, 25.641, 76, 40], ["Z"]],
+        "evenOdd": false,
+        "fill": "body",
+        "opacity": 1,
+        "stroke": "edge",
+        "strokeWidth": 1.5
+      }
+    ],
+    "mouth-flat": [
+      {
+        "d": [["M", 46, 46], ["L", 54, 46]],
+        "evenOdd": false,
+        "fill": null,
+        "opacity": 1,
+        "stroke": "eye",
+        "strokeWidth": 1.2
+      }
+    ],
+    "mouth-smile": [
+      {
+        "d": [["M", 45, 45], ["C", 46.112, 46.676, 47.989, 47.683, 50, 47.683], ["C", 52.011, 47.683, 53.888, 46.676, 55, 45]],
+        "evenOdd": false,
+        "fill": null,
+        "opacity": 1,
+        "stroke": "eye",
+        "strokeWidth": 1.2
+      }
+    ],
+    "mouth-talk-1": [
+      {
+        "d": [["M", 54, 46], ["C", 54, 47.657, 52.209, 49, 50, 49], ["C", 47.791, 49, 46, 47.657, 46, 46], ["C", 46, 44.343, 47.791, 43, 50, 43], ["C", 52.209, 43, 54, 44.343, 54, 46], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "mouth-talk-2": [
+      {
+        "d": [["M", 53, 46], ["C", 53, 46.828, 51.657, 47.5, 50, 47.5], ["C", 48.343, 47.5, 47, 46.828, 47, 46], ["C", 47, 45.172, 48.343, 44.5, 50, 44.5], ["C", 51.657, 44.5, 53, 45.172, 53, 46], ["Z"]],
+        "evenOdd": false,
+        "fill": "eye",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "stem": [
+      {
+        "d": [["M", 48, 60], ["L", 52, 60], ["L", 52, 92], ["L", 48, 92], ["Z"]],
+        "evenOdd": false,
+        "fill": "stem",
+        "opacity": 1,
+        "stroke": null,
+        "strokeWidth": 0
+      }
+    ],
+    "zz": [
+      {
+        "d": [["M", 72, 10], ["L", 80, 10], ["L", 72, 18], ["L", 80, 18]],
+        "evenOdd": false,
+        "fill": null,
+        "opacity": 0.8,
+        "stroke": "inkSoft",
+        "strokeWidth": 1.5
+      }
+    ]
+  },
+  "pivots": {
+    "base": [50, 92],
+    "face": [50, 40],
+    "neck": [50, 62]
+  },
+  "rig": {
+    "always": ["stem", "head", "face"],
+    "blink": {
+      "closedEyes": "eyes-closed",
+      "duration": 0.12,
+      "intervals": [4.2, 5.6, 3.8]
+    },
+    "bubble": {
+      "pivot": "face",
+      "tuck": 0.1
+    },
+    "glyph": {
+      "asleep": ["asleep"],
+      "awake": ["idle"],
+      "hushedForCall": ["idle"],
+      "hushedFullScreen": ["idle"],
+      "offHours": ["asleep"],
+      "shushed": ["idle"],
+      "talking": ["talk-1", "talk-2"]
+    },
+    "head": {
+      "follow": 1,
+      "parts": ["head", "face"],
+      "pivot": "neck"
+    },
+    "moods": {
+      "asleep": {
+        "blink": false,
+        "droop": 24,
+        "eyes": "eyes-closed",
+        "headExtras": ["cheeks"],
+        "mouth": ["mouth-flat"],
+        "mouthRate": 0,
+        "overlays": ["zz"],
+        "pulse": 0,
+        "sink": 4,
+        "sway": 1.5,
+        "swayPeriod": 6
+      },
+      "awake": {
+        "blink": true,
+        "droop": 0,
+        "eyes": "eyes-open",
+        "headExtras": ["cheeks"],
+        "mouth": ["mouth-smile"],
+        "mouthRate": 0,
+        "overlays": [],
+        "pulse": 0,
+        "sink": 0,
+        "sway": 4,
+        "swayPeriod": 4
+      },
+      "hushedForCall": {
+        "blink": true,
+        "droop": 0,
+        "eyes": "eyes-open",
+        "headExtras": [],
+        "mouth": ["mouth-flat"],
+        "mouthRate": 0,
+        "overlays": [],
+        "pulse": 0,
+        "sink": 0,
+        "sway": 0,
+        "swayPeriod": 4
+      },
+      "hushedFullScreen": {
+        "blink": true,
+        "droop": 0,
+        "eyes": "eyes-open",
+        "headExtras": [],
+        "mouth": ["mouth-flat"],
+        "mouthRate": 0,
+        "overlays": [],
+        "pulse": 0,
+        "sink": 0,
+        "sway": 0,
+        "swayPeriod": 4
+      },
+      "offHours": {
+        "blink": false,
+        "droop": 10,
+        "eyes": "eyes-closed",
+        "headExtras": [],
+        "mouth": ["mouth-flat"],
+        "mouthRate": 0,
+        "overlays": [],
+        "pulse": 0,
+        "sink": 0,
+        "sway": 0,
+        "swayPeriod": 4
+      },
+      "shushed": {
+        "blink": false,
+        "droop": 14,
+        "eyes": "eyes-open",
+        "headExtras": ["cheeks"],
+        "mouth": ["mouth-flat"],
+        "mouthRate": 0,
+        "overlays": [],
+        "pulse": 0,
+        "sink": 2,
+        "sway": 0,
+        "swayPeriod": 4
+      },
+      "talking": {
+        "blink": true,
+        "droop": 0,
+        "eyes": "eyes-wide",
+        "headExtras": ["cheeks"],
+        "mouth": ["mouth-talk-1", "mouth-talk-2"],
+        "mouthRate": 6,
+        "overlays": [],
+        "pulse": 0.03,
+        "sink": 0,
+        "sway": 4,
+        "swayPeriod": 4
+      }
+    },
+    "period": 4,
+    "pulse": {
+      "follow": 1,
+      "parts": ["head"],
+      "pivot": "face"
+    },
+    "stem": {
+      "follow": 0.25,
+      "parts": ["stem"],
+      "pivot": "base"
+    },
+    "stillTime": 1
+  },
+  "skin": "fixture-vector",
+  "viewBox": [100, 100]
+}

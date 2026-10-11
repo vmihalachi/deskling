@@ -9,7 +9,7 @@
 # Path → checks:
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
-#   tools/**, Tests/Fixtures/**         the tools' Python tests
+#   tools/**, Tests/Fixtures/**         the tools' Python tests, fixture art current
 #   version sources, site/**            every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -89,7 +89,9 @@ if touched "$dotnet"; then
   else skip "dotnet format: needs the .NET SDK"; fi
 fi
 if touched "$tools"; then
-  if has python3; then check "tools tests" python3 tools/tests/test_character.py
+  if has python3; then
+    check "tools tests" python3 tools/tests/test_character.py
+    check "fixture art current" scripts/fixture-art.sh --check
   else skip "tools tests: needs python3"; fi
 fi
 if [ "$fast" = 0 ]; then

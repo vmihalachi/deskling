@@ -8,11 +8,13 @@ on:
     paths:
       - "tools/**"
       - "Tests/Fixtures/**"
+      - "scripts/fixture-art.sh"
       - ".github/workflows/tools.yml"
   pull_request:
     paths:
       - "tools/**"
       - "Tests/Fixtures/**"
+      - "scripts/fixture-art.sh"
       - ".github/workflows/tools.yml"
   workflow_dispatch:
 
@@ -32,3 +34,6 @@ jobs:
 
       - name: Test character.py
         run: python3 tools/tests/test_character.py
+
+      - name: Check the fixture art is current
+        run: scripts/fixture-art.sh --check

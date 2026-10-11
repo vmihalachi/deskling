@@ -33,6 +33,16 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   require `bubble: {pivot, tuck}`. Raster skins draw parts from `layers/<part>@2x.png` (+ `@3x`), sized frame ×
   scale, and get an imageset per layer and Windows `scale-200`/`scale-300` PNGs. Tests in `tools/tests/`, run by
   the new `tools.yml`; fixture skins in `Tests/Fixtures/characters/`.
+- Swift: `DesklingCompanion` `Figures/`: `Point`, `Size`, `Rect`, `PaintRole` (an app-named string; `ink` for
+  glyphs), `PathCommand`, `PathShape`, `PartContent` (shapes, or an image asset placed in a frame), `Transform` (with
+  `affine`), `Pose` (`headExtras`, `overlays`), `CharacterArt` (`bubblePoint`), `Rig`, `RigGroup`, `Blink`,
+  `BubbleAnchor`, `MoodRig`, the `DrawableCharacter` protocol with `PlacedPart`, `RiggedCharacter` (`layers(for:)`;
+  `shapes(for:)` skips image parts) and `CharacterArtJSON` (the compiler's exact bytes, and a decoder that refuses a
+  rig naming missing parts). `Skins/`: `SkinEntry`, `SkinCatalog` (a locked, refunded or unknown skin draws the
+  default). Moved from sunnysays: `Shape` is now `PathShape`, `PaletteRole` is now `PaintRole`, `Character` is now
+  `DrawableCharacter`, and a mood's `cheeks`/`zz` flags are `headExtras`/`overlays` lists.
+- Swift: `DesklingTesting` `FixtureArt.vector`/`.raster` (compiled by `scripts/fixture-art.sh`) and
+  `SkinCatalog.fixture`.
 
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
