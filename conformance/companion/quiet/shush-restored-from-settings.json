@@ -1,0 +1,80 @@
+{
+  "name" : "shush-restored-from-settings",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ],
+    "shushedUntil" : "2026-09-28T10:30:00Z"
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : true,
+      "mood" : "shushed",
+      "repeat" : 29,
+      "shushedUntil" : "2026-09-28T10:30:00Z",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:30:00Z",
+          "chime" : false,
+          "id" : "shush-end-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "shushEnd"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 2,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

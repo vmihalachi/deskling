@@ -1,0 +1,57 @@
+{
+  "candidates" : [
+    "general-a1",
+    "general-a2",
+    "general-a3",
+    "general-b1",
+    "general-c1",
+    "night-1",
+    "weekend-1"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 23,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 7
+  },
+  "draws" : [
+    {
+      "id" : "general-a1",
+      "unit" : 0
+    },
+    {
+      "id" : "general-a2",
+      "unit" : 0.1
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.25
+    },
+    {
+      "id" : "general-c1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "night-1",
+      "unit" : 0.75
+    },
+    {
+      "id" : "weekend-1",
+      "unit" : 0.9
+    },
+    {
+      "id" : "weekend-1",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "saturday-night"
+}

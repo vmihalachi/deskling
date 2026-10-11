@@ -1,0 +1,58 @@
+{
+  "candidates" : [
+    "general-a1",
+    "general-a2",
+    "general-a3",
+    "general-b1",
+    "general-c1",
+    "morning-1",
+    "monday-1",
+    "tune-1"
+  ],
+  "context" : {
+    "chimeEnabled" : true,
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 10,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 2
+  },
+  "draws" : [
+    {
+      "id" : "general-a1",
+      "unit" : 0
+    },
+    {
+      "id" : "general-a2",
+      "unit" : 0.1
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.25
+    },
+    {
+      "id" : "general-c1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "morning-1",
+      "unit" : 0.75
+    },
+    {
+      "id" : "tune-1",
+      "unit" : 0.9
+    },
+    {
+      "id" : "tune-1",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "monday-morning-chime"
+}

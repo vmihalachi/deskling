@@ -12,9 +12,9 @@ conformance vectors.
 | Path | Contents |
 |---|---|
 | `Package.swift`, `Sources/Deskling{Core,System,Shell,Companion,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`. `DesklingCompanion` imports Foundation and Observation only: `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`; it and `DesklingTesting` (`Fixtures/`, and `Conformance/`: the suite and generators apps reuse) build on Linux. |
-| `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
+| `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/scheduler`, `DesklingCompanionTests/Conformance/` `conformance/companion`. |
 | `Tests/Fixtures/characters/` | Art sources for the fixture skins (`fixture-vector`: SVGs; `fixture-raster`: layer PNGs), compiled by `scripts/fixture-art.sh` into `DesklingTesting/Fixtures/Fixture*Art.swift` and `conformance/companion/characters/`. |
-| `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
+| `conformance/` | Generated vectors (`scheduler/`, `companion/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/` | xUnit; `Conformance/` replays every vector. |

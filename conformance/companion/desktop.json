@@ -1,0 +1,361 @@
+{
+  "bubbles" : [
+    {
+      "seconds" : 2,
+      "text" : ""
+    },
+    {
+      "seconds" : 2,
+      "text" : "Hi!"
+    },
+    {
+      "seconds" : 2,
+      "text" : "♪ hm hm hmm ♪"
+    },
+    {
+      "seconds" : 2,
+      "text" : "Ça va, ça va ? Encore un café ?"
+    },
+    {
+      "seconds" : 3.5,
+      "text" : "Some days the light comes in sideways and everything looks like a painting."
+    },
+    {
+      "seconds" : 5,
+      "text" : "A long line that keeps going. A long line that keeps going. A long line that keeps going. A long line that keeps going. A long line that keeps going. A long line that keeps going. A long line that keeps going. A long line that keeps going. "
+    }
+  ],
+  "hourHideSeconds" : 3600,
+  "partDelays" : [
+    {
+      "previousPart" : "Fixture joke, setup",
+      "seconds" : 1.2,
+      "spoken" : true
+    },
+    {
+      "previousPart" : "Fixture joke, setup",
+      "seconds" : 2,
+      "spoken" : false
+    },
+    {
+      "previousPart" : "",
+      "seconds" : 2,
+      "spoken" : false
+    },
+    {
+      "previousPart" : "A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. A long setup that keeps going. ",
+      "seconds" : 5,
+      "spoken" : false
+    }
+  ],
+  "reappearDelaySeconds" : 10,
+  "timelines" : [
+    {
+      "name" : "calm",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : false,
+          "shown" : false,
+          "t" : 20
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 40
+        }
+      ]
+    },
+    {
+      "name" : "call",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 0
+        },
+        {
+          "busy" : [
+            "call"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 20
+        },
+        {
+          "busy" : [
+            "call"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 25
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 26
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 34.9
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 35
+        }
+      ]
+    },
+    {
+      "name" : "fullScreen",
+      "steps" : [
+        {
+          "busy" : [
+            "fullScreen"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 9.5
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 10
+        }
+      ]
+    },
+    {
+      "name" : "callAndFullScreen",
+      "steps" : [
+        {
+          "busy" : [
+            "call",
+            "fullScreen"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+            "fullScreen"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 5
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 14
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 15
+        }
+      ]
+    },
+    {
+      "name" : "busyWhileDisabled",
+      "steps" : [
+        {
+          "busy" : [
+            "call"
+          ],
+          "enabled" : false,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 5
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 10
+        }
+      ]
+    },
+    {
+      "name" : "hideForAnHour",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "hideForSeconds" : 3600,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 1800
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 3599
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 3600
+        }
+      ]
+    },
+    {
+      "name" : "hideThenShowNow",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "hideForSeconds" : 3600,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "showNow" : true,
+          "shown" : true,
+          "t" : 60
+        }
+      ]
+    },
+    {
+      "name" : "callAtTheEndOfAHide",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "hideForSeconds" : 60,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+            "call"
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 55
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 60
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 65
+        }
+      ]
+    },
+    {
+      "name" : "hideWhileDisabled",
+      "steps" : [
+        {
+          "busy" : [
+
+          ],
+          "enabled" : false,
+          "hideForSeconds" : 60,
+          "shown" : false,
+          "t" : 0
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : false,
+          "t" : 30
+        },
+        {
+          "busy" : [
+
+          ],
+          "enabled" : true,
+          "shown" : true,
+          "t" : 60
+        }
+      ]
+    }
+  ]
+}

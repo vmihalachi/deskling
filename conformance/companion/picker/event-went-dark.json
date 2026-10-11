@@ -1,0 +1,52 @@
+{
+  "candidates" : [
+    "went-dark-1"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "event" : "wentDark",
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 18,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 2
+  },
+  "draws" : [
+    {
+      "id" : "went-dark-1",
+      "unit" : 0
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.25
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.75
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.9
+    },
+    {
+      "id" : "went-dark-1",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "event-went-dark"
+}

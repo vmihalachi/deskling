@@ -1,0 +1,1170 @@
+{
+  "glyph" : [
+    {
+      "frame" : 0,
+      "mood" : "awake",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "talking",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 10.500000 8.000000 C 10.500000 8.828000 9.828000 9.500000 9.000000 9.500000 C 8.172000 9.500000 7.500000 8.828000 7.500000 8.000000 C 7.500000 7.172000 8.172000 6.500000 9.000000 6.500000 C 9.828000 6.500000 10.500000 7.172000 10.500000 8.000000 Z",
+          "evenOdd" : false,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    },
+    {
+      "frame" : 1,
+      "mood" : "talking",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 7.500000 8.000000 L 10.500000 8.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "shushed",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "asleep",
+      "shapes" : [
+        {
+          "d" : "M 0.000000 0.000000 L 18.000000 0.000000 L 18.000000 18.000000 L 0.000000 18.000000 Z M 4.000000 4.000000 L 14.000000 4.000000 L 14.000000 14.000000 L 4.000000 14.000000 Z",
+          "evenOdd" : true,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "hushedForCall",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "hushedFullScreen",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "offHours",
+      "shapes" : [
+        {
+          "d" : "M 0.000000 0.000000 L 18.000000 0.000000 L 18.000000 18.000000 L 0.000000 18.000000 Z M 4.000000 4.000000 L 14.000000 4.000000 L 14.000000 14.000000 L 4.000000 14.000000 Z",
+          "evenOdd" : true,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    }
+  ],
+  "layers" : [
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "cheeks",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-open",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-smile",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        }
+      ],
+      "mood" : "awake",
+      "time" : 0
+    },
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            0.999985,
+            0.005393,
+            -0.005393,
+            0.999985,
+            0.496914,
+            -0.268329
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            1.017397,
+            0.021952,
+            -0.021952,
+            1.017397,
+            0.482828,
+            -1.788359
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "cheeks",
+          "transform" : [
+            0.999767,
+            0.021572,
+            -0.021572,
+            0.999767,
+            1.349085,
+            -1.064162
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-open",
+          "transform" : [
+            0.999767,
+            0.021572,
+            -0.021572,
+            0.999767,
+            1.349085,
+            -1.064162
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-talk-2",
+          "transform" : [
+            0.999767,
+            0.021572,
+            -0.021572,
+            0.999767,
+            1.349085,
+            -1.064162
+          ]
+        }
+      ],
+      "mood" : "talking",
+      "time" : 0.2
+    },
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            0.998135,
+            0.061049,
+            -0.061049,
+            0.998135,
+            5.709726,
+            -2.880828
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            0.970296,
+            0.241922,
+            -0.241922,
+            0.970296,
+            16.484371,
+            -8.25443
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-open",
+          "transform" : [
+            0.970296,
+            0.241922,
+            -0.241922,
+            0.970296,
+            16.484371,
+            -8.25443
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-smile",
+          "transform" : [
+            0.970296,
+            0.241922,
+            -0.241922,
+            0.970296,
+            16.484371,
+            -8.25443
+          ]
+        }
+      ],
+      "mood" : "shushed",
+      "time" : 0
+    },
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            0.993913,
+            0.110164,
+            -0.110164,
+            0.993913,
+            10.4394,
+            -4.948228
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            0.90409,
+            0.427343,
+            -0.427343,
+            0.90409,
+            31.29076,
+            -11.420697
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "cheeks",
+          "transform" : [
+            0.90409,
+            0.427343,
+            -0.427343,
+            0.90409,
+            31.29076,
+            -11.420697
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-closed",
+          "transform" : [
+            0.90409,
+            0.427343,
+            -0.427343,
+            0.90409,
+            31.29076,
+            -11.420697
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-talk-2",
+          "transform" : [
+            0.90409,
+            0.427343,
+            -0.427343,
+            0.90409,
+            31.29076,
+            -11.420697
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "zz",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        }
+      ],
+      "mood" : "asleep",
+      "time" : 1
+    },
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            0.999048,
+            0.043619,
+            -0.043619,
+            0.999048,
+            4.060573,
+            -2.093406
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            0.984808,
+            0.173648,
+            -0.173648,
+            0.984808,
+            11.525799,
+            -7.74049
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-closed",
+          "transform" : [
+            0.984808,
+            0.173648,
+            -0.173648,
+            0.984808,
+            11.525799,
+            -7.74049
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-talk-2",
+          "transform" : [
+            0.984808,
+            0.173648,
+            -0.173648,
+            0.984808,
+            11.525799,
+            -7.74049
+          ]
+        }
+      ],
+      "mood" : "offHours",
+      "time" : 0
+    },
+    {
+      "layers" : [
+        {
+          "kind" : "image",
+          "name" : "stem",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "head",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "eyes-closed",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "kind" : "image",
+          "name" : "mouth-smile",
+          "transform" : [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        }
+      ],
+      "mood" : "hushedForCall",
+      "time" : 4.15
+    }
+  ],
+  "poses" : [
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0.933781,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0.933781,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.009271,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.017634,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 24,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 25.299038,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 22.599629,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 24.311868,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0.313836,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.024271,
+        "sink" : 0
+      },
+      "time" : 0.05
+    }
+  ],
+  "skin" : "fixture-raster",
+  "still" : [
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      }
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 25.299038,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      }
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    }
+  ]
+}

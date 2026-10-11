@@ -1,0 +1,65 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalJitterSeconds" : 300,
+    "intervalSeconds" : 900,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+      13
+    ]
+  },
+  "fireMinutes" : [
+    12,
+    29,
+    46,
+    57,
+    137,
+    149,
+    168,
+    183,
+    202,
+    219,
+    237,
+    252,
+    266,
+    284,
+    302,
+    316,
+    328,
+    340,
+    356
+  ],
+  "minutes" : 420,
+  "name" : "quiet-hour-and-end-of-day",
+  "seed" : 3,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "frequency" : "chatty",
+    "hushInFullScreen" : true,
+    "quietHours" : [
+      13
+    ]
+  },
+  "start" : "2026-09-28T12:00:00Z",
+  "timeZone" : "UTC"
+}

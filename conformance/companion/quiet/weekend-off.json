@@ -1,0 +1,70 @@
+{
+  "name" : "weekend-off",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-10-03T11:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "offHours",
+      "repeat" : 30,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "event",
+      "advanceSeconds" : 0,
+      "argument" : "wentDark",
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "offHours",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

@@ -1,0 +1,53 @@
+{
+  "candidates" : [
+    "welcome-back-1",
+    "welcome-back-2"
+  ],
+  "context" : {
+    "chimeEnabled" : true,
+    "event" : "welcomeBack",
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 10,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 2
+  },
+  "draws" : [
+    {
+      "id" : "welcome-back-1",
+      "unit" : 0
+    },
+    {
+      "id" : "welcome-back-1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "welcome-back-1",
+      "unit" : 0.25
+    },
+    {
+      "id" : "welcome-back-2",
+      "unit" : 0.5
+    },
+    {
+      "id" : "welcome-back-2",
+      "unit" : 0.75
+    },
+    {
+      "id" : "welcome-back-2",
+      "unit" : 0.9
+    },
+    {
+      "id" : "welcome-back-2",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "event-welcome-back"
+}

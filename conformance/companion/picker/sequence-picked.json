@@ -1,0 +1,52 @@
+{
+  "candidates" : [
+    "joke-1"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "event" : "buttonPress",
+    "excludedIDs" : [
+      "button-press-1"
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 16,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 3
+  },
+  "draws" : [
+    {
+      "id" : "joke-1",
+      "unit" : 0
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.25
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.75
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.9
+    },
+    {
+      "id" : "joke-1",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "sequence-picked"
+}

@@ -1,0 +1,132 @@
+{
+  "name" : "ambient-monday-morning",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:35:00Z",
+          "chime" : false,
+          "id" : "morning-1",
+          "index" : 34,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-28T10:59:00Z",
+          "chime" : false,
+          "id" : "general-b1",
+          "index" : 58,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-28T11:25:00Z",
+          "chime" : false,
+          "id" : "general-a3",
+          "index" : 84,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-28T11:52:00Z",
+          "chime" : false,
+          "id" : "monday-1",
+          "index" : 111,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 120,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "poke",
+      "advanceSeconds" : 0,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T12:00:00Z",
+          "chime" : false,
+          "id" : "button-press-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "buttonPress"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 25,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

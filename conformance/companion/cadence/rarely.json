@@ -1,0 +1,54 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalJitterSeconds" : 900,
+    "intervalSeconds" : 3600,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "fireMinutes" : [
+    57,
+    103,
+    176,
+    239,
+    298,
+    351,
+    411,
+    466
+  ],
+  "minutes" : 480,
+  "name" : "rarely",
+  "seed" : 7,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "frequency" : "rarely",
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "timeZone" : "UTC"
+}

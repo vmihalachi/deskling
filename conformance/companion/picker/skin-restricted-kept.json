@@ -1,0 +1,53 @@
+{
+  "candidates" : [
+    "general-b1",
+    "afternoon-1",
+    "skin-raster-only"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+      "b"
+    ],
+    "hour" : 14,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-raster",
+    "weekday" : 4
+  },
+  "draws" : [
+    {
+      "id" : "general-b1",
+      "unit" : 0
+    },
+    {
+      "id" : "general-b1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "afternoon-1",
+      "unit" : 0.25
+    },
+    {
+      "id" : "afternoon-1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "skin-raster-only",
+      "unit" : 0.75
+    },
+    {
+      "id" : "skin-raster-only",
+      "unit" : 0.9
+    },
+    {
+      "id" : "skin-raster-only",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "skin-restricted-kept"
+}

@@ -1,0 +1,52 @@
+{
+  "candidates" : [
+    "after-call-1"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "event" : "afterCall",
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+
+    ],
+    "hour" : 15,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 3
+  },
+  "draws" : [
+    {
+      "id" : "after-call-1",
+      "unit" : 0
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.25
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.5
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.75
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.9
+    },
+    {
+      "id" : "after-call-1",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "event-after-call"
+}

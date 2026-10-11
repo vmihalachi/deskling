@@ -1,0 +1,67 @@
+{
+  "name" : "full-screen-ignored-by-setting",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : false,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:35:00Z",
+          "chime" : false,
+          "id" : "morning-1",
+          "index" : 34,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-28T10:59:00Z",
+          "chime" : false,
+          "id" : "general-b1",
+          "index" : 58,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 60,
+      "snapshot" : {
+        "busy" : [
+          "fullScreen"
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

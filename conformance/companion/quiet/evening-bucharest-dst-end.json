@@ -1,0 +1,142 @@
+{
+  "name" : "evening-bucharest-dst-end",
+  "seed" : 5,
+  "settings" : {
+    "activeEndMinute" : 1320,
+    "activeStartMinute" : 480,
+    "activeWeekdays" : [
+      1,
+      7
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-10-24T17:30:00+03:00",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-10-24T17:58:00+03:00",
+          "chime" : false,
+          "id" : "evening-1",
+          "index" : 27,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-10-24T18:34:00+03:00",
+          "chime" : false,
+          "id" : "general-a3",
+          "index" : 63,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-10-24T18:59:00+03:00",
+          "chime" : false,
+          "id" : "general-a1",
+          "index" : 88,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 90,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "shush",
+      "advanceSeconds" : 0,
+      "argument" : "restOfToday",
+      "deliveries" : [
+
+      ],
+      "isShushed" : true,
+      "mood" : "shushed",
+      "shushedUntil" : "2026-10-25T00:00:00+03:00",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : true,
+      "mood" : "shushed",
+      "repeat" : 3,
+      "shushedUntil" : "2026-10-25T00:00:00+03:00",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "wake",
+      "advanceSeconds" : 0,
+      "deliveries" : [
+        {
+          "at" : "2026-10-24T19:03:00+03:00",
+          "chime" : false,
+          "id" : "shush-end-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "shushEnd"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "Europe/Bucharest"
+}

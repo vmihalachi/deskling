@@ -1,0 +1,104 @@
+{
+  "name" : "sequence-delivered",
+  "seed" : 3,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-30T16:00:00Z",
+  "steps" : [
+    {
+      "action" : "poke",
+      "advanceSeconds" : 0,
+      "deliveries" : [
+        {
+          "at" : "2026-09-30T16:00:00Z",
+          "chime" : false,
+          "id" : "button-press-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "buttonPress"
+        },
+        {
+          "at" : "2026-09-30T16:00:00Z",
+          "chime" : false,
+          "id" : "joke-1",
+          "index" : 1,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "buttonPress"
+        },
+        {
+          "at" : "2026-09-30T16:00:00Z",
+          "chime" : false,
+          "id" : "button-press-1",
+          "index" : 2,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "buttonPress"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 3,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-30T16:22:00Z",
+          "chime" : false,
+          "id" : "general-b1",
+          "index" : 21,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 30,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

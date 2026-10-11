@@ -1,0 +1,54 @@
+{
+  "candidates" : [
+    "general-a1",
+    "general-a2",
+    "general-a3"
+  ],
+  "context" : {
+    "chimeEnabled" : false,
+    "event" : "batteryLow",
+    "excludedIDs" : [
+
+    ],
+    "flavors" : [
+      "a"
+    ],
+    "hour" : 12,
+    "recentIDs" : [
+
+    ],
+    "skin" : "fixture-vector",
+    "weekday" : 5
+  },
+  "draws" : [
+    {
+      "id" : "general-a1",
+      "unit" : 0
+    },
+    {
+      "id" : "general-a1",
+      "unit" : 0.1
+    },
+    {
+      "id" : "general-a2",
+      "unit" : 0.25
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.5
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.75
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.9
+    },
+    {
+      "id" : "general-a3",
+      "unit" : 0.999999
+    }
+  ],
+  "name" : "event-flavor-left-empty-falls-back"
+}

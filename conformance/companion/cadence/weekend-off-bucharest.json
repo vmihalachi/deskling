@@ -1,0 +1,43 @@
+{
+  "config" : {
+    "activeEndMinute" : 1320,
+    "activeStartMinute" : 600,
+    "activeWeekdays" : [
+      1,
+      7
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalJitterSeconds" : 600,
+    "intervalSeconds" : 1800,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "fireMinutes" : [
+    814,
+    850,
+    876
+  ],
+  "minutes" : 900,
+  "name" : "weekend-off-bucharest",
+  "seed" : 9,
+  "settings" : {
+    "activeEndMinute" : 1320,
+    "activeStartMinute" : 600,
+    "activeWeekdays" : [
+      1,
+      7
+    ],
+    "frequency" : "sometimes",
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-10-02T21:00:00+03:00",
+  "timeZone" : "Europe/Bucharest"
+}

@@ -1,0 +1,1134 @@
+{
+  "glyph" : [
+    {
+      "frame" : 0,
+      "mood" : "awake",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "talking",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 10.500000 8.000000 C 10.500000 8.828000 9.828000 9.500000 9.000000 9.500000 C 8.172000 9.500000 7.500000 8.828000 7.500000 8.000000 C 7.500000 7.172000 8.172000 6.500000 9.000000 6.500000 C 9.828000 6.500000 10.500000 7.172000 10.500000 8.000000 Z",
+          "evenOdd" : false,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    },
+    {
+      "frame" : 1,
+      "mood" : "talking",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 7.500000 8.000000 L 10.500000 8.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "shushed",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "asleep",
+      "shapes" : [
+        {
+          "d" : "M 0.000000 0.000000 L 18.000000 0.000000 L 18.000000 18.000000 L 0.000000 18.000000 Z M 4.000000 4.000000 L 14.000000 4.000000 L 14.000000 14.000000 L 4.000000 14.000000 Z",
+          "evenOdd" : true,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "hushedForCall",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "hushedFullScreen",
+      "shapes" : [
+        {
+          "d" : "M 14.000000 7.000000 C 14.000000 9.761000 11.761000 12.000000 9.000000 12.000000 C 6.239000 12.000000 4.000000 9.761000 4.000000 7.000000 C 4.000000 4.239000 6.239000 2.000000 9.000000 2.000000 C 11.761000 2.000000 14.000000 4.239000 14.000000 7.000000 Z",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        },
+        {
+          "d" : "M 9.000000 12.000000 L 9.000000 17.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "ink",
+          "strokeWidth" : 1.25
+        }
+      ]
+    },
+    {
+      "frame" : 0,
+      "mood" : "offHours",
+      "shapes" : [
+        {
+          "d" : "M 0.000000 0.000000 L 18.000000 0.000000 L 18.000000 18.000000 L 0.000000 18.000000 Z M 4.000000 4.000000 L 14.000000 4.000000 L 14.000000 14.000000 L 4.000000 14.000000 Z",
+          "evenOdd" : true,
+          "fill" : "ink",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ]
+    }
+  ],
+  "poses" : [
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0.933781,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 0,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0.933781,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.009271,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.017634,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 24,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 25.299038,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 22.599629,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 24.311868,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : true,
+        "eyes" : "eyes-closed",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 1
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 4.15
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 0.313836,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.024271,
+        "sink" : 0
+      },
+      "time" : 0.05
+    }
+  ],
+  "shapes" : [
+    {
+      "mood" : "awake",
+      "shapes" : [
+        {
+          "d" : "M 48.000000 60.000000 L 52.000000 60.000000 L 52.000000 92.000000 L 48.000000 92.000000 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 76.000000 40.000000 C 76.000000 54.359000 64.359000 66.000000 50.000000 66.000000 C 35.641000 66.000000 24.000000 54.359000 24.000000 40.000000 C 24.000000 25.641000 35.641000 14.000000 50.000000 14.000000 C 64.359000 14.000000 76.000000 25.641000 76.000000 40.000000 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 66.000000 40.000000 C 66.000000 47.732000 58.837000 54.000000 50.000000 54.000000 C 41.163000 54.000000 34.000000 47.732000 34.000000 40.000000 C 34.000000 32.268000 41.163000 26.000000 50.000000 26.000000 C 58.837000 26.000000 66.000000 32.268000 66.000000 40.000000 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 41.000000 44.000000 C 41.000000 45.657000 39.657000 47.000000 38.000000 47.000000 C 36.343000 47.000000 35.000000 45.657000 35.000000 44.000000 C 35.000000 42.343000 36.343000 41.000000 38.000000 41.000000 C 39.657000 41.000000 41.000000 42.343000 41.000000 44.000000 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 65.000000 44.000000 C 65.000000 45.657000 63.657000 47.000000 62.000000 47.000000 C 60.343000 47.000000 59.000000 45.657000 59.000000 44.000000 C 59.000000 42.343000 60.343000 41.000000 62.000000 41.000000 C 63.657000 41.000000 65.000000 42.343000 65.000000 44.000000 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 46.000000 37.000000 C 46.000000 38.105000 45.105000 39.000000 44.000000 39.000000 C 42.895000 39.000000 42.000000 38.105000 42.000000 37.000000 C 42.000000 35.895000 42.895000 35.000000 44.000000 35.000000 C 45.105000 35.000000 46.000000 35.895000 46.000000 37.000000 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 58.000000 37.000000 C 58.000000 38.105000 57.105000 39.000000 56.000000 39.000000 C 54.895000 39.000000 54.000000 38.105000 54.000000 37.000000 C 54.000000 35.895000 54.895000 35.000000 56.000000 35.000000 C 57.105000 35.000000 58.000000 35.895000 58.000000 37.000000 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 45.000000 45.000000 C 46.112000 46.676000 47.989000 47.683000 50.000000 47.683000 C 52.011000 47.683000 53.888000 46.676000 55.000000 45.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        }
+      ],
+      "time" : 0
+    },
+    {
+      "mood" : "talking",
+      "shapes" : [
+        {
+          "d" : "M 48.172616 59.989679 L 52.172558 60.011252 L 51.999971 92.010787 L 48.000029 91.989213 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 76.926895 40.575876 C 76.611684 55.184676 64.512623 66.772646 49.903823 66.457435 C 35.295023 66.142224 23.707052 54.043163 24.022264 39.434363 C 24.337475 24.825563 36.436536 13.237592 51.045336 13.552804 C 65.654136 13.868015 77.242106 25.967076 76.926895 40.575876 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 66.470856 40.350268 C 66.304063 48.080469 59.007518 54.192491 50.172574 54.001862 C 41.337631 53.811232 34.311509 47.390172 34.478302 39.659971 C 34.645095 31.929770 41.941641 25.817747 50.776584 26.008377 C 59.611528 26.199007 66.637649 32.620067 66.470856 40.350268 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 41.390386 43.810043 C 41.354642 45.466657 39.982984 46.780374 38.326369 46.744629 C 36.669755 46.708885 35.356038 45.337226 35.391783 43.680612 C 35.427527 42.023997 36.799185 40.710281 38.455800 40.746025 C 40.112414 40.781770 41.426131 42.153428 41.390386 43.810043 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 65.384802 44.327765 C 65.349057 45.984380 63.977399 47.298096 62.320784 47.262352 C 60.664170 47.226607 59.350453 45.854949 59.386198 44.198335 C 59.421942 42.541720 60.793601 41.228004 62.450215 41.263748 C 64.106829 41.299492 65.420546 42.671151 65.384802 44.327765 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 47.561564 35.941335 C 47.525820 37.597949 46.154162 38.911666 44.497547 38.875921 C 42.840933 38.840177 41.527216 37.468519 41.562961 35.811904 C 41.598705 34.155290 42.970363 32.841573 44.626978 32.877318 C 46.283592 32.913062 47.597309 34.284720 47.561564 35.941335 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 59.558772 36.200196 C 59.523028 37.856811 58.151369 39.170527 56.494755 39.134783 C 54.838140 39.099038 53.524424 37.727380 53.560168 36.070765 C 53.595913 34.414151 54.967571 33.100434 56.624186 33.136179 C 58.280800 33.171923 59.594517 34.543582 59.558772 36.200196 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 53.344450 46.068439 C 53.326589 46.896246 51.969405 47.539119 50.312791 47.503374 C 48.656176 47.467630 47.327985 46.766815 47.345847 45.939008 C 47.363708 45.111200 48.720892 44.468328 50.377506 44.504072 C 52.034121 44.539817 53.362312 45.240631 53.344450 46.068439 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        }
+      ],
+      "time" : 0.2
+    },
+    {
+      "mood" : "shushed",
+      "shapes" : [
+        {
+          "d" : "M 49.957284 59.937589 L 53.949823 60.181784 L 51.996270 92.122097 L 48.003730 91.877903 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 80.549971 48.943463 C 77.076214 62.875940 62.964789 71.354939 49.032312 67.881183 C 35.099836 64.407426 26.620836 50.296001 30.094593 36.363525 C 33.568349 22.431048 47.679775 13.952049 61.612251 17.425805 C 75.544727 20.899562 84.023727 35.010987 80.549971 48.943463 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 70.847013 46.524244 C 68.976473 54.026571 60.509878 58.375498 51.935375 56.237634 C 43.360872 54.099770 37.927010 46.285070 39.797550 38.782744 C 41.668090 31.280417 50.134685 26.931490 58.709188 29.069354 C 67.283692 31.207218 72.717553 39.021918 70.847013 46.524244 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 45.621933 44.357380 C 45.221068 45.965160 43.593060 46.943366 41.985280 46.542501 C 40.377500 46.141637 39.399294 44.513629 39.800158 42.905848 C 40.201023 41.298068 41.829031 40.319862 43.436811 40.720727 C 45.044591 41.121592 46.022797 42.749600 45.621933 44.357380 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 68.909030 50.163505 C 68.508165 51.771285 66.880157 52.749491 65.272377 52.348627 C 63.664597 51.947762 62.686391 50.319754 63.087256 48.711974 C 63.488120 47.104194 65.116129 46.125988 66.723909 46.526852 C 68.331689 46.927717 69.309895 48.555725 68.909030 50.163505 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 52.166864 38.774919 C 51.899541 39.847096 50.814606 40.498991 49.742429 40.231667 C 48.670252 39.964343 48.018358 38.879408 48.285682 37.807232 C 48.553005 36.735055 49.637940 36.083160 50.710117 36.350484 C 51.782294 36.617808 52.434188 37.702742 52.166864 38.774919 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 63.810413 41.677982 C 63.543090 42.750159 62.458155 43.402053 61.385978 43.134730 C 60.313801 42.867406 59.661907 41.782471 59.929230 40.710294 C 60.196554 39.638118 61.281489 38.986223 62.353666 39.253547 C 63.425842 39.520870 64.077737 40.605805 63.810413 41.677982 Z",
+          "evenOdd" : false,
+          "fill" : "eye",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 49.989567 47.507581 L 57.751933 49.442956",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        }
+      ],
+      "time" : 0
+    },
+    {
+      "mood" : "asleep",
+      "shapes" : [
+        {
+          "d" : "M 51.537416 59.974442 L 55.513069 60.415097 L 51.987827 92.220328 L 48.012173 91.779672 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 82.907872 57.220936 C 76.771658 70.202760 61.272454 75.752573 48.290629 69.616359 C 35.308805 63.480145 29.758993 47.980941 35.895206 34.999116 C 42.031420 22.017292 57.530625 16.467480 70.512449 22.603693 C 83.494273 28.739907 89.044086 44.239112 82.907872 57.220936 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 73.866975 52.947509 C 70.562761 59.937931 61.408182 62.543710 53.418741 58.767282 C 45.429301 54.990855 41.631890 46.262965 44.936103 39.272543 C 48.240317 32.282121 57.394896 29.676343 65.384337 33.452770 C 73.373778 37.229197 77.171188 45.957087 73.866975 52.947509 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 49.555361 45.880301 C 48.847254 47.378377 47.059140 48.018649 45.561064 47.310542 C 44.062987 46.602435 43.422716 44.814321 44.130822 43.316245 C 44.838929 41.818168 46.627043 41.177897 48.125120 41.886004 C 49.623196 42.594110 50.263468 44.382224 49.555361 45.880301 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 71.253514 56.136525 C 70.545407 57.634602 68.757294 58.274873 67.259217 57.566766 C 65.761140 56.858660 65.120869 55.070546 65.828976 53.572469 C 66.537083 52.074392 68.325196 51.434121 69.823273 52.142228 C 71.321350 52.850335 71.961621 54.638449 71.253514 56.136525 Z",
+          "evenOdd" : false,
+          "fill" : "blush",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 52.546760 39.551673 C 53.785291 41.611510 55.593471 42.466195 57.971298 42.115729 M 63.395836 44.679785 C 64.634368 46.739622 66.442547 47.594307 68.820375 47.243841",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        },
+        {
+          "d" : "M 53.221124 49.825194 L 60.453842 53.243935",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        },
+        {
+          "d" : "M 72.000000 10.000000 L 80.000000 10.000000 L 72.000000 18.000000 L 80.000000 18.000000",
+          "evenOdd" : false,
+          "opacity" : 0.8,
+          "stroke" : "inkSoft",
+          "strokeWidth" : 1.5
+        }
+      ],
+      "time" : 1
+    },
+    {
+      "mood" : "offHours",
+      "shapes" : [
+        {
+          "d" : "M 49.397724 59.943218 L 53.393917 60.117696 L 51.998096 92.087239 L 48.001904 91.912761 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 79.425261 44.849082 C 76.931847 58.989937 63.446262 68.432645 49.305407 65.939231 C 35.164553 63.445817 25.721844 49.960231 28.215258 35.819377 C 30.708673 21.678522 44.194258 12.235814 58.335113 14.729228 C 72.475967 17.222642 81.918676 30.708228 79.425261 44.849082 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 69.577184 43.112600 C 68.234536 50.727134 60.091932 55.656067 51.389185 54.121538 C 42.686439 52.587009 36.720688 45.170392 38.063336 37.555859 C 39.405984 29.941325 47.548588 25.012392 56.251334 26.546921 C 64.954081 28.081450 70.919832 35.498067 69.577184 43.112600 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 45.477935 35.816973 C 47.216077 37.477018 49.185693 37.824314 51.386781 36.858862 M 57.295628 37.900751 C 59.033770 39.560796 61.003386 39.908092 63.204474 38.942640",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        },
+        {
+          "d" : "M 48.839140 45.548483 L 56.717602 46.937669",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        }
+      ],
+      "time" : 0
+    },
+    {
+      "mood" : "hushedForCall",
+      "shapes" : [
+        {
+          "d" : "M 48.000000 60.000000 L 52.000000 60.000000 L 52.000000 92.000000 L 48.000000 92.000000 Z",
+          "evenOdd" : false,
+          "fill" : "stem",
+          "opacity" : 1,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 76.000000 40.000000 C 76.000000 54.359000 64.359000 66.000000 50.000000 66.000000 C 35.641000 66.000000 24.000000 54.359000 24.000000 40.000000 C 24.000000 25.641000 35.641000 14.000000 50.000000 14.000000 C 64.359000 14.000000 76.000000 25.641000 76.000000 40.000000 Z",
+          "evenOdd" : false,
+          "fill" : "body",
+          "opacity" : 1,
+          "stroke" : "edge",
+          "strokeWidth" : 1.5
+        },
+        {
+          "d" : "M 66.000000 40.000000 C 66.000000 47.732000 58.837000 54.000000 50.000000 54.000000 C 41.163000 54.000000 34.000000 47.732000 34.000000 40.000000 C 34.000000 32.268000 41.163000 26.000000 50.000000 26.000000 C 58.837000 26.000000 66.000000 32.268000 66.000000 40.000000 Z",
+          "evenOdd" : false,
+          "fill" : "edge",
+          "opacity" : 0.5,
+          "strokeWidth" : 0
+        },
+        {
+          "d" : "M 41.000000 37.000000 C 43.000000 38.333000 45.000000 38.333000 47.000000 37.000000 M 53.000000 37.000000 C 55.000000 38.333000 57.000000 38.333000 59.000000 37.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        },
+        {
+          "d" : "M 46.000000 46.000000 L 54.000000 46.000000",
+          "evenOdd" : false,
+          "opacity" : 1,
+          "stroke" : "eye",
+          "strokeWidth" : 1.2
+        }
+      ],
+      "time" : 4.15
+    }
+  ],
+  "skin" : "fixture-vector",
+  "still" : [
+    {
+      "mood" : "awake",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-smile",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "talking",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 4,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "shushed",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 14,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 2
+      }
+    },
+    {
+      "mood" : "asleep",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 25.299038,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+          "zz"
+        ],
+        "pulse" : 0,
+        "sink" : 4
+      }
+    },
+    {
+      "mood" : "hushedForCall",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "hushedFullScreen",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-open",
+        "headAngle" : 0,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    },
+    {
+      "mood" : "offHours",
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-closed",
+        "headAngle" : 10,
+        "headExtras" : [
+
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      }
+    }
+  ]
+}

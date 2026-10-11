@@ -1,0 +1,165 @@
+{
+  "name" : "frequency-change-reschedules",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 5,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "setFrequency",
+      "advanceSeconds" : 0,
+      "argument" : "rarely",
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 44,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:55:00Z",
+          "chime" : false,
+          "id" : "morning-1",
+          "index" : 5,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 40,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "setChannels",
+      "advanceSeconds" : 0,
+      "argument" : "voice,chime,notification",
+      "deliveries" : [
+
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "poke",
+      "advanceSeconds" : 0,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T11:29:00Z",
+          "chime" : true,
+          "id" : "joke-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "buttonPress"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

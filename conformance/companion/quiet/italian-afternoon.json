@@ -1,0 +1,149 @@
+{
+  "language" : "it",
+  "name" : "italian-afternoon",
+  "seed" : 3,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "chatty",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-30T14:00:00Z",
+  "steps" : [
+    {
+      "action" : "tick",
+      "advanceSeconds" : 60,
+      "deliveries" : [
+        {
+          "at" : "2026-09-30T14:12:00Z",
+          "chime" : false,
+          "id" : "general-b1",
+          "index" : 11,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T14:29:00Z",
+          "chime" : false,
+          "id" : "joke-it",
+          "index" : 28,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T14:46:00Z",
+          "chime" : false,
+          "id" : "it-only",
+          "index" : 45,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T14:57:00Z",
+          "chime" : false,
+          "id" : "general-a3",
+          "index" : 56,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T15:10:00Z",
+          "chime" : false,
+          "id" : "general-c1",
+          "index" : 69,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T15:27:00Z",
+          "chime" : false,
+          "id" : "afternoon-1",
+          "index" : 86,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T15:39:00Z",
+          "chime" : false,
+          "id" : "general-a2",
+          "index" : 98,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T15:58:00Z",
+          "chime" : false,
+          "id" : "general-a1",
+          "index" : 117,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T16:13:00Z",
+          "chime" : false,
+          "id" : "general-a3",
+          "index" : 132,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T16:32:00Z",
+          "chime" : false,
+          "id" : "afternoon-1",
+          "index" : 151,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        },
+        {
+          "at" : "2026-09-30T16:49:00Z",
+          "chime" : false,
+          "id" : "it-only",
+          "index" : 168,
+          "notify" : false,
+          "speak" : true,
+          "trigger" : "due"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "repeat" : 180,
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

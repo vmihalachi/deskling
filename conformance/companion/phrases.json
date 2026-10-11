@@ -1,0 +1,465 @@
+{
+  "dayparts" : {
+    "afternoon" : [
+      12,
+      16
+    ],
+    "evening" : [
+      17,
+      21
+    ],
+    "morning" : [
+      5,
+      11
+    ],
+    "night" : [
+      0,
+      23
+    ]
+  },
+  "eventTags" : [
+    "afterCall",
+    "batteryLow",
+    "buttonPress",
+    "charging",
+    "shushEnd",
+    "unplugged",
+    "welcomeBack",
+    "wentDark",
+    "wentLight"
+  ],
+  "flavors" : [
+    "a",
+    "b",
+    "c"
+  ],
+  "phrases" : [
+    {
+      "english" : "Fixture line, general, flavor a, weight 1",
+      "flavor" : "a",
+      "id" : "general-a1",
+      "key" : "phrase.general-a1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 1
+    },
+    {
+      "english" : "Fixture line, general, flavor a, weight 3",
+      "flavor" : "a",
+      "id" : "general-a2",
+      "key" : "phrase.general-a2",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, general, flavor a, weight 5",
+      "flavor" : "a",
+      "id" : "general-a3",
+      "key" : "phrase.general-a3",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 5
+    },
+    {
+      "english" : "Fixture line, general, flavor b",
+      "flavor" : "b",
+      "id" : "general-b1",
+      "key" : "phrase.general-b1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, general, flavor c",
+      "flavor" : "c",
+      "id" : "general-c1",
+      "key" : "phrase.general-c1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, morning",
+      "flavor" : "a",
+      "id" : "morning-1",
+      "key" : "phrase.morning-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "morning"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, afternoon",
+      "flavor" : "b",
+      "id" : "afternoon-1",
+      "key" : "phrase.afternoon-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "afternoon"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, evening",
+      "flavor" : "c",
+      "id" : "evening-1",
+      "key" : "phrase.evening-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "evening"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, night",
+      "flavor" : "a",
+      "id" : "night-1",
+      "key" : "phrase.night-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "night"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, Monday",
+      "flavor" : "b",
+      "id" : "monday-1",
+      "key" : "phrase.monday-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "monday"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, Friday",
+      "flavor" : "c",
+      "id" : "friday-1",
+      "key" : "phrase.friday-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "friday"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, weekend",
+      "flavor" : "a",
+      "id" : "weekend-1",
+      "key" : "phrase.weekend-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "weekend"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, welcome back, flavor a",
+      "flavor" : "a",
+      "id" : "welcome-back-1",
+      "key" : "phrase.welcome-back-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "welcomeBack"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, welcome back, flavor b",
+      "flavor" : "b",
+      "id" : "welcome-back-2",
+      "key" : "phrase.welcome-back-2",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "welcomeBack"
+      ],
+      "weight" : 4
+    },
+    {
+      "english" : "Fixture line, after a call",
+      "flavor" : "b",
+      "id" : "after-call-1",
+      "key" : "phrase.after-call-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "afterCall"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, Shh ended",
+      "flavor" : "c",
+      "id" : "shush-end-1",
+      "key" : "phrase.shush-end-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "shushEnd"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, button press",
+      "flavor" : "a",
+      "id" : "button-press-1",
+      "key" : "phrase.button-press-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "buttonPress"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, battery low",
+      "flavor" : "b",
+      "id" : "battery-low-1",
+      "key" : "phrase.battery-low-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "batteryLow"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, charging",
+      "flavor" : "c",
+      "id" : "charging-1",
+      "key" : "phrase.charging-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "charging"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, unplugged",
+      "flavor" : "a",
+      "id" : "unplugged-1",
+      "key" : "phrase.unplugged-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "unplugged"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, went dark",
+      "flavor" : "b",
+      "id" : "went-dark-1",
+      "key" : "phrase.went-dark-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "wentDark"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, went light",
+      "flavor" : "c",
+      "id" : "went-light-1",
+      "key" : "phrase.went-light-1",
+      "kind" : "line",
+      "skins" : [
+
+      ],
+      "tags" : [
+        "wentLight"
+      ],
+      "weight" : 3
+    },
+    {
+      "id" : "tune-1",
+      "kind" : "tune",
+      "skins" : [
+
+      ],
+      "sound" : "tune-1",
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Fixture line, raster skin only",
+      "flavor" : "b",
+      "id" : "skin-raster-only",
+      "key" : "phrase.skin-raster-only",
+      "kind" : "line",
+      "skins" : [
+        "fixture-raster"
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "english" : "Battuta di prova, solo in italiano",
+      "flavor" : "c",
+      "id" : "it-only",
+      "key" : "phrase.it-only",
+      "kind" : "line",
+      "languages" : [
+        "it"
+      ],
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "flavor" : "a",
+      "id" : "joke-1",
+      "keys" : [
+        "phrase.joke-1.1",
+        "phrase.joke-1.2"
+      ],
+      "kind" : "sequence",
+      "parts" : [
+        "Fixture joke, setup",
+        "Fixture joke, punchline"
+      ],
+      "skins" : [
+
+      ],
+      "tags" : [
+        "buttonPress",
+        "general"
+      ],
+      "weight" : 3
+    },
+    {
+      "flavor" : "c",
+      "id" : "joke-it",
+      "keys" : [
+        "phrase.joke-it.1",
+        "phrase.joke-it.2"
+      ],
+      "kind" : "sequence",
+      "languages" : [
+        "it"
+      ],
+      "parts" : [
+        "Barzelletta di prova, preparazione",
+        "Barzelletta di prova, battuta finale"
+      ],
+      "skins" : [
+
+      ],
+      "tags" : [
+        "general"
+      ],
+      "weight" : 3
+    }
+  ],
+  "recentWindow" : 12,
+  "tags" : [
+    "general",
+    "morning",
+    "afternoon",
+    "evening",
+    "night",
+    "monday",
+    "friday",
+    "weekend",
+    "welcomeBack",
+    "afterCall",
+    "shushEnd",
+    "buttonPress",
+    "batteryLow",
+    "charging",
+    "unplugged",
+    "wentDark",
+    "wentLight"
+  ],
+  "weekdays" : {
+    "friday" : [
+      6
+    ],
+    "monday" : [
+      2
+    ],
+    "weekend" : [
+      1,
+      7
+    ]
+  }
+}

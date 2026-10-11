@@ -1,0 +1,85 @@
+{
+  "name" : "quietly",
+  "seed" : 42,
+  "settings" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "channels" : [
+
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hushInFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "action" : "poke",
+      "advanceSeconds" : 0,
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:00:00Z",
+          "chime" : false,
+          "id" : "joke-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : false,
+          "trigger" : "buttonPress"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    },
+    {
+      "action" : "event",
+      "advanceSeconds" : 0,
+      "argument" : "wentDark",
+      "deliveries" : [
+        {
+          "at" : "2026-09-28T10:00:00Z",
+          "chime" : false,
+          "id" : "went-dark-1",
+          "index" : 0,
+          "notify" : false,
+          "speak" : false,
+          "trigger" : "wentDark"
+        }
+      ],
+      "isShushed" : false,
+      "mood" : "awake",
+      "snapshot" : {
+        "busy" : [
+
+        ],
+        "idleSeconds" : 0,
+        "isOutputMuted" : null,
+        "isScreenLocked" : false,
+        "isSpeaking" : false,
+        "notificationsAuthorized" : false
+      }
+    }
+  ],
+  "timeZone" : "UTC"
+}

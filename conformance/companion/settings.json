@@ -1,0 +1,167 @@
+{
+  "appearances" : [
+    "system",
+    "light",
+    "dark"
+  ],
+  "busyGraceSeconds" : 30,
+  "channels" : [
+    "voice",
+    "chime",
+    "notification"
+  ],
+  "defaults" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "appearance" : "system",
+    "channels" : [
+      "voice"
+    ],
+    "commentOnAppearance" : true,
+    "commentOnPower" : true,
+    "desktopPosition" : null,
+    "desktopSize" : "medium",
+    "frequency" : "sometimes",
+    "greetOnReturn" : true,
+    "hasCompletedOnboarding" : false,
+    "hushInFullScreen" : true,
+    "mutedPhraseIDs" : [
+
+    ],
+    "phraseFlavors" : [
+      "a",
+      "b",
+      "c"
+    ],
+    "quietHours" : [
+
+    ],
+    "sayShortcut" : {
+      "key" : "F",
+      "keyCode" : 3,
+      "modifiers" : 6400
+    },
+    "showOnDesktop" : false,
+    "shushedUntil" : null,
+    "skin" : "fixture-vector",
+    "speechRate" : 0.5,
+    "speechVolume" : 0.8,
+    "voiceIdentifier" : null
+  },
+  "desktopSizes" : {
+    "large" : 140,
+    "medium" : 96,
+    "small" : 64
+  },
+  "frequencies" : {
+    "chatty" : [
+      900,
+      300
+    ],
+    "rarely" : [
+      3600,
+      900
+    ],
+    "sometimes" : [
+      1800,
+      600
+    ]
+  },
+  "hourHideSeconds" : 3600,
+  "idleThresholdSeconds" : 300,
+  "keyOrder" : [
+    "channels",
+    "frequency",
+    "activeStartMinute",
+    "activeEndMinute",
+    "activeWeekdays",
+    "quietHours",
+    "hushInFullScreen",
+    "greetOnReturn",
+    "commentOnPower",
+    "commentOnAppearance",
+    "voiceIdentifier",
+    "speechRate",
+    "speechVolume",
+    "phraseFlavors",
+    "mutedPhraseIDs",
+    "sayShortcut",
+    "appearance",
+    "skin",
+    "shushedUntil",
+    "showOnDesktop",
+    "desktopSize",
+    "desktopPosition",
+    "hasCompletedOnboarding"
+  ],
+  "keys" : {
+    "activeEndMinute" : "activeEndMinute",
+    "activeStartMinute" : "activeStartMinute",
+    "activeWeekdays" : "activeWeekdays",
+    "appearance" : "appearance",
+    "channels" : "channels",
+    "commentOnAppearance" : "commentOnAppearance",
+    "commentOnPower" : "commentOnPower",
+    "desktopPosition" : "desktopPosition",
+    "desktopSize" : "desktopSize",
+    "frequency" : "frequency",
+    "greetOnReturn" : "greetOnReturn",
+    "hasCompletedOnboarding" : "hasCompletedOnboarding",
+    "hushInFullScreen" : "hushInFullScreen",
+    "mutedPhraseIDs" : "mutedPhraseIDs",
+    "phraseFlavors" : "phraseFlavors",
+    "quietHours" : "quietHours",
+    "sayShortcut" : "sayShortcut",
+    "showOnDesktop" : "showOnDesktop",
+    "shushedUntil" : "shushedUntil",
+    "skin" : "skin",
+    "speechRate" : "speechRate",
+    "speechVolume" : "speechVolume",
+    "voiceIdentifier" : "voiceIdentifier"
+  },
+  "partBeatSeconds" : 1.2,
+  "reappearDelaySeconds" : 10,
+  "recentCapacity" : 24,
+  "recentWindow" : 12,
+  "resettable" : [
+    "channels",
+    "frequency",
+    "activeStartMinute",
+    "activeEndMinute",
+    "activeWeekdays",
+    "quietHours",
+    "hushInFullScreen",
+    "greetOnReturn",
+    "commentOnPower",
+    "commentOnAppearance",
+    "voiceIdentifier",
+    "speechRate",
+    "speechVolume",
+    "phraseFlavors",
+    "mutedPhraseIDs",
+    "sayShortcut",
+    "appearance",
+    "skin",
+    "shushedUntil",
+    "showOnDesktop",
+    "desktopSize",
+    "desktopPosition"
+  ],
+  "shushes" : [
+    "hour",
+    "restOfToday",
+    "untilISay"
+  ],
+  "skins" : [
+    "fixture-vector",
+    "fixture-raster"
+  ],
+  "welcomeBackCooldownSeconds" : 1800
+}
