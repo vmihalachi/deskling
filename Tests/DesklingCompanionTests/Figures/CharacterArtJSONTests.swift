@@ -7,13 +7,8 @@ import XCTest
 final class CharacterArtJSONTests: XCTestCase {
     /// `conformance/companion/characters/<skin>.json`, written by the compiler (`scripts/fixture-art.sh`).
     private func committed(_ skin: SkinID) throws -> Data {
-        var folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        while folder.path != "/" {
-            let candidate = folder.appendingPathComponent("conformance/companion/characters/\(skin.rawValue).json")
-            if FileManager.default.fileExists(atPath: candidate.path) { return try Data(contentsOf: candidate) }
-            folder.deleteLastPathComponent()
-        }
-        throw XCTSkip("conformance/companion/characters/\(skin.rawValue).json not found")
+        let root = try XCTUnwrap(ConformanceRoot.find(markerFile: "conformance/README.md", from: #filePath))
+        return try Data(contentsOf: root.appendingPathComponent("companion/characters/\(skin.rawValue).json"))
     }
 
     /// A copy of sunnysays' `sunflower.json`, recompiled by `tools/character.py` (with `bubble` and the

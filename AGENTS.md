@@ -11,7 +11,7 @@ conformance vectors.
 
 | Path | Contents |
 |---|---|
-| `Package.swift`, `Sources/Deskling{Core,System,Shell,Companion,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`. `DesklingCompanion` imports Foundation and Observation only: `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`; it and `DesklingTesting` (`Fixtures/`) build on Linux. |
+| `Package.swift`, `Sources/Deskling{Core,System,Shell,Companion,Store,Testing}/` | The Swift products (one folder each). `DesklingCore` imports Foundation only: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`. `DesklingCompanion` imports Foundation and Observation only: `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`; it and `DesklingTesting` (`Fixtures/`, and `Conformance/`: the suite and generators apps reuse) build on Linux. |
 | `Tests/<Product>Tests/` | XCTest, one test target per product. `DesklingCoreTests/Conformance/` generates and replays `conformance/`. |
 | `Tests/Fixtures/characters/` | Art sources for the fixture skins (`fixture-vector`: SVGs; `fixture-raster`: layer PNGs), compiled by `scripts/fixture-art.sh` into `DesklingTesting/Fixtures/Fixture*Art.swift` and `conformance/companion/characters/`. |
 | `conformance/` | Generated vectors (`scheduler/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |

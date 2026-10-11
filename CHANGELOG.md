@@ -43,6 +43,13 @@ each sequence commits; the migration list is in `plans/0.5/README.md`.
   `DrawableCharacter`, and a mood's `cheeks`/`zz` flags are `headExtras`/`overlays` lists.
 - Swift: `DesklingTesting` `FixtureArt.vector`/`.raster` (compiled by `scripts/fixture-art.sh`) and
   `SkinCatalog.fixture`.
+- Swift: `DesklingTesting` `Conformance/`: `ConformanceRoot.find(markerFile:from:)`, `ConformanceSuite` (`checkUpToDate`,
+  `replayCommitted`, `checkDeterministic`, `writeIfAsked(flag:)`, each returning its problems so the library never
+  links XCTest), `JSONValue`, `SnapshotData`, and the companion generators parameterized by bank, defaults, character
+  and cases: `PhrasesVector`, `PickerVector`, `CadenceVector`, `QuietTimeline`, `CharacterPoseVector`,
+  `DesktopVector`, `SettingsVector.base(defaults:)` (a tree the app adds its keys to) and
+  `BankAudit.floors(bank:languages:skins:minimumPerTag:)`. Apps generate their content vectors with these.
+  `ConformanceSupport` moved into the folder; the Core `ConformanceTests` runs on `ConformanceSuite`.
 
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
