@@ -111,6 +111,8 @@ public struct CompanionDefaults: Equatable, Sendable {  // today's numbers as pa
 An app subclasses: `@Observable final class AppSettings: CompanionSettings` adds its own keys (sunnysays: `sunnyVoice`).
 Sequence 1 spiked cross-module `@Observable` subclassing first: it passed (macOS and Linux, 2026-10-11), so the
 class design above is what shipped and the `CompanionSettingsProviding` fallback was not needed.
+Sequence 2 (2026-10-11) shipped `Figures/`, `Skins/`, the generators and `conformance/companion/`; the moved
+generators rewrote sunnysays' picker, quiet, cadence, desktop, phrases and settings vectors byte for byte.
 
 ### Skins/ (`SkinCatalog.swift`)
 

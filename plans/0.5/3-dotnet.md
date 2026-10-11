@@ -2,6 +2,17 @@
 
 > Sequence 3 of `README.md` (read *Products*, *The Companion API*, *Vectors*). Needs 2 (the vectors); can run while 4 runs.
 > One session. Use the `port-to-csharp` skill.
+>
+> From sequence 2 (done 2026-10-11): `conformance/companion/` exists (formats in `conformance/README.md`), generated
+> by `Tests/DesklingCompanionTests/Conformance` over `PhraseBank.fixture`, `CompanionDefaults.fixture` and
+> `FixtureArt.vector`/`.raster`; the C# replay needs the same fixtures (port `Sources/DesklingTesting/Fixtures/`,
+> loading the art from `companion/characters/fixture-*.json` with a `CharacterArtJSON` decoder). Shipped names that
+> differ from the README's sketch: `PaintRole` is string-backed; `SkinEntry(art:unlockedBy:)` takes its id from the
+> art; `PartContent.kind` is "shapes"/"image"; generators are `PhrasesVector`, `PickerVector`, `CadenceVector`,
+> `QuietTimeline`, `CharacterPoseVector`, `DesktopVector` (`partDelays` optional), `SettingsVector.base(defaults:)`
+> (a `JSONValue` tree the app adds `skins` and its own keys to) and `BankAudit`. `ConformanceSuite` checks return
+> problem lists rather than asserting. `tools/character.py` takes `--design --skin --out --swift-out --module --mode
+> --assets --windows-assets --palette --moods --check`; `scripts/fixture-art.sh` runs it for the fixtures.
 
 ## Read only these
 
