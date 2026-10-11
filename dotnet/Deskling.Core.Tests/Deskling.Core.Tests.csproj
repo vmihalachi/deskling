@@ -10,8 +10,12 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- The mocks and conformance helpers apps use too (Deskling.Testing). -->
+    <Using Include="Deskling.Testing" />
+    <Using Include="Deskling.Testing.Conformance" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Deskling.Core\Deskling.Core.csproj" />
+    <ProjectReference Include="..\Deskling.Testing\Deskling.Testing.csproj" />
   </ItemGroup>
 </Project>

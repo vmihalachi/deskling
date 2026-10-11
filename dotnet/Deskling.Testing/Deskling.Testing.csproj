@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Deskling.Testing</PackageId>
+    <Description>Test support for apps built on Deskling.Core and Deskling.Companion, mirrored from the Swift DesklingTesting: mock clock, idle, busy and random sources; conformance helpers (finding the vectors folder, dates, names); the replay bodies that check an app's companion vectors (phrases, settings, picker, cadence, quiet timelines, character poses, desktop) and return their problems; loaders for Deskling's fixture bank, defaults and art. No test framework dependency.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Deskling.Core\Deskling.Core.csproj" />
+    <ProjectReference Include="..\Deskling.Companion\Deskling.Companion.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
