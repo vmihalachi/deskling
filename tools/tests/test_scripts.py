@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -182,6 +183,27 @@ class DevIconTests(unittest.TestCase):
             for size in (32, 128):
                 stamped = (catalog / "AppIcon-Dev.appiconset" / f"icon_{size}.png").read_bytes()
                 self.assertNotEqual(stamped, (catalog / "AppIcon.appiconset" / f"icon_{size}.png").read_bytes())
+
+
+class SharedFilesTests(unittest.TestCase):
+    """The tools and skills are shared by every app: none names one, and every skill is well formed."""
+
+    def test_no_app_is_named(self):
+        names = re.compile(r"Sunny|sunnysays|Pagliacci|pagliacci|sunflower")
+        for path in TOOLS.rglob("*"):
+            if path.is_file() and "tests" not in path.relative_to(TOOLS).parts and path.suffix != ".pyc":
+                self.assertIsNone(names.search(path.read_text("utf8", errors="replace")), path)
+
+    def test_every_skill_has_frontmatter(self):
+        skills = sorted(p.parent.name for p in (TOOLS / "skills").glob("*/SKILL.md"))
+        self.assertEqual(skills, ["add-phrase", "add-setting", "conformance", "localization", "release-mac",
+                                  "review-invariants", "voice", "windows-port"])
+        for name in skills:
+            text = (TOOLS / "skills" / name / "SKILL.md").read_text("utf8")
+            header = text.split("---", 2)[1]
+            self.assertIn(f"name: {name}\n", header)
+            self.assertRegex(header, r"description: .{80,}")
+        self.assertTrue((TOOLS / "skills" / "review-invariants" / "checklist.md").exists())
 
 
 if __name__ == "__main__":
