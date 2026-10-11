@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""Tests for tools/voice.py's offline parts over the fixture app: clip ids (a joke's parts, language scoping), the
+pending report, the check, the friends' site, the review page, the render hash and the mouth envelope. Nothing here
+talks to ElevenLabs."""
+
+from __future__ import annotations
+
+import io
+import json
+import sys
+import unittest
+import wave
+from array import array
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import companion  # noqa: E402
+import voice  # noqa: E402
+from support import fixture_app  # noqa: E402
+
+TEXTS = {
+    "hello": "Ciao.",
+    "joke.1": "Perché il clown si è seduto?",
+    "joke.2": "Aveva i piedi stanchi.",
+    "ciao": "Ciao a tutti!",
+    "ui-test-voice": "Ciao. Ecco la mia voce.",
+}
+
+
+class VoiceTests(unittest.TestCase):
+    def setUp(self):
+        self.app = fixture_app()
+        self.root = self.app.__enter__()
+        voice.configure(companion.load())
+
+    def tearDown(self):
+        self.app.__exit__(None, None, None)
+
+    def check(self) -> int:
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            return voice.cmd_check(None)
+
+    def add_clip(self, clip: str, text: str | None = None, lang: str = "it", kind: str = "clown") -> None:
+        path = voice.clip_path(lang, kind, clip)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"aac")
+        manifest = voice.load_manifest()
+        entry = manifest["languages"].setdefault(lang, {"status": "testing", "default": "clown", "voices": {}})
+        entry["voices"].setdefault(kind, {"clips": {}})["clips"][clip] = {
+            "textHash": voice.text_hash(text or TEXTS[clip]), "renderHash": "r", "duration": 1.0, "mouth": "0110"}
+        voice.dump_json(voice.MANIFEST, manifest)
+
+    def test_names_come_from_companion_json(self):
+        self.assertEqual(voice.KINDS, ("clown",))
+        self.assertEqual(voice.KEYCHAIN_SERVICE, "fixture-elevenlabs")
+        self.assertEqual(voice.VOICE, self.root / "voices" / "Voice")
+        self.assertEqual(voice.REVIEW_TITLE, "Fixy's voice")
+        self.assertIn("© Fixture", voice.SITE_NOTICE)
+
+    def test_a_joke_has_a_clip_per_part_and_scoped_phrases_stay_in_their_languages(self):
+        config = voice.load_config()
+        self.assertEqual(list(voice.clip_keys(config, "it")), ["hello", "joke.1", "joke.2", "ciao", "ui-test-voice"])
+        self.assertEqual(voice.clip_keys(config, "it")["joke.2"], "phrase.joke.2")
+        self.assertNotIn("ciao", voice.clip_keys(config, "de"), "the Italian-only line isn't recorded in German")
+        self.assertIn("ciao", voice.clip_keys(config), "but it's a known clip, never an orphan")
+
+    def test_pending_marks_missing_stale_and_voiced(self):
+        self.add_clip("hello")
+        self.add_clip("joke.1", "Perché il clown?")  # recorded from older text
+        state = voice.pending("it", "clown", voice.load_config(), voice.load_manifest())
+        self.assertEqual(state, {"hello": None, "joke.1": "stale", "joke.2": "missing", "ciao": "missing", "ui-test-voice": "missing"})
+
+    def test_a_joke_is_voiced_only_with_every_part(self):
+        for clip in ("hello", "ciao", "joke.1"):
+            self.add_clip(clip)
+        male = voice.report(voice.load_config())["voiced"]["it"]["voices"]["clown"]
+        self.assertIn("tag buttonPress", male["gaps"], "only the joke has buttonPress, and its punchline is missing")
+        self.assertIn("flavor b", male["gaps"])
+        self.add_clip("joke.2")
+        male = voice.report(voice.load_config())["voiced"]["it"]["voices"]["clown"]
+        self.assertEqual(male["gaps"], [])
+        self.assertEqual(male["requiredPending"], ["ui-test-voice"])
+
+    def test_check_passes_with_pending_lines_while_testing(self):
+        self.add_clip("hello")
+        self.assertEqual(self.check(), 0)
+
+    def test_check_fails_on_a_required_clip_when_shipping(self):
+        config = voice.load_config()
+        config["languages"]["it"]["status"] = "shipping"
+        voice.dump_json(voice.CONFIG, config)
+        self.add_clip("hello")
+        manifest = voice.load_manifest()
+        manifest["languages"]["it"]["status"] = "shipping"
+        voice.dump_json(voice.MANIFEST, manifest)
+        self.assertEqual(self.check(), 1)
+        self.add_clip("ui-test-voice")
+        self.assertEqual(self.check(), 0)
+
+    def test_check_fails_on_orphans_and_stray_files(self):
+        self.add_clip("retired", "Addio.")
+        self.assertEqual(self.check(), 1)
+        manifest = voice.load_manifest()
+        del manifest["languages"]["it"]["voices"]["clown"]["clips"]["retired"]
+        voice.dump_json(voice.MANIFEST, manifest)
+        self.assertEqual(self.check(), 1, "the file is still on disk, outside the manifest")
+        voice.clip_path("it", "clown", "retired").unlink()
+        self.assertEqual(self.check(), 0)
+
+    def test_site_follows_the_clips(self):
+        self.add_clip("hello")
+        site = voice.VOICE.parent
+        (site / ".git").write_text("gitdir: elsewhere")
+        self.assertEqual(self.check(), 1, "the voices repository without its pages")
+        voice.sync_site(voice.load_config(), voice.load_manifest())
+        self.assertEqual(self.check(), 0)
+        page = (site / "review" / "it.html").read_text("utf8")
+        self.assertIn('"../Voice/it/clown/hello.m4a?v=r"', page)
+        self.assertIn("<title>Fixy's voice review</title>", (site / "index.html").read_text("utf8"))
+        self.assertIn("Copyright (c) Fixture", (site / "LICENSE").read_text("utf8"))
+        self.assertIn("`deskling/tools/voice.py` in fixture", (site / "README.md").read_text("utf8"))
+
+    def test_review_page_lists_a_jokes_parts_under_it(self):
+        self.add_clip("joke.1")
+        self.add_clip("joke.2", "Old punchline.")
+        page = voice.WORK / "review" / "it.html"
+        html_text, count = voice.review_page("it", ["clown"], page, False, voice.load_config(), voice.load_manifest())
+        data = json.loads(html_text.split("const DATA = ", 1)[1].split(";\n", 1)[0])
+        rows = {r["id"]: r for r in data["rows"]}
+        self.assertEqual(count, 1)
+        self.assertEqual([r["id"] for r in data["rows"]], ["hello", "joke.1", "joke.2", "ciao", "ui-test-voice"])
+        self.assertEqual((rows["joke.1"]["joke"], rows["joke.1"]["part"], rows["joke.1"]["parts"]), ("joke", 1, 2))
+        self.assertEqual(rows["joke.2"]["clips"], {}, "the old audio says the old text")
+        self.assertEqual(rows["hello"]["joke"], "")
+        self.assertEqual(data["title"], "Fixy's voice")
+        self.assertEqual(data["flavors"], ["a", "b"])
+        self.assertEqual(data["languages"], [{"code": "it", "name": "Italian", "recorded": True}])
+        self.assertNotIn("Sunny", html_text)
+
+    def test_render_hash_follows_text_voice_and_loudness(self):
+        config, direction = voice.load_config(), {"hello": {"tags": "[whispers]", "gain_db": -5}}
+        request = voice.request_for("hello", "Ciao.", "it", "clown", config, direction)
+        self.assertEqual(request["text"], "Ciao.")
+        config["audio_tags"] = True
+        tagged = voice.request_for("hello", "Ciao.", "it", "clown", config, direction)
+        self.assertEqual(tagged["text"], "[whispers] Ciao.")
+        lufs = voice.loudness_for("hello", config, direction)
+        self.assertEqual(lufs, -24)
+        base = voice.render_hash("V1", tagged, lufs)
+        self.assertNotEqual(base, voice.render_hash("V2", tagged, lufs))
+        self.assertNotEqual(base, voice.render_hash("V1", request, lufs))
+
+    def test_retake_changes_the_seed(self):
+        config = voice.load_config()
+        first = voice.request_for("joke.2", "x", "it", "clown", config, {})["seed"]
+        config["languages"]["it"]["voices"]["clown"]["takes"] = {"joke.2": 2}
+        self.assertNotEqual(first, voice.request_for("joke.2", "x", "it", "clown", config, {})["seed"])
+
+    def test_mouth_envelope_follows_loudness(self):
+        path = self.root / "tone.wav"
+        rate = 8000
+        quiet, loud = [0] * (rate // 4), [12000 if i % 2 else -12000 for i in range(rate // 4)]
+        with wave.open(str(path), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(array("h", quiet + loud + quiet).tobytes())
+        duration, mouth = voice.analyze(path)
+        self.assertAlmostEqual(duration, 0.75)
+        self.assertTrue(mouth.startswith("000") and mouth.endswith("000"))
+        self.assertIn("333", mouth)
+
+
+if __name__ == "__main__":
+    unittest.main()

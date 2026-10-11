@@ -1,0 +1,26 @@
+{
+  "model": "eleven_v3",
+  "loudness_lufs": -19,
+  "seed": 1,
+  "audio_tags": false,
+  "design_lines": [
+    "hello",
+    "joke.1",
+    "joke.2",
+    "ciao"
+  ],
+  "languages": {
+    "it": {
+      "status": "testing",
+      "default": "clown",
+      "replace": {},
+      "voices": {
+        "clown": {
+          "voice_id": "V1",
+          "name": "Pagliaccio",
+          "takes": {}
+        }
+      }
+    }
+  }
+}

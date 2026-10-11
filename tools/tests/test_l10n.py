@@ -72,10 +72,13 @@ class GapTests(L10nTestCase):
     def test_status_skips_keys_out_of_scope(self):
         report = l10n.collect()
         self.assertEqual(report["it"]["app"], {})
-        self.assertEqual(report["de"]["app"], {"Shh": ["missing"], "phrase.joke.1": ["missing"]})
+        self.assertEqual(
+            report["de"]["app"],
+            {"Hello. This is how I sound.": ["missing"], "Shh": ["missing"], "phrase.joke.1": ["missing"]},
+        )
         result, out = quiet(l10n.cmd_status, self.args())
         self.assertEqual(result, 0)
-        self.assertIn("de: app 2", out)
+        self.assertIn("de: app 3", out)
         self.assertNotIn("phrase.ciao", out)
         self.assertEqual(quiet(l10n.cmd_check, self.args())[0], 1)
 
@@ -84,7 +87,7 @@ class GapTests(L10nTestCase):
         quiet(l10n.cmd_export, self.args(out=str(out)))
         self.assertFalse((out / "it.json").exists(), "nothing to translate in Italian")
         work = json.loads((out / "de.json").read_text("utf8"))
-        self.assertEqual(list(work["app"]), ["Shh", "phrase.joke.1"])
+        self.assertEqual(list(work["app"]), ["Hello. This is how I sound.", "Shh", "phrase.joke.1"])
         self.assertEqual(work["glossary"], {"Say something": "Sag etwas"})
         self.assertEqual(work["rules"], l10n.RULES)
         self.assertEqual(work["app"]["phrase.joke.1"]["comment"], "Fixy says this aloud. Part 1 of 2.")
@@ -94,7 +97,9 @@ class GapTests(L10nTestCase):
         result, text = quiet(l10n.cmd_apply, SimpleNamespace(files=[str(out / "de.json")]))
         self.assertEqual(result, 1, "a specifier the English lacks is rejected")
         self.assertIn("applied 1", text)
-        self.assertEqual(l10n.collect()["de"]["app"], {"phrase.joke.1": ["missing"]})
+        self.assertEqual(
+            l10n.collect()["de"]["app"], {"Hello. This is how I sound.": ["missing"], "phrase.joke.1": ["missing"]}
+        )
 
 
 class ExportTests(L10nTestCase):

@@ -60,6 +60,17 @@
         }
       }
     },
+    "Hello. This is how I sound." : {
+      "comment" : "Settings: the Test voice line",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciao. Ecco la mia voce."
+          }
+        }
+      }
+    },
     "Say something" : {
       "comment" : "Menu item",
       "localizations" : {
