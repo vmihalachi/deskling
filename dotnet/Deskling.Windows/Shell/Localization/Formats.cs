@@ -21,17 +21,26 @@ public static class Formats
     /// <summary>"14:30" or "2:30 PM".</summary>
     public static string ShortTime(DateTimeOffset date) => date.ToLocalTime().ToString("t", Loc.Culture);
 
+    /// <summary>A formatter for <paramref name="template"/> in <paramref name="language"/>.</summary>
+    internal static DateTimeFormatter Formatter(string template, string language)
+    {
+        // An array: CsWinRT can't marshal the list type an untyped collection expression argument ([language]) makes
+        // as IIterable<String>, so the constructor threw and the Windows window that formatted a date never opened.
+        string[] languages = [language];
+        return new DateTimeFormatter(template, languages);
+    }
+
     /// <summary>"Mon, Oct 5", ordered for the language.</summary>
     public static string WeekdayMonthDay(DateTimeOffset date)
     {
-        weekdayMonthDay ??= new DateTimeFormatter("dayofweek.abbreviated month.abbreviated day", [Loc.Language]);
+        weekdayMonthDay ??= Formatter("dayofweek.abbreviated month.abbreviated day", Loc.Language);
         return weekdayMonthDay.Format(date.ToLocalTime());
     }
 
     /// <summary>"3 PM" or "15".</summary>
     public static string Hour(int hour)
     {
-        hourOnly ??= new DateTimeFormatter("hour", [Loc.Language]);
+        hourOnly ??= Formatter("hour", Loc.Language);
         return hourOnly.Format(new DateTimeOffset(2026, 1, 5, hour % 24, 0, 0, TimeSpan.Zero), "UTC");
     }
 

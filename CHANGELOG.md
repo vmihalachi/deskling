@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.5.2 - 2026-10-12
+
+### Fixed
+- `Formats.WeekdayMonthDay` and `Formats.Hour` (Windows) threw in apps built with Native AOT (`PublishAot`, Debug runs
+  included): the language list was a collection expression the projection couldn't marshal, so a window that formatted
+  a date never opened. `Deskling.Windows.Tests` now builds with `PublishAot` too, so its tests catch this kind of interop.
+
 ## 0.5.1 - 2026-10-12
 
 ### Fixed
