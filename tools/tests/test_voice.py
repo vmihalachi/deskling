@@ -151,6 +151,22 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(data["languages"], [{"code": "it", "name": "Italian", "recorded": True}])
         self.assertNotIn("Sunny", html_text)
 
+    def test_review_pages_take_the_apps_colors(self):
+        path = self.root / "companion.json"
+        data = json.loads(path.read_text("utf8"))
+        data["voice"]["reviewColors"] = {"light": {"accent": "#B23A1F"}, "dark": {"accent": "#F2B23A"}}
+        path.write_text(json.dumps(data), "utf8")
+        voice.configure(companion.load())
+        page = voice.WORK / "review" / "it.html"
+        html_text, _ = voice.review_page("it", ["clown"], page, False, voice.load_config(), voice.load_manifest())
+        self.assertIn(":root{--accent:#B23A1F;}@media (prefers-color-scheme: dark){:root{--accent:#F2B23A;}}", html_text)
+        self.assertNotIn("/*COLORS*/", html_text)
+        data["voice"]["reviewColors"] = {"light": {"sun": "#B23A1F"}}
+        path.write_text(json.dumps(data), "utf8")
+        voice.configure(companion.load())
+        with self.assertRaises(SystemExit):
+            voice.review_colors()
+
     def test_render_hash_follows_text_voice_and_loudness(self):
         config, direction = voice.load_config(), {"hello": {"tags": "[whispers]", "gain_db": -5}}
         request = voice.request_for("hello", "Ciao.", "it", "clown", config, direction)

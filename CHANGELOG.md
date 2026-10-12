@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+### Added
+- **`voice.reviewColors` in `companion.json`** gives the voice review pages and the friends' site the app's own colors
+  (per scheme, a token → `#RRGGBB` map: `paper`, `card`, `ink`, `ink-soft`, `line`, `accent`, `accent-soft`, `on-accent`,
+  `done`, `done-soft`, `flag`, `flag-soft`, `link`). Apps that set none keep today's colors.
+
 ## 0.6.0 - 2026-10-12
 
 ### Changed

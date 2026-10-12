@@ -49,6 +49,7 @@ import hashlib
 import html
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -792,6 +793,28 @@ def write_page(path: Path, title: str, intro: str, rows: list[tuple[str, str, st
     )
 
 
+REVIEW_COLOR_TOKENS = ("paper", "card", "ink", "ink-soft", "line", "accent", "accent-soft", "on-accent", "done",
+                       "done-soft", "flag", "flag-soft", "link")
+SITE_DEFAULT_COLORS = (":root{--paper:#FFF8E7;--ink:#3D2B1F;--ink-soft:#7A6555;--link:#6B5000}"
+                       "@media(prefers-color-scheme:dark){:root{--paper:#1F1B17;--ink:#EFE6D8;--ink-soft:#B3A592;--link:#E2B93F}}")
+
+
+def review_colors() -> str:
+    """The app's review-page colors (`voice.reviewColors`: per scheme, `light` and `dark`, a token → `#RRGGBB` map) as
+    CSS custom properties that override the template's defaults; empty when the app sets none."""
+    colors = APP.get("voice.reviewColors") or {}
+    css = ""
+    for scheme in ("light", "dark"):
+        values = colors.get(scheme) or {}
+        for token, value in values.items():
+            if token not in REVIEW_COLOR_TOKENS or not re.fullmatch(r"#[0-9A-Fa-f]{6}", str(value)):
+                fail(f"voice.reviewColors.{scheme}.{token}: use one of {', '.join(REVIEW_COLOR_TOKENS)} with a #RRGGBB value")
+        if values:
+            rule = ":root{" + "".join(f"--{token}:{value};" for token, value in values.items()) + "}"
+            css += rule if scheme == "light" else f"@media (prefers-color-scheme: dark){{{rule}}}"
+    return css
+
+
 def review_page(lang: str, kinds: list[str], page: Path, site: bool, config: dict, manifest: dict) -> tuple[str, int]:
     """The review page's HTML for `lang` (clip paths relative to `page`) and how many lines it lists. A clip plays only
     while it says the current text; a line whose voices are all missing or stale is listed as waiting, text only.
@@ -824,7 +847,7 @@ def review_page(lang: str, kinds: list[str], page: Path, site: bool, config: dic
     data = {"lang": lang, "languageName": LANGUAGE_NAMES.get(lang, lang), "voices": voices, "rows": rows, "site": site,
             "languages": languages, "title": REVIEW_TITLE, "notice": SITE_NOTICE, "app": APP.require("name"),
             "flavors": flavors}
-    html_text = REVIEW_TEMPLATE.read_text("utf8").replace(
+    html_text = REVIEW_TEMPLATE.read_text("utf8").replace("/*COLORS*/", review_colors()).replace(
         "/*DATA*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     return html_text, sum(1 for r in rows if r["clips"])
 
@@ -849,9 +872,8 @@ def site_files(config: dict, manifest: dict) -> dict[Path, str]:
     files[site / "index.html"] = (
         '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, '
         f'initial-scale=1"><meta name="robots" content="noindex, nofollow, noarchive"><title>{title}</title>'
-        "<style>body{font:16px/1.5 system-ui;max-width:640px;margin:3em auto;padding:0 16px;background:#FFF8E7;"
-        "color:#3D2B1F}a{color:#6B5000}small{color:#7A6555}@media(prefers-color-scheme:dark){body{background:#1F1B17;"
-        "color:#EFE6D8}a{color:#E2B93F}small{color:#B3A592}}</style>"
+        f"<style>{SITE_DEFAULT_COLORS}{review_colors()}body{{font:16px/1.5 system-ui;max-width:640px;margin:3em auto;"
+        "padding:0 16px;background:var(--paper);color:var(--ink)}a{color:var(--link)}small{color:var(--ink-soft)}</style>"
         f"<h1>{title}</h1><p>Thanks for helping! Pick a language, listen, and flag anything that sounds "
         f"off. When you're done, copy your notes and send them back.</p><ul>{links}</ul>"
         f"<p><small>{html.escape(SITE_NOTICE)}</small></p></html>\n")

@@ -120,6 +120,15 @@
         "defaultVoice": { "type": "string" },
         "keychainService": { "type": "string" },
         "reviewTitle": { "type": "string" },
+        "reviewColors": {
+          "type": "object",
+          "description": "The review pages' colors, per scheme: token (paper, card, ink, ink-soft, line, accent, accent-soft, on-accent, done, done-soft, flag, flag-soft, link) → #RRGGBB. Unset tokens keep the defaults.",
+          "properties": {
+            "light": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" } },
+            "dark": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" } }
+          },
+          "additionalProperties": false
+        },
         "siteCopyright": { "type": "string", "description": "The rights sentence on the review site, after \"Shared with friends who help review <character>'s voice.\" (default: © displayName, all rights reserved)." },
         "copyrightHolder": { "type": "string", "description": "Who holds the copyright in the voices repository's LICENSE line, e.g. \"2026 Jane Doe\" (default: displayName)." },
         "extraClips": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Clip id → source text of clips that aren't phrases." },

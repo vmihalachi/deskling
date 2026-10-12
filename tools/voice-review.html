@@ -6,51 +6,55 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>Voice review</title>
 <style>
+  /* The default colors; an app sets its own in companion.json (`voice.reviewColors`), injected after this block. */
   :root {
     --paper: #FFF8E7; --card: #FFFDF7; --ink: #3D2B1F; --ink-soft: #7A6555; --line: #E8DCC4;
-    --sun: #F2C94C; --sun-soft: #FCEFC4; --leaf: #6B8F4E; --leaf-soft: #E3EDD5; --clay: #C4623A; --clay-soft: #F6DED3;
+    --accent: #F2C94C; --accent-soft: #FCEFC4; --on-accent: #3D2B1F;
+    --done: #6B8F4E; --done-soft: #E3EDD5; --flag: #C4623A; --flag-soft: #F6DED3;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --paper: #1F1B17; --card: #2A241D; --ink: #EFE6D8; --ink-soft: #B3A592; --line: #3E352B;
-      --sun: #E2B93F; --sun-soft: #4A3D1C; --leaf: #9BC07A; --leaf-soft: #2E3A24; --clay: #E3825C; --clay-soft: #4A2C20;
+      --accent: #E2B93F; --accent-soft: #4A3D1C; --on-accent: #3D2B1F;
+      --done: #9BC07A; --done-soft: #2E3A24; --flag: #E3825C; --flag-soft: #4A2C20;
     }
   }
+  /*COLORS*/
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, sans-serif; }
   header { position: sticky; top: 0; z-index: 2; background: var(--paper); border-bottom: 1px solid var(--line); padding: 12px 16px; }
   .bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; max-width: 980px; margin: 0 auto; }
   h1 { font-size: 18px; margin: 0 12px 0 0; }
   .progress { flex: 1 1 160px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 120px; }
-  .progress > i { display: block; height: 100%; background: var(--leaf); width: 0; transition: width .2s; }
+  .progress > i { display: block; height: 100%; background: var(--done); width: 0; transition: width .2s; }
   .count { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
   button, select { font: inherit; color: var(--ink); background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
   button:hover { border-color: var(--ink-soft); }
-  button.primary { background: var(--sun); border-color: var(--sun); font-weight: 600; color: #3D2B1F; }
-  button.on { background: var(--leaf-soft); border-color: var(--leaf); }
+  button.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; color: var(--on-accent); }
+  button.on { background: var(--done-soft); border-color: var(--done); }
   .keys { max-width: 980px; margin: 6px auto 0; color: var(--ink-soft); font-size: 12px; }
   kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--card); }
   main { max-width: 980px; margin: 0 auto; padding: 12px 16px 270px; }
   .row { display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: start; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 0 0 10px; }
-  .row.current { border-color: var(--sun); box-shadow: 0 0 0 3px var(--sun-soft); }
-  .row.flagged { border-color: var(--clay); }
-  .row.done .num::after { content: " ✓"; color: var(--leaf); }
+  .row.current { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .row.flagged { border-color: var(--flag); }
+  .row.done .num::after { content: " ✓"; color: var(--done); }
   .num { color: var(--ink-soft); font-variant-numeric: tabular-nums; padding-top: 3px; font-size: 13px; }
   .it { font-size: 18px; font-weight: 600; }
   .en { color: var(--ink-soft); font-size: 13px; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--ink-soft); }
   .chip { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
-  .chip.flavor-0 { background: var(--sun-soft); } .chip.flavor-1 { background: var(--clay-soft); }
-  .chip.new { background: var(--sun); border-color: var(--sun); color: #3D2B1F; font-weight: 600; }
+  .chip.flavor-0 { background: var(--accent-soft); } .chip.flavor-1 { background: var(--flag-soft); }
+  .chip.new { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
   .chip.waiting { border-style: dashed; }
-  .chip.flavor-2 { background: var(--leaf-soft); } .chip.flavor-3 { background: var(--line); }
+  .chip.flavor-2 { background: var(--done-soft); } .chip.flavor-3 { background: var(--line); }
   /* A joke's later parts sit under its first, indented, joined to it. */
   .row.part { margin: -6px 0 10px 34px; border-top-style: dashed; }
   .actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
   .pair { display: flex; gap: 6px; } .pair button:first-child { flex: 1; }
   .actions button { font-size: 13px; padding: 3px 10px; white-space: nowrap; }
-  .actions button.flag.on { background: var(--clay-soft); border-color: var(--clay); }
-  .actions .playing { background: var(--sun-soft); border-color: var(--sun); }
+  .actions button.flag.on { background: var(--flag-soft); border-color: var(--flag); }
+  .actions .playing { background: var(--accent-soft); border-color: var(--accent); }
   .note { grid-column: 2 / 4; display: none; }
   .row.flagged .note { display: block; }
   .note input { width: 100%; font: inherit; font-size: 13px; padding: 6px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); }
@@ -62,7 +66,7 @@
   /* The pager sits on top of the notes footer; on wide screens it is fixed under the list instead. */
   .pager { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; max-width: 980px; margin: 0 auto 10px; }
   .pager button { font-size: 13px; padding: 3px 10px; min-width: 34px; font-variant-numeric: tabular-nums; }
-  .pager button[aria-current] { background: var(--sun); border-color: var(--sun); color: #3D2B1F; font-weight: 600; }
+  .pager button[aria-current] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
   .pager button:disabled { opacity: .4; cursor: default; border-color: var(--line); }
   .pager[hidden] { display: none; }
   .pager .gap { color: var(--ink-soft); padding: 0 2px; }
