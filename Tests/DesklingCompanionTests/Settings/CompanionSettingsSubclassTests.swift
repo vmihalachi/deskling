@@ -39,7 +39,7 @@ final class CompanionSettingsSubclassTests: XCTestCase {
         XCTAssertEqual(AppSettings(store: store, defaults: .fixture).voice, "female")
         settings.resetToDefaults()
         XCTAssertNil(settings.voice)
-        XCTAssertEqual(settings.frequency, .sometimes)
+        XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertNil(store.string(forKey: "voice"))
     }
 
@@ -60,7 +60,7 @@ final class CompanionSettingsSubclassTests: XCTestCase {
         } onChange: {
             own.value += 1
         }
-        settings.frequency = .rarely
+        settings.frequency = .every3Hours
         XCTAssertEqual(own.value, 0)
         settings.voice = "male"
         XCTAssertEqual(own.value, 1)

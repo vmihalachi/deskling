@@ -28,7 +28,7 @@
     "commentOnPower" : true,
     "desktopPosition" : null,
     "desktopSize" : "medium",
-    "frequency" : "sometimes",
+    "frequency" : "rarely",
     "greetOnReturn" : true,
     "hasCompletedOnboarding" : false,
     "hushInFullScreen" : true,
@@ -64,6 +64,22 @@
     "chatty" : [
       900,
       300
+    ],
+    "every2Hours" : [
+      7200,
+      1800
+    ],
+    "every3Hours" : [
+      10800,
+      2700
+    ],
+    "every45Minutes" : [
+      2700,
+      600
+    ],
+    "every90Minutes" : [
+      5400,
+      1200
     ],
     "rarely" : [
       3600,

@@ -81,7 +81,7 @@ enum CompanionCases {
 
     static let cadence: [CadenceVector.Case] = [
         .init(
-            name: "sometimes-default",
+            name: "sometimes",
             settings: .init(
                 frequency: "sometimes", activeStartMinute: 540, activeEndMinute: 1080, activeWeekdays: weekdays,
                 quietHours: [], hushInFullScreen: true),
@@ -98,6 +98,12 @@ enum CompanionCases {
                 frequency: "chatty", activeStartMinute: 540, activeEndMinute: 1080, activeWeekdays: weekdays,
                 quietHours: [], hushInFullScreen: false),
             start: (2026, 9, 28, 10, 0), seed: 1),
+        .init(
+            name: "every-2-hours",
+            settings: .init(
+                frequency: "every2Hours", activeStartMinute: 540, activeEndMinute: 1080, activeWeekdays: weekdays,
+                quietHours: [], hushInFullScreen: true),
+            start: (2026, 9, 28, 10, 0), seed: 5, minutes: 480),
         .init(
             name: "quiet-hour-and-end-of-day",
             settings: .init(
@@ -146,7 +152,9 @@ enum CompanionCases {
         typealias Input = QuietTimeline.Input
         typealias Settings = QuietTimeline.Settings
         let minute = QuietTimeline.minute
-        let base = Settings(defaults)
+        // Every 30 minutes, the default these timelines were written for, so each still hears what it tests.
+        var base = Settings(defaults)
+        base.frequency = "sometimes"
         let call = Snapshot(busy: [.call])
         let fullScreen = Snapshot(busy: [.fullScreen])
         let away = Snapshot(idleSeconds: 600)
@@ -304,7 +312,12 @@ enum CompanionCases {
     /// Italian lines in an Italian afternoon.
     static let quietExtras: [QuietTimeline.Case] = [
         .init(
-            name: "sequence-delivered", start: (2026, 9, 30, 16, 0), seed: 3, settings: QuietTimeline.Settings(defaults),
+            name: "sequence-delivered", start: (2026, 9, 30, 16, 0), seed: 3,
+            settings: {
+                var s = QuietTimeline.Settings(defaults)
+                s.frequency = "sometimes"
+                return s
+            }(),
             steps: [
                 QuietTimeline.Input(advance: 0, action: "poke", repeat: 3),
                 QuietTimeline.Input(advance: QuietTimeline.minute, action: "tick", repeat: 30),

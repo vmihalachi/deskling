@@ -7,7 +7,8 @@ import Foundation
 public struct CompanionDefaults: Equatable, Sendable {
     /// Speak out loud; no notification until the user turns that channel on, so first launch asks for nothing.
     public var channels: Channels = [.voice]
-    public var frequency: Frequency = .sometimes
+    /// Every hour or so: the character also speaks on its occasions (a greeting, a comment), so more is a lot.
+    public var frequency: Frequency = .rarely
     public var activeStartMinute = 9 * 60
     public var activeEndMinute = 18 * 60
     /// Monday to Friday (1 = Sunday … 7 = Saturday).

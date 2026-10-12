@@ -9,12 +9,11 @@ public sealed class ChatterCadenceTests
     [Fact]
     public void Presets()
     {
-        Assert.Equal(3600.0, Frequency.Rarely.IntervalSeconds());
-        Assert.Equal(900.0, Frequency.Rarely.JitterSeconds());
-        Assert.Equal(1800.0, Frequency.Sometimes.IntervalSeconds());
-        Assert.Equal(600.0, Frequency.Sometimes.JitterSeconds());
-        Assert.Equal(900.0, Frequency.Chatty.IntervalSeconds());
-        Assert.Equal(300.0, Frequency.Chatty.JitterSeconds());
+        int[][] minutes = [[15, 5], [30, 10], [45, 10], [60, 15], [90, 20], [120, 30], [180, 45]];
+        Assert.Equal(minutes, Frequencies.All.Select(f => new[] { (int)f.IntervalSeconds() / 60, (int)f.JitterSeconds() / 60 }));
+        Assert.Equal(
+            ["chatty", "sometimes", "every45Minutes", "rarely", "every90Minutes", "every2Hours", "every3Hours"],
+            Frequencies.All.Select(f => f.RawValue()));
     }
 
     [Fact]
@@ -38,8 +37,8 @@ public sealed class ChatterCadenceTests
     {
         var settings = new CompanionSettings(new InMemorySettingsStore(), Fixture.Defaults);
         var config = ChatterCadence.Config(settings);
-        Assert.Equal(1800.0, config.IntervalSeconds);
-        Assert.Equal(600.0, config.IntervalJitterSeconds);
+        Assert.Equal(3600.0, config.IntervalSeconds);
+        Assert.Equal(900.0, config.IntervalJitterSeconds);
         Assert.Equal(new[] { 2, 3, 4, 5, 6 }, config.ActiveWeekdays.Order().ToArray());
         Assert.True(config.PostponeDuringFullScreen);
     }

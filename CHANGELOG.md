@@ -6,6 +6,21 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.6.0 - 2026-10-12
+
+### Changed
+- **`Frequency` has seven presets**, from every 15 minutes to every 3 hours: `every45Minutes`, `every90Minutes`,
+  `every2Hours` and `every3Hours` join `chatty` (15 min), `sometimes` (30 min) and `rarely` (1 h), whose raw values
+  stay. The cases are declared from the most frequent to the least (`allCases` and C#'s `Frequencies.All` list them in
+  that order, for a picker), so an app's `switch` over `Frequency` needs the new cases.
+- **The default frequency is every hour** (`rarely`, was `sometimes`): a character also speaks on its occasions, so
+  twice an hour on top was a lot. Settings a user chose stay; the app's `settings.json` vector changes.
+
+### Migration
+- Give the four new cases a label wherever the app switches over `Frequency` (its frequency picker), then regenerate
+  the app's vectors: `settings.json` gets the new default and presets, and any timeline written for the old default
+  that should keep its cadence sets `frequency: "sometimes"`.
+
 ## 0.5.2 - 2026-10-12
 
 ### Fixed

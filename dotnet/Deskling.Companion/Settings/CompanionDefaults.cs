@@ -18,7 +18,8 @@ public sealed record CompanionDefaults(SkinId Skin, IReadOnlySet<FlavorId> Phras
     /// <summary>Speak out loud; no notification until the user turns that channel on, so first launch asks for nothing.</summary>
     public Channels Channels { get; init; } = Channels.Voice;
 
-    public Frequency Frequency { get; init; } = Frequency.Sometimes;
+    /// <summary>Every hour or so: the character also speaks on its occasions (a greeting, a comment), so more is a lot.</summary>
+    public Frequency Frequency { get; init; } = Frequency.Rarely;
 
     public int ActiveStartMinute { get; init; } = 9 * 60;
 

@@ -5,12 +5,11 @@ import XCTest
 
 final class ChatterCadenceTests: XCTestCase {
     func testPresets() {
-        XCTAssertEqual(Frequency.rarely.interval, 3600)
-        XCTAssertEqual(Frequency.rarely.jitter, 900)
-        XCTAssertEqual(Frequency.sometimes.interval, 1800)
-        XCTAssertEqual(Frequency.sometimes.jitter, 600)
-        XCTAssertEqual(Frequency.chatty.interval, 900)
-        XCTAssertEqual(Frequency.chatty.jitter, 300)
+        let minutes = Frequency.allCases.map { [Int($0.interval / 60), Int($0.jitter / 60)] }
+        XCTAssertEqual(minutes, [[15, 5], [30, 10], [45, 10], [60, 15], [90, 20], [120, 30], [180, 45]])
+        XCTAssertEqual(
+            Frequency.allCases.map(\.rawValue),
+            ["chatty", "sometimes", "every45Minutes", "rarely", "every90Minutes", "every2Hours", "every3Hours"])
     }
 
     func testConfigMapsSettingsOntoTheScheduler() {
@@ -32,8 +31,8 @@ final class ChatterCadenceTests: XCTestCase {
     func testDefaultSettingsGiveTheDefaultConfig() {
         let settings = CompanionSettings(store: InMemorySettingsStore(), defaults: .fixture)
         let config = ChatterCadence.config(for: settings)
-        XCTAssertEqual(config.interval, 1800)
-        XCTAssertEqual(config.intervalJitter, 600)
+        XCTAssertEqual(config.interval, 3600)
+        XCTAssertEqual(config.intervalJitter, 900)
         XCTAssertEqual(config.activeWeekdays, [2, 3, 4, 5, 6])
         XCTAssertTrue(config.postponeDuringFullScreen)
     }

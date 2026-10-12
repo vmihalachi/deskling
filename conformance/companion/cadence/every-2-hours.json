@@ -12,8 +12,8 @@
     "afterCallFallbackSeconds" : 900,
     "busyGraceSeconds" : 30,
     "idleThresholdSeconds" : 300,
-    "intervalJitterSeconds" : 600,
-    "intervalSeconds" : 1800,
+    "intervalJitterSeconds" : 1800,
+    "intervalSeconds" : 7200,
     "postponeDuringCalls" : true,
     "postponeDuringFullScreen" : true,
     "quietHours" : [
@@ -21,18 +21,14 @@
     ]
   },
   "fireMinutes" : [
-    35,
-    59,
-    85,
-    112,
-    133,
-    171,
-    196,
-    233
+    114,
+    250,
+    354,
+    450
   ],
-  "minutes" : 240,
-  "name" : "sometimes-default",
-  "seed" : 42,
+  "minutes" : 480,
+  "name" : "every-2-hours",
+  "seed" : 5,
   "settings" : {
     "activeEndMinute" : 1080,
     "activeStartMinute" : 540,
@@ -43,7 +39,7 @@
       5,
       6
     ],
-    "frequency" : "sometimes",
+    "frequency" : "every2Hours",
     "hushInFullScreen" : true,
     "quietHours" : [
 

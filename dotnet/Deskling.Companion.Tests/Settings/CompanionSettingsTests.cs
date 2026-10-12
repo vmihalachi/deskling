@@ -17,7 +17,7 @@ public sealed class CompanionSettingsTests
         var store = new InMemorySettingsStore();
         var settings = Make(store);
         Assert.Equal(Channels.Voice, settings.Channels);
-        Assert.Equal(Frequency.Sometimes, settings.Frequency);
+        Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.Equal(540, settings.ActiveStartMinute);
         Assert.Equal(1080, settings.ActiveEndMinute);
         Assert.Equal([2, 3, 4, 5, 6], settings.ActiveWeekdays.Order());
@@ -107,7 +107,7 @@ public sealed class CompanionSettingsTests
         store.SetString(SettingsKeys.Skin, "");
         store.SetInteger(SettingsKeys.Appearance, 3);
         var settings = Make(store);
-        Assert.Equal(Frequency.Sometimes, settings.Frequency);
+        Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.Equal(Channels.Voice, settings.Channels);
         Assert.Equal(FixtureIds.VectorSkin, settings.Skin);
         Assert.Equal(AppearanceSetting.System, settings.Appearance);
@@ -148,10 +148,10 @@ public sealed class CompanionSettingsTests
     public void ResetKeepsOnboardingDone()
     {
         var settings = Make(new InMemorySettingsStore());
-        settings.Frequency = Frequency.Rarely;
+        settings.Frequency = Frequency.Every2Hours;
         settings.HasCompletedOnboarding = true;
         settings.ResetToDefaults();
-        Assert.Equal(Frequency.Sometimes, settings.Frequency);
+        Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.True(settings.HasCompletedOnboarding);
         Assert.Equal(23, SettingsKeys.All.Count);
         Assert.Equal(23, SettingsKeys.All.Distinct().Count());
@@ -212,9 +212,9 @@ public sealed class CompanionSettingsTests
         var settings = Make(store);
         var changed = new List<string?>();
         settings.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
-        settings.Frequency = Frequency.Sometimes; // the same value, as Swift's didSet
+        settings.Frequency = Frequency.Rarely; // the same value, as Swift's didSet
         settings.Skin = FixtureIds.RasterSkin;
         Assert.Equal([nameof(CompanionSettings.Frequency), nameof(CompanionSettings.Skin)], changed);
-        Assert.Equal("sometimes", store.GetString(SettingsKeys.Frequency));
+        Assert.Equal("rarely", store.GetString(SettingsKeys.Frequency));
     }
 }

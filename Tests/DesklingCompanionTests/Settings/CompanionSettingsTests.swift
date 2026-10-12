@@ -8,7 +8,7 @@ final class CompanionSettingsTests: XCTestCase {
         let store = InMemorySettingsStore()
         let settings = CompanionSettings(store: store, defaults: .fixture)
         XCTAssertEqual(settings.channels, [.voice])
-        XCTAssertEqual(settings.frequency, .sometimes)
+        XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertEqual(settings.activeStartMinute, 540)
         XCTAssertEqual(settings.activeEndMinute, 1080)
         XCTAssertEqual(settings.activeWeekdays, [2, 3, 4, 5, 6])
@@ -87,7 +87,7 @@ final class CompanionSettingsTests: XCTestCase {
         store.set(string: "", forKey: SettingsKeys.skin)
         store.set(integer: 3, forKey: SettingsKeys.appearance)
         let settings = CompanionSettings(store: store, defaults: .fixture)
-        XCTAssertEqual(settings.frequency, .sometimes)
+        XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertEqual(settings.channels, [.voice])
         XCTAssertEqual(settings.skin, FixtureIDs.vectorSkin)
         XCTAssertEqual(settings.appearance, .system)
@@ -122,10 +122,10 @@ final class CompanionSettingsTests: XCTestCase {
     func testResetKeepsOnboardingDone() {
         let store = InMemorySettingsStore()
         let settings = CompanionSettings(store: store, defaults: .fixture)
-        settings.frequency = .rarely
+        settings.frequency = .every2Hours
         settings.hasCompletedOnboarding = true
         settings.resetToDefaults()
-        XCTAssertEqual(settings.frequency, .sometimes)
+        XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertTrue(settings.hasCompletedOnboarding)
         XCTAssertEqual(SettingsKeys.all.count, 23)
         XCTAssertEqual(Set(SettingsKeys.all).count, 23)

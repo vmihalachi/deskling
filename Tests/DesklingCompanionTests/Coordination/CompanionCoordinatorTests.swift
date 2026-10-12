@@ -26,6 +26,7 @@ final class CompanionCoordinatorTests: XCTestCase {
         idle = MockIdle()
         busy = MockBusy()
         settings = CompanionSettings(store: InMemorySettingsStore(), defaults: .fixture)
+        settings.frequency = .sometimes  // every 30 minutes: these tests count lines on that clock
         configure(settings)
         return CompanionCoordinator(
             settings: settings, bank: .fixture, language: language, clock: clock, idle: idle, busy: busy, calendar: calendar, seed: seed)
@@ -161,10 +162,10 @@ final class CompanionCoordinatorTests: XCTestCase {
 
     func testSettingsChangedRescheduls() {
         let c = makeCoordinator(start: monday(10))
-        settings.frequency = .rarely
+        settings.frequency = .every2Hours
         c.settingsChanged()
-        XCTAssertEqual(c.scheduler.config.interval, 3600)
-        XCTAssertEqual(run(c, minutes: 44).count, 0)
+        XCTAssertEqual(c.scheduler.config.interval, 7200)
+        XCTAssertEqual(run(c, minutes: 89).count, 0)
     }
 
     func testFullScreenCountsOnlyWhenTheSettingSays() {

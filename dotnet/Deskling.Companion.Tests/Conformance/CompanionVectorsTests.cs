@@ -57,7 +57,7 @@ public sealed class CompanionVectorsTests
     public void EveryFolderHasVectors()
     {
         Assert.Equal(24, Pickers.Count());
-        Assert.Equal(5, Cadences.Count());
+        Assert.Equal(6, Cadences.Count());
         Assert.Equal(19, Timelines.Count());
         Assert.Equal(4, CharacterFiles.Count());
     }

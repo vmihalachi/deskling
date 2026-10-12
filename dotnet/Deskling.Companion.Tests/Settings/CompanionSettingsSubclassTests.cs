@@ -40,7 +40,7 @@ public sealed class CompanionSettingsSubclassTests
         Assert.Equal("female", new AppSettings(store, Fixture.Defaults).Voice);
         settings.ResetToDefaults();
         Assert.Null(settings.Voice);
-        Assert.Equal(Frequency.Sometimes, settings.Frequency);
+        Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.Null(store.GetString("voice"));
     }
 

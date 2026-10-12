@@ -24,6 +24,7 @@ public sealed class CompanionCoordinatorTests
         idle = new MockIdle();
         busy = new MockBusy();
         settings = new CompanionSettings(new InMemorySettingsStore(), Fixture.Defaults);
+        settings.Frequency = Frequency.Sometimes; // every 30 minutes: these tests count lines on that clock
         configure?.Invoke(settings);
         return new CompanionCoordinator(settings, Fixture.Bank, language, clock, idle, busy, TimeZoneInfo.Utc, seed);
     }
@@ -184,10 +185,10 @@ public sealed class CompanionCoordinatorTests
     public void SettingsChangedReschedules()
     {
         var c = Make(Monday(10));
-        settings.Frequency = Frequency.Rarely;
+        settings.Frequency = Frequency.Every2Hours;
         c.SettingsChanged();
-        Assert.Equal(3600, c.Scheduler.Config.IntervalSeconds);
-        Assert.Empty(Run(c, 44));
+        Assert.Equal(7200, c.Scheduler.Config.IntervalSeconds);
+        Assert.Empty(Run(c, 89));
     }
 
     [Fact]
