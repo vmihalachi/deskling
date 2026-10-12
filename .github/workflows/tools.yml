@@ -62,5 +62,9 @@ jobs:
       - name: Test
         run: npx vp test run
 
-      - name: Pack (what npm would publish)
-        run: npm pack --dry-run
+      # The same pack as release.yml's landing job, into a folder of its own, so a tag never meets it first.
+      - name: Pack (as the release does)
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm"
+          npm pack --pack-destination "$RUNNER_TEMP/npm"
+          ls -l "$RUNNER_TEMP/npm"/*.tgz

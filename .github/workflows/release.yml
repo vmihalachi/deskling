@@ -126,6 +126,7 @@ jobs:
           npm ci
           npx tsc --noEmit && npx vp test run
           npm version "${{ needs.version.outputs.version }}" --no-git-tag-version
+          mkdir -p "$GITHUB_WORKSPACE/npm"
           npm pack --pack-destination "$GITHUB_WORKSPACE/npm"
 
       - uses: actions/upload-artifact@v7

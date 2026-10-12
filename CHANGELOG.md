@@ -6,6 +6,15 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.1 - 2026-10-12
+
+0.7.0 as it was meant to ship: its tag exists (SwiftPM sees it), but its release stopped at packing
+`@deskling/landing`, before NuGet, npm and the GitHub release. Use 0.7.1 everywhere 0.7.0 is named; nothing else
+changes.
+
+- **Release**: the landing job creates the folder it packs into, and the Tools workflow packs the same way on every
+  push, so a release can't be the first to run it.
+
 ## 0.7.0 - 2026-10-12
 
 The companion shell: what sunnysays and Mister Pagliacci still repeated on top of 0.6 (the app model, its delegate
