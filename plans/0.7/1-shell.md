@@ -29,3 +29,32 @@
 `swift build && swift test` on macOS; `xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests`;
 `scripts/verify.sh --all` ok; `swift.yml` green. Hand to 5: the exact `open` surface (so the migration briefs can be
 checked against it) and whether 1.1 needed the fallback.
+
+## Outcome (2026-10-12)
+
+Done in one session. **1.1 needed no fallback**: `@MainActor @Observable open class CompanionAppModel<Window: WindowID,
+Settings: CompanionSettings>` is subclassed by an `@Observable final class` in the test module with a property of its
+own. Differences from the README's API, all deliberate:
+
+- **A second generic parameter, `Settings`**, so `model.settings` keeps the app's own type (`AppSettings` with
+  `sunnyVoice` or `skin`) and views don't change.
+- **`willSay(_ phrase:)` instead of `didDeliver(_:)`**: one hook before deliveries *and* previews (Pagliacci's
+  `prepare(phrase)` needs both). Previews go through `say(_:)` (no guards, clears `bubblePhraseID`, stops first:
+  Pagliacci's way; sunnysays' `testVoice` becomes `say(...)`); `preview(_:)` = `canPreview` + `say`.
+- **`desktopBubbleWaits`** (open, false): Pagliacci's `!isSettingUp` in `lingerDesktopBubble`. **`stopSpeaking()` is
+  open** (Pagliacci resets `isSettingUp`, then super).
+- **`CompanionAppDelegate` isn't generic** (AppKit calls delegates through Objective-C, which a generic class can't
+  expose): the app's subclass holds its model and overrides `companion: any CompanionLaunching`; a screenshot run
+  overrides `runScreenshots() -> Bool`. `isRunningTests` is a static on it.
+- **`CompanionAppConfiguration`** also carries `palette`, `displayFont` (the desktop bubble), `supporterProduct` (the
+  menus' thanks; `model.isSupporter`) and `localize` (default `Phrase.localize`, the app's catalog). Copy structs are
+  closures, not `@Sendable`, and nothing is `Sendable` (they live on the main actor).
+- **`waveFromHome()` is in the base** (both apps had it, over `sounds.hello`). `DesktopHide` is top level.
+- **The glyph talks while `isVoicing`** (sunnysays used `isSpeaking`; the same for one-part lines).
+- `statusLine(status:snapshot:now:calendar:endOfToday:copy:)` is a static on the base (callable as `AppModel.statusLine`).
+
+The `open` surface: required `windowContent(for:)`, `panelContent()`, `menuCopy`, `desktopCharacter()`, `desktopLayout`,
+`glyphCharacter`; optional `willLaunch()`, `menuBarMenu()`, `desktopMenu()`, `glyphMood`, `preferredVoice`,
+`willSay(_:)`, `showBubble(_:)`, `desktopBubbleWaits`, `voicingChanged(_:)`, `handleNotificationAction(_:)`,
+`settingsDidReset()`, `stopSpeaking()`. Public helpers for subclasses: `observe(_:then:)`, `refreshVoice()`,
+`refreshGlyph()`, `refreshStatus(snapshot:)`, `say(_:)`, `performer`, `chime`, `voices`, `statusItem`, `isLaunched`.

@@ -14,6 +14,22 @@ package and the NuGet packages together.
   `FloatingWindow.setFrame(_:)` lays the content out at the new size before it shows.
 
 ### Added
+- **The companion shell (`DesklingCompanionUI/Shell/`)**: what every companion app's model, delegate and menus repeated.
+  `CompanionAppModel<Window, Settings>` is an `@Observable open class` with the 20 s tick, the channels, the status
+  item, the desktop presence and bubble, the windows by role (`WindowRoles`), the hotkey, the store's start, mute with
+  Undo, previews (`say(_:)` clears `bubblePhraseID`) and the status pill's words; the app subclasses it and supplies its
+  views, character and words through open hooks (`windowContent`, `panelContent`, `menuCopy`, `desktopCharacter`,
+  `desktopLayout`, `glyphCharacter`; `glyphMood`, `preferredVoice`, `willSay`, `showBubble`, `desktopBubbleWaits`,
+  `voicingChanged`, `handleNotificationAction`, `settingsDidReset`, `willLaunch`, `stopSpeaking`) and
+  `CompanionAppConfiguration` (`StatusCopy`, `DesktopCopy`, `CompanionSounds`, the palette and face, the supporter
+  product). `observe(_:then:)` watches the app's own preferences. `CompanionNotifying` is the notification it drives
+  (actions by raw id). `CompanionAppDelegate` (subclassed, hands over `companion`; `runScreenshots()`),
+  `CompanionMenus` over `MenuCopy`, a public `ActionItem`, `DesktopHide`.
+- **`DeliveryPerformer.onVoicingChanged`** and **`SpeechSequencer.onVoicingChanged`**: audio started or stopped, false
+  in the beat between a joke's parts, so the mouth moves only while words are heard (an app's own voicing wrapper can
+  go).
+- **`Phrase.localizedParts(bundle:)`, `localizedText`, `Phrase.localize(_:_:bundle:)`**: a phrase in the user's
+  language from the app's String Catalog.
 - **`FloatingWindow.idealSize(of:maxWidth:)`** measures content before it goes into the window.
 
 ## 0.6.5 - 2026-10-12
