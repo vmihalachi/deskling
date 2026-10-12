@@ -63,6 +63,13 @@ mechanism; each app keeps its own content vectors in the same formats, written b
 own bank and art. The formats are sunnysays' (its `conformance/README.md`), with the additions marked **new**; a new
 field is written only when it isn't the default, so sunnysays' files read the same.
 
+An app's case lists are the standard ones plus its own: `QuietTimeline.standardCases(base:dst:)` (17 timelines, the
+last one in the app's DST city) and `PickerVector.standardCases(...)` (15 cases, the flavor ones under the app's
+names), then the cases only it has (its button, its languages, its skins). The app's content as a `CompanionVectors`
+type gives `ConformanceSuite.companion(_:root:regenerateHint:)` the whole suite; on Windows, `CompanionReplay`
+replays each file kind. The lists here are the same standard ones over the fixtures, plus the cadence, the desktop and
+the fixture's own picker and quiet cases.
+
 | File | Pins |
 |---|---|
 | `phrases.json` | The bank as data: `phrases[]` in bank order with `id` (stable, never renamed), `kind` and its fields: `line` with `key` (`phrase.<id>`) and `english` (the catalog's source text, whatever its language: the field keeps its name), `tune` with `sound`, or **new** `sequence` with `keys` (`phrase.<id>.1`, `.2`, …) and `parts` (the source text of each beat); then `flavor` (absent for tunes), sorted `tags`, `weight`, sorted `skins` (`[]` = every skin) and **new** `languages` (sorted BCP-47 base codes; absent = every language). Then `tags` (all, in declaration order), `flavors` (the app's, in its order), `eventTags`, `dayparts` (tag → first and last hour), `weekdays` (tag → calendar weekdays) and `recentWindow`. |

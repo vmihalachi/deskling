@@ -28,3 +28,22 @@
 the tree clean, `scripts/verify.sh --all` ok. Hand to 5: confirmation that the standard lists reproduce sunnysays'
 and Pagliacci's committed `picker/` and `quiet/` byte for byte (run their generators against `path: ../deskling` in a
 scratch worktree, or leave it to 5.4).
+
+## Outcome (2026-10-12)
+
+Done in one session. **Confirmed byte for byte**: a scratch package building sunnysays' and Pagliacci's cores against
+this checkout regenerated their `picker/` (19 and 21 files) and `quiet/` (17 each) from the standard lists plus each
+app's own cases, identical to what they have committed. `conformance/companion` is unchanged too.
+
+- `PickerVector.standardCases` takes more than the README said, because the three lists differ in counts:
+  `leftEmpty` (the flavor with no battery line: sunnysays `.wonder`, Pagliacci `.silly`), `excluded` (Monday morning's
+  first N candidates: sunnysays 10, Pagliacci 3, the fixture 4) and `recent` (default `PhrasePicker.recentWindow`; the
+  fixture 4). Its 15 cases are the dayparts but Monday, `recent-skipped`, five events, the two flavor cases,
+  `event-flavor-left-empty-falls-back`, `excluded-ids` and the two fallbacks. Each app keeps its own Monday-morning,
+  button and `recent-older-than-window-count-again` cases (sunnysays: `monday-morning-chime`, `-no-chime`,
+  `event-button-press`, `recent-older-…` with `recentWindow + 4`; Pagliacci: `monday-morning`, `-italian`, the three
+  `event-button-press-*`, `supporter-skin`).
+- `ConformanceSuite.companion` owns `picker/` and `quiet/` only (`characters/` also holds the compiled art). Deskling's
+  own suite is that plus `cadence/`, `characters/` and `desktop.json`.
+- `CompanionReplay` also has `Desktop(root)` and `Cadence(path)` (Deskling's own test uses them); problem messages name
+  the file by its name only.

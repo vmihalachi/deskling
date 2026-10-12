@@ -45,6 +45,13 @@ package and the NuGet packages together.
   default).
 - **`ScreenshotScript` (`DesklingCompanionUI/Screenshots/`)**: an app's screenshot run as a list of shots in light and
   dark over its model; `ScreenshotCapture.SampleEnvironment` (what the run's model is built on) and `SilentNotifier`.
+- **Standard case lists (`DesklingTesting`)**: `QuietTimeline.standardCases(base:dst:)` (the 17 timelines every app
+  pins, the DST one named and zoned by the app) and `PickerVector.standardCases(bank:skin:language:single:pair:
+  leftEmpty:excluded:recent:)` (the 15 shared picker cases); **`CompanionVectors`** and
+  **`ConformanceSuite.companion(_:root:regenerateHint:)`**, an app's whole suite from its content. sunnysays' and
+  Pagliacci's committed vectors come out of them byte for byte.
+- **`CompanionReplay` (Deskling.Testing)**: one call per vector kind over an app's vectors folder, so its replay test is
+  theories and one assertion each.
 - **`DeliveryPerformer.onVoicingChanged`** and **`SpeechSequencer.onVoicingChanged`**: audio started or stopped, false
   in the beat between a joke's parts, so the mouth moves only while words are heard (an app's own voicing wrapper can
   go).
