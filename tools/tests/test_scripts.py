@@ -167,6 +167,47 @@ chmod +x "$app/Fixture"
         self.assertIn("ok    Deskling pins agree", result.stdout, result.stderr)
         self.assertEqual(store_line(result), [], "no store section: --all has no store check to run")
 
+    def git(self, cwd: Path, *args: str) -> str:
+        return subprocess.run(
+            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", *args],
+            cwd=cwd, env=companion.git_env(), capture_output=True, text=True, check=True,
+        ).stdout.strip()
+
+    def commit_app(self) -> None:
+        """The fixture app as a repository, with deskling/ a checkout of its own on the pinned tag."""
+        deskling = self.root / "deskling"
+        deskling.mkdir()
+        self.git(deskling, "init", "-q")
+        self.git(deskling, "commit", "-q", "--allow-empty", "-m", "release")
+        self.git(deskling, "tag", "v0.5.0")
+        self.git(self.root, "init", "-q")
+        (self.root / ".gitignore").write_text("deskling/\nfake-bin/\ncalls.log\n", "utf8")
+        self.git(self.root, "add", "-A")
+        self.git(self.root, "commit", "-q", "-m", "app")
+
+    def test_verify_reads_the_submodules_under_a_git_hook(self):
+        self.commit_app()
+        # What git exports to a pre-commit hook in a linked worktree: absolute paths into the app's repository.
+        hook = {"GIT_DIR": str(self.root / ".git"), "GIT_INDEX_FILE": str(self.root / ".git" / "index")}
+        result = self.run_script("verify.sh", "--fast", "--", "notes.md", env=hook)
+        self.assertEqual(result.stdout.strip(), "ok    Deskling pins agree", result.stdout + result.stderr)
+
+    @unittest.skipUnless(sys.platform == "darwin", "verify.sh runs xcodegen on macOS only")
+    def test_verify_names_a_group_named_after_the_checkout(self):
+        project = self.root / "macos" / "Fixture.xcodeproj" / "project.pbxproj"
+        project.parent.mkdir()
+        project.write_text("// generated\n", "utf8")
+        self.commit_app()
+        # XcodeGen's group for a source outside mac.dir, named after the folder the app is checked out in ("app").
+        self.fake("xcodegen", f"printf '\\t\\tname = app;\\n' >> '{project}'\n")
+        self.fake("xcrun", "exit 0\n")
+        spec = self.root / "macos" / "project.yml"
+        spec.write_text(spec.read_text("utf8") + "\n", "utf8")
+        self.git(self.root, "add", "macos/project.yml")
+        result = self.run_script("verify.sh", "--fast", "--staged")
+        self.assertIn("FAIL  xcodegen (project.pbxproj in sync)", result.stdout, result.stderr)
+        self.assertIn("named after this checkout's folder (app)", result.stdout)
+
     @unittest.skipUnless(sys.platform == "darwin", "ditto and lsregister are macOS tools")
     def test_install_dev_copies_the_debug_build(self):
         built = self.root / "products"

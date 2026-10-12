@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -168,6 +169,7 @@ def derived(config: Config) -> dict[str, str]:
         "VOICE_DIR": rel("voice.dir"),
         "DESKLING_PATH": rel("deskling.path"),
         "DESKLING_TAG": config.get("deskling.tag", ""),
+        "GIT_LOCAL_ENV": " ".join(GIT_LOCAL_ENV),  # verify.sh unsets them for git in a submodule
     }
     never = "^$a"  # matches no path: a section the app doesn't have
     values["RE_NEVER"] = never  # verify.sh --all skips a check whose patterns are all this one
@@ -201,6 +203,22 @@ def derived(config: Config) -> dict[str, str]:
     return values
 
 
+# What `git rev-parse --local-env-vars` lists, less the `-c` settings: the variables that tell git which repository to
+# use. A git hook exports them for the app's repository and they win over `-C`.
+GIT_LOCAL_ENV = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX", "GIT_SHALLOW_FILE", "GIT_COMMON_DIR",
+)
+
+
+def git_env() -> dict[str, str]:
+    """The environment for git in another repository than the app's (a submodule: `deskling/`, the voices): the
+    current one without `GIT_LOCAL_ENV`. Under the pre-commit hook `git -C deskling describe` would otherwise ask the
+    app's repository, always so in a linked worktree, where the exported GIT_DIR is absolute."""
+    return {key: value for key, value in os.environ.items() if key not in GIT_LOCAL_ENV}
+
+
 def pins(config: Config) -> list[tuple[str, str]]:
     """Where the Deskling release is pinned and the version each place names: the submodule's tag, companion.json's
     `deskling.tag`, the `exact:` of the core package's Package.swift, the `exactVersion`/`exact` of the XcodeGen spec
@@ -208,10 +226,8 @@ def pins(config: Config) -> list[tuple[str, str]]:
     found: list[tuple[str, str]] = []
     submodule = config.path("deskling.path")
     if submodule and (submodule / ".git").exists():
-        import subprocess
-
-        described = subprocess.run(
-            ["git", "-C", str(submodule), "describe", "--tags", "--exact-match"], capture_output=True, text=True)
+        described = subprocess.run(["git", "-C", str(submodule), "describe", "--tags", "--exact-match"],
+                                   capture_output=True, text=True, env=git_env())
         found.append((f"{config.get('deskling.path')} (submodule tag)", described.stdout.strip() or "(not on a tag)"))
     found.append(("companion.json deskling.tag", config.get("deskling.tag", "")))
     deskling_line = re.compile(r"deskling", re.I)

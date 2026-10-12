@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: the pre-commit hook's `verify.sh --staged` passes in a linked worktree (`git worktree add`,
+  `.claude/worktrees/<name>/`). git in a submodule (the `deskling/` tag the pin check reads, the voices and landing
+  checks, `voice.py publish`) runs without the `GIT_DIR`, `GIT_INDEX_FILE`… a git hook exports for the app's repository
+  (`companion.git_env`), which pointed `git -C deskling describe` back at the app. The xcodegen check says when a group
+  is named after the checkout's folder: a source outside `mac.dir` (`../voices/Voice`) needs a `group:` in the spec,
+  or every checkout generates another project.
+
 ## 0.7.3 - 2026-10-12
 
 - **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed

@@ -953,7 +953,9 @@ def cmd_site(args) -> int:
 
 def git(*cmd: str, cwd: Path | None = None) -> str:
     cwd = cwd or ROOT
-    result = subprocess.run(["git", "-C", str(cwd), *cmd], capture_output=True, text=True)
+    # In the voices repository, without the GIT_DIR… a git hook exports for the app's (companion.git_env).
+    env = None if cwd == ROOT else companion.git_env()
+    result = subprocess.run(["git", "-C", str(cwd), *cmd], capture_output=True, text=True, env=env)
     if result.returncode != 0:
         fail(f"git {cmd[0]} failed in {rel(cwd)}: {result.stderr.strip()[-800:]}")
     return result.stdout.strip()
@@ -962,7 +964,7 @@ def git(*cmd: str, cwd: Path | None = None) -> str:
 def default_branch(site: Path) -> str:
     """The voices repository's default branch on `origin` (`main`, `master`…), which publish pushes to."""
     found = subprocess.run(["git", "-C", str(site), "ls-remote", "--symref", "origin", "HEAD"],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, env=companion.git_env())
     for line in found.stdout.splitlines():
         if line.startswith("ref: refs/heads/") and line.endswith("\tHEAD"):
             return line[len("ref: refs/heads/"):-len("\tHEAD")]
@@ -989,7 +991,7 @@ def cmd_publish(args) -> int:
     # If another machine published first, this fails as a non-fast-forward instead of overwriting its clips.
     branch = default_branch(site)
     pushed = subprocess.run(["git", "-C", str(site), "push", "-q", "origin", f"HEAD:refs/heads/{branch}"],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, env=companion.git_env())
     if pushed.returncode != 0:
         fail(f"push failed: {pushed.stderr.strip()[-600:]}\nIf the voices repo moved on elsewhere: "
              f"`git -C {rel(site)} pull --rebase origin {branch}`, then voice.py site and publish again.")

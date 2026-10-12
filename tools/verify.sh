@@ -49,12 +49,15 @@ case "$mode" in
   base) changed="$(git diff --name-only "$base"...HEAD; git diff --name-only HEAD; git ls-files --others --exclude-standard)" ;;
   paths) changed="$(printf '%s\n' "${paths[@]}" | sed "s|^$ROOT/||")" ;;
 esac
+# subgit <dir> <args…>: git in a submodule. A pre-commit hook exports GIT_DIR, GIT_INDEX_FILE… for the app's
+# repository, and they win over -C (GIT_LOCAL_ENV, from companion.py, lists them).
+subgit() { local dir="$1"; shift; ( unset $GIT_LOCAL_ENV; git -C "$dir" "$@" ); }
+
 # A landing page kept in its own repository is a submodule: the parent only reports its path, so list the files
-# changed inside it since the commit the parent records (commits not recorded yet, and uncommitted work). Its git
-# runs without the GIT_DIR / GIT_INDEX_FILE a pre-commit hook runs under.
+# changed inside it since the commit the parent records (commits not recorded yet, and uncommitted work).
 if [ "$mode" != paths ] && [ -n "$LANDING_DIR" ] && [ -e "$LANDING_DIR/.git" ] &&
   printf '%s\n' "$changed" | grep -qxF "$LANDING_DIR"; then
-  sub() { env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE git -C "$LANDING_DIR" "$@"; }
+  sub() { subgit "$LANDING_DIR" "$@"; }
   recorded="$(git rev-parse -q --verify "${base:-HEAD}:$LANDING_DIR" 2>/dev/null || git rev-parse -q --verify "HEAD:$LANDING_DIR")"
   changed="$changed
 $({ sub diff --name-only "$recorded" 2>/dev/null; sub ls-files --others --exclude-standard; } | sed "s|^|$LANDING_DIR/|")"
@@ -101,6 +104,13 @@ xcodegen_in_sync() {
   if ! git diff --quiet -- "$MAC_DIR/$MAC_PROJECT"; then
     echo "project.pbxproj was stale and has been regenerated; include it in your commit."
     git diff --stat -- "$MAC_DIR/$MAC_PROJECT"
+    # XcodeGen groups a source outside mac.dir (../voices/Voice) under a group named after the checkout's folder, so
+    # a worktree or a clone in another folder generates another project.
+    local folder; folder="$(basename "$ROOT")"
+    if git diff -- "$MAC_DIR/$MAC_PROJECT" | grep '^+' | grep -qF -e "name = $folder;" -e "name = \"$folder\";"; then
+      echo "A group is named after this checkout's folder ($folder): give each source outside $MAC_DIR (../…) a"
+      echo "fixed group in $MAC_SPEC (\`group: <name>\`) and regenerate, so every checkout generates the same project."
+    fi
     [ "$mode" = staged ] && return 1
   fi
   return 0
@@ -128,8 +138,8 @@ voices_pointer_pushed() {
   sha="$(git ls-files --stage "$VOICE_DIR" | awk '{print $2}')"
   [ -n "$sha" ] || return 0
   [ -e "$VOICE_DIR/.git" ] || { echo "$VOICE_DIR/ isn't checked out: git submodule update --init"; return 1; }
-  git -C "$VOICE_DIR" fetch -q origin 2>/dev/null || true
-  if [ -z "$(git -C "$VOICE_DIR" branch -r --contains "$sha" 2>/dev/null)" ]; then
+  subgit "$VOICE_DIR" fetch -q origin 2>/dev/null || true
+  if [ -z "$(subgit "$VOICE_DIR" branch -r --contains "$sha" 2>/dev/null)" ]; then
     echo "$VOICE_DIR pointer ${sha:0:7} isn't pushed: run python3 $DESKLING_PATH/tools/voice.py publish -m \"…\""
     return 1
   fi
