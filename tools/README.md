@@ -20,10 +20,17 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
 | `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies. |
+| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits; App Store Connect (text, in-app purchases, screenshots, previews, review notes; `--status` reads only); a Partner Center import folder. |
+| `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks, the Windows parity reminder. |
 | `skills/` | `localization`, `add-phrase`, `add-setting`, `conformance`, `voice`, `windows-port`, `release-mac`, `review-invariants`. |
 
-Tests: `python3 tools/tests/run.py` (over `tools/tests/fixture-app`, a minimal app; `tools.yml` runs them).
+Tests: `python3 tools/tests/run.py` (over `tools/tests/fixture-app`, a minimal app; `tools.yml` runs them), and for
+the landing package `npx vp test run` in `tools/landing`.
+
+An app without a phrase bank or a character (a reminder app, say) leaves `character` and `conformance` out of
+`companion.json`: `l10n.py`, the store tools, `verify.sh` and the hook work as usual; `phrases.py`, `voice.py`,
+`character.py` and `conformance.sh` say the app has no conformance section.
 
 ## Adopting the tools in an app
 

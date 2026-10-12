@@ -7,6 +7,8 @@ package and the NuGet packages together.
 ## Unreleased
 
 ### Changed
+- **`companion.json` no longer requires `character` or `conformance`**: an app without a phrase bank uses the
+  tools too; the bank's tools say the section is missing.
 - **Tools: a landing page kept in its own repository.** When `landing.dir` is a submodule, `verify.sh` lists the files
   changed inside it (since the commit the app records, so its commits not yet recorded count too) instead of only the
   submodule's path, so the landing checks run; and `setup-linux.sh` fetches it.
@@ -52,6 +54,14 @@ package and the NuGet packages together.
   Pagliacci's committed vectors come out of them byte for byte.
 - **`CompanionReplay` (Deskling.Testing)**: one call per vector kind over an app's vectors folder, so its replay test is
   theories and one assertion each.
+- **`@deskling/landing` (`tools/landing`)**: a landing page's localized pages, legal pages, sitemap, CSP `_headers` and
+  social cards as Vite plugins, from `companionLanding(options)`; the app keeps its data, placeholders, JSON-LD, brand
+  and page. An npm package (the landing pages are their own repositories): `release.yml` publishes it at the tag's
+  version when the `NPM_PUBLISH` variable is set. sunnysays' and Pagliacci's landing builds come out the same.
+- **The store tools (`tools/store`)**: `check.py` (each listing field against the stores' limits), `push.py` (App Store
+  Connect: text, in-app purchases with their creation, screenshots, previews, review notes, `--status`) and
+  `import.py` (a Partner Center import folder), over `companion.json`'s new `store` section; `verify.sh` runs
+  `check.py` when a listing file changes. **`l10n.py`** checks `%#@name@` plural substitutions in every category.
 - **`DeliveryPerformer.onVoicingChanged`** and **`SpeechSequencer.onVoicingChanged`**: audio started or stopped, false
   in the beat between a joke's parts, so the mouth moves only while words are heard (an app's own voicing wrapper can
   go).

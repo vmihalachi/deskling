@@ -33,3 +33,37 @@
 `python3 tools/tests/run.py` green; `npx vp test` in `tools/landing` green; `tools.yml` green; both apps' and the
 fixture app's `companion.json` validate (sunnysays' and Pagliacci's gain `store` in their migrations, so validate
 them as they are). Hand to 5: the exact `store` keys `push.py` reads, so the migration briefs fill them right.
+
+## Outcome (2026-10-12)
+
+Done in one session after 1–3. **The landing route is npm** (the owner's choice, since the landing pages became their
+own public repositories): `@deskling/landing` is TypeScript compiled to `dist/` (Node won't strip types inside
+`node_modules`), `release.yml`'s `landing` job tests and packs it at the tag's version and `publish` pushes it to npm
+when the repository variable `NPM_PUBLISH` is `true`. **Before 0.7.0: the owner creates the `@deskling` npm scope**
+(an organization on npmjs.com) and adds an `NPM_TOKEN` secret for the first publish; after it, a trusted publisher on
+npmjs.com (repository `vmihalachi/deskling`, workflow `release.yml`) replaces the token. Without them the tarball is
+still on the GitHub release.
+
+- **Gate D, checked early**: sunnysays' and Pagliacci's landing configs, converted onto a packed tarball, built
+  `dist/` byte for byte the same as before and pass `vp check`. sunnysays' `vite.config.ts` keeps its lines, voice
+  switch, runtime JSON and JSON-LD (521 → about 180 lines); Pagliacci's keeps its jokes, portrait, inline switcher
+  (`languageSwitcher: "inline"`) and its own store button (`storeButton` with the exported `appleIcon`). In the
+  landing repos: `"@deskling/landing": "0.7.0"` in `devDependencies`, `import { companionLanding, … } from
+  "@deskling/landing"`, then `defineConfig({ ...landing, fmt, lint })`. `og/render.ts` goes (the package's
+  `og: { dir, iconPath, fontFamily, iconBackground, breakFLigatures, copy }`: sunnysays `"Fredoka"`, `#FFF8E7`,
+  `breakFLigatures: true`; Pagliacci `"Bodoni Moda"`, `#B8321D`).
+- The options beyond the README: `localeProblems` (Pagliacci's jokes check), `languageSwitcherLabel`, `headers` (extra
+  `_headers` rules: mybackhurts' posters), `Language.aliases` and `notFor` (mybackhurts' redirect script, which only
+  takes its `skip` form when a language has `notFor`). mybackhurts' `notFoundJson` and other keys are its own
+  `placeholders`.
+- **The store keys `push.py` reads** (`store.apple`): `appId`, `platform` (MAC_OS), `copyright`, `locales`,
+  `extraLocales`, `baseTerritory` (USA by default; sunnysays ITA), `screenshots`, `previews`, `screenshotType`,
+  `previewType`, `iaps` (product id → `reference`, `type`, `familySharing`, `price` as a string, `name` and
+  `description` field ids, `reviewNote`, `reviewShot`), `review` (`notes`, `shots` relative to the root, `size`,
+  `background`). `store.siteUrl` defaults to `https://<domain>`. `store.microsoft`: `screenshots`, `art`,
+  `screenshotCount`, `publisher`; its presence makes `check.py` require the `ms.*` fields. sunnysays' constants as a
+  `store` section made the shared `check.py` print exactly what its own does; `push.py --status` needs the owner's
+  App Store Connect key, so M10 compares it there.
+- `l10n.py` gained the substitution **checks** (status and check); mybackhurts' export and apply of substitutions are
+  still its fork's: sequence 6 ports them if its `status -v` / `check` comparison needs it.
+- `setup-linux.sh` needs nothing new: a landing repository installs `@deskling/landing` from npm like any dependency.
