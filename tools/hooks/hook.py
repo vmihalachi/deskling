@@ -152,7 +152,10 @@ def normalize(event):
         patch = args.get("command") or args.get("input") or ""
         if isinstance(patch, list):
             patch = "\n".join(map(str, patch))
-        return [{**event, "tool_name": "Edit", "tool_input": {"file_path": p}} for p in PATCHED.findall(patch)]
+        # Its paths are relative to the session's directory (`cwd`), which may be below the root.
+        cwd = event.get("cwd")
+        return [{**event, "tool_name": "Edit", "tool_input": {"file_path": str(Path(cwd) / p) if cwd else p}}
+                for p in PATCHED.findall(patch)]
     if tool in ("Read", "Edit", "Write") and "file_path" not in args and "path" in args:
         args = {**args, "file_path": args["path"]}
     if tool == "Bash" and isinstance(args.get("command"), list):  # Codex sends argv

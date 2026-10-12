@@ -6,15 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.3 - 2026-10-12
+
 - **Tools**: the pre-commit hook's `verify.sh --staged` passes in a linked worktree (`git worktree add`,
   `.claude/worktrees/<name>/`). git in a submodule (the `deskling/` tag the pin check reads, the voices and landing
   checks, `voice.py publish`) runs without the `GIT_DIR`, `GIT_INDEX_FILE`… a git hook exports for the app's repository
   (`companion.git_env`), which pointed `git -C deskling describe` back at the app. The xcodegen check says when a group
   is named after the checkout's folder: a source outside `mac.dir` (`../voices/Voice`) needs a `group:` in the spec,
   or every checkout generates another project.
-
-## 0.7.3 - 2026-10-12
-
 - **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed
   `<svg` or `<?xml` tags can't make the render take quadratic time (CodeQL `js/polynomial-redos`).
 - **Tools**: `verify.sh --all` skips the checks of a section the app's `companion.json` doesn't have (no `store`, no
@@ -31,7 +30,8 @@ package and the NuGet packages together.
     exports have Polish, Czech, Japanese, Korean and Chinese plural forms.
   - `hooks/hook.py`: a `cloud-stop` mode for Copilot's cloud coding agent (in GitHub Actions only: `verify.sh` on the
     branch against origin's default branch); paths are compared with forward slashes on Windows; Codex's argv
-    commands are read as one command line.
+    commands are read as one command line; apply_patch paths are read against the session's directory (`cwd`), not
+    the hook's.
   - `store/push.py`: an in-app purchase without `reviewNote` or `reviewShot`, and an app without the review notes
     file, leave App Store Connect's own alone (the schema no longer requires `reviewNote`).
   - `@deskling/landing`: `og` is optional, for an app that renders its own social cards in `extraPlugins`.

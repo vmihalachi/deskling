@@ -103,6 +103,9 @@ class PreToolUse(HookTestCase):
         self.assertTrue(self.blocked("apply_patch", command="*** Begin Patch\n*** Add File: notes.md\n+x\n"
                                      "*** Update File: macos/Fixture.xcodeproj/project.pbxproj\n*** End Patch\n"))
         self.assertFalse(self.blocked("apply_patch", command=patch("macos/project.yml")))
+        below_root = {"session_id": "t", "cwd": str(self.root / "macos"), "tool_name": "apply_patch",
+                      "tool_input": {"command": patch("../conformance/phrases.json")}}
+        self.assertEqual(self.run_hook("pre", below_root).returncode, 2, "relative to the session's cwd")
 
     def test_copilot_shapes(self):
         xcstrings = str(self.root / "macos/Fixture/Resources/Localizable.xcstrings")
