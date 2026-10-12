@@ -30,6 +30,9 @@
         public var onSpeechStarted: (() -> Void)?
         /// The last part was said, or speech was stopped.
         public var onSpeechFinished: (() -> Void)?
+        /// Audio started (true) or ended (false), from the sequencer: false in the beat between a setup and its
+        /// punchline, so the character's mouth moves only while words are heard.
+        public var onVoicingChanged: ((Bool) -> Void)?
 
         private let post: ((String) -> Void)?
         private let schedule: SpeechSequencer.Schedule
@@ -56,6 +59,7 @@
             self.schedule = schedule
             sequencer = SpeechSequencer(speaker: speaker, schedule: schedule)
             sequencer.onFinished = { [weak self] in self?.onSpeechFinished?() }
+            sequencer.onVoicingChanged = { [weak self] on in self?.onVoicingChanged?(on) }
         }
 
         /// From the first part until the last finished, beats included.

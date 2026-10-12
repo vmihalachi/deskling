@@ -80,6 +80,23 @@
             XCTAssertTrue(sequencer.isVoicing)
         }
 
+        func testVoicingIsReportedAsAudioStartsAndStops() {
+            var voicing: [Bool] = []
+            sequencer.onVoicingChanged = { voicing.append($0) }
+            sequencer.speak(joke, beat: 1.2, voiceIdentifier: nil, rate: 0.5, volume: 1)
+            XCTAssertEqual(voicing, [true])
+            speaker.finish()
+            XCTAssertEqual(voicing, [true, false], "the beat is silent")
+            runBeat()
+            speaker.finish()
+            XCTAssertEqual(voicing, [true, false, true, false])
+            sequencer.speak(joke, beat: 1.2, voiceIdentifier: nil, rate: 0.5, volume: 1)
+            sequencer.stop()
+            XCTAssertEqual(voicing, [true, false, true, false, true, false], "a stop ends the audio")
+            sequencer.stop()
+            XCTAssertEqual(voicing.count, 6, "reported once")
+        }
+
         func testStopCancelsThePendingPart() {
             sequencer.speak(joke, beat: 1.2, voiceIdentifier: nil, rate: 0.5, volume: 1)
             speaker.finish()

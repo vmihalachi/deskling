@@ -29,6 +29,9 @@
         public var onPartStarted: ((Int) -> Void)?
         /// The last part finished, or the sequence was stopped.
         public var onFinished: (() -> Void)?
+        /// Audio started (true, just before a part is spoken) or ended (false: the part finished, so a beat or the end
+        /// follows, or the sequence was stopped). Moves the character's mouth only while words are heard.
+        public var onVoicingChanged: ((Bool) -> Void)?
 
         private let schedule: Schedule
         private var parts: [SpeechPart] = []
@@ -37,6 +40,12 @@
         private var voice: (identifier: String?, rate: Double, volume: Double) = (nil, 0.5, 1)
         /// Bumped by every `speak` and `stop`, so a beat or a finish that arrives late is ignored.
         private var generation = 0
+        /// What `onVoicingChanged` last reported.
+        private var voicing = false {
+            didSet {
+                if voicing != oldValue { onVoicingChanged?(voicing) }
+            }
+        }
 
         public init(speaker: any Speaking, schedule: Schedule? = nil) {
             self.speaker = speaker
@@ -76,6 +85,7 @@
             parts = []
             speaker.onFinished = nil
             speaker.stop()
+            voicing = false
             onFinished?()
         }
 
@@ -84,12 +94,14 @@
             speaker.onFinished = { [weak self] in self?.partFinished(current) }
             onPartStarted?(index)
             let part = parts[index]
+            voicing = true  // first: a voice may finish at once
             speaker.speak(part.text, clip: part.clip, voiceIdentifier: voice.identifier, rate: voice.rate, volume: voice.volume)
         }
 
         private func partFinished(_ current: Int) {
             guard current == generation, isActive else { return }
             speaker.onFinished = nil
+            voicing = false
             index += 1
             guard index < parts.count else {
                 isActive = false
