@@ -19,14 +19,20 @@
         public let bubbleMaxWidth: CGFloat
         /// Around the bubble's card, so its shadow isn't clipped by the window.
         public let bubbleMargin: CGFloat
+        /// The contact shadow's width, as a share of the window's.
+        public let shadowWidthRatio: CGFloat
 
-        public init(art: CharacterArt, shadowHeight: CGFloat = 4, bubbleMaxWidth: CGFloat = 240, bubbleMargin: CGFloat = 4) {
+        public init(
+            art: CharacterArt, shadowHeight: CGFloat = 4, bubbleMaxWidth: CGFloat = 240, bubbleMargin: CGFloat = 4,
+            shadowWidthRatio: CGFloat = 0.42
+        ) {
             aspect = art.viewBox.width / art.viewBox.height
             headHeightRatio = art.bubblePoint.y / art.viewBox.height
             bubbleTuck = art.rig.bubble.tuck
             self.shadowHeight = shadowHeight
             self.bubbleMaxWidth = bubbleMaxWidth
             self.bubbleMargin = bubbleMargin
+            self.shadowWidthRatio = shadowWidthRatio
         }
 
         /// The desktop window's size for `size`.

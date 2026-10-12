@@ -51,7 +51,7 @@
                 AnyView(view.environment(\.companionPalette, palette).environment(\.companionDisplayFont, displayFont))
             }
             let windowSize = layout.windowSize(for: size)
-            let stand = DesktopStand(content: content, shadowHeight: layout.shadowHeight, sayActionName: sayActionName)
+            let stand = DesktopStand(content: content, layout: layout, sayActionName: sayActionName)
             character = FloatingWindow(
                 content: environment(AnyView(stand)), size: windowSize, anchor: Self.anchor(for: position, size: windowSize))
             bubble = FloatingWindow(content: AnyView(EmptyView()), size: .zero, anchor: .zero, isMovable: false)
@@ -126,12 +126,7 @@
             let parent = character.frame
             let side = FloatingPlacement.side(beside: parent, in: screen)
             let view = environment(
-                AnyView(
-                    SpeechBubble(
-                        text: text, tail: side == .left ? .trailing : .leading, size: Self.bubbleTextSize, fillsWidth: false,
-                        countdown: countdown, roomForDial: true
-                    )
-                    .padding(layout.bubbleMargin)))
+                AnyView(Self.bubblePreview(text: text, tail: side == .left ? .trailing : .leading, countdown: countdown, layout: layout)))
             let ideal = FloatingWindow.idealSize(of: view, maxWidth: layout.bubbleMaxWidth + 2 * layout.bubbleMargin)
             let size = CGSize(width: ceil(ideal.width), height: ceil(ideal.height))
             // Exactly the measured size from the window's top left, and each line a view of its own: the window takes its
@@ -142,6 +137,20 @@
             bubble.setFrame(
                 FloatingPlacement.frame(
                     size: size, beside: parent, on: side, centerY: centerY, gap: layout.bubbleGap(width: parent.width), in: screen))
+        }
+
+        // MARK: The views, for screenshot sheets
+
+        /// The character standing on the desktop the way the companion's window draws it: `character` at the window's
+        /// size over a soft contact shadow in the palette's shade.
+        public static func stand(character: AnyView, layout: DesktopLayout) -> CompanionStand {
+            CompanionStand(character: character, layout: layout)
+        }
+
+        /// The desktop bubble the way the companion shows it; `tail` is `.trailing` when it sits left of the character.
+        public static func bubblePreview(text: String, tail: Edge, countdown: BubbleCountdown?, layout: DesktopLayout) -> some View {
+            SpeechBubble(text: text, tail: tail, size: bubbleTextSize, fillsWidth: false, countdown: countdown, roomForDial: true)
+                .padding(layout.bubbleMargin)
         }
 
         // MARK: Position
@@ -165,8 +174,34 @@
         }
     }
 
-    /// The character standing on the desktop over a soft contact shadow, so it looks like it stands rather than floats.
-    /// Clicks, drags and the menu are the window's; VoiceOver gets "say something" as an action.
+    /// The character standing on the desktop over a soft contact shadow, so it looks like it stands rather than floats:
+    /// what the companion's window draws, and a screenshot sheet with it (`DesktopCompanion.stand`).
+    public struct CompanionStand: View {
+        let character: AnyView
+        let layout: DesktopLayout
+        @Environment(\.companionPalette) private var palette
+
+        public init(character: AnyView, layout: DesktopLayout) {
+            self.character = character
+            self.layout = layout
+        }
+
+        public var body: some View {
+            GeometryReader { proxy in
+                ZStack(alignment: .bottom) {
+                    Ellipse()
+                        .fill(palette.shade)
+                        .frame(width: proxy.size.width * layout.shadowWidthRatio, height: layout.shadowHeight * 2)
+                        .blur(radius: 1.5)
+                    character.padding(.bottom, layout.shadowHeight)
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+        }
+    }
+
+    /// The stand in the companion's window. Clicks, drags and the menu are the window's; VoiceOver gets "say something"
+    /// as an action.
     private struct DesktopStand: View {
         /// Set after the window exists, so the VoiceOver action reaches the companion.
         final class Action {
@@ -174,24 +209,14 @@
         }
 
         let content: AnyView
-        let shadowHeight: CGFloat
+        let layout: DesktopLayout
         let sayActionName: String
         let onSay = Action()
-        @Environment(\.companionPalette) private var palette
 
         var body: some View {
-            GeometryReader { proxy in
-                ZStack(alignment: .bottom) {
-                    Ellipse()
-                        .fill(palette.shade)
-                        .frame(width: proxy.size.width * 0.42, height: shadowHeight * 2)
-                        .blur(radius: 1.5)
-                    content.padding(.bottom, shadowHeight)
-                }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityAction(named: Text(verbatim: sayActionName)) { onSay.action?() }
+            CompanionStand(character: content, layout: layout)
+                .accessibilityElement(children: .combine)
+                .accessibilityAction(named: Text(verbatim: sayActionName)) { onSay.action?() }
         }
     }
 #endif
