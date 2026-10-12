@@ -12,35 +12,25 @@ final class ConformanceTests: XCTestCase {
     static let suite: ConformanceSuite = {
         typealias C = CompanionCases
         let root = ConformanceRoot.find(markerFile: "conformance/README.md", from: #filePath)!.appendingPathComponent("companion")
+        let hint = "Regenerate with scripts/conformance.sh and commit the result."
+        // An app's suite, plus the mechanism only the package pins: the cadence and the desktop presence.
+        let app = ConformanceSuite.companion(C.self, root: root, regenerateHint: hint)
         return ConformanceSuite(
             root: root,
-            generatedFolders: [
-                PickerVector.directory, CadenceVector.directory, QuietTimeline.directory, CharacterPoseVector.directory,
-            ],
+            generatedFolders: app.generatedFolders + [CadenceVector.directory, CharacterPoseVector.directory],
             generate: {
-                var files = try PhrasesVector.files(bank: C.bank, flavors: C.flavors)
-                files.merge(try SettingsVector.files(C.settings)) { a, _ in a }
-                files.merge(try PickerVector.files(cases: C.picker, bank: C.bank)) { a, _ in a }
+                var files = try app.generate()
                 files.merge(try CadenceVector.files(cases: C.cadence)) { a, _ in a }
-                files.merge(
-                    try QuietTimeline.files(cases: C.quiet(defaults: C.defaults) + C.quietExtras, bank: C.bank, defaults: C.defaults)
-                ) { a, _ in a }
                 files.merge(try DesktopVector.files(timelines: C.desktopTimelines, bubbleTexts: C.bubbleTexts, partDelays: C.partDelays)) {
                     a, _ in a
                 }
-                for character in C.characters { files.merge(try CharacterPoseVector.files(character)) { a, _ in a } }
                 return files
             },
-            replayers: [
-                .init(path: PhrasesVector.file) { try PhrasesVector.verify($0, file: $1, bank: C.bank, flavors: C.flavors) },
-                .init(path: SettingsVector.file) { try SettingsVector.verify($0, file: $1, expected: C.settings) },
-                .init(path: PickerVector.directory) { try PickerVector.verify($0, file: $1, bank: C.bank) },
+            replayers: app.replayers + [
                 .init(path: CadenceVector.directory) { try CadenceVector.verify($0, file: $1) },
-                .init(path: QuietTimeline.directory) { try QuietTimeline.verify($0, file: $1, bank: C.bank, defaults: C.defaults) },
                 .init(path: DesktopVector.file) { try DesktopVector.verify($0, file: $1) },
-                .init(path: CharacterPoseVector.directory) { try CharacterPoseVector.verify($0, file: $1, characters: C.characters) },
             ],
-            regenerateHint: "Regenerate with scripts/conformance.sh and commit the result.")
+            regenerateHint: hint)
     }()
 
     func testVectorsAreUpToDate() throws {

@@ -4,8 +4,9 @@ import DesklingTesting
 import Foundation
 
 /// The cases behind `conformance/companion/`, over the fixtures. Cadence, desktop and the quiet timelines carry no app
-/// data, so their lists are sunnysays' own; the picker cases are sunnysays' re-expressed over fixture ids.
-enum CompanionCases {
+/// data, so their lists are sunnysays' own; the picker and quiet cases are the standard ones (`PickerVector.standardCases`,
+/// `QuietTimeline.standardCases`) plus the fixture's own.
+enum CompanionCases: CompanionVectors {
     static let bank = PhraseBank.fixture
     static let defaults = CompanionDefaults.fixture
     /// The app's flavors in display order.
@@ -30,39 +31,22 @@ enum CompanionCases {
             excludedIDs: excluded, skin: skin, language: language)
     }
 
-    static let picker: [PickerVector.Case] = {
+    static let pickerCases: [PickerVector.Case] = {
         let morning = PhrasePicker.candidates(in: bank, context: context(10, 2, chime: true))
         let (a, b, c) = (FixtureIDs.flavorA, FixtureIDs.flavorB, FixtureIDs.flavorC)
+        let standard = PickerVector.standardCases(
+            bank: bank, skin: FixtureIDs.vectorSkin, single: ("flavors-calm-only", [c]), pair: ("flavors-playful-and-wonder", [a, b]),
+            leftEmpty: a, excluded: 4, recent: 4)
         return [
             .init(name: "monday-morning-chime", context: context(10, 2, chime: true)),
             .init(name: "monday-morning-no-chime", context: context(10, 2, chime: false)),
-            .init(name: "wednesday-afternoon", context: context(14, 4, chime: false)),
-            .init(name: "friday-evening", context: context(19, 6, chime: true)),
-            .init(name: "saturday-night", context: context(23, 7, chime: false)),
-            .init(name: "sunday-dawn", context: context(4, 1, chime: false)),
-            .init(name: "recent-skipped", context: context(10, 2, chime: true, recent: morning.prefix(4).map(\.id))),
             .init(
                 name: "recent-older-than-window-count-again",
                 context: context(
                     10, 2, chime: true,
                     recent: morning.prefix(2).map(\.id) + Array(repeating: "general-c1", count: PhrasePicker.recentWindow))),
-            .init(name: "event-welcome-back", context: context(10, 2, event: .welcomeBack, chime: true)),
-            .init(name: "event-after-call", context: context(15, 3, event: .afterCall, chime: false)),
             .init(name: "event-button-press", context: context(23, 7, event: .buttonPress, chime: true)),
-            .init(name: "event-battery-low", context: context(12, 5, event: .batteryLow, chime: false)),
-            .init(name: "event-went-dark", context: context(18, 2, event: .wentDark, chime: false)),
-            .init(name: "flavors-calm-only", context: context(14, 4, chime: true, flavors: [c])),
-            .init(name: "flavors-playful-and-wonder", context: context(20, 6, chime: false, flavors: [a, b])),
-            .init(
-                name: "event-flavor-left-empty-falls-back",
-                context: context(12, 5, event: .batteryLow, chime: false, flavors: [a])),
-            .init(name: "excluded-ids", context: context(10, 2, chime: true, excluded: Set(morning.prefix(4).map(\.id)))),
-            .init(
-                name: "event-all-excluded-falls-back",
-                context: context(23, 7, event: .unplugged, chime: false, excluded: Set(bank.phrases(tagged: .unplugged).map(\.id)))),
-            .init(
-                name: "event-recent-exhausted",
-                context: context(10, 2, event: .shushEnd, chime: false, recent: bank.phrases(tagged: .shushEnd).map(\.id))),
+        ] + standard + [
             // New with the companion layer.
             .init(
                 name: "sequence-picked",
@@ -146,166 +130,13 @@ enum CompanionCases {
         (false, String(repeating: "A long setup that keeps going. ", count: 8)),
     ]
 
-    // MARK: Quiet timelines (sunnysays' 17 over the given defaults, plus the fixture's sequence)
+    // MARK: Quiet timelines (the standard 17 over the fixture's defaults, plus the fixture's own)
 
-    static func quiet(defaults: CompanionDefaults) -> [QuietTimeline.Case] {
-        typealias Input = QuietTimeline.Input
-        typealias Settings = QuietTimeline.Settings
-        let minute = QuietTimeline.minute
+    static var quietCases: [QuietTimeline.Case] {
         // Every 30 minutes, the default these timelines were written for, so each still hears what it tests.
-        var base = Settings(defaults)
+        var base = QuietTimeline.Settings(defaults)
         base.frequency = "sometimes"
-        let call = Snapshot(busy: [.call])
-        let fullScreen = Snapshot(busy: [.fullScreen])
-        let away = Snapshot(idleSeconds: 600)
-        let locked = Snapshot(isScreenLocked: true)
-        let muted = Snapshot(isOutputMuted: true, notificationsAuthorized: true)
-        let mutedNoBanner = Snapshot(isOutputMuted: true, notificationsAuthorized: false)
-        let speaking = Snapshot(isSpeaking: true)
-        func with(_ change: (inout Settings) -> Void) -> Settings {
-            var s = base
-            change(&s)
-            return s
-        }
-        let voiceChime = with { $0.channels = ["voice", "chime"] }
-        return [
-            .init(
-                name: "ambient-monday-morning", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 120),
-                    Input(advance: 0, action: "poke"),
-                    Input(advance: minute, action: "tick", repeat: 25),
-                ]),
-            .init(
-                name: "chatty-with-chime", start: (2026, 9, 29, 9, 0), seed: 7, settings: voiceChime,
-                steps: [Input(advance: minute, action: "tick", repeat: 90)]),
-            .init(
-                name: "shush-hour-then-wake-line", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: 0, action: "shush", argument: "hour"),
-                    Input(advance: minute, action: "tick", repeat: 59),
-                    Input(advance: minute, action: "tick", repeat: 2),
-                    Input(advance: 0, action: "shush", argument: "untilISay"),
-                    Input(advance: minute, action: "tick", repeat: 30),
-                    Input(advance: 0, action: "wake"),
-                    Input(advance: 0, action: "wake"),
-                    Input(advance: 0, action: "shush", argument: "restOfToday"),
-                    Input(advance: minute, action: "tick", repeat: 5),
-                ]),
-            .init(
-                name: "shush-restored-from-settings", start: (2026, 9, 28, 10, 0),
-                settings: with { $0.shushedUntil = "2026-09-28T10:30:00Z" },
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 29),
-                    Input(advance: minute, action: "tick", repeat: 2),
-                ]),
-            .init(
-                name: "shush-expired-in-settings", start: (2026, 9, 28, 10, 0),
-                settings: with { $0.shushedUntil = "2026-09-28T09:00:00Z" },
-                steps: [Input(advance: minute, action: "tick", repeat: 3)]),
-            .init(
-                name: "call-holds-then-after-call", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 15),
-                    Input(advance: minute, action: "tick", repeat: 40, snapshot: call),
-                    Input(advance: 0, action: "poke", snapshot: call),
-                    Input(advance: minute, action: "tick", repeat: 3),
-                ]),
-            .init(
-                name: "full-screen-hushed", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 60, snapshot: fullScreen),
-                    Input(advance: minute, action: "tick", repeat: 2),
-                ]),
-            .init(
-                name: "full-screen-ignored-by-setting", start: (2026, 9, 28, 10, 0), settings: with { $0.hushInFullScreen = false },
-                steps: [Input(advance: minute, action: "tick", repeat: 60, snapshot: fullScreen)]),
-            .init(
-                name: "away-welcome-back-cooldown", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick"),
-                    Input(advance: minute, action: "tick", repeat: 10, snapshot: away),
-                    Input(advance: minute, action: "tick"),
-                    Input(advance: minute, action: "tick", repeat: 6, snapshot: away),
-                    Input(advance: minute, action: "tick"),
-                    Input(advance: minute, action: "tick", repeat: 10, snapshot: locked),
-                    Input(advance: 31 * minute, action: "tick", snapshot: locked),
-                    Input(advance: minute, action: "tick"),
-                ]),
-            .init(
-                name: "muted-falls-back-to-notification", start: (2026, 9, 28, 10, 0), settings: voiceChime,
-                steps: [
-                    Input(advance: 0, action: "poke", snapshot: muted),
-                    Input(advance: 0, action: "event", argument: "wentDark", snapshot: muted),
-                    Input(advance: 0, action: "event", argument: "wentLight", snapshot: mutedNoBanner),
-                    Input(advance: 0, action: "event", argument: "batteryLow", snapshot: speaking),
-                    Input(advance: 0, action: "event", argument: "charging"),
-                ]),
-            .init(
-                name: "notification-channel", start: (2026, 9, 28, 10, 0), settings: with { $0.channels = ["notification"] },
-                steps: [
-                    Input(advance: 0, action: "poke"),
-                    Input(advance: 0, action: "event", argument: "unplugged"),
-                    Input(advance: minute, action: "tick", repeat: 45),
-                ]),
-            .init(
-                name: "quietly", start: (2026, 9, 28, 10, 0), settings: with { $0.channels = [] },
-                steps: [
-                    Input(advance: 0, action: "poke"),
-                    Input(advance: 0, action: "event", argument: "wentDark"),
-                ]),
-            .init(
-                name: "comments-off", start: (2026, 9, 28, 10, 0),
-                settings: with {
-                    $0.greetOnReturn = false
-                    $0.commentOnPower = false
-                    $0.commentOnAppearance = false
-                },
-                steps: [
-                    Input(advance: 0, action: "event", argument: "batteryLow"),
-                    Input(advance: 0, action: "event", argument: "wentDark"),
-                    Input(advance: minute, action: "tick"),
-                    Input(advance: minute, action: "tick", repeat: 10, snapshot: away),
-                    Input(advance: minute, action: "tick"),
-                    Input(advance: 0, action: "poke"),
-                ]),
-            .init(
-                name: "off-hours", start: (2026, 9, 28, 20, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 30),
-                    Input(advance: 0, action: "event", argument: "batteryLow"),
-                    Input(advance: 0, action: "poke"),
-                ]),
-            .init(
-                name: "weekend-off", start: (2026, 10, 3, 11, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 30),
-                    Input(advance: 0, action: "event", argument: "wentDark"),
-                ]),
-            .init(
-                name: "frequency-change-reschedules", start: (2026, 9, 28, 10, 0), settings: base,
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 5),
-                    Input(advance: 0, action: "setFrequency", argument: "rarely"),
-                    Input(advance: minute, action: "tick", repeat: 44),
-                    Input(advance: minute, action: "tick", repeat: 40),
-                    Input(advance: 0, action: "setChannels", argument: "voice,chime,notification"),
-                    Input(advance: 0, action: "poke"),
-                ]),
-            .init(
-                name: "evening-bucharest-dst-end", timeZone: "Europe/Bucharest", start: (2026, 10, 24, 17, 30), seed: 5,
-                settings: with {
-                    $0.activeStartMinute = 8 * 60
-                    $0.activeEndMinute = 22 * 60
-                    $0.activeWeekdays = [1, 7]
-                },
-                steps: [
-                    Input(advance: minute, action: "tick", repeat: 90),
-                    Input(advance: 0, action: "shush", argument: "restOfToday"),
-                    Input(advance: minute, action: "tick", repeat: 3),
-                    Input(advance: 0, action: "wake"),
-                ]),
-        ]
+        return QuietTimeline.standardCases(base: base, dst: ("evening-bucharest-dst-end", "Europe/Bucharest")) + quietExtras
     }
 
     /// The fixture's own timelines: a two-part joke delivered by the button, keyed on its id like any line, and the
