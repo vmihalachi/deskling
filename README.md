@@ -115,7 +115,8 @@ creates the tag on master) runs `release.yml`: it packs the NuGet packages, push
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
 username; without them it says so and attaches the packages to the release instead) and drafts a GitHub release from
-`CHANGELOG.md`.
+`CHANGELOG.md`. It also stages `@deskling/landing` on npm through trusted publishing, which goes live when an owner
+approves it with 2FA ([`tools/landing/README.md`](tools/landing/README.md)).
 
 ## License
 

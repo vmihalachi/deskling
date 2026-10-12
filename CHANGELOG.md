@@ -67,8 +67,9 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
   theories and one assertion each.
 - **`@deskling/landing` (`tools/landing`)**: a landing page's localized pages, legal pages, sitemap, CSP `_headers` and
   social cards as Vite plugins, from `companionLanding(options)`; the app keeps its data, placeholders, JSON-LD, brand
-  and page. An npm package (the landing pages are their own repositories): `release.yml` publishes it at the tag's
-  version when the `NPM_PUBLISH` variable is set. sunnysays' and Pagliacci's landing builds come out the same.
+  and page. An npm package (the landing pages are their own repositories): `release.yml` stages it on npm at the tag's
+  version through trusted publishing (no stored token), and an owner approves it with 2FA. sunnysays' and Pagliacci's
+  landing builds come out the same.
 - **The store tools (`tools/store`)**: `check.py` (each listing field against the stores' limits), `push.py` (App Store
   Connect: text, in-app purchases with their creation, screenshots, previews, review notes, `--status`) and
   `import.py` (a Partner Center import folder), over `companion.json`'s new `store` section; `verify.sh` runs

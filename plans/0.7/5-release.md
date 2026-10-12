@@ -50,5 +50,6 @@ session's scratch folder): the real migrations repin to `v0.7.0` and restore the
 - **The open surface as it ended**: sequence 1's outcome, unchanged by the dry runs. Pagliacci kept `tellNow`,
   `punchline`, `muteBubbleJoke`, `faceMood` and `previewChannel(_:joke:)` as one-line aliases; M7 may rename the call
   sites instead.
-- **5.5 (the owner)**: before tagging, create the `@deskling` npm scope, add `NPM_TOKEN` and set `NPM_PUBLISH=true`
-  (sequence 4's outcome), then tag `v0.7.0`; check NuGet and that `exact: "0.7.0"` resolves.
+- **5.5 (the owner)**: before tagging, the `@deskling` npm scope (done) and the package's one-time trusted-publisher
+  setup in `tools/landing/README.md` (no `NPM_TOKEN`, no `NPM_PUBLISH`: both deleted), then tag `v0.7.0`, approve the
+  staged `@deskling/landing@0.7.0` with 2FA, and check NuGet, npm and that `exact: "0.7.0"` resolves.

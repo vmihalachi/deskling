@@ -42,7 +42,9 @@ own public repositories): `@deskling/landing` is TypeScript compiled to `dist/` 
 when the repository variable `NPM_PUBLISH` is `true`. **Before 0.7.0: the owner creates the `@deskling` npm scope**
 (an organization on npmjs.com) and adds an `NPM_TOKEN` secret for the first publish; after it, a trusted publisher on
 npmjs.com (repository `vmihalachi/deskling`, workflow `release.yml`) replaces the token. Without them the tarball is
-still on the GitHub release.
+still on the GitHub release. **Superseded before 0.7.0 (2026-10-12):** no token at all. An `npm` job stages the
+package through trusted publishing and an owner approves it with 2FA (npm's staged publishing); the one-time setup is
+in `tools/landing/README.md`.
 
 - **Gate D, checked early**: sunnysays' and Pagliacci's landing configs, converted onto a packed tarball, built
   `dist/` byte for byte the same as before and pass `vp check`. sunnysays' `vite.config.ts` keeps its lines, voice

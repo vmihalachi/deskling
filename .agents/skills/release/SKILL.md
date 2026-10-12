@@ -32,10 +32,12 @@ Commit as `X.Y.Z: <headline change>` (the history's style), then merge to `maste
 
 ## 4. Tag
 
-Ask the user before tagging: it publishes to NuGet and tags are protected (they never move).
+Ask the user before tagging: it publishes to NuGet, stages `@deskling/landing` on npm and tags are protected (they
+never move).
 
 - `git tag -a vX.Y.Z -m "Deskling X.Y.Z" && git push origin vX.Y.Z`, or
 - without tag-push rights: dispatch `release.yml` with `version: X.Y.Z`, which tags `master` itself.
 
-`release.yml` tests, packs both NuGet packages, pushes them through Trusted Publishing and drafts the GitHub release.
-Publishing the draft is the user's call.
+`release.yml` tests, packs both NuGet packages, pushes them through Trusted Publishing, stages `@deskling/landing` on
+npm and drafts the GitHub release. Publishing the draft, and approving the staged npm version with 2FA (npmjs.com, or
+`npm stage approve <id>`), are the user's.
