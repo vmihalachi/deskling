@@ -29,16 +29,16 @@
             let purchases = PurchaseStore(catalog: catalog, backend: MockStoreBackend(catalog: catalog), defaults: defaults)
             let copy = SupportCopy(
                 pitch: Text(verbatim: "Pitch"), becomeSupporter: { Text(verbatim: "Become a supporter \($0 ?? "")") },
-                supporterNote: Text(verbatim: "Pay once"), supporterThanks: Text(verbatim: "Thanks"), tipsTitle: Text(verbatim: "Tips"),
+                supporterNote: Text(verbatim: "Pay once"), supporterThanks: Text(verbatim: "Thanks"),
                 tipTitle: { $0 }, tipsNote: Text(verbatim: "Tips unlock nothing"), welcomeLine: "Welcome", welcomeNote: nil,
                 tipThanksLine: "Thank you", error: { "\($0)" }, askToBuy: Text(verbatim: "Waiting"),
                 pricesFailed: Text(verbatim: "No prices"), tryAgain: Text(verbatim: "Try again"), restore: Text(verbatim: "Restore"),
                 done: Text(verbatim: "Done"))
             let look = SupportLook(
-                title: AnyView(Text(verbatim: "Support")), label: { AnyView($0) },
+                title: AnyView(Text(verbatim: "Support")), tipsHeader: AnyView(Text(verbatim: "Tips")),
                 character: { AnyView(Color.green.frame(width: $0 ? 150 : 96, height: $0 ? 150 : 96)) },
                 bubble: { AnyView(SpeechBubble(text: $0, tail: .bottom, size: 18, fillsWidth: false)) }, primary: LabelOnly(),
-                largePrimary: LabelOnly(), outline: LabelOnly(), tipPriceOpacity: 0.8)
+                largePrimary: LabelOnly(), outline: LabelOnly(), tipPrice: { AnyView($0.opacity(0.8)) })
             let window = SupportWindow(
                 purchases: purchases, products: SupportProducts(supporter: "fixture.supporter", tips: catalog.tips), copy: copy,
                 look: look, onDone: {})

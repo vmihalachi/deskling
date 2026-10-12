@@ -138,7 +138,7 @@
 
         private var tips: some View {
             VStack(alignment: .leading, spacing: Space.item) {
-                look.label(copy.tipsTitle)
+                look.tipsHeader
                 HStack(spacing: Space.item) {
                     ForEach(products.tips, id: \.self) { tip in
                         Button {
@@ -147,9 +147,7 @@
                             VStack(spacing: Space.tight) {
                                 Text(verbatim: copy.tipTitle(tip))
                                     .multilineTextAlignment(.center)
-                                Text(verbatim: purchases.price(tip) ?? "…")
-                                    .font(.system(size: 12))
-                                    .opacity(look.tipPriceOpacity)
+                                look.tipPrice(Text(verbatim: purchases.price(tip) ?? "…").font(.system(size: 12)))
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }

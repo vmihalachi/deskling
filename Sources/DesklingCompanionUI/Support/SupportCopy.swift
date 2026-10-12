@@ -23,8 +23,6 @@
         public var supporterNote: Text
         /// Beside the character once the user is a supporter, above the tips.
         public var supporterThanks: Text
-        /// The header over the tips.
-        public var tipsTitle: Text
         /// A tip's name, by product id.
         public var tipTitle: (_ product: String) -> String
         /// Under the tips.
@@ -46,7 +44,7 @@
 
         public init(
             pitch: Text, becomeSupporter: @escaping (_ price: String?) -> Text, supporterNote: Text, supporterThanks: Text,
-            tipsTitle: Text, tipTitle: @escaping (_ product: String) -> String, tipsNote: Text, welcomeLine: String, welcomeNote: Text?,
+            tipTitle: @escaping (_ product: String) -> String, tipsNote: Text, welcomeLine: String, welcomeNote: Text?,
             tipThanksLine: String, error: @escaping (PurchaseError) -> String, askToBuy: Text, pricesFailed: Text, tryAgain: Text,
             restore: Text, done: Text
         ) {
@@ -54,7 +52,6 @@
             self.becomeSupporter = becomeSupporter
             self.supporterNote = supporterNote
             self.supporterThanks = supporterThanks
-            self.tipsTitle = tipsTitle
             self.tipTitle = tipTitle
             self.tipsNote = tipsNote
             self.welcomeLine = welcomeLine
@@ -69,13 +66,13 @@
         }
     }
 
-    /// How the Support window looks in the app: its title and section label views, its character, the celebration's
+    /// How the Support window looks in the app: its title, the header over the tips, its character, the celebration's
     /// bubble and its buttons.
     public struct SupportLook<Primary: ButtonStyle, Outline: ButtonStyle> {
         /// The window title, in the app's title view.
         public var title: AnyView
-        /// A section label (the tips' header), in the app's label view.
-        public var label: (Text) -> AnyView
+        /// The header over the tips ("Leave a tip"), in the app's section label view.
+        public var tipsHeader: AnyView
         /// The character, already framed: beside the words (`celebrating` false) or large after a purchase.
         public var character: (_ celebrating: Bool) -> AnyView
         /// The bubble over the celebrating character, saying `line`.
@@ -84,22 +81,23 @@
         /// The supporter and tip buttons.
         public var largePrimary: Primary
         public var outline: Outline
-        /// A tip's price under its name, over the primary button's own text color.
-        public var tipPriceOpacity: Double
+        /// A tip's price under its name (12 pt): the app tones it down its own way, such as its button text color at
+        /// 80%.
+        public var tipPrice: (Text) -> AnyView
 
         public init(
-            title: AnyView, label: @escaping (Text) -> AnyView, character: @escaping (_ celebrating: Bool) -> AnyView,
+            title: AnyView, tipsHeader: AnyView, character: @escaping (_ celebrating: Bool) -> AnyView,
             bubble: @escaping (_ line: String) -> AnyView, primary: Primary, largePrimary: Primary, outline: Outline,
-            tipPriceOpacity: Double
+            tipPrice: @escaping (Text) -> AnyView
         ) {
             self.title = title
-            self.label = label
+            self.tipsHeader = tipsHeader
             self.character = character
             self.bubble = bubble
             self.primary = primary
             self.largePrimary = largePrimary
             self.outline = outline
-            self.tipPriceOpacity = tipPriceOpacity
+            self.tipPrice = tipPrice
         }
     }
 #endif
