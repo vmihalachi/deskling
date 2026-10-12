@@ -29,3 +29,32 @@
 `swift build && swift test`; `swift-format lint`; `scripts/verify.sh --all` ok; `swift.yml` green. Hand to 5: the
 list of label parameters per view (the migration briefs map each to the app's existing string, so no catalog key
 changes).
+
+## Outcome (2026-10-12)
+
+Done in one session after sequence 1. Where the API differs from the README, and the label parameters per view (the
+migrations map each to the app's existing string, so no catalog key changes):
+
+- **`ActiveHoursEditor(settings:activeHours:from:to:between:days:chipStyle:)`**: five labels, not four. `from` and `to`
+  label the pickers for VoiceOver (the apps' `"From"`, `"To"`), `between` is the visible `"to"` between them (comment
+  "Between the two active-hours time pickers"). `orderedWeekdays(firstWeekday:)` and
+  `minuteBinding(_:_:calendar:)` are public statics.
+- **`QuietHoursEditor(settings:title:chipStyle:)`** takes one chip style (the apps pass their chip with
+  `horizontalPadding: Space.tight`), not a closure. `label(_:locale:calendar:)`.
+- **`ShortcutRecorder(shortcut:pressKeys:record:clear:hint:buttonStyle:onCaptureStarted:onCaptureEnded:)`**: the apps
+  pass `$settings.sayShortcut`, `model.suspendHotKey`, `model.registerHotKey`. The cross is `palette.inkSoft`.
+- **`LaunchAtLoginToggle(label:errorText:errorColor:)`** owns its state (two rows in a `Form`).
+- **`LanguageRow(label:change:buttonStyle:)`**, **`NotificationPermissionNote(permission:text:open:buttonStyle:action:)`**
+  (draws nothing unless denied; the app still checks the channel), **`SettingsFooter(_ text: Text)`**.
+- **`SupportWindow(purchases:products:copy:look:onDone:)`**: the apps' windows differ in more than buttons, so the
+  look is a `SupportLook` (title view, label view, the framed character `(celebrating) -> AnyView` with the apps' own
+  sizes, the celebration bubble, `primary`, `largePrimary`, `outline`, `tipPriceOpacity`: sunnysays 0.8, Pagliacci
+  0.85). `SupportCopy` has no `title` (the title is a view in the look). The spring is sunnysays' (damping 0.7;
+  Pagliacci's 0.75 is not in a screenshot).
+- **`DesktopCompanion.stand(character:layout:)`** takes no shade: the palette's from the environment.
+  `DesktopLayout.shadowWidthRatio` is new: Pagliacci's sheet drew 0.5 while its desktop window drew 0.42; M7 sets 0.5
+  so both match (its desktop screenshot stays the same, the real desktop changes).
+- **`ScreenshotScript(model:backend:root:paper:)`** with `run(prepare:shots:)` and `take(_:)`;
+  `ScreenshotCapture.SampleEnvironment(prices:now:)` gives the store, clock, providers, signals, silent channels and
+  `purchases(catalog:prefix:)`; `SilentNotifier` is public.
+- **`Phrase+Localized`** landed with sequence 1 (the model needed it).

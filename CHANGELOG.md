@@ -30,6 +30,21 @@ package and the NuGet packages together.
   product). `observe(_:then:)` watches the app's own preferences. `CompanionNotifying` is the notification it drives
   (actions by raw id). `CompanionAppDelegate` (subclassed, hands over `companion`; `runScreenshots()`),
   `CompanionMenus` over `MenuCopy`, a public `ActionItem`, `DesktopHide`.
+- **Settings rows and editors (`DesklingCompanionUI/Settings/`)**: `ActiveHoursEditor`, `QuietHoursEditor`,
+  `ShortcutRecorder`, `LaunchAtLoginToggle`, `LanguageRow`, `NotificationPermissionNote`, `SettingsFooter`, each taking
+  every label as a `Text` and its chip or button style as a generic parameter; `CompanionSettings` channel and flavor
+  bindings and `mutedCount(in:)`.
+- **`SupportWindow` (`DesklingCompanionUI/Support/`)**: the supporter purchase, the tips and the thank-yous over
+  `PurchaseStore`, with every word in `SupportCopy`, the products in `SupportProducts` and the app's look in
+  `SupportLook`; `SupportWindow.stage(...)` is its state machine.
+- **The chrome (`Theme/`)**: `WindowInset` and `windowPadding(bottom:)`, `ActionBar`, `PanelRowStyle`, `Pointer`,
+  `companionWindowRoot(palette:displayFont:tint:bodySize:)`, `DisplayWeight`; **`FontRegistration`** (DesklingShell)
+  registers an app's bundled fonts once.
+- **`DesktopCompanion.stand(character:layout:)`** (`CompanionStand`, what the desktop window draws) and
+  **`bubblePreview(text:tail:countdown:layout:)`**, for screenshot sheets; **`DesktopLayout.shadowWidthRatio`** (0.42 by
+  default).
+- **`ScreenshotScript` (`DesklingCompanionUI/Screenshots/`)**: an app's screenshot run as a list of shots in light and
+  dark over its model; `ScreenshotCapture.SampleEnvironment` (what the run's model is built on) and `SilentNotifier`.
 - **`DeliveryPerformer.onVoicingChanged`** and **`SpeechSequencer.onVoicingChanged`**: audio started or stopped, false
   in the beat between a joke's parts, so the mouth moves only while words are heard (an app's own voicing wrapper can
   go).
