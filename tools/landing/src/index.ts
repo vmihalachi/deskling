@@ -69,8 +69,11 @@ export interface CompanionLandingOptions<L extends Language = Language> {
   storeButton?: (locale: Locale, big: boolean) => string;
   /** More problems with a language's files, checked with the locale keys (a missing data file, say). */
   localeProblems?: (language: L) => string | undefined;
-  /** The social cards and icons. `copy` gives each language's card text (its locale's `og` by default). */
-  og: {
+  /**
+   * The social cards and icons. `copy` gives each language's card text (its locale's `og` by default). Leave it out
+   * when the app renders its own (a plugin in `extraPlugins`).
+   */
+  og?: {
     dir: string;
     iconPath: string;
     fontFamily: string;
@@ -210,21 +213,29 @@ export function companionLanding<L extends Language>(
     };
   }
 
-  const ogCopy = options.og.copy ?? ((_language: L, locale: Locale) => locale.og as OgCopy);
+  const og = options.og;
+  const ogCopy = og?.copy ?? ((_language: L, locale: Locale) => locale.og as OgCopy);
   const plugins: Plugin[] = [
     localizedHtmlPlugin(),
     hostingConfigPlugin({ mediaSrc: options.csp?.mediaSrc, rules: options.headers }),
     ...(options.extraPlugins ?? []),
-    socialAssetsPlugin({
-      ogDir: options.og.dir,
-      iconPath: options.og.iconPath,
-      fontFamily: options.og.fontFamily,
-      iconBackground: options.og.iconBackground,
-      breakFLigatures: options.og.breakFLigatures,
-      copy: Object.fromEntries(
-        languages.map((language) => [language.code, ogCopy(language, locales[language.code])]),
-      ),
-    }),
+    ...(og
+      ? [
+          socialAssetsPlugin({
+            ogDir: og.dir,
+            iconPath: og.iconPath,
+            fontFamily: og.fontFamily,
+            iconBackground: og.iconBackground,
+            breakFLigatures: og.breakFLigatures,
+            copy: Object.fromEntries(
+              languages.map((language) => [
+                language.code,
+                ogCopy(language, locales[language.code]),
+              ]),
+            ),
+          }),
+        ]
+      : []),
   ];
 
   const input = {

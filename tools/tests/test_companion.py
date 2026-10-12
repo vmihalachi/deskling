@@ -17,6 +17,7 @@ import companion  # noqa: E402
 from support import FIXTURE_APP, HERE, REPO, fixture_app  # noqa: E402
 
 PAGLIACCI = REPO.parent / "pagliacci" / "companion.json"
+MYBACKHURTS = REPO.parent / "mybackhurts" / "companion.json"
 
 
 class SchemaTests(unittest.TestCase):
@@ -31,6 +32,17 @@ class SchemaTests(unittest.TestCase):
     @unittest.skipUnless(PAGLIACCI.exists(), "../pagliacci isn't checked out next to deskling")
     def test_pagliacci_validates(self):
         self.assertEqual(self.check(PAGLIACCI), [])
+
+    @unittest.skipUnless(MYBACKHURTS.exists(), "../mybackhurts isn't checked out next to deskling")
+    def test_mybackhurts_validates(self):
+        self.assertEqual(self.check(MYBACKHURTS), [])
+
+    def test_an_app_without_a_core_package(self):
+        data = json.loads((FIXTURE_APP / "companion.json").read_text("utf8"))
+        del data["mac"]["core"], data["mac"]["coreModule"], data["conformance"]
+        self.assertEqual(companion.validate(data), [])
+        names = companion.derived(companion.Config(data, FIXTURE_APP))
+        self.assertEqual((names["MAC_CORE"], names["RE_PURE"], names["RE_COREPKG"]), ("", "^$a", "^$a"))
 
     def test_problems_are_named(self):
         data = json.loads((FIXTURE_APP / "companion.json").read_text("utf8"))

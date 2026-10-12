@@ -70,6 +70,8 @@ LANGUAGES: list[str] = []
 WINDOWS_STRINGS: Path | None = None
 LINUX_PO: Path | None = None
 GLOSSARY_KEYS: list[str] = []
+# (source file, pattern with one group): more glossary terms, read from the app's code (`l10n.glossarySources`).
+GLOSSARY_SOURCES: list[tuple[Path, re.Pattern]] = []
 RULES = ""
 # Plural categories each language must provide, matching the catalog's existing convention.
 PLURAL_CATEGORIES: dict[str, list[str]] = {}
@@ -88,14 +90,16 @@ BASE_RULES = (
     "%2$@). For plurals, `value` is an object with every key in `categories`, each including the number. If an "
     "item has `en_plural`, decide whether the count needs singular/plural forms: if it does, fill `en_plural.one` "
     "(English singular, same specifiers) and give `value` as a plural object; otherwise leave `en_plural` alone and "
-    "give a string."
+    "give a string. If an item has `substitutions`, its `en` holds a `%#@name@` token that stands for a counted "
+    "phrase: keep the token in `value`, and for each name fill `substitutions.<name>.value` with every key in "
+    "`categories`, each containing `%arg` where the number goes (see `substitutions.<name>.en`)."
 )
 
 
 def configure(config: companion.Config | None = None) -> None:
     """Points the module at an app: its catalogs, languages, rules and export folders."""
     global CONFIG, ROOT, MACOS, LANDING_I18N, WORK_DIR, DERIVED, SOURCE, LANGUAGES, WINDOWS_STRINGS, LINUX_PO
-    global GLOSSARY_KEYS, RULES, PLURAL_CATEGORIES, SCOPED
+    global GLOSSARY_KEYS, GLOSSARY_SOURCES, RULES, PLURAL_CATEGORIES, SCOPED
     CONFIG = config or companion.load()
     ROOT = CONFIG.root
     MACOS = CONFIG.mac_dir
@@ -111,6 +115,9 @@ def configure(config: companion.Config | None = None) -> None:
     WINDOWS_STRINGS = CONFIG.path("windows.strings")
     LINUX_PO = CONFIG.path("l10n.linuxPo")
     GLOSSARY_KEYS = list(CONFIG.get("l10n.glossaryKeys", []))
+    GLOSSARY_SOURCES = [
+        (ROOT / source["file"], re.compile(source["pattern"])) for source in CONFIG.get("l10n.glossarySources", [])
+    ]
     PLURAL_CATEGORIES = dict(CONFIG.get("l10n.pluralCategories", {}))
     rules_file = CONFIG.path("l10n.rulesFile")
     app_rules = rules_file.read_text("utf8").strip() if rules_file and rules_file.exists() else ""
@@ -454,10 +461,20 @@ def cmd_check(args) -> int:
     return 1 if stale else result
 
 
+def glossary_keys() -> list[str]:
+    """The fixed UI terms (GLOSSARY_KEYS), then the ones found in the app's code (GLOSSARY_SOURCES), each once."""
+    keys = list(GLOSSARY_KEYS)
+    for path, pattern in GLOSSARY_SOURCES:
+        if not path.exists():
+            fail(f"l10n.glossarySources: {path.relative_to(ROOT)} not found")
+        keys += pattern.findall(path.read_text("utf8"))
+    return list(dict.fromkeys(keys))
+
+
 def glossary(strings: dict, lang: str) -> dict[str, str]:
-    """Fixed UI terms (GLOSSARY_KEYS) and their current translations."""
+    """The glossary terms (`glossary_keys`) and their current translations."""
     out = collections.OrderedDict()
-    for name in GLOSSARY_KEYS:
+    for name in glossary_keys():
         value, _ = translation_of(strings.get(name, {}), lang)
         if isinstance(value, str) and value:
             out[name] = value
@@ -491,6 +508,17 @@ def cmd_export(args) -> int:
                     # New keys with a count: the English plural variants may still need creating.
                     item["en_plural"] = {"one": "", "other": english}
                     item["categories"] = categories_for(lang)
+                if subs := english_substitutions(entry):
+                    item.pop("en_plural", None)
+                    item.pop("categories", None)
+                    item["substitutions"] = collections.OrderedDict(
+                        (name, collections.OrderedDict(
+                            en=sub["plural"],
+                            categories=categories_for(lang),
+                            value={cat: "" for cat in categories_for(lang)},
+                        ))
+                        for name, sub in subs.items()
+                    )
                 if current:
                     item["current"] = current
                 item["issues"] = report[lang][section][key]
@@ -581,10 +609,34 @@ def cmd_apply(args) -> int:
                     problems = [p] if isinstance(value, str) and (p := token_problem(english, value)) else []
                     if not isinstance(value, str):
                         problems = ["value must be a string"]
+                english_subs = english_substitutions(strings[key])
+                given = item.get("substitutions") or {}
+                for name in english_subs:
+                    sub_value = (given.get(name) or {}).get("value") or {}
+                    missing = [cat for cat in categories_for(lang) if not sub_value.get(cat)]
+                    if missing:
+                        problems.append(f"substitution {name}: missing {', '.join(missing)}")
+                    problems += [
+                        f"substitution {name} {cat}: needs %arg"
+                        for cat, text in sub_value.items() if text and "%arg" not in text
+                    ]
                 if problems:
                     errors.append(f"{file.name} [{section}] {key!r}: {'; '.join(problems)}")
                     continue
                 set_catalog_value(strings[key], lang, value)
+                if english_subs:
+                    strings[key]["localizations"][lang]["substitutions"] = collections.OrderedDict(
+                        (name, collections.OrderedDict(
+                            argNum=sub["argNum"],
+                            formatSpecifier=sub["formatSpecifier"],
+                            variations={"plural": collections.OrderedDict(
+                                (cat, {"stringUnit": collections.OrderedDict(
+                                    state="translated", value=given[name]["value"][cat])})
+                                for cat in sorted(categories_for(lang))
+                            )},
+                        ))
+                        for name, sub in english_subs.items()
+                    )
                 dirty.add(section)
                 applied += 1
         for key, item in work.get("landing", {}).items():
@@ -722,8 +774,21 @@ PO_PLURALS = {
     "fr": ("nplurals=2; plural=(n > 1);", ["one", "other"]),
     "ro": ("nplurals=3; plural=(n==1 ? 0 : (((n%100>19) || ((n%100==0) && (n!=0))) ? 2 : 1));",
            ["one", "few", "other"]),
+    "pl": ("nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);",
+           ["one", "few", "many"]),
+    "cs": ("nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;", ["one", "few", "other"]),
+    "none": ("nplurals=1; plural=0;", ["other"]),
 }
-PO_PLURAL_KIND = {"fr": "fr", "pt-BR": "fr", "ro": "ro"}
+PO_PLURAL_KIND = {
+    "cs": "cs",
+    "fr": "fr",
+    "ja": "none",
+    "ko": "none",
+    "pl": "pl",
+    "pt-BR": "fr",
+    "ro": "ro",
+    "zh-Hans": "none",
+}
 
 SUBST_RE = re.compile(r"%#@([A-Za-z0-9_]+)@")
 CLDR_ORDER = ["zero", "one", "two", "few", "many", "other"]

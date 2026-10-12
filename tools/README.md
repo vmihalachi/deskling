@@ -78,8 +78,9 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    Codex, `.codex/config.toml` (`[features] hooks = true`): `PreToolUse`/`PostToolUse` with matcher
    `^(Bash|apply_patch)$` and `Stop`, each running
    `python3 "$(git rev-parse --show-toplevel)/deskling/tools/hooks/hook.py" <pre|post|stop>`. GitHub Copilot,
-   `.github/hooks/<app>.json`: `PreToolUse` and `PostToolUse` running `python3 deskling/tools/hooks/hook.py pre|post`.
-   The hook reads the guards, the slow-check table and the parity patterns (`hooks.*`) from `companion.json`, and
+   `.github/hooks/<app>.json`: `PreToolUse` and `PostToolUse` running `python3 deskling/tools/hooks/hook.py pre|post`,
+   and for Copilot's cloud coding agent `agentStop` running `hook.py cloud-stop` (the app's `verify.sh` on the branch,
+   inside GitHub Actions only). The hook reads the guards, the slow-check table and the parity patterns (`hooks.*`) from `companion.json`, and
    fails open when the file is missing or invalid.
 
 5. **Skills.** Symlink the generic ones next to the app's own:

@@ -11,6 +11,21 @@ package and the NuGet packages together.
 - **Tools**: `verify.sh --all` skips the checks of a section the app's `companion.json` doesn't have (no `store`, no
   `windows`…) instead of running them and failing, and reports the store check as `skip` until `store.dir` holds the
   source language's listing. `companion.py env` exports `RE_NEVER` and `STORE_LISTING` for it.
+- **Tools for an app without a character** (mybackhurts' adoption, `plans/0.7/6-mybackhurts.md`):
+  - `companion.json`: `mac.core` is optional (an app without a core package); `l10n.glossarySources` adds glossary
+    keys read from the app's code (each match of a pattern's group in a file, such as a catalog's names);
+    `hooks.guards` guards paths with the reason the agent sees, and with `reads` refuses loading them too;
+    `hooks.slow` replaces a built-in slow check's paths and label, or adds one, counted as run by a `ran` command
+    pattern.
+  - `l10n.py`: work files carry `%#@name@` substitutions (a slot per name with every plural category, `%arg` where
+    the number goes) and `apply` writes them back with their `argNum` and format; the rules explain them. `.po`
+    exports have Polish, Czech, Japanese, Korean and Chinese plural forms.
+  - `hooks/hook.py`: a `cloud-stop` mode for Copilot's cloud coding agent (in GitHub Actions only: `verify.sh` on the
+    branch against origin's default branch); paths are compared with forward slashes on Windows; Codex's argv
+    commands are read as one command line.
+  - `store/push.py`: an in-app purchase without `reviewNote` or `reviewShot`, and an app without the review notes
+    file, leave App Store Connect's own alone (the schema no longer requires `reviewNote`).
+  - `@deskling/landing`: `og` is optional, for an app that renders its own social cards in `extraPlugins`.
 
 ## 0.7.2 - 2026-10-12
 

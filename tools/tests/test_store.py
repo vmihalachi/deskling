@@ -249,6 +249,21 @@ class StoreTests(unittest.TestCase):
     def test_the_review_notes_come_from_their_block(self):
         self.assertEqual(push.review_notes(self.listing), "Fixture lives in the menu bar. Click it for a line.")
 
+    def test_without_review_notes_or_an_iap_note_and_shot_app_store_connect_keeps_its_own(self):
+        self.listing.review_notes.unlink()
+        for spec in self.listing.iaps.values():
+            del spec["reviewNote"], spec["reviewShot"]
+            spec["screenshot"] = None
+        api, version = self.setup_app()
+        for product_id in self.listing.iaps:
+            api.add("inAppPurchases", {"productId": product_id, "reviewNote": "theirs"}, self.listing.app_id)
+        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync.review(version)
+        sync.iaps(["en"], extra=False)
+        self.assertEqual(sync.problems, [])
+        self.assertNotIn("PATCH", [c[0] for c in api.calls], "no review note set")
+        self.assertFalse([c for c in api.calls if "appStoreReviewScreenshot" in str(c) or "ReviewDetail" in str(c)])
+
     # MARK: import.py
 
     def test_import_builds_a_partner_center_folder(self):

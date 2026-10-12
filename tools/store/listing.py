@@ -88,7 +88,8 @@ class Listing:
         self.review_size = tuple(review.get("size", (1440, 900)))
         self.review_background = review.get("background", "FFFFFF")
         self.iaps = {
-            product: {**spec, "screenshot": self.review_shots / spec["reviewShot"] if self.review_shots else None}
+            product: {**spec, "screenshot": self.review_shots / spec["reviewShot"]
+                      if self.review_shots and spec.get("reviewShot") else None}
             for product, spec in apple.get("iaps", {}).items()
         }
         self.microsoft = config.get("store.microsoft")

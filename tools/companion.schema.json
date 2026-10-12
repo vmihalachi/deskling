@@ -25,7 +25,7 @@
     },
     "mac": {
       "type": "object",
-      "required": ["dir", "project", "scheme", "app", "core", "tests"],
+      "required": ["dir", "project", "scheme", "app", "tests"],
       "additionalProperties": false,
       "properties": {
         "dir": { "type": "string" },
@@ -33,7 +33,7 @@
         "projectSpec": { "type": "string", "description": "The XcodeGen spec, relative to mac.dir." },
         "scheme": { "type": "string" },
         "app": { "type": "string", "description": "The app target's folder, relative to mac.dir." },
-        "core": { "type": "string", "description": "The core Swift package's folder, relative to mac.dir." },
+        "core": { "type": "string", "description": "The core Swift package's folder, relative to mac.dir; an app without one leaves it out." },
         "coreModule": { "type": "string" },
         "tests": { "type": "string", "description": "The app's test target folder, relative to mac.dir." },
         "devAppName": { "type": "string", "description": "The Debug app's name (install-dev, dev icon)." },
@@ -73,6 +73,19 @@
         "plist": { "type": ["string", "null"], "description": "InfoPlist.xcstrings." },
         "landing": { "type": ["string", "null"], "description": "The landing page's i18n folder (<lang>.json, languages.ts)." },
         "glossaryKeys": { "type": "array", "items": { "type": "string" }, "description": "Catalog keys whose translations work files repeat as a glossary." },
+        "glossarySources": {
+          "type": "array",
+          "description": "More glossary keys, read from the app's code: every match of `pattern`'s one group in `file` (relative to the root), such as the names in a catalog of items.",
+          "items": {
+            "type": "object",
+            "required": ["file", "pattern"],
+            "additionalProperties": false,
+            "properties": {
+              "file": { "type": "string" },
+              "pattern": { "type": "string", "description": "A Python regular expression with one group: the catalog key." }
+            }
+          }
+        },
         "keepNames": { "type": "array", "items": { "type": "string" }, "description": "Names translators keep as they are." },
         "rulesFile": { "type": ["string", "null"], "description": "Markdown with the app's transcreation rules, sent with every work file." },
         "pluralCategories": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
@@ -219,7 +232,7 @@
               "description": "The in-app purchases by product id; a missing one is created.",
               "additionalProperties": {
                 "type": "object",
-                "required": ["reference", "type", "familySharing", "price", "name", "description", "reviewNote"],
+                "required": ["reference", "type", "familySharing", "price", "name", "description"],
                 "additionalProperties": false,
                 "properties": {
                   "reference": { "type": "string", "description": "The reference name in App Store Connect." },
@@ -228,8 +241,8 @@
                   "price": { "type": "string", "description": "In baseTerritory's currency (1.99)." },
                   "name": { "type": "string", "description": "The listing field with its display name (apple.iap.supporter.name)." },
                   "description": { "type": "string", "description": "The listing field with its description." },
-                  "reviewNote": { "type": "string" },
-                  "reviewShot": { "type": "string", "description": "The App Review screenshot's file in review.shots." }
+                  "reviewNote": { "type": "string", "description": "The note for App Review; without one, App Store Connect's is left alone." },
+                  "reviewShot": { "type": "string", "description": "The App Review screenshot's file in review.shots; without one, App Store Connect's is left alone." }
                 }
               }
             },
@@ -263,6 +276,35 @@
       "additionalProperties": false,
       "properties": {
         "guardedExtra": { "type": "array", "items": { "type": "string" }, "description": "More paths (regular expressions) agents must not edit by hand." },
+        "guards": {
+          "type": "array",
+          "description": "More guarded paths, each with the reason the agent is shown: never edited by hand, and with `reads`, never loaded either.",
+          "items": {
+            "type": "object",
+            "required": ["pattern", "why"],
+            "additionalProperties": false,
+            "properties": {
+              "pattern": { "type": "string", "description": "A regular expression over the root-relative path." },
+              "why": { "type": "string", "description": "What to do instead, shown when the hook refuses." },
+              "reads": { "type": "boolean", "description": "Refuse reads too (large or generated files); edits only by default." }
+            }
+          }
+        },
+        "slow": {
+          "type": "array",
+          "description": "The app's slow checks, reminded at stop when a matching path changed since they last ran. A `name` of a built-in check (xcodebuild-test, conformance, swift-test, dotnet-test, landing-build) replaces its paths (and label); any other name adds a check, counted as run when a shell command matches `ran` (or a full verify.sh).",
+          "items": {
+            "type": "object",
+            "required": ["name", "paths"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "paths": { "type": "string", "description": "A regular expression over root-relative paths." },
+              "label": { "type": "string", "description": "How the reminder names the check." },
+              "ran": { "type": "string", "description": "A regular expression over shell commands that run the check." }
+            }
+          }
+        },
         "macUI": { "type": ["string", "null"], "description": "A path regex for Mac UI files; editing one reminds of the Windows twin." },
         "windowsUI": { "type": ["string", "null"], "description": "The same for Windows UI files." }
       }

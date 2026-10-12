@@ -24,6 +24,82 @@ APPLE_SPEC_RE = re.compile(r"%(?:\d+\$)?(?:ll|l|q|z)?[@diu]|%#@|%arg")
 NET_ARG_RE = re.compile(r"(?<!\{)\{(\d+)\}(?!\})")
 
 
+def eval_plural(expr: str, n: int) -> int:
+    """Evaluates a gettext `plural=` C expression (ternaries, comparisons, &&, ||, %, !)."""
+    tokens = re.findall(r"\d+|n|==|!=|>=|<=|&&|\|\||[()?:<>%!]", expr)
+    pos = 0
+
+    def peek():
+        return tokens[pos] if pos < len(tokens) else None
+
+    def take(expected=None):
+        nonlocal pos
+        token = tokens[pos]
+        if expected and token != expected:
+            raise ValueError(f"expected {expected}, got {token} in {expr}")
+        pos += 1
+        return token
+
+    def ternary():
+        cond = logical_or()
+        if peek() == "?":
+            take("?")
+            a = ternary()
+            take(":")
+            b = ternary()
+            return a if cond else b
+        return cond
+
+    def logical_or():
+        value = logical_and()
+        while peek() == "||":
+            take()
+            right = logical_and()
+            value = int(bool(value) or bool(right))
+        return value
+
+    def logical_and():
+        value = comparison()
+        while peek() == "&&":
+            take()
+            right = comparison()
+            value = int(bool(value) and bool(right))
+        return value
+
+    def comparison():
+        value = modulo()
+        while peek() in ("==", "!=", ">", "<", ">=", "<="):
+            op = take()
+            right = modulo()
+            value = int({"==": value == right, "!=": value != right, ">": value > right,
+                         "<": value < right, ">=": value >= right, "<=": value <= right}[op])
+        return value
+
+    def modulo():
+        value = unary()
+        while peek() == "%":
+            take()
+            value %= unary()
+        return value
+
+    def unary():
+        if peek() == "!":
+            take()
+            return int(not unary())
+        if peek() == "(":
+            take("(")
+            value = ternary()
+            take(")")
+            return value
+        token = take()
+        return n if token == "n" else int(token)
+
+    result = ternary()
+    if pos != len(tokens):
+        raise ValueError(f"trailing tokens in {expr}")
+    return result
+
+
 def quiet(function, *args):
     out = io.StringIO()
     with redirect_stdout(out):
@@ -120,6 +196,56 @@ class GapTests(L10nTestCase):
             l10n.collect()["de"]["app"], {"Hello. This is how I sound.": ["missing"], "phrase.joke.1": ["missing"]}
         )
 
+    def test_glossary_sources_add_terms_from_the_code(self):
+        (self.root / "macos/Fixture/Items.swift").write_text(
+            'Item(name: String(localized: "Shh"))\nItem(name: String(localized: "Say something"))\n', "utf8"
+        )
+        path = self.root / "companion.json"
+        data = json.loads(path.read_text("utf8"))
+        data["l10n"]["glossarySources"] = [
+            {"file": "macos/Fixture/Items.swift", "pattern": r'\bname:\s*String\(localized:\s*"([^"]+)"'}
+        ]
+        path.write_text(json.dumps(data), "utf8")
+        l10n.configure(companion.load())
+        self.assertEqual(l10n.glossary_keys(), ["Say something", "Shh"], "the fixed keys first, each term once")
+        strings = l10n.load_catalog(l10n.CATALOGS["app"])["strings"]
+        self.assertEqual(l10n.glossary(strings, "it"), {"Say something": "Dì qualcosa", "Shh": "Zitto"})
+
+    def test_substitutions_round_trip(self):
+        """A `%#@name@` string exports with a slot per substitution and applies with argNum and format kept."""
+        key = "Muted %lld lines in %@."
+
+        def unit(value):
+            return {"stringUnit": {"state": "translated", "value": value}}
+
+        catalog = l10n.load_catalog(l10n.CATALOGS["app"])
+        catalog["strings"][key] = {"localizations": {"en": {
+            **unit("Muted %#@lines@ in %2$@."),
+            "substitutions": {"lines": {"argNum": 1, "formatSpecifier": "lld", "variations": {"plural": {
+                "one": unit("%arg line"), "other": unit("%arg lines")}}}},
+        }}}
+        l10n.dump_catalog(l10n.CATALOGS["app"], catalog)
+        out = self.root / "work"
+        quiet(l10n.cmd_export, self.args(lang=["de"], out=str(out)))
+        work = json.loads((out / "de.json").read_text("utf8"))
+        item = work["app"][key]
+        self.assertEqual(item["substitutions"]["lines"]["categories"], ["one", "other"])
+        self.assertNotIn("en_plural", item)
+        item["value"] = "%#@lines@ in %2$@ stummgeschaltet."
+        item["substitutions"]["lines"]["value"] = {"one": "%arg Zeile", "other": "Zeilen"}
+        (out / "de.json").write_text(json.dumps(work, ensure_ascii=False), "utf8")
+        result, text = quiet(l10n.cmd_apply, SimpleNamespace(files=[str(out / "de.json")]))
+        self.assertEqual(result, 1)
+        self.assertIn("substitution lines other: needs %arg", text)
+        item["substitutions"]["lines"]["value"]["other"] = "%arg Zeilen"
+        (out / "de.json").write_text(json.dumps(work, ensure_ascii=False), "utf8")
+        self.assertEqual(quiet(l10n.cmd_apply, SimpleNamespace(files=[str(out / "de.json")]))[0], 0)
+        entry = l10n.load_catalog(l10n.CATALOGS["app"])["strings"][key]
+        self.assertEqual(l10n.catalog_issues(key, entry, "de"), [])
+        lines = entry["localizations"]["de"]["substitutions"]["lines"]
+        self.assertEqual((lines["argNum"], lines["formatSpecifier"]), (1, "lld"))
+        self.assertEqual(lines["variations"]["plural"]["other"]["stringUnit"]["value"], "%arg Zeilen")
+
 
 class ExportTests(L10nTestCase):
     def setUp(self):
@@ -171,6 +297,25 @@ class ExportTests(L10nTestCase):
                 continue
             self.assertIn("Plural-Forms: nplurals=2; plural=(n != 1);", text)
             self.assertEqual(text.count("msgid_plural"), 1, path)
+
+    def test_gettext_plural_forms_match_cldr(self):
+        # CLDR sample numbers per category (only the categories the language's catalog uses; the rest fall back
+        # to "other").
+        samples = {
+            "en": {"one": [1], "other": [0, 2, 5, 11, 21]},
+            "fr": {"one": [0, 1], "other": [2, 5, 100]},
+            "ro": {"one": [1], "few": [0, 2, 19, 101, 119], "other": [20, 21, 100, 120]},
+            "pl": {"one": [1], "few": [2, 4, 22, 24, 102], "many": [0, 5, 11, 12, 14, 21, 25, 112]},
+            "cs": {"one": [1], "few": [2, 3, 4], "other": [0, 5, 11, 100]},
+            "ja": {"other": [0, 1, 2, 11]},
+        }
+        for lang, categories in samples.items():
+            forms, order = l10n.po_plurals(lang)
+            expression = re.search(r"plural=(.*);", forms).group(1)
+            for category, numbers in categories.items():
+                for n in numbers:
+                    self.assertEqual(order[eval_plural(expression, n)], category, f"{lang} n={n}")
+        self.assertEqual(l10n.po_plurals("zh-Hans"), l10n.po_plurals("ko"))
 
     def test_check_flags_stale_exports(self):
         l10n.WINDOWS_STRINGS = self.root / "port" / "Fixture.App" / "Strings"

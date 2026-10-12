@@ -10,11 +10,12 @@ What it syncs, per language (companion.json's `store.apple` names the app, its l
   text         App Information (name, subtitle, privacy URL) and the version page (description, keywords,
                promotional text, What's New, support and marketing URLs), plus copyright (and manual release on a
                version it creates)
-  iap          each in-app purchase's display name, description, review note and review screenshot; one that
-               doesn't exist yet is created with its price and availability (`store.apple.iaps`)
+  iap          each in-app purchase's display name, description, review note and review screenshot (each left alone
+               when its config has none); one that doesn't exist yet is created with its price and availability
+               (`store.apple.iaps`)
   screenshots  `store.apple.screenshots`/<lang>/*.png, in order; a set whose files all match is left alone
   review       the App Review notes, from the block under "App Review Information → Notes" in `store.apple.review.notes`
-               (the contact details are left to App Store Connect)
+               (the contact details are left to App Store Connect; without the file, the notes are left alone)
   previews     `store.apple.previews`/preview-<lang>.mp4 (opt-in: --only ...,previews)
 A field the listing doesn't have (What's New on a first version) is left alone. Languages missing from App Store Connect
 are added (App Information first: App Store Connect then adds them to the version, which is filled in rather than added
@@ -317,7 +318,7 @@ class Sync:
                                 "type": "inAppPurchases",
                                 "attributes": {"name": spec["reference"], "productId": product_id,
                                                "inAppPurchaseType": spec["type"], "familySharable": spec["familySharing"],
-                                               "reviewNote": spec["reviewNote"]},
+                                               **({"reviewNote": spec["reviewNote"]} if spec.get("reviewNote") else {})},
                                 "relationships": {"app": {"data": {"type": "apps", "id": self.listing.app_id}}}}})["data"])
         if product is None:
             self.log(f"  price {spec['price']} in {self.listing.base_territory}, available in every territory")
@@ -357,13 +358,14 @@ class Sync:
             if product is None:
                 continue
             self.log(f"In-app purchase {product_id}")
-            if product["attributes"].get("reviewNote") != spec["reviewNote"]:
+            if spec.get("reviewNote") and product["attributes"].get("reviewNote") != spec["reviewNote"]:
                 self.step("  set the review note", lambda product=product: self.api.request(
                     "PATCH", f"/v2/inAppPurchases/{product['id']}", {"data": {
                         "type": "inAppPurchases", "id": product["id"], "attributes": {"reviewNote": spec["reviewNote"]}}}))
             existing = self.localizations("inAppPurchaseLocalizations",
                                           f"/v2/inAppPurchases/{product['id']}/inAppPurchaseLocalizations")
-            self.iap_review_screenshot(product, spec["screenshot"])
+            if spec.get("reviewShot"):
+                self.iap_review_screenshot(product, spec["screenshot"])
             for lang in langs:
                 fields = self.listing.fields(lang)
                 want = {"name": fields[spec["name"]], "description": fields[spec["description"]]}
@@ -429,8 +431,11 @@ class Sync:
             self.step(f"{locale}: upload {f.name}", upload)
 
     def review(self, version):
-        notes = review_notes(self.listing)
         print("App Review")
+        if not self.listing.review_notes.exists():
+            self.log(f"  no {self.listing.review_notes.name} in {self.listing.dir.name}/: the notes are left alone")
+            return
+        notes = review_notes(self.listing)
         if not version["id"]:
             self.log("  set the notes (once the version exists)")
             return

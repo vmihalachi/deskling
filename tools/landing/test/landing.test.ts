@@ -125,6 +125,17 @@ describe("companionLanding", () => {
     ]);
   });
 
+  it("leaves the social cards to the app without og", () => {
+    const own = { name: "own-social-assets" };
+    const names = landing({ og: undefined, extraPlugins: [own as any] }).plugins.map((p) => p.name);
+    expect(names).toEqual([
+      "deskling-landing-html",
+      "deskling-landing-hosting",
+      "own-social-assets",
+    ]);
+    expect(landing().plugins.map((p) => p.name)).toContain("deskling-landing-social-assets");
+  });
+
   it("refuses locales that don't share their keys", () => {
     const broken = { ...locales, it: { ...locales.it, hero: {} } };
     expect(() => landing({ locales: broken })).toThrow("Missing in it.json: hero.title");
