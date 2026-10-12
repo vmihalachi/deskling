@@ -61,8 +61,16 @@ $({ sub diff --name-only "$recorded" 2>/dev/null; sub ls-files --others --exclud
 fi
 changed="$(printf '%s\n' "$changed" | sed '/^$/d' | sort -u)"
 
-# touched <extended regex>: true when a changed path matches (always true with --all).
-touched() { [ "$all" = 1 ] || printf '%s\n' "$changed" | grep -Eq "$1"; }
+# touched <extended regex>...: true when a changed path matches one of them. With --all, true unless each is empty or
+# $RE_NEVER (companion.py's pattern for a section the app doesn't have), so --all skips the checks of a missing section.
+touched() {
+  local re live=()
+  for re in "$@"; do [ -n "$re" ] && [ "$re" != "$RE_NEVER" ] && live+=("$re"); done
+  [ ${#live[@]} -gt 0 ] || return 1
+  [ "$all" = 1 ] && return 0
+  local IFS='|'
+  printf '%s\n' "$changed" | grep -Eq "${live[*]}"
+}
 
 darwin=0; [ "$(uname)" = Darwin ] && darwin=1
 has() { command -v "$1" >/dev/null 2>&1; }
@@ -164,7 +172,7 @@ check "Deskling pins agree" python3 "$TOOLS/companion.py" pins
 
 # --- fast checks -------------------------------------------------------------------------------
 
-if touched "$RE_SWIFT|$RE_COREPKG"; then
+if touched "$RE_SWIFT" "$RE_COREPKG"; then
   if [ -n "$MAC_SPEC" ]; then
     if [ "$darwin" = 1 ] && has xcodegen; then check "xcodegen (project.pbxproj in sync)" xcodegen_in_sync
     else skip "xcodegen: needs macOS with xcodegen"; fi
@@ -198,7 +206,8 @@ if touched "$RE_CSHARP"; then
 fi
 
 if touched "$RE_STORE"; then
-  check "store listing (store/check.py)" python3 "$TOOLS/store/check.py"
+  if [ -f "$STORE_LISTING" ]; then check "store listing (store/check.py)" python3 "$TOOLS/store/check.py"
+  else skip "store listing: no $STORE_LISTING yet"; fi
 fi
 if touched "$RE_LANDING" && [ -n "$LANDING_DIR" ] && [ -d "$ROOT/$LANDING_DIR" ]; then
   if [ -n "$landing_tool" ] && { has "$landing_tool" || [ -x "$landing_tool" ]; }; then
@@ -217,7 +226,7 @@ if [ "$fast" = 0 ]; then
     if [ "$darwin" = 1 ]; then check "conformance vectors current" conformance_current
     else skip "conformance.sh: needs macOS + Xcode"; fi
   fi
-  if touched "$RE_SWIFT|^$CONFORMANCE_DIR/"; then
+  if touched "$RE_SWIFT" "${CONFORMANCE_DIR:+^$CONFORMANCE_DIR/}"; then
     if [ "$darwin" = 1 ]; then
       check "xcodebuild test" bash -c "cd \"$MAC_DIR\" && xcodebuild -project \"$MAC_PROJECT\" -scheme \"$MAC_SCHEME\" \
         -destination 'platform=macOS' -derivedDataPath \"$ROOT/$DERIVED\" -quiet test"

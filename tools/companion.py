@@ -157,6 +157,8 @@ def derived(config: Config) -> dict[str, str]:
         "LANDING_I18N": landing_i18n,
         "LANDING_TOOL": config.get("landing.tool", ""),
         "STORE_DIR": store,
+        # The source language's listing, which store/check.py reads every other language against.
+        "STORE_LISTING": f"{store}/{config.get('languages.source', '')}.md" if store else "",
         "WINDOWS_DIR": windows,
         "WINDOWS_CORE": win_core,
         "WINDOWS_CORE_TESTS": win_core_tests,
@@ -168,6 +170,7 @@ def derived(config: Config) -> dict[str, str]:
         "DESKLING_TAG": config.get("deskling.tag", ""),
     }
     never = "^$a"  # matches no path: a section the app doesn't have
+    values["RE_NEVER"] = never  # verify.sh --all skips a check whose patterns are all this one
     swift_dirs = "|".join(ere(d) for d in (app, tests) if d)
     values["RE_SWIFT"] = (
         f"^({swift_dirs})/.*\\.swift$" + (f"|^{ere(values['MAC_SPEC'])}$" if values["MAC_SPEC"] else "")

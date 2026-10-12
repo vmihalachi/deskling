@@ -150,6 +150,23 @@ chmod +x "$app/Fixture"
         self.assertEqual(quiet.returncode, 0, quiet.stdout)
         self.assertEqual(quiet.stdout.strip(), "ok    Deskling pins agree")
 
+    def test_verify_all_skips_what_the_app_lacks(self):
+        for tool in ("xcrun", "xcodegen", "dotnet"):
+            self.fake(tool, "exit 0\n")
+        store_line = lambda result: [line for line in result.stdout.splitlines() if "store listing" in line]
+        self.assertEqual(store_line(self.run_script("verify.sh", "--all", "--fast")), ["ok    store listing (store/check.py)"])
+        (self.root / "store-listing" / "en.md").unlink()
+        self.assertEqual(
+            store_line(self.run_script("verify.sh", "--all", "--fast")), ["skip  store listing: no store-listing/en.md yet"]
+        )
+        config = self.root / "companion.json"
+        data = json.loads(config.read_text("utf8"))
+        del data["store"]
+        config.write_text(json.dumps(data), "utf8")
+        result = self.run_script("verify.sh", "--all", "--fast")
+        self.assertIn("ok    Deskling pins agree", result.stdout, result.stderr)
+        self.assertEqual(store_line(result), [], "no store section: --all has no store check to run")
+
     @unittest.skipUnless(sys.platform == "darwin", "ditto and lsregister are macOS tools")
     def test_install_dev_copies_the_debug_build(self):
         built = self.root / "products"

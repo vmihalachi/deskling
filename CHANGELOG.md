@@ -8,6 +8,9 @@ package and the NuGet packages together.
 
 - **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed
   `<svg` or `<?xml` tags can't make the render take quadratic time (CodeQL `js/polynomial-redos`).
+- **Tools**: `verify.sh --all` skips the checks of a section the app's `companion.json` doesn't have (no `store`, no
+  `windows`…) instead of running them and failing, and reports the store check as `skip` until `store.dir` holds the
+  source language's listing. `companion.py env` exports `RE_NEVER` and `STORE_LISTING` for it.
 
 ## 0.7.2 - 2026-10-12
 
