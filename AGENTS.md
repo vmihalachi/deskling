@@ -25,7 +25,7 @@ conformance vectors.
 | `tools/` | Tools for companion apps, which vendor this repo as a `deskling/` submodule (`tools/README.md`): every one reads the app's `companion.json` (`companion.py`, `companion.schema.json`). `l10n.py`, `phrases.py`, `voice.py`, `character.py`, `synth.py`, `fonts.py`, the shell scripts (`verify.sh`, `setup-linux.sh`, `screenshots.sh`…), `hooks/hook.py` and `skills/` (the apps symlink them). Shared by every app, so no file names one. Tests in `tools/tests/` over `fixture-app/`. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `fixture-art.sh` (compiles the fixture skins; `--check`), `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
-| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it. |
+| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it; `plans/0.7/README.md` the companion shell (0.7.0: what the apps still repeat on top of 0.6 moves here), `1-…`–`6-…` its sessions. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `tools.yml` (the Python tools' tests), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
