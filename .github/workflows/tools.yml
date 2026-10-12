@@ -62,9 +62,12 @@ jobs:
       - name: Test
         run: npx vp test run
 
-      # The same pack as release.yml's landing job, into a folder of its own, so a tag never meets it first.
+      # The same pack as release.yml's landing job, into a folder of its own, so a tag never meets it first. A release
+      # packs at a version above npm's latest (npm won't tag a lower one latest), so this packs at the next patch.
       - name: Pack (as the release does)
         run: |
+          npm version "$(npm view @deskling/landing version)" --no-git-tag-version --allow-same-version
+          npm version patch --no-git-tag-version
           mkdir -p "$RUNNER_TEMP/npm"
           npm pack --pack-destination "$RUNNER_TEMP/npm"
           ls -l "$RUNNER_TEMP/npm"/*.tgz
