@@ -56,9 +56,13 @@ export function createRenderer(options: Omit<OgOptions, "iconPath" | "copy">) {
   /** Renders the square icon at `size`. `padded` insets it on `iconBackground` for iOS/Android masks. */
   function renderIcon(iconSvg: string, size: number, { padded = false } = {}) {
     if (!padded) return toPng(iconSvg, size);
-    const inner = iconSvg
-      .replace(/<\?xml[^>]*>/, "")
-      .replace(/<svg[^>]*>/, '<svg x="8" y="8" width="48" height="48" viewBox="0 0 64 64">');
+    // Everything up to the root tag's `>` (the XML declaration with it) goes, found by index: a `[^>]*` regex over
+    // the file is quadratic on a run of unclosed `<svg`.
+    const open = iconSvg.indexOf("<svg");
+    const close = open < 0 ? -1 : iconSvg.indexOf(">", open);
+    if (close < 0) throw new Error("The icon has no <svg> tag");
+    const inner =
+      '<svg x="8" y="8" width="48" height="48" viewBox="0 0 64 64">' + iconSvg.slice(close + 1);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${options.iconBackground}"/>${inner}</svg>`;
     return toPng(svg, size);
   }

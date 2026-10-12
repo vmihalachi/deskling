@@ -6,6 +6,9 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed
+  `<svg` or `<?xml` tags can't make the render take quadratic time (CodeQL `js/polynomial-redos`).
+
 ## 0.7.2 - 2026-10-12
 
 0.7.1 with `@deskling/landing` on npm: 0.7.1 reached NuGet and GitHub, but its npm job passed the tarball as

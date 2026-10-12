@@ -2,7 +2,13 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import { companionLanding, headersFile, socialAssets, type Language } from "../src/index.js";
+import {
+  companionLanding,
+  createRenderer,
+  headersFile,
+  socialAssets,
+  type Language,
+} from "../src/index.js";
 
 const root = resolve(import.meta.dirname, "fixture-site");
 const languages: readonly Language[] = [
@@ -156,5 +162,23 @@ describe("companionLanding", () => {
       "og-it.png",
     ]);
     for (const png of files.values()) expect(png.subarray(1, 4).toString()).toBe("PNG");
+  });
+
+  it("pads an icon whatever comes before its root tag, in linear time", () => {
+    const { renderIcon } = createRenderer({
+      ogDir: join(root, "og"),
+      fontFamily: "Fixture",
+      iconBackground: "#FFF8E7",
+    });
+    const icon = readFileSync(join(root, "public/favicon.svg"), "utf8");
+    const padded = renderIcon(icon, 64, { padded: true });
+    expect(
+      renderIcon(`<?xml version="1.0" encoding="UTF-8"?>\n${icon}`, 64, { padded: true }),
+    ).toEqual(padded);
+
+    const start = performance.now();
+    expect(() => renderIcon("<svg".repeat(100_000), 64, { padded: true })).toThrow("no <svg> tag");
+    expect(() => renderIcon("<?xml".repeat(100_000), 64, { padded: true })).toThrow("no <svg> tag");
+    expect(performance.now() - start).toBeLessThan(1000);
   });
 });
