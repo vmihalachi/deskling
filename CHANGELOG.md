@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.5.1 - 2026-10-12
+
 ### Fixed
 - `tools/dev-icon.swift` makes `AppIcon-Dev.appiconset` (starting from `AppIcon`'s `Contents.json`) when an app doesn't
   have one yet, instead of failing with "Can't write".
