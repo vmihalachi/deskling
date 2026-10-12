@@ -53,3 +53,7 @@ session's scratch folder): the real migrations repin to `v0.7.0` and restore the
 - **5.5 (the owner)**: before tagging, the `@deskling` npm scope (done) and the package's one-time trusted-publisher
   setup in `tools/landing/README.md` (no `NPM_TOKEN`, no `NPM_PUBLISH`: both deleted), then tag `v0.7.0`, approve the
   staged `@deskling/landing@0.7.0` with 2FA, and check NuGet, npm and that `exact: "0.7.0"` resolves.
+  **Done as 0.7.2 (2026-10-12).** v0.7.0's run failed packing the landing (no `npm/` folder), v0.7.1's staging (npm
+  read `npm/….tgz` as a GitHub repository); tags never move, so 0.7.2 is the complete one: NuGet, `@deskling/landing`
+  staged by GitHub Actions through the trusted publisher and approved with 2FA (SLSA provenance from `v0.7.2`), the
+  GitHub release. The Tools workflow now packs and dry-run stages the way the release does. The apps pin 0.7.2.
