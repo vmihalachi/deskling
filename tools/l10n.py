@@ -278,6 +278,34 @@ def translation_of(entry: dict, lang: str):
     return unit.get("value"), unit.get("state")
 
 
+def english_substitutions(entry: dict) -> dict:
+    """The source language's `%#@name@` substitutions of a catalog entry: {name: {argNum, formatSpecifier, plural}}."""
+    subs = entry.get("localizations", {}).get(SOURCE, {}).get("substitutions", {})
+    return {
+        name: {
+            "argNum": sub["argNum"],
+            "formatSpecifier": sub["formatSpecifier"],
+            "plural": {cat: unit["stringUnit"]["value"] for cat, unit in sub["variations"]["plural"].items()},
+        }
+        for name, sub in subs.items()
+    }
+
+
+def substitution_issues(entry: dict, lang: str) -> list[str]:
+    """Each source substitution must have every plural category `lang` uses, filled in."""
+    english = english_substitutions(entry)
+    if not english:
+        return []
+    subs = entry.get("localizations", {}).get(lang, {}).get("substitutions", {})
+    issues = []
+    for name in english:
+        plural = subs.get(name, {}).get("variations", {}).get("plural", {})
+        missing = [cat for cat in categories_for(lang) if not plural.get(cat, {}).get("stringUnit", {}).get("value")]
+        if missing:
+            issues.append(f"substitution {name}: missing {', '.join(missing)}")
+    return issues
+
+
 def catalog_issues(entry_key: str, entry: dict, lang: str) -> list[str]:
     if entry.get("shouldTranslate") is False or entry.get("extractionState") == "stale":
         return []
@@ -309,6 +337,8 @@ def catalog_issues(entry_key: str, entry: dict, lang: str) -> list[str]:
             issues.append("empty")
         elif problem := token_problem(english, value):
             issues.append(problem)
+        else:
+            issues += substitution_issues(entry, lang)
     return issues
 
 

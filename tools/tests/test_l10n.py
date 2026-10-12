@@ -82,6 +82,25 @@ class GapTests(L10nTestCase):
         self.assertNotIn("phrase.ciao", out)
         self.assertEqual(quiet(l10n.cmd_check, self.args())[0], 1)
 
+    def test_a_substitution_needs_every_plural_category(self):
+        def plural(values):
+            return {"variations": {"plural": {cat: {"stringUnit": {"state": "translated", "value": value}}
+                                              for cat, value in values.items()}}}
+
+        def localization(value, lines):
+            return {"stringUnit": {"state": "translated", "value": value},
+                    "substitutions": {"lines": {"argNum": 1, "formatSpecifier": "lld", **plural(lines)}}}
+
+        entry = {"localizations": {
+            "en": localization("%#@lines@ muted", {"one": "%arg line", "other": "%arg lines"}),
+            "it": localization("%#@lines@ silenziate", {"one": "%arg battuta"}),
+            "de": localization("%#@lines@ stumm", {"one": "%arg Satz", "other": "%arg Sätze"}),
+        }}
+        self.assertEqual(l10n.english_substitutions(entry)["lines"]["plural"], {"one": "%arg line", "other": "%arg lines"})
+        self.assertEqual(l10n.catalog_issues("%lld lines muted", entry, "it"), ["substitution lines: missing other"])
+        self.assertEqual(l10n.catalog_issues("%lld lines muted", entry, "de"), [])
+        self.assertEqual(l10n.substitution_issues({"localizations": {"en": {}}}, "it"), [], "no substitutions, nothing to check")
+
     def test_export_and_apply(self):
         out = self.root / "work"
         quiet(l10n.cmd_export, self.args(out=str(out)))
