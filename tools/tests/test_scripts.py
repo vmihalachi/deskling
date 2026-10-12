@@ -97,6 +97,44 @@ chmod +x "$app/Fixture"
         self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"])
         self.assertIn("1 screenshots in", result.stdout)
 
+    def fake_app(self, problems: dict[str, str] | None = None) -> None:
+        """xcodebuild "builds" an app that writes a shot and prints its folder; in the languages named in `problems`
+        it also writes that problems.txt, as ScreenshotCapture.finish() does."""
+        cases = "".join(f'  {lang}) printf "%s\\n" "{text}" > "$out/problems.txt" ;;\n' for lang, text in (problems or {}).items())
+        self.fake("xcodebuild", f'''while [ $# -gt 0 ]; do [ "$1" = -derivedDataPath ] && derived="$2"; shift; done
+app="$derived/Build/Products/Debug/Fixture.app/Contents/MacOS"
+mkdir -p "$app"
+cat > "$app/Fixture" <<'APP'
+#!/bin/sh
+out=$(mktemp -d)
+printf png > "$out/panel-light.png"
+case "$4" in  # -AppleLanguages (xx) -AppleLocale xx
+{cases}esac
+echo "$out"
+APP
+chmod +x "$app/Fixture"
+''')
+
+    def test_screenshots_fail_on_the_problems_the_run_reports(self):
+        self.fake_app({"it": "panel-light.png: the content needs 540 pt of height, the window has 520"})
+        out = self.root / "shots"
+        result = self.run_script("screenshots.sh", str(out), "it")
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("Problems (it):", result.stderr)
+        self.assertIn("the content needs 540 pt", result.stderr)
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"], "the shots are still copied")
+
+    def test_check_layout_runs_every_language_and_names_the_ones_that_fail(self):
+        self.fake_app({"de": "panel-light.png: the content needs 540 pt of height, the window has 520"})
+        result = self.run_script("check-layout.sh")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual([line for line in result.stdout.splitlines() if line.startswith("==")], ["== en", "== it", "== de"])
+        self.assertIn("Layout problems in: de", result.stderr)
+        self.assertTrue((self.root / "macos" / "build" / "layout-check" / "it" / "panel-light.png").exists())
+        passing = self.run_script("check-layout.sh", "--only", "panel", "en", "it")
+        self.assertEqual(passing.returncode, 0, passing.stderr)
+        self.assertIn("Every window fits in: en it", passing.stdout)
+
     def test_verify_runs_what_the_paths_need(self):
         result = self.run_script("verify.sh", "--fast", "--", "conformance/phrases.json")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

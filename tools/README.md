@@ -14,7 +14,8 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
 | `fonts.py` | Builds the display face from a pinned variable font (needs fontTools). |
-| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark; App Store images (needs Pillow). |
+| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written); App Store images (needs Pillow). |
+| `check-layout.sh` | `screenshots.sh` in every language (or the ones named), naming the languages whose windows don't fit. |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
@@ -47,7 +48,7 @@ Tests: `python3 tools/tests/run.py` (over `tools/tests/fixture-app`, a minimal a
    exec "$(dirname "$0")/../deskling/tools/verify.sh" "$@"
    ```
 
-   and the same for `setup-linux.sh`, `conformance.sh`, `screenshots.sh`, `install-dev.sh` (the scheme's post-action);
+   and the same for `setup-linux.sh`, `conformance.sh`, `screenshots.sh`, `check-layout.sh`, `install-dev.sh` (the scheme's post-action);
    Python tools are called directly (`python3 deskling/tools/l10n.py status`).
 
 4. **The hook.** Claude Code, `.claude/settings.json`:

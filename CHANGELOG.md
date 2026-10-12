@@ -6,6 +6,23 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.6.4 - 2026-10-12
+
+### Added
+- **`LayoutCheck` (DesklingShell)** finds SwiftUI content taller than its window: it measures the content's ideal
+  height at the window's width and skips windows that scroll. `overflow(in:)` for a window, `overflow(of:in:)` for a
+  view on its own, `contentRoom(forWindowOfSize:)` for the room below a `WindowManager` window's title bar.
+- **`ScreenshotCapture` checks every shot**: a window that couldn't be drawn, a PNG that wasn't written, or content
+  taller than its window is a problem (`problems`, `report(_:)` for the app's own), and `finish()` writes them to
+  `problems.txt` next to the shots.
+- **`tools/screenshots.sh` fails on `problems.txt`** (after copying the shots), and **`tools/check-layout.sh`** renders
+  the windows in every language (or the ones named) into `<mac.dir>/build/layout-check/` and names the languages that
+  don't fit. Apps add a two-line wrapper like `screenshots.sh`'s.
+- **`LayoutCheck` (Deskling.Windows)** finds WinUI text that doesn't fit its box: `TextProblems(root)` lists every
+  visible TextBlock cut off with an ellipsis, wider than its room, breaking a word across lines or cut off at the
+  bottom. **`XamlCast.As<T>`** reads an untyped XAML object as a type under Native AOT, where a cast throws and
+  `as`/`is` quietly fail.
+
 ## 0.6.3 - 2026-10-12
 
 ### Fixed

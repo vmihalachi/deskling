@@ -5,6 +5,8 @@
 #        source language)
 #   --only   just the shots whose file names start with one of the names, for checking a change. Pair it with a
 #            scratch output-dir so the committed screenshots stay as they are.
+# Fails, after copying the shots, when the run reports problems (ScreenshotCapture's problems.txt): a window that
+# couldn't be drawn, a shot that wasn't written, content taller than its window. check-layout.sh runs it per language.
 set -e
 ONLY=""
 if [ "$1" = "--only" ]; then
@@ -38,3 +40,8 @@ for file in "$SRC"/*.png; do
 done
 [ "$COUNT" -gt 0 ] || { echo "No screenshots matched --only $ONLY" >&2; exit 1; }
 echo "$COUNT screenshots in $OUT"
+if [ -s "$SRC/problems.txt" ]; then
+  echo "Problems ($LANG_CODE):" >&2
+  sed 's/^/  /' "$SRC/problems.txt" >&2
+  exit 1
+fi

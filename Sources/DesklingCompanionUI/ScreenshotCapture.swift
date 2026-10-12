@@ -11,6 +11,10 @@
     /// the temporary directory, which a sandboxed app's script copies out of its container: `finish()` prints its path
     /// last). The app builds its model over a throwaway defaults suite, a fixed clock and the silent fakes below, so the
     /// user's settings, speakers and the App Store are never touched, then shoots what it wants. Needs the main actor.
+    ///
+    /// Every shot is also checked: a window that couldn't be drawn, a PNG that wasn't written, or SwiftUI content taller
+    /// than its window (`LayoutCheck`) is a problem. `finish()` writes them to `problems.txt` in the output folder, which
+    /// `tools/screenshots.sh` prints and fails on; `report(_:)` adds the app's own.
     @MainActor
     public enum ScreenshotCapture {
         public static let modeVariable = "DESKLING_SCREENSHOT_MODE"
@@ -37,6 +41,20 @@
             return FileManager.default.temporaryDirectory.appendingPathComponent("screenshots", isDirectory: true)
         }
 
+        /// The file `finish()` writes the run's problems to, next to the shots; absent when there were none.
+        public static let problemsFile = "problems.txt"
+
+        /// What the run found wrong so far, one line each, starting with the shot's file name.
+        public private(set) static var problems: [String] = []
+
+        /// Records a problem (once), for example a window the app expected to open and didn't, and prints it to
+        /// standard error as it happens.
+        public static func report(_ problem: String) {
+            guard !problems.contains(problem) else { return }
+            problems.append(problem)
+            FileHandle.standardError.write(Data("\(problem)\n".utf8))
+        }
+
         /// Empties and creates `outputDirectory`.
         public static func prepareOutputDirectory() {
             try? FileManager.default.removeItem(at: outputDirectory)
@@ -56,24 +74,42 @@
                 ?? Date()
         }
 
-        /// Prints the output folder (the run script reads the last line) and quits.
+        /// Writes the problems found (`problemsFile`), prints the output folder (the run script reads the last line) and
+        /// quits.
         public static func finish() {
+            if !problems.isEmpty {
+                try? problems.joined(separator: "\n").appending("\n").write(
+                    to: outputDirectory.appendingPathComponent(problemsFile), atomically: true, encoding: .utf8)
+            }
             print(outputDirectory.path)
             NSApp.terminate(nil)
         }
 
         // MARK: Capture
 
-        /// Draws the whole window (title bar included) once it is key, so it looks as it does in use.
+        /// Draws the whole window (title bar included) once it is key, so it looks as it does in use, then checks that
+        /// its content fits (`LayoutCheck`).
         public static func capture(_ window: NSWindow, to url: URL) async {
-            await makeKey(window, for: url.lastPathComponent)
+            let shot = url.lastPathComponent
+            await makeKey(window, for: shot)
             guard let view = window.contentView?.superview ?? window.contentView,
                 let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds)
-            else { return }
+            else { return report("\(shot): the window couldn't be drawn") }
             window.makeFirstResponder(nil)  // no focus ring in the shot
             view.displayIfNeeded()
             view.cacheDisplay(in: view.bounds, to: rep)
-            try? rep.representation(using: .png, properties: [:])?.write(to: url)
+            write(rep, to: url)
+            if let overflow = LayoutCheck.overflow(in: window) { report("\(shot): \(overflow)") }
+        }
+
+        /// Saves a drawn shot, reporting it when that fails.
+        private static func write(_ rep: NSBitmapImageRep, to url: URL) {
+            do {
+                guard let png = rep.representation(using: .png, properties: [:]) else { throw CocoaError(.fileWriteUnknown) }
+                try png.write(to: url)
+            } catch {
+                report("\(url.lastPathComponent): not written (\(error.localizedDescription))")
+            }
         }
 
         /// `view` in a titled window built the way `WindowManager` builds one, for states a real window can't be told
@@ -104,7 +140,9 @@
             try? await Task.sleep(for: .seconds(0.5))
             if let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
                 host.cacheDisplay(in: host.bounds, to: rep)
-                try? rep.representation(using: .png, properties: [:])?.write(to: url)
+                write(rep, to: url)
+            } else {
+                report("\(url.lastPathComponent): the view couldn't be drawn")
             }
             window.close()
         }
