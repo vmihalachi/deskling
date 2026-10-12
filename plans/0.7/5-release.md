@@ -24,3 +24,31 @@
 `scripts/verify.sh --all` ok; `swift.yml`, `dotnet.yml`, `tools.yml`, `release.yml` green; the dry runs' gates passed
 (say which API changes they forced, and the `open` surface as it ended up). sunnysays' M10, Pagliacci's M7 and
 sequence 6 can start.
+
+## Outcome (2026-10-12)
+
+5.1 and 5.2 done (`0.7.0: the companion shell`, not tagged). The dry runs are committed on local branches in worktrees,
+for M10 and M7 to reuse: `../sunnysays-m10` (`m10-dry-run`) and `../pagliacci-m7` (`m7-dry-run`, two commits: the
+unchanged app on 0.7, then the migration). In both worktrees `deskling/`, `voices/` and `landing/` are symlinks to the
+main checkouts and the pins are local (path packages to `../deskling`, a NuGet feed with `0.7.0-dryrun.1` in the
+session's scratch folder): the real migrations repin to `v0.7.0` and restore the submodules.
+
+- **What the dry runs forced**: `SupportLook.tipsHeader` (a view: sunnysays' label upper-cases its string) instead of
+  `SupportCopy.tipsTitle` + `SupportLook.label`; `SupportLook.tipPrice` (the app styles the price `Text`: sunnysays
+  `onSun` at 80%, Pagliacci `.opacity(0.85)`) instead of `tipPriceOpacity`. And one name collides for an app on 0.6:
+  its own `View.windowPadding(bottom:)` (CHANGELOG → Migration).
+- **sunnysays (5.3)**: Gate A byte-identical; Gate B 57 Windows tests; Gate C 15 app tests (34 − 19 generic ones, now in
+  Deskling), every screenshot pixel-identical except `home-*`, whose waving glyph mock (`GlyphWave`, a `TimelineView`)
+  lands on a different frame from run to run before and after the change alike; no catalog key changed. Gate D on a
+  scratch copy: the landing's `dist/` identical, `check.py` prints the same. `push.py --status` needs the owner's App
+  Store Connect key: M10 compares it.
+- **Pagliacci (5.4)**: Gate A byte-identical; Gate B 53 Windows tests; all 34 app tests (its two-part joke, gel, skin
+  and refund tests included) pass on the subclass. **Gate C not run**: the screenshot runs couldn't take the focus
+  (another app held it). The baseline is commit `f33fca7` on `m7-dry-run`, the migrated state `df79355`: render both
+  when the Mac is free. Its `DesktopLayout` takes `shadowWidthRatio: 0.5`, so the sheet stays and the real desktop
+  shadow widens to match it.
+- **The open surface as it ended**: sequence 1's outcome, unchanged by the dry runs. Pagliacci kept `tellNow`,
+  `punchline`, `muteBubbleJoke`, `faceMood` and `previewChannel(_:joke:)` as one-line aliases; M7 may rename the call
+  sites instead.
+- **5.5 (the owner)**: before tagging, create the `@deskling` npm scope, add `NPM_TOKEN` and set `NPM_PUBLISH=true`
+  (sequence 4's outcome), then tag `v0.7.0`; check NuGet and that `exact: "0.7.0"` resolves.
