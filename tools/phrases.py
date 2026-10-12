@@ -37,7 +37,7 @@ DEFAULT_COMMENT = "{character} says this aloud ({tags}). Flavor {flavorNote}.{pa
 
 def load_bank(config: companion.Config) -> dict[str, dict]:
     """Catalog key → {"source": the key's text, "phrase": its phrase, "part": (n, count) or None}."""
-    path = config.phrases_file
+    path = config.require_phrases_file()
     if not path.exists():
         sys.exit(f"{path.relative_to(config.root)} is missing: regenerate the vectors first (deskling/tools/conformance.sh)")
     out: dict[str, dict] = collections.OrderedDict()

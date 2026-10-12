@@ -4,6 +4,7 @@
   "displayName": "Fixture",
   "character": "Fixy",
   "bundleId": "app.fixture",
+  "domain": "fixture.example",
   "devBundleId": "app.fixture.dev",
   "deskling": { "tag": "v0.5.0", "path": "deskling" },
   "mac": {
@@ -50,5 +51,21 @@
   "fonts": null,
   "screenshots": { "out": "screenshots/macos", "shots": ["panel", "home"], "store": null },
   "landing": null,
+  "store": {
+    "dir": "store-listing",
+    "apple": {
+      "appId": "1234567890", "copyright": "2026 Fixture", "baseTerritory": "ITA",
+      "locales": { "en": "en-US", "it": "it", "de": "de-DE" }, "extraLocales": { "en": ["en-GB", "en-CA", "en-AU"] },
+      "iaps": {
+        "app.fixture.supporter": {
+          "reference": "Supporter", "type": "NON_CONSUMABLE", "familySharing": true, "price": "1.99",
+          "name": "apple.iap.supporter.name", "description": "apple.iap.supporter.description",
+          "reviewNote": "A thank-you; it unlocks nothing.", "reviewShot": "support-light.png"
+        }
+      },
+      "review": { "shots": "screenshots/macos", "size": [1440, 900], "background": "FFF8E7" }
+    },
+    "microsoft": { "screenshotCount": 2, "publisher": "Fixture Studio" }
+  },
   "hooks": { "guardedExtra": ["^design/locked\\.txt$"], "macUI": "^macos/Fixture/Views/.*\\.swift$", "windowsUI": "^windows/Fixture\\.App/" }
 }

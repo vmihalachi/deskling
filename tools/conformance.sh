@@ -7,6 +7,10 @@ set -eu
 TOOLS=$(cd "$(dirname "$0")" && pwd)
 get() { python3 "$TOOLS/companion.py" get "$1"; }
 ROOT=$(python3 "$TOOLS/companion.py" root)
+if ! get conformance.dir >/dev/null; then
+  echo "companion.json has no conformance section: this app has no vectors to regenerate" >&2
+  exit 1
+fi
 FLAG=$(get conformance.writeFlag)
 PACKAGE=$(get conformance.corePackagePath)
 cd "$ROOT"

@@ -107,8 +107,17 @@ class Config:
         return self.mac_dir / "build"
 
     @property
-    def phrases_file(self) -> Path:
-        return self.require_path("conformance.dir") / "phrases.json"
+    def phrases_file(self) -> Path | None:
+        """`conformance.dir`/phrases.json, or None for an app without a conformance section (no phrase bank)."""
+        folder = self.path("conformance.dir")
+        return folder / "phrases.json" if folder else None
+
+    def require_phrases_file(self) -> Path:
+        """The phrases file, exiting with a clear message when the app has no conformance section."""
+        path = self.phrases_file
+        if path is None:
+            sys.exit(f"companion: {self.root / FILE} has no conformance section, so there is no phrase bank to read")
+        return path
 
 
 # MARK: Derived names (verify.sh and the hook share these)
@@ -130,6 +139,7 @@ def derived(config: Config) -> dict[str, str]:
     windows, conformance = rel("windows.dir"), rel("conformance.dir")
     win_core, win_core_tests = config.get("windows.core", ""), config.get("windows.coreTests", "")
     landing, landing_i18n = rel("landing.dir"), rel("l10n.landing")
+    store = rel("store.dir")
     values = {
         "ROOT": str(config.root),
         "TOOLS": str(Path(__file__).resolve().parent),
@@ -146,6 +156,7 @@ def derived(config: Config) -> dict[str, str]:
         "LANDING_DIR": landing,
         "LANDING_I18N": landing_i18n,
         "LANDING_TOOL": config.get("landing.tool", ""),
+        "STORE_DIR": store,
         "WINDOWS_DIR": windows,
         "WINDOWS_CORE": win_core,
         "WINDOWS_CORE_TESTS": win_core_tests,
@@ -177,6 +188,7 @@ def derived(config: Config) -> dict[str, str]:
     values["RE_LANDING"] = (
         f"^{ere(landing)}/|^{ere(conformance)}/(phrases|settings)\\.json$|Localizable\\.xcstrings$" if landing else never
     )
+    values["RE_STORE"] = f"^{ere(store)}/[^/]+\\.md$" if store else never
     values["RE_PHRASES"] = f"^{ere(conformance)}/phrases\\.json$|Localizable\\.xcstrings$"
     values["RE_VOICE"] = (
         f"Localizable\\.xcstrings$|^{ere(values['VOICE_DIR'])}($|/)|^{ere(conformance)}/phrases\\.json$"

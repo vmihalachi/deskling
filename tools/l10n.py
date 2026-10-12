@@ -125,9 +125,9 @@ def base_language(code: str) -> str:
     return re.split(r"[-_]", code, maxsplit=1)[0].lower()
 
 
-def scoped_keys(phrases_file: Path) -> dict[str, set[str]]:
-    """The catalog keys of phrases that exist in some languages only, with those languages."""
-    if not phrases_file.exists():
+def scoped_keys(phrases_file: Path | None) -> dict[str, set[str]]:
+    """The catalog keys of phrases that exist in some languages only, with those languages (none without a bank)."""
+    if phrases_file is None or not phrases_file.exists():
         return {}
     out: dict[str, set[str]] = {}
     for phrase in json.loads(phrases_file.read_text("utf8"))["phrases"]:

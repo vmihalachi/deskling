@@ -18,6 +18,7 @@
 #   voices, voice config, catalog, phrases.json     voice.py check, the voices pointer is pushed
 #   windows/**/*.cs                        dotnet format whitespace, dotnet test (windows.coreTests)
 #   landing/, phrases/settings vectors     <landing.tool> check and build
+#   store.dir/*.md                         store/check.py (the listing's field limits)
 #   always                                 the Deskling pins agree (submodule tag = deskling.tag = SwiftPM = XcodeGen = NuGet)
 #
 # Prints one line per check and the tail of the log for failures. Exit 1 if anything failed.
@@ -196,6 +197,9 @@ if touched "$RE_CSHARP"; then
   else skip "dotnet format: needs the .NET SDK"; fi
 fi
 
+if touched "$RE_STORE"; then
+  check "store listing (store/check.py)" python3 "$TOOLS/store/check.py"
+fi
 if touched "$RE_LANDING" && [ -n "$LANDING_DIR" ] && [ -d "$ROOT/$LANDING_DIR" ]; then
   if [ -n "$landing_tool" ] && { has "$landing_tool" || [ -x "$landing_tool" ]; }; then
     check "landing: $LANDING_TOOL check" bash -c "cd \"$LANDING_DIR\" && \"$landing_tool\" check"

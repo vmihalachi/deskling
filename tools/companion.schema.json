@@ -4,7 +4,7 @@
   "title": "companion.json",
   "description": "A Deskling companion app's facts for tools/*: names, paths (relative to the file), languages and the tool settings. tools/companion.py validates it with the subset of JSON Schema used here (type, required, properties, additionalProperties, items, enum, pattern, minItems).",
   "type": "object",
-  "required": ["name", "displayName", "character", "bundleId", "deskling", "mac", "languages", "l10n", "conformance"],
+  "required": ["name", "displayName", "bundleId", "deskling", "mac", "languages", "l10n"],
   "additionalProperties": false,
   "properties": {
     "$comment": { "type": "string" },
@@ -189,6 +189,73 @@
       "properties": {
         "dir": { "type": "string" },
         "tool": { "type": "string", "description": "The landing page's build command (vp, npm)." }
+      }
+    },
+    "store": {
+      "type": "object",
+      "description": "The store listing and what tools/store pushes (check.py, push.py, import.py).",
+      "required": ["dir"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string", "description": "The listing folder: one <lang>.md per language in languages.all." },
+        "siteUrl": { "type": "string", "description": "The landing page (privacy, support and marketing URLs); https://<domain> by default." },
+        "apple": {
+          "type": "object",
+          "description": "App Store Connect (push.py). Paths are relative to store.dir unless noted.",
+          "additionalProperties": false,
+          "properties": {
+            "appId": { "type": "string", "description": "The app's Apple ID in App Store Connect." },
+            "platform": { "type": "string", "enum": ["MAC_OS", "IOS"], "description": "MAC_OS by default." },
+            "copyright": { "type": "string" },
+            "locales": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Listing language → App Store Connect locale (en → en-US)." },
+            "extraLocales": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } }, "description": "More App Store Connect locales a listing language fills when they exist (en → en-GB, en-CA)." },
+            "baseTerritory": { "type": "string", "description": "Where a new in-app purchase's price is set (ITA); USA by default." },
+            "screenshots": { "type": "string", "description": "<lang>/*.png per language; apple/screenshots by default." },
+            "previews": { "type": "string", "description": "preview-<lang>.mp4; apple/previews by default." },
+            "screenshotType": { "type": "string", "description": "APP_DESKTOP by default." },
+            "previewType": { "type": "string", "description": "DESKTOP by default." },
+            "iaps": {
+              "type": "object",
+              "description": "The in-app purchases by product id; a missing one is created.",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["reference", "type", "familySharing", "price", "name", "description", "reviewNote"],
+                "additionalProperties": false,
+                "properties": {
+                  "reference": { "type": "string", "description": "The reference name in App Store Connect." },
+                  "type": { "type": "string", "enum": ["CONSUMABLE", "NON_CONSUMABLE", "NON_RENEWING_SUBSCRIPTION"] },
+                  "familySharing": { "type": "boolean" },
+                  "price": { "type": "string", "description": "In baseTerritory's currency (1.99)." },
+                  "name": { "type": "string", "description": "The listing field with its display name (apple.iap.supporter.name)." },
+                  "description": { "type": "string", "description": "The listing field with its description." },
+                  "reviewNote": { "type": "string" },
+                  "reviewShot": { "type": "string", "description": "The App Review screenshot's file in review.shots." }
+                }
+              }
+            },
+            "review": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "notes": { "type": "string", "description": "The file with \"## App Review Information → Notes\"; app-review.md by default." },
+                "shots": { "type": "string", "description": "The app's window captures, relative to the root (screenshots/macos)." },
+                "size": { "type": "array", "items": { "type": "integer" }, "description": "The review screenshot's canvas, [width, height]." },
+                "background": { "type": "string", "pattern": "^[0-9A-Fa-f]{6}$", "description": "Around the capture: RRGGBB." }
+              }
+            }
+          }
+        },
+        "microsoft": {
+          "type": "object",
+          "description": "The Partner Center import (import.py); check.py requires the ms.* fields when it's there.",
+          "additionalProperties": false,
+          "properties": {
+            "screenshots": { "type": "string", "description": "<lang>/*.png per language; microsoft/screenshots by default." },
+            "art": { "type": "string", "description": "poster-art.png, box-art.png, super-hero-art.png; microsoft/art by default." },
+            "screenshotCount": { "type": "integer", "description": "Screenshots (and captions) per language; 8 by default." },
+            "publisher": { "type": "string", "description": "DevStudio in the listing." }
+          }
+        }
       }
     },
     "hooks": {
