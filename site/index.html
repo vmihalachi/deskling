@@ -188,8 +188,8 @@
         <div role="cell" class="pkg none"><span>macOS only</span></div>
         <div role="cell">
           <h3>The companion on screen</h3>
-          <p>The character view (vector and image parts), the character and its speech bubble on the desktop, the menu bar glyph, delivery through bubble, voice, chime and notification, the system signals gathered into one snapshot, a palette your app sets, and a screenshot mode.</p>
-          <p class="types"><code>CharacterView</code> <code>DesktopCompanion</code> <code>DeliveryPerformer</code> <code>SignalHub</code> <code>CompanionPalette</code></p>
+          <p>The character view (vector and image parts), the character and its speech bubble on the desktop, the menu bar glyph, delivery through bubble, voice, chime and notification, the system signals gathered into one snapshot, a palette your app sets, and a screenshot mode. And the shell your app subclasses: the model that runs the day, its delegate and menus, the Settings rows, the Support window and a screenshot script, every word passed in by your app.</p>
+          <p class="types"><code>CharacterView</code> <code>DesktopCompanion</code> <code>DeliveryPerformer</code> <code>SignalHub</code> <code>CompanionPalette</code> <code>CompanionAppModel</code> <code>SupportWindow</code> <code>ScreenshotScript</code></p>
         </div>
       </div>
 
@@ -208,14 +208,14 @@
         <div role="cell" class="pkg"><code>Deskling.Testing</code></div>
         <div role="cell">
           <h3>Fakes, fixtures and vectors for your tests</h3>
-          <p>A fake for every protocol, a fixture phrase bank and skins, and the conformance generators and replays: your app's Swift tests write its own companion vectors, its .NET tests replay them.</p>
-          <p class="types"><code>MockClock</code> <code>MockIdle</code> <code>MockBusy</code> <code>MockStoreBackend</code> <code>ConformanceSuite</code></p>
+          <p>A fake for every protocol, a fixture phrase bank and skins, and the conformance generators and replays: your app's Swift tests write its own companion vectors from the standard case lists plus its own, its .NET tests replay them.</p>
+          <p class="types"><code>MockClock</code> <code>MockIdle</code> <code>MockBusy</code> <code>MockStoreBackend</code> <code>ConformanceSuite</code> <code>CompanionVectors</code> <code>CompanionReplay</code></p>
         </div>
       </div>
     </div>
 
     <p class="footnote">The package ships no strings, product ids or window lists. Your app passes them in, already localized.</p>
-    <p class="footnote">Building a companion? <a href="https://github.com/vmihalachi/deskling/tree/master/tools"><code>tools/</code></a> has the scripts and agent skills that go with it: localization, phrase sync, recorded voices, character art, sounds, screenshots and checks. You vendor them as a submodule and run them on your machine; none of them ship in your app.</p>
+    <p class="footnote">Building a companion? <a href="https://github.com/vmihalachi/deskling/tree/master/tools"><code>tools/</code></a> has the scripts and agent skills that go with it: localization, phrase sync, recorded voices, character art, sounds, screenshots, the store listing and checks, and <code>@deskling/landing</code> on npm for the landing page. You vendor them as a submodule and run them on your machine; none of them ship in your app.</p>
   </div>
 </section>
 

@@ -71,6 +71,11 @@ Step-by-step procedures for the multi-step changes live in `.agents/skills/` (sy
 - **Package code never names an app.** No app's skins, phrase bank, product ids, palette or voices, and no app name in
   a doc comment or a fixture: apps inject their bank, defaults, skins, palette and voices. The same goes for `tools/`,
   which reads everything app-specific from the app's `companion.json`.
+- **A view or model in the package takes its words from the app.** `DesklingCompanionUI`'s shell, Settings rows,
+  Support window and menus get every label as a `Text`, a string or a copy struct (`StatusCopy`, `MenuCopy`,
+  `SupportCopy`…), never a default; the app's String Catalog and its `l10n.py` workflow are untouched. The look (the
+  app's buttons, chips, titles, cards) comes in as styles or views; only chrome that is the same in every app lives
+  here.
 - **No permission prompts, no network.** System signals read device and window state. If an API would prompt the user
   or touch the network, it doesn't belong here.
 - **Behavior changes are additive and vector-tested.** New scheduler behavior gets a config field whose default keeps
