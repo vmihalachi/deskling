@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.6.2 - 2026-10-12
+
+### Added
+- **A Voiced filter on the voice review pages**, next to Waiting for a voice: only the lines with a current clip.
+
 ## 0.6.1 - 2026-10-12
 
 ### Added

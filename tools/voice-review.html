@@ -106,7 +106,7 @@
       <option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option>
     </select>
     <select id="filter">
-      <option value="all">All lines</option><option value="todo">New or not heard yet</option><option value="flagged">Flagged</option><option value="waiting">Waiting for a voice</option>
+      <option value="all">All lines</option><option value="voiced">Voiced</option><option value="todo">New or not heard yet</option><option value="flagged">Flagged</option><option value="waiting">Waiting for a voice</option>
     </select>
     <div class="progress"><i id="bar"></i></div>
     <span class="count" id="count"></span>
@@ -178,6 +178,7 @@ function visible() {
     if (f === "all") return true;
     if (f === "todo") return DATA.voices.some(v => r.clips[v.kind] && !heard(r, v.kind));
     if (f === "flagged") return flagged(r);
+    if (f === "voiced") return Object.keys(r.clips).length > 0;
     if (f === "waiting") return !Object.keys(r.clips).length;
     return r.flavor === f;
   });
