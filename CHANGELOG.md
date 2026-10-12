@@ -6,6 +6,17 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-12
+
+The companion shell: what sunnysays and Mister Pagliacci still repeated on top of 0.6 (the app model, its delegate
+and menus, the Settings rows, the Support window, the window chrome, the screenshot run, the vector case lists, the
+landing page's plumbing and the store tools) is Deskling's now. Every word and the look stay the apps'.
+
+### Migration
+- **One name collides.** An app that defines its own `View.windowPadding(bottom:)` (both companion apps do) deletes
+  it: the package's is the same, and the two are ambiguous. Nothing else needs changing to build on 0.7.0. To shed the
+  rest of an app's copies, follow sunnysays' M10 brief (`plans/milestones/10-companion-shell.md` there).
+
 ### Changed
 - **`companion.json` no longer requires `character` or `conformance`**: an app without a phrase bank uses the
   tools too; the bank's tools say the section is missing.
