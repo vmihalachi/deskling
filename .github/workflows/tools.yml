@@ -68,3 +68,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/npm"
           npm pack --pack-destination "$RUNNER_TEMP/npm"
           ls -l "$RUNNER_TEMP/npm"/*.tgz
+
+      # The release's npm job's command as a dry run, from the same relative path (no login and no --provenance, which
+      # needs the job's OIDC token: it stages nothing).
+      - name: Stage (dry run, as the release does)
+        working-directory: ${{ runner.temp }}
+        run: |
+          npm install -g npm@^11.15.0
+          npm stage publish ./npm/*.tgz --access public --dry-run

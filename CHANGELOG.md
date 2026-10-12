@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.2 - 2026-10-12
+
+0.7.1 with `@deskling/landing` on npm: 0.7.1 reached NuGet and GitHub, but its npm job passed the tarball as
+`npm/….tgz`, which npm reads as a GitHub repository. The same code as 0.7.1; use 0.7.2.
+
+- **Release**: the npm job stages `./npm/….tgz`, and the Tools workflow dry-runs that same command on every push.
+
 ## 0.7.1 - 2026-10-12
 
 0.7.0 as it was meant to ship: its tag exists (SwiftPM sees it), but its release stopped at packing

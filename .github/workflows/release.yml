@@ -161,7 +161,7 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           npm install -g npm@^11.15.0  # staged publishing
-          npm stage publish npm/*.tgz --access public --provenance
+          npm stage publish ./npm/*.tgz --access public --provenance  # ./: a bare npm/… reads as a GitHub repository
           {
             echo "@deskling/landing@$VERSION is staged on npm. Approve it with 2FA on npmjs.com (the package's Staged tab)"
             echo "or with \`npm stage list @deskling/landing\` and \`npm stage approve <id>\`."
