@@ -48,6 +48,16 @@ case "$mode" in
   base) changed="$(git diff --name-only "$base"...HEAD; git diff --name-only HEAD; git ls-files --others --exclude-standard)" ;;
   paths) changed="$(printf '%s\n' "${paths[@]}" | sed "s|^$ROOT/||")" ;;
 esac
+# A landing page kept in its own repository is a submodule: the parent only reports its path, so list the files
+# changed inside it since the commit the parent records (commits not recorded yet, and uncommitted work). Its git
+# runs without the GIT_DIR / GIT_INDEX_FILE a pre-commit hook runs under.
+if [ "$mode" != paths ] && [ -n "$LANDING_DIR" ] && [ -e "$LANDING_DIR/.git" ] &&
+  printf '%s\n' "$changed" | grep -qxF "$LANDING_DIR"; then
+  sub() { env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE git -C "$LANDING_DIR" "$@"; }
+  recorded="$(git rev-parse -q --verify "${base:-HEAD}:$LANDING_DIR" 2>/dev/null || git rev-parse -q --verify "HEAD:$LANDING_DIR")"
+  changed="$changed
+$({ sub diff --name-only "$recorded" 2>/dev/null; sub ls-files --others --exclude-standard; } | sed "s|^|$LANDING_DIR/|")"
+fi
 changed="$(printf '%s\n' "$changed" | sed '/^$/d' | sort -u)"
 
 # touched <extended regex>: true when a changed path matches (always true with --all).

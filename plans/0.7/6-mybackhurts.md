@@ -3,6 +3,9 @@
 > Sequence 6 of `README.md`. Needs `v0.7.0`. One session, run in `../mybackhurts` (its `AGENTS.md` rules apply there:
 > never load its String Catalogs or `.resw` files, never `git checkout` in the shared checkout). Droppable: if the
 > tools fight mybackhurts' shape for more than an hour, stop, note what bit in the outcome here, and leave it.
+>
+> The landing pages moved to public repositories of their own on 2026-10-12 (submodules at `landing/`): read the
+> note under *`tools/landing`* in `README.md` before touching `@deskling/landing` or a landing `package.json`.
 
 mybackhurts keeps a fork of the tooling (its `macos/scripts/l10n.py` shares 703 of ~860 lines with `tools/l10n.py`;
 `store-listing/check.py` is 97% sunnysays'; `apple/push.py` 58%; `landing/vite.config.ts` 69%). It is not a companion

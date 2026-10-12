@@ -17,6 +17,10 @@ cd "$ROOT"
 # The Deskling tools and the recorded voices are submodules.
 git submodule update --init ${DESKLING_PATH:+"$DESKLING_PATH"} ${VOICE_DIR:+"$VOICE_DIR"} >/dev/null 2>&1 ||
   echo "warning: couldn't fetch the submodules; voice.py check won't run" >&2
+# A landing page kept in its own repository is a submodule too.
+if [ -n "$LANDING_DIR" ] && git ls-files -s -- "$LANDING_DIR" | grep -q '^160000'; then
+  git submodule update --init "$LANDING_DIR" >/dev/null 2>&1 || echo "warning: couldn't fetch $LANDING_DIR/" >&2
+fi
 git config submodule.recurse true; git config push.recurseSubmodules on-demand
 [ -d .githooks ] && git config core.hooksPath .githooks
 

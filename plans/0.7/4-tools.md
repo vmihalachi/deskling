@@ -2,6 +2,9 @@
 
 > Sequence 4 of `README.md` (read *`tools/landing`*, *`tools/store`*). Needs nothing. One session, anywhere with
 > python3 and node 24.
+>
+> The landing pages moved to public repositories of their own on 2026-10-12 (submodules at `landing/`): read the
+> note under *`tools/landing`* in `README.md` before touching `@deskling/landing` or a landing `package.json`.
 
 ## Read only these
 

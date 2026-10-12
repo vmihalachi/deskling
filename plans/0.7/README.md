@@ -43,7 +43,7 @@ Half of the repetition is the look and should stay duplicated. The other half is
 | Mechanism | **Moves, and is the same bytes afterwards.** Both apps' content vectors stay byte-identical, their screenshots pixel-identical, their test counts accounted for. A diff is a bug. |
 | Compatibility | **Additive.** 0.7.0 adds types and functions; nothing from 0.6 changes meaning or signature. The app migrations are deletions. (`DeliveryPerformer` gains one optional callback.) |
 | Where | `DesklingCompanionUI` gains `Shell/`, `Settings/`, `Support/`, `Screenshots/`; `DesklingShell` gains `FontRegistration`; `DesklingTesting` gains the standard cases and `CompanionVectors`; `Deskling.Testing` gains `CompanionReplay`; `tools/` gains `landing/` and `store/`. No new product, no new NuGet package. |
-| Landing | `tools/landing/` is an npm package (`@deskling/landing`, TypeScript sources, not published) that each app's `landing/package.json` takes as `file:../deskling/tools/landing` through the submodule. The app's `vite.config.ts` keeps its data and brand hooks. |
+| Landing | `tools/landing/` is an npm package (`@deskling/landing`, TypeScript sources, not published) that each app's `landing/package.json` takes as `file:../deskling/tools/landing` through the submodule (but see the note under *`tools/landing`*: the landing pages are now public repositories of their own). The app's `vite.config.ts` keeps its data and brand hooks. |
 | Store | `tools/store/{check,push,import}.py` read a new `store` section of `companion.json`; the apps keep two-line wrappers at today's paths. sunnysays' `push.py` (the review part, `--status`, IAP creation) and mybackhurts' (previews, `test_push.py`) are merged, with both repos' "App Information languages first" fix. |
 | mybackhurts | Adopts the tools only (`l10n.py`, the hook, `store/`, `landing`), keeps its own `conformance.sh`, `verify.sh` and screenshots, and stays on Deskling 0.4.0 for code. Droppable (sequence 6). |
 | Timing | After Pagliacci's M3 lands and, if the dates allow, after its M5 ships: no session may be editing either app's `AppModel` or `SettingsView` while 5.4 dry-runs the migration. The brief of each migration says the same. |
@@ -214,6 +214,13 @@ The Settings Support card stays in the app (its surface is the brand).
   `ConformanceRoot.Files`.
 
 ### `tools/landing` (`@deskling/landing`)
+
+> **Since 2026-10-12 each app's landing page is its own public repository** (`vmihalachi/mybackhurts.app`,
+> `sunnysays.app`, `pagliacci.app`), mounted in the app at `landing/` as a submodule, and it builds and deploys from its
+> own CI without the app around it (app data comes through a committed `app-data/` snapshot that a build inside the
+> app rewrites). So `file:../deskling/tools/landing` through the app's `deskling/` submodule doesn't resolve there:
+> `@deskling/landing` needs another route (publish it to npm, a git dependency on a package-only repository, or a
+> `deskling` submodule in each landing repository). Decide that before sequence 4; the rest of this section stands.
 
 From `../sunnysays/landing/vite.config.ts` (512 lines; Pagliacci's and mybackhurts' are the same file with other
 data). `companionLanding(options)` returns `{ plugins, build }` for `defineConfig`:

@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+### Changed
+- **Tools: a landing page kept in its own repository.** When `landing.dir` is a submodule, `verify.sh` lists the files
+  changed inside it (since the commit the app records, so its commits not yet recorded count too) instead of only the
+  submodule's path, so the landing checks run; and `setup-linux.sh` fetches it.
+
 ### Fixed
 - **The desktop bubble's words stay inside it.** A new line used to animate its card and words from the last line's
   shape and place while the window took its new size at once, so for a moment (and in a running app sometimes until
