@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.6.5 - 2026-10-12
+
+### Fixed
+- **`LayoutCheck.TextProblems` (Deskling.Windows) measures the real text**: it flagged hundreds of false problems in
+  French. A detached probe rounds each line to whole DIPs (so a line wrapped at its own width), copied letter spacing
+  that a button's label reads back but never applies, and counted a label's `MinWidth` as text. Lines are now measured
+  on the real TextBlock with its width limits lifted for the measure (restored after), and the word probe takes the
+  spacing that reproduces the box's own width. It lays the tree out again when it's done, so run it after the
+  screenshot, not before.
+
 ## 0.6.4 - 2026-10-12
 
 ### Added
