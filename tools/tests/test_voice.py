@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
 import sys
 import unittest
 import wave
@@ -166,6 +167,15 @@ class VoiceTests(unittest.TestCase):
         voice.configure(companion.load())
         with self.assertRaises(SystemExit):
             voice.review_colors()
+
+    def test_publish_pushes_to_origins_default_branch(self):
+        remote, site = self.root / "remote.git", self.root / "voices-clone"
+        git = lambda *a: subprocess.run(["git", *a], check=True, capture_output=True)  # noqa: E731
+        git("init", "-q", "--bare", "-b", "trunk", str(remote))
+        git("clone", "-q", str(remote), str(site))
+        git("-C", str(site), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "first")
+        git("-C", str(site), "push", "-q", "origin", "HEAD:refs/heads/trunk")
+        self.assertEqual(voice.default_branch(site), "trunk")
 
     def test_render_hash_follows_text_voice_and_loudness(self):
         config, direction = voice.load_config(), {"hello": {"tags": "[whispers]", "gain_db": -5}}

@@ -959,6 +959,16 @@ def git(*cmd: str, cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+def default_branch(site: Path) -> str:
+    """The voices repository's default branch on `origin` (`main`, `master`…), which publish pushes to."""
+    found = subprocess.run(["git", "-C", str(site), "ls-remote", "--symref", "origin", "HEAD"],
+                           capture_output=True, text=True)
+    for line in found.stdout.splitlines():
+        if line.startswith("ref: refs/heads/") and line.endswith("\tHEAD"):
+            return line[len("ref: refs/heads/"):-len("\tHEAD")]
+    fail(f"can't read the default branch of {rel(site)}'s origin: {found.stderr.strip()[-300:]}")
+
+
 def cmd_publish(args) -> int:
     """Ship the voices: check, refresh the site, commit and push the voices repository, then stage its new pointer
     here (commit it with the change that needed it). Pushing first means the pointer never names an unpushed commit."""
@@ -977,11 +987,12 @@ def cmd_publish(args) -> int:
         print("voices: nothing new to commit")
     # By refspec: `git submodule update` leaves the checkout detached, and a plain `push origin HEAD` refuses that.
     # If another machine published first, this fails as a non-fast-forward instead of overwriting its clips.
-    pushed = subprocess.run(["git", "-C", str(site), "push", "-q", "origin", "HEAD:refs/heads/main"],
+    branch = default_branch(site)
+    pushed = subprocess.run(["git", "-C", str(site), "push", "-q", "origin", f"HEAD:refs/heads/{branch}"],
                             capture_output=True, text=True)
     if pushed.returncode != 0:
         fail(f"push failed: {pushed.stderr.strip()[-600:]}\nIf the voices repo moved on elsewhere: "
-             f"`git -C {rel(site)} pull --rebase origin main`, then voice.py site and publish again.")
+             f"`git -C {rel(site)} pull --rebase origin {branch}`, then voice.py site and publish again.")
     git("add", rel(site))
     print(f"voices: pushed; {rel(site)} staged here at {git('rev-parse', '--short', 'HEAD', cwd=site)}, commit it")
     return 0

@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.6.3 - 2026-10-12
+
+### Fixed
+- **`voice.py publish` pushes to the voices repository's default branch** (`master`, `main`…), read from `origin`;
+  it always pushed to `main`, which created a stray branch in repositories whose default is `master`.
+
 ## 0.6.2 - 2026-10-12
 
 ### Added
