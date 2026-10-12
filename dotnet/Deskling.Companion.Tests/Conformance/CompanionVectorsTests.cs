@@ -10,48 +10,40 @@ public sealed class CompanionVectorsTests
 {
     private static readonly IReadOnlyList<RiggedCharacter> Characters = FixtureArt.Characters(Fixture.Root);
 
-    public static IEnumerable<object[]> Pickers => ConformanceRoot.Files("companion/picker");
+    private static readonly string Root = Path.Combine(Fixture.Root, "companion");
 
-    public static IEnumerable<object[]> Cadences => ConformanceRoot.Files("companion/cadence");
+    public static IEnumerable<object[]> Pickers => CompanionReplay.Files("companion/picker");
 
-    public static IEnumerable<object[]> Timelines => ConformanceRoot.Files("companion/quiet");
+    public static IEnumerable<object[]> Cadences => CompanionReplay.Files("companion/cadence");
 
-    public static IEnumerable<object[]> CharacterFiles => ConformanceRoot.Files("companion/characters");
+    public static IEnumerable<object[]> Timelines => CompanionReplay.Files("companion/quiet");
 
-    private static string Name(string path) => Path.GetRelativePath(Fixture.Root, path).Replace('\\', '/');
-
-    private static IReadOnlyList<string> Verify(string relativeOrFull, Func<Stream, string, IReadOnlyList<string>> verify)
-    {
-        var path = Path.IsPathRooted(relativeOrFull) ? relativeOrFull : Path.Combine(Fixture.Root, relativeOrFull);
-        using var stream = File.OpenRead(path);
-        return verify(stream, Name(path));
-    }
+    public static IEnumerable<object[]> CharacterFiles => CompanionReplay.Files("companion/characters");
 
     [Fact]
-    public void Phrases() =>
-        Assert.Empty(Verify("companion/phrases.json", (s, f) => PhrasesReplay.Verify(s, f, Fixture.Bank, FixtureIds.Flavors)));
+    public void Phrases() => Assert.Empty(CompanionReplay.Phrases(Root, Fixture.Bank, FixtureIds.Flavors));
 
     [Fact]
-    public void Settings() => Assert.Empty(Verify("companion/settings.json", (s, f) => SettingsReplay.Verify(s, f, Fixture.Defaults)));
+    public void Settings() => Assert.Empty(CompanionReplay.Settings(Root, Fixture.Defaults));
 
     [Fact]
-    public void Desktop() => Assert.Empty(Verify("companion/desktop.json", DesktopReplay.Verify));
+    public void Desktop() => Assert.Empty(CompanionReplay.Desktop(Root));
 
     [Theory]
     [MemberData(nameof(Pickers))]
-    public void Picker(string path) => Assert.Empty(Verify(path, (s, f) => PickerReplay.Verify(s, f, Fixture.Bank)));
+    public void Picker(string path) => Assert.Empty(CompanionReplay.Picker(path, Fixture.Bank));
 
     [Theory]
     [MemberData(nameof(Cadences))]
-    public void Cadence(string path) => Assert.Empty(Verify(path, CadenceReplay.Verify));
+    public void Cadence(string path) => Assert.Empty(CompanionReplay.Cadence(path));
 
     [Theory]
     [MemberData(nameof(Timelines))]
-    public void Quiet(string path) => Assert.Empty(Verify(path, (s, f) => QuietReplay.Verify(s, f, Fixture.Bank, Fixture.Defaults)));
+    public void Quiet(string path) => Assert.Empty(CompanionReplay.Quiet(path, Fixture.Bank, Fixture.Defaults));
 
     [Theory]
     [MemberData(nameof(CharacterFiles))]
-    public void Character(string path) => Assert.Empty(Verify(path, (s, f) => CharacterReplay.Verify(s, f, Characters)));
+    public void Character(string path) => Assert.Empty(CompanionReplay.Character(path, Characters));
 
     [Fact]
     public void EveryFolderHasVectors()
