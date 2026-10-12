@@ -84,7 +84,13 @@
 
         /// The content's ideal size, at most `maxWidth` wide.
         public func idealSize(maxWidth: CGFloat) -> CGSize {
-            NSHostingController(rootView: host.rootView)
+            Self.idealSize(of: host.rootView, maxWidth: maxWidth)
+        }
+
+        /// The ideal size of `content`, at most `maxWidth` wide, measured on its own: size a window before its content
+        /// goes in.
+        public static func idealSize(of content: AnyView, maxWidth: CGFloat) -> CGSize {
+            NSHostingController(rootView: content)
                 .sizeThatFits(in: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
         }
 
@@ -94,10 +100,12 @@
             place()
         }
 
-        /// Puts a riding-along window exactly at `frame` (a `FloatingPlacement` result), without clamping.
+        /// Puts a riding-along window exactly at `frame` (a `FloatingPlacement` result), without clamping, and lays its
+        /// content out at the new size right away, so it never shows at the old one.
         public func setFrame(_ frame: CGRect) {
             size = frame.size
             panel.setFrame(frame, display: true)
+            host.layoutSubtreeIfNeeded()
         }
 
         /// Rides along beside `parent` from now on: shown above it and moved with it.

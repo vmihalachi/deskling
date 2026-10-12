@@ -125,14 +125,18 @@
             guard let text = bubbleText, let screen = character.visibleFrame else { return }
             let parent = character.frame
             let side = FloatingPlacement.side(beside: parent, in: screen)
-            let view = SpeechBubble(
-                text: text, tail: side == .left ? .trailing : .leading, size: Self.bubbleTextSize, fillsWidth: false,
-                countdown: countdown, roomForDial: true
-            )
-            .padding(layout.bubbleMargin)
-            bubble.setContent(environment(AnyView(view)))
-            let ideal = bubble.idealSize(maxWidth: layout.bubbleMaxWidth + 2 * layout.bubbleMargin)
+            let view = environment(
+                AnyView(
+                    SpeechBubble(
+                        text: text, tail: side == .left ? .trailing : .leading, size: Self.bubbleTextSize, fillsWidth: false,
+                        countdown: countdown, roomForDial: true
+                    )
+                    .padding(layout.bubbleMargin)))
+            let ideal = FloatingWindow.idealSize(of: view, maxWidth: layout.bubbleMaxWidth + 2 * layout.bubbleMargin)
             let size = CGSize(width: ceil(ideal.width), height: ceil(ideal.height))
+            // Exactly the measured size from the window's top left, and each line a view of its own: the window takes its
+            // new size at once, so a card and words animating from the last line's shape would hang out of it.
+            bubble.setContent(AnyView(view.frame(width: size.width, height: size.height, alignment: .topLeading).id(text)))
             // The tail's tip level with the bubble pivot (the head's middle).
             let centerY = layout.headY(in: parent) + layout.bubbleTailY(height: size.height) - size.height / 2
             bubble.setFrame(

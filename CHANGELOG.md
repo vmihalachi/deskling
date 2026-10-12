@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+### Fixed
+- **The desktop bubble's words stay inside it.** A new line used to animate its card and words from the last line's
+  shape and place while the window took its new size at once, so for a moment (and in a running app sometimes until
+  the bubble went away) the words hung out of the top of the card. `DesktopCompanion` now lays each line out at exactly
+  the measured size from the window's top left, as a view of its own (no animation from the line before), and
+  `FloatingWindow.setFrame(_:)` lays the content out at the new size before it shows.
+
+### Added
+- **`FloatingWindow.idealSize(of:maxWidth:)`** measures content before it goes into the window.
+
 ## 0.6.5 - 2026-10-12
 
 ### Fixed
