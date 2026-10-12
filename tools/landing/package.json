@@ -1,0 +1,45 @@
+{
+  "name": "@deskling/landing",
+  "version": "0.0.0",
+  "description": "A desk companion's landing page as Vite plugins: localized pages, legal pages, sitemap, CSP headers and social cards.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vmihalachi/deskling.git",
+    "directory": "tools/landing"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "check": "tsc --noEmit",
+    "test": "vp test run"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0"
+  },
+  "peerDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "vite-plus": "^1.0.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

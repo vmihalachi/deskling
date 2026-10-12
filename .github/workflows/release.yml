@@ -4,7 +4,7 @@ name: Release
 # Publishing (OIDC: no stored key; nuget.org → your account → Trusted Publishing → a policy for repository
 # vmihalachi/deskling and workflow file release.yml, plus the NUGET_USER repository variable set to your nuget.org
 # username) and drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
-# the tag itself. Run it from Actions with a version to have it create the tag on master (for sessions
+# the tag itself; @deskling/landing (tools/landing) is published to npm at the tag's version (see the publish job). Run it from Actions with a version to have it create the tag on master (for sessions
 # whose credentials can't push tags), or push the tag yourself.
 on:
   push:
@@ -106,8 +106,34 @@ jobs:
           name: nupkg-windows
           path: dotnet/artifacts/*.nupkg
 
+  # @deskling/landing (tools/landing) at the tag's version: tested and packed here, published to npm by `publish`.
+  landing:
+    needs: version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/landing
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Test and pack
+        run: |
+          npm ci
+          npx tsc --noEmit && npx vp test run
+          npm version "${{ needs.version.outputs.version }}" --no-git-tag-version
+          npm pack --pack-destination "$GITHUB_WORKSPACE/npm"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-landing
+          path: npm/*.tgz
+
   publish:
-    needs: [version, core, windows]
+    needs: [version, core, windows, landing]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -149,6 +175,33 @@ jobs:
           dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json --skip-duplicate
 
+      - uses: actions/download-artifact@v7
+        with:
+          name: npm-landing
+          path: npm
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+
+      # npm Trusted Publishing: the OIDC token (id-token: write above) stands in for a stored token once npmjs.com has a
+      # trusted publisher for @deskling/landing (repository vmihalachi/deskling, workflow release.yml). npm only lets a
+      # package that exists configure one, so the first version goes out with an NPM_TOKEN secret (an automation token
+      # of the account that owns the @deskling scope), which can be deleted afterwards. Set the NPM_PUBLISH repository
+      # variable to true to publish; without it the tarball still lands on the GitHub release below.
+      - name: Publish @deskling/landing to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          ls -l npm
+          if [ "${{ vars.NPM_PUBLISH }}" != "true" ]; then
+            echo "::warning::@deskling/landing not published to npm: set the NPM_PUBLISH repository variable to true (and, for the first version, an NPM_TOKEN secret)."
+            exit 0
+          fi
+          npm install -g npm@latest
+          npm publish npm/*.tgz --access public --provenance
+
       - name: Release notes from CHANGELOG.md
         run: |
           awk -v v="$DESKLING_VERSION" '
@@ -161,8 +214,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "v$DESKLING_VERSION" >/dev/null 2>&1; then
-            gh release upload "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg --clobber
+            gh release upload "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg npm/*.tgz --clobber
           else
-            gh release create "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg --title "v$DESKLING_VERSION" \
+            gh release create "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg npm/*.tgz --title "v$DESKLING_VERSION" \
               --notes-file "$RUNNER_TEMP/notes.md"
           fi

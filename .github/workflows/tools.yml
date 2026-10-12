@@ -1,6 +1,7 @@
 name: Tools
 
-# Tests the Python tools in tools/ (standard library only, so no setup beyond the runner's python3).
+# Tests the Python tools in tools/ (standard library only, so no setup beyond the runner's python3) and the
+# @deskling/landing package (tools/landing, Node 24).
 on:
   push:
     branches:
@@ -37,3 +38,29 @@ jobs:
 
       - name: Check the fixture art is current
         run: scripts/fixture-art.sh --check
+
+  landing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/landing
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: tools/landing/package-lock.json
+
+      - run: npm ci
+
+      - name: Types, lint, format
+        run: npx tsc --noEmit && npx vp check
+
+      - name: Test
+        run: npx vp test run
+
+      - name: Pack (what npm would publish)
+        run: npm pack --dry-run

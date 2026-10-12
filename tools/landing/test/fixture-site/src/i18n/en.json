@@ -1,0 +1,8 @@
+{
+  "meta": { "title": "Fixture", "description": "A fixture page" },
+  "hero": { "title": "Hello" },
+  "nav": { "privacy": "Privacy", "languageLabel": "Language" },
+  "store": { "soon": "Coming soon", "mac": "Get it" },
+  "notFound": { "title": "Not found" },
+  "og": { "title": "Fixture card" }
+}

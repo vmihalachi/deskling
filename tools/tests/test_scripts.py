@@ -231,7 +231,11 @@ class SharedFilesTests(unittest.TestCase):
     def test_no_app_is_named(self):
         names = re.compile(r"Sunny|sunnysays|Pagliacci|pagliacci|sunflower")
         for path in TOOLS.rglob("*"):
-            if path.is_file() and "tests" not in path.relative_to(TOOLS).parts and path.suffix != ".pyc":
+            parts = path.relative_to(TOOLS).parts
+            # The landing package's installed dependencies and build output aren't ours.
+            if "node_modules" in parts or parts[:2] == ("landing", "dist"):
+                continue
+            if path.is_file() and "tests" not in parts and "test" not in parts and path.suffix != ".pyc":
                 self.assertIsNone(names.search(path.read_text("utf8", errors="replace")), path)
 
     def test_every_skill_has_frontmatter(self):

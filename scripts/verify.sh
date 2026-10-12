@@ -10,6 +10,7 @@
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
 #   tools/**, Tests/Fixtures/**         the tools' Python tests, fixture art current
+#   tools/landing/**                    @deskling/landing: types, lint, format, tests (Node 24)
 #   version sources, site/**            every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -57,6 +58,14 @@ vectors_current() {
   fi
 }
 
+landing_check() {
+  (
+    cd tools/landing || exit 1
+    [ -d node_modules ] || npm ci --silent || exit 1
+    npx tsc --noEmit && npx vp check && npx vp test run
+  )
+}
+
 versions_agree() {
   local found distinct
   found="$( {
@@ -93,6 +102,10 @@ if touched "$tools"; then
     check "tools tests" python3 tools/tests/run.py
     check "fixture art current" scripts/fixture-art.sh --check
   else skip "tools tests: needs python3"; fi
+fi
+if touched '^tools/landing/'; then
+  if has npm; then check "@deskling/landing (types, lint, tests)" landing_check
+  else skip "@deskling/landing: needs Node 24 and npm"; fi
 fi
 if [ "$fast" = 0 ]; then
   if touched "$swift|^conformance/"; then
