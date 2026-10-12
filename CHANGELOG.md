@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.3 - 2026-10-12
+
 - **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed
   `<svg` or `<?xml` tags can't make the render take quadratic time (CodeQL `js/polynomial-redos`).
 - **Tools**: `verify.sh --all` skips the checks of a section the app's `companion.json` doesn't have (no `store`, no
