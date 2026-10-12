@@ -16,7 +16,7 @@ export function inlineScriptHashes(outDir: string) {
   const hashes = new Set<string>();
   for (const file of htmlFiles(outDir)) {
     const html = readFileSync(file, "utf8");
-    for (const [, tag, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    for (const [, tag, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)) {
       if (/\bsrc=/.test(tag) || /type="application\/(ld\+)?json"/.test(tag)) continue;
       hashes.add(`'sha256-${createHash("sha256").update(body).digest("base64")}'`);
     }
