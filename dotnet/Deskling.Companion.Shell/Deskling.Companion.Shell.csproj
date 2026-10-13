@@ -5,7 +5,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Companion.Shell</PackageId>
-    <Description>The platform-free half of a desk-companion app's shell, the C# twin of the Swift DesklingCompanionUI's logic: speech in parts with recorded voices, the delivery performer, the signal hub, the desktop layout and placement. Written against small interfaces (speaker, chime, timers, signal sources) that Deskling.Windows.Companion implements, so it is tested on any OS. No OS or UI dependencies.</Description>
+    <Description>The platform-free half of a desk-companion app's shell, the C# twin of the Swift DesklingCompanionUI's logic: the app model (the tick, the channels, Shh and wake, the bubble with mute and undo, previews, the status line, the desktop character), the menus as data, speech in parts with recorded voices, the delivery performer, the signal hub, the desktop layout and placement, a screenshot run's sample environment. Written against small interfaces (a host for the tray icon, windows, desktop window, hotkey and timers; speaker, chime, notifier, signal sources) that Deskling.Windows.Companion implements, so it is tested on any OS. No OS or UI dependencies.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Deskling.Core\Deskling.Core.csproj" />

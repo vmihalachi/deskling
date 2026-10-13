@@ -63,7 +63,7 @@ Swift (`Sources/`) → C#. `CS` = `dotnet/Deskling.Companion.Shell/`, `WC` = `do
 | `…/Drawing/*` | — (only if 4 needs them) | The rig's paths are already `PathCommand`s in `Deskling.Companion`; the canvas draws those. |
 | `…/FloatingPlacement.swift` | `CS/Desktop/FloatingPlacement.cs` | Pure geometry. |
 | `…/FloatingWindow.swift` | `WC/Desktop/DesktopWindow.cs` | The spike. |
-| `…/WindowManager.swift` | `CS/App/IWindowHost.cs`, `WC/Shell/WindowManager.cs` | `WindowID`'s placement, exclusivity and min size become a `WindowSpec` the app returns per window. |
+| `…/WindowManager.swift` | `CS/App/Host.cs` (`IWindowHost`), `WC/Shell/WindowManager.cs` | `WindowID`'s title, size, placement, exclusivity and min size become a `WindowSpec` the app returns per window, on the Windows side (the model only shows and closes ids). |
 | `…/StatusItemController.swift` | `CS/App/IStatusItem.cs`, `WC/Shell/TrayStatusItem.cs` | Left click opens the flyout (the panel), right click the native menu. Animation at the same 8 fps. |
 | `…/GlobalHotKey.swift`, `ShortcutCapture.swift` | `CS/App/IHotKey.cs`, `WC/Shell/HotKey.cs`, `WC/Settings/ShortcutRecorder.cs` | Over `Deskling.Windows.GlobalHotKey`. |
 | `…/NotificationPoster.swift` | `WC/Shell/CompanionNotifier.cs` | Over `AppNotifier<string>`. |

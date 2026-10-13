@@ -13,8 +13,16 @@ package and the NuGet packages together.
   `IIdleTimeProvider`, `IBusyStateProvider` and the new `IAudioOutputState`, `IScreenLock`, `IPowerSource`, `IAppearance`;
   `DesktopLayout`, `FloatingPlacement` (y-down screen coordinates), `BubbleMetrics`, `DesktopHide`. `SilentSpeaker` and
   `SilentChime`.
+- **Companion.Shell**: `CompanionAppModel<TWindow, TSettings>`, the Swift app model in C# (`INotifyPropertyChanged`;
+  the same actions and the same overridable surface, view hooks left to the platform), over `ICompanionHost<TWindow>`
+  (`IWindowHost`, `IStatusItem`, `IDesktopCompanion`, `IHotKey`, `ITimers`, appearance, quit) and
+  `ICompanionNotifying`; `WindowRoles`, `StatusCopy` (times as moments, the next line in minutes: the app formats them),
+  `DesktopCopy`, `MenuCopy`, `CompanionSounds`, `CompanionAppConfiguration`, `NotificationPermission`,
+  `BubbleCountdown`; `CompanionMenus` building `MenuItem` data for the tray's and the desktop character's menus;
+  `SampleEnvironment` (with `FixedClock`, `ConstantIdle`, `SilentNotifier`, `FixedPriceBackend`) for screenshot runs.
 - **Testing**: `Deskling.Testing` depends on `Deskling.Companion.Shell` and adds `ManualTimers` (timers a test runs by
-  hand, moving a `MockClock`), `FakeSpeaker` and `FakeChime`.
+  hand, moving a `MockClock`), `FakeSpeaker`, `FakeChime`, `FakeNotifier` and `FakeHost<TWindow>` (with
+  `FakeStatusItem`, `FakeWindowHost`, `FakeDesktopCompanion`, `FakeHotKey`).
 
 ## 0.7.6 - 2026-10-13
 
