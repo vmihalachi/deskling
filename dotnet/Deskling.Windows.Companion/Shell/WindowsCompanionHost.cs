@@ -1,0 +1,175 @@
+using Deskling.Companion.Desktop;
+using Deskling.Companion.Settings;
+using Deskling.Companion.Shell.App;
+using Deskling.Companion.Shell.Desktop;
+using Deskling.Companion.Shell.Speech;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Launcher = Windows.System.Launcher;
+
+namespace Deskling.Windows.Companion.Shell;
+
+/// <summary>
+/// The app's views, which the host shows where the model asks: each window's spec and content, the tray panel, and the
+/// character on the desktop.
+/// </summary>
+/// <param name="WindowSpec">Each window's title, size and traits.</param>
+/// <param name="WindowContent">Each window's view, made when it opens.</param>
+/// <param name="Panel">The tray icon's panel, made the first time it opens.</param>
+public sealed record CompanionViews<TWindow>(
+    Func<TWindow, WindowSpec> WindowSpec,
+    Func<TWindow, UIElement> WindowContent,
+    Func<UIElement> Panel
+)
+    where TWindow : notnull
+{
+    /// <summary>The desktop character's window (the layout, size, saved position and the click's accessible name); none shows without it.</summary>
+    public Func<DesktopLayout, DesktopSize, DesktopPosition?, string, IDesktopCompanion>? Desktop { get; init; }
+}
+
+/// <summary>
+/// Everything native the model drives on Windows (<see cref="ICompanionHost{TWindow}"/>): the windows
+/// (<see cref="WindowManager{TWindow}"/>), the hotkey, timers on the UI thread, the tray icon
+/// (<see cref="TrayStatusItem"/>), the desktop character, the appearance, the notification settings and quitting. The
+/// app makes one on the UI thread, before the model, and hands both its views. UI thread only.
+/// </summary>
+public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDisposable
+    where TWindow : notnull
+{
+    private readonly CompanionViews<TWindow> views;
+    private readonly Guid trayIconId;
+    private readonly string trayToolTip;
+    private readonly DispatcherQueue queue;
+    private ElementTheme theme = ElementTheme.Default;
+
+    /// <param name="trayIconId">The tray icon's identity (see <see cref="TrayStatusItem"/>).</param>
+    /// <param name="trayToolTip">The tray icon's tooltip and accessible name (the configuration's <c>StatusItemTooltip</c>).</param>
+    /// <param name="windowIconPath">The windows' <c>.ico</c>; the executable's icon by default.</param>
+    /// <param name="queue">The UI thread's queue; the current thread's by default.</param>
+    public WindowsCompanionHost(
+        CompanionViews<TWindow> views,
+        Guid trayIconId,
+        string trayToolTip,
+        string? windowIconPath = null,
+        DispatcherQueue? queue = null
+    )
+    {
+        this.views = views;
+        this.trayIconId = trayIconId;
+        this.trayToolTip = trayToolTip;
+        this.queue =
+            queue
+            ?? DispatcherQueue.GetForCurrentThread()
+            ?? throw new InvalidOperationException("Create the host on the UI thread, or pass its DispatcherQueue.");
+        Windows = new WindowManager<TWindow>(views.WindowSpec, views.WindowContent, windowIconPath);
+        HotKey = new HotKey();
+        Timers = new DispatcherTimers(this.queue);
+    }
+
+    public WindowManager<TWindow> Windows { get; }
+
+    public HotKey HotKey { get; }
+
+    public DispatcherTimers Timers { get; }
+
+    /// <summary>The tray icon, once the model made it.</summary>
+    public TrayStatusItem? StatusItem { get; private set; }
+
+    /// <summary>The desktop character, once the model made it.</summary>
+    public IDesktopCompanion? Desktop { get; private set; }
+
+    public bool ReduceMotion => Shell.ReduceMotion.IsOn;
+
+    /// <summary>Runs on <see cref="Quit"/>: the app's exit (closing what it holds, then <c>Application.Exit</c>).</summary>
+    public Action? OnQuit { get; set; }
+
+    IWindowHost<TWindow> ICompanionHost<TWindow>.Windows => Windows;
+
+    IHotKey ICompanionHost<TWindow>.HotKey => HotKey;
+
+    ITimers ICompanionHost<TWindow>.Timers => Timers;
+
+    public IStatusItem MakeStatusItem()
+    {
+        StatusItem?.Dispose();
+        StatusItem = new TrayStatusItem(trayIconId, trayToolTip, views.Panel, Timers, () => ReduceMotion, queue)
+        {
+            Theme = theme,
+        };
+        return StatusItem;
+    }
+
+    public IDesktopCompanion MakeDesktop(DesktopLayout layout, DesktopSize size, DesktopPosition? position, string sayActionName)
+    {
+        Desktop = views.Desktop?.Invoke(layout, size, position, sayActionName) ?? new AbsentDesktop();
+        return Desktop;
+    }
+
+    public void ApplyAppearance(AppearanceSetting appearance)
+    {
+        theme = Theme(appearance);
+        Windows.Theme = theme;
+        if (StatusItem is not null)
+            StatusItem.Theme = theme;
+    }
+
+    /// <summary>Settings › System › Notifications, where the app's switch is.</summary>
+    public void OpenNotificationSettings() => _ = Launcher.LaunchUriAsync(new Uri("ms-settings:notifications"));
+
+    public void Quit()
+    {
+        if (OnQuit is { } quit)
+            quit();
+        else
+            Application.Current.Exit();
+    }
+
+    /// <summary>Closes the windows and takes the tray icon and hotkey away; once, at exit.</summary>
+    public void Dispose()
+    {
+        Windows.CloseAll();
+        StatusItem?.Dispose();
+        StatusItem = null;
+        (Desktop as IDisposable)?.Dispose();
+        HotKey.Dispose();
+    }
+
+    /// <summary>The appearance setting as a XAML theme (<see cref="ElementTheme.Default"/> follows Windows' app mode).</summary>
+    public static ElementTheme Theme(AppearanceSetting appearance) =>
+        appearance switch
+        {
+            AppearanceSetting.Light => ElementTheme.Light,
+            AppearanceSetting.Dark => ElementTheme.Dark,
+            _ => ElementTheme.Default,
+        };
+
+    /// <summary>No desktop character: the app gave no view for one.</summary>
+    private sealed class AbsentDesktop : IDesktopCompanion
+    {
+        public Action? OnSay { get; set; }
+
+        public Action<DesktopPosition>? OnMoved { get; set; }
+
+        public Action<int>? OnPinch { get; set; }
+
+        public Action? OnBubbleDismissed { get; set; }
+
+        public Func<IReadOnlyList<MenuItem>>? Menu { get; set; }
+
+        public bool IsShown => false;
+
+        public void Show(bool animated) { }
+
+        public void Hide(bool animated) { }
+
+        public void SetSize(DesktopSize size) { }
+
+        public void SetPosition(DesktopPosition? position) { }
+
+        public void ShowBubble(string text, BubbleCountdown? countdown, bool animated) { }
+
+        public void SetCountdown(BubbleCountdown? countdown) { }
+
+        public void HideBubble(bool animated) { }
+    }
+}

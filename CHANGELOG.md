@@ -12,6 +12,17 @@ package and the NuGet packages together.
   played through a `MediaPlayer` kept out of the system media controls; the clip's rate keeps its pitch and
   `ClipTime` is the clip's own position; a clip that can't play ends the line. `ChimePlayer` (`IChimePlaying`): the app's
   `Sounds/<sound>.wav`, several at once, at the user's volume.
+- **Windows.Companion**: the shell's services. `WindowsCompanionHost<TWindow>` (`ICompanionHost`) over the app's
+  `CompanionViews` (each window's `WindowSpec` and content, the tray panel, the desktop character); `WindowManager<TWindow>`
+  (`IWindowHost`: content under a theme-following title bar, sized in DIPs on its display, centered or by the tray,
+  exclusive windows, minimum sizes, always on top); `TrayStatusItem` (`IStatusItem`: the glyph at 8 fps while talking or
+  waving, the panel next to the icon sized to its content and closing when it loses focus or on Esc, the model's menu
+  built fresh); `GlyphRenderer` (a rig's glyph frame as an `HICON`, black or white ink by the taskbar); `DispatcherTimers`
+  (`ITimers`); `HotKey` (`IHotKey`); `CompanionNotifier` (`ICompanionNotifying`: the line as a silent notification with
+  the app's buttons); `MenuConversion` (`MenuItem` to `TrayMenuItem`); `ReduceMotion`; and `SystemAudioOutput`,
+  `SystemScreenLock`, `SystemPowerSource`, `SystemAppearance` as the signal hub's sources.
+- **Windows**: `TrayMenuItem.Command` takes `IsChecked` (a check mark), and `TrayIconHost.MenuOpening` is raised before
+  the menu opens, so its owner can rebuild it from the current state. Both additive.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of
   `DesklingCompanionUI`'s logic, tested on any OS. `SpeechSequencer` and `VoiceLibrary` (with `VoiceId`, `SpeechPart`,
   `SpeechRates.ClipRate`) over `ISpeaking`, `IChimePlaying` and `ITimers`; `DeliveryPerformer`, `PhraseLocalization`

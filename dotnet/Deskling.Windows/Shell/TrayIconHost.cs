@@ -51,6 +51,12 @@ public sealed class TrayIconHost : IDisposable
     /// </summary>
     public event Action<PointInt32>? Selected;
 
+    /// <summary>
+    /// The menu is about to open (a right click, the menu key, or <see cref="ShowMenu"/>), so an owner whose menu
+    /// follows its state can <see cref="SetMenu"/> it now. Raised on the UI thread.
+    /// </summary>
+    public event Action? MenuOpening;
+
     /// <summary>The small-icon size at the system DPI (16 px at 100 %), for drawing glyphs.</summary>
     public static int SmallIconPixels => Math.Max(16, NativeMethods.GetSystemMetrics(NativeMethods.SM_CXSMICON));
 
@@ -93,6 +99,7 @@ public sealed class TrayIconHost : IDisposable
     /// <summary>Opens the menu at a screen point, as a right click does.</summary>
     public void ShowMenu(PointInt32 anchor)
     {
+        MenuOpening?.Invoke();
         if (menu.Count == 0 || window.Handle == 0)
             return;
         var commands = new List<Action>();
@@ -211,7 +218,8 @@ public sealed class TrayIconHost : IDisposable
             {
                 case TrayMenuItem.Command command:
                     commands.Add(command.Invoke);
-                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING, (nuint)commands.Count, Escape(command.Text));
+                    var check = command.IsChecked ? NativeMethods.MF_CHECKED : 0;
+                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | check, (nuint)commands.Count, Escape(command.Text));
                     break;
                 case TrayMenuItem.Label label:
                     NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | NativeMethods.MF_GRAYED, 0, Escape(label.Text));

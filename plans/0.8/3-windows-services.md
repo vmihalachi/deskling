@@ -145,4 +145,49 @@ cut before 0.8.0 shouldn't publish a half-built package. Differences from the br
   tests pump their own and need no Windows App SDK runtime.
 - **Tests** play generated WAVs at no volume: real playback here (a 0.4 s clip ends after 0.4 s); a runner without an
   audio device should fail the player instead, and the line ends either way. The windows job is the first run without
-  one: check it once this is pushed. The Swift cases 1 left over (a broken clip, a missing sound) are here.
+  one: check it once this is pushed (checked: all 14 pass there, in 22 s). The Swift cases 1 left over (a broken clip, a
+  missing sound) are here.
+
+### 3.3, shell services (2026-10-13)
+
+`Shell/` and `Signals/` in the package, 31 more tests (45 in all). A scratch probe app (WinUI, unpackaged, run under JIT
+and as Native AOT on ARM64, no AOT warnings) drove each service from a command file; what needs a hand (clicks, keys,
+the taskbar's light mode) is on 3.5's fixture checklist. Differences from the brief, and what was found:
+
+- **The host takes the views as one record**, `CompanionViews<TWindow>(WindowSpec, WindowContent, Panel) { Desktop }`,
+  plus the tray icon's GUID and tooltip (the model makes the status item without arguments). Without a `Desktop` view,
+  `MakeDesktop` returns one that never shows: 4.3 supplies the real one. `Quit` runs the app's `OnQuit` (3.4's
+  `CompanionApp`), else `Application.Exit`.
+- **`WindowSpec`**: title, content size in DIPs, `Center` (on the pointer's display) or `NearTray` (the work area's corner
+  by the taskbar's end), exclusive, minimum size, always on top. The Mac's frame autosave and "bigger" aren't here (no
+  companion uses them). Content reaches under the title bar (`ExtendsContentIntoTitleBar`, the Mac's transparent title
+  bar), so 4.2's `WindowInset` must leave room for the caption buttons, which follow the theme through
+  `TitleBar.PreferredTheme`. Not maximizable.
+- **Trap: `AppWindow.ResizeClient` adds a caption's height** (58 px at 200 %) both for a window without a title bar (the
+  panel) and for content under the title bar (every window): both came out 29 DIPs too tall.
+  `NativeMethods.SetClientSize` resizes by the window's measured frame instead: a 520×600 window is now 1040×1200 client
+  pixels.
+- **The panel** is a window with a border and no title bar (Windows 11 rounds and shadows it), always on top, out of
+  Alt+Tab and the taskbar, made on first open and hidden after (Alt+F4 too), never closed. Its content sits in a
+  `Canvas`, so it keeps the size it asks for and the window follows it: two more lines moved it up, still above the
+  taskbar. It sits on the icon's display, centered on the icon along the taskbar (`TrayPlacement.NextTo`), or by the
+  click or pointer when the icon's rect can't be read. It closes when it loses focus (opening a window closed it) and on
+  Esc; a click on the icon within 500 ms of that doesn't reopen it.
+- **The menu is rebuilt each time it opens**: `Deskling.Windows` gains `TrayIconHost.MenuOpening` and
+  `TrayMenuItem.Command.IsChecked` (both additive). A command that isn't enabled becomes a dimmed `Label`. Opening the
+  menu closes the panel, as on the Mac.
+- **The glyph**: `GlyphAnimation` holds Swift's frame logic apart from the icon, tested with `ManualTimers`.
+  `GlyphRenderer` draws through GDI+ (`System.Drawing.Common`), caching bitmaps and making a fresh `HICON` for each
+  `SetGlyph` (the tray host frees it): black ink on a light taskbar, white on dark.
+- **Notifications** register and post from an unpackaged app: permission reads `Authorized`, and posts land in
+  Notification Center (the banner itself doesn't show in a screen capture). A click on the banner raises nothing (a
+  reserved `banner` action), as on the Mac; `Activated(args)` takes the click Windows launched the app with, for 3.4.
+  Windows never asks, so `RequestAuthorization` reports whether notifications are on.
+- **Signal adapters** bring `Deskling.Windows`' background events to the UI thread through a `SynchronizationContext`.
+  `SystemAppearance` reports only a real light and dark swap (Windows also reports accent changes). Mute reads `null`
+  without an output device.
+- **`DispatcherTimers`** over `DispatcherQueueTimer`: a cancelled one-shot never ran, a 0.5 s one fired at 500–516 ms.
+  No unit test (the test host has no Windows App SDK runtime).
+- **Not checked yet**, for 3.5's fixture app by hand: a left click toggling the panel and the reopen guard, Esc, the
+  right-click menu's checks and rebuild, the hotkey's press (it registers), a notification button reaching the app, and
+  the glyph's frames and light-taskbar ink on screen.

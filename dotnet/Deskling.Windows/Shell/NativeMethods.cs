@@ -208,6 +208,7 @@ internal static partial class NativeMethods
 
     public const uint MF_STRING = 0x0000;
     public const uint MF_GRAYED = 0x0001;
+    public const uint MF_CHECKED = 0x0008;
     public const uint MF_POPUP = 0x0010;
     public const uint MF_SEPARATOR = 0x0800;
 
