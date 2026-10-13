@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.7 - 2026-10-13
+
 - **Tools**: `fonts.py` builds more than one face: `fonts.faces` lists further variable fonts under the same
   license (an upright beside an italic), each with its own `family`, pinned `font` and `weights`.
 - **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
