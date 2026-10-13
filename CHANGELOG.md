@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Shell**: an app macOS opens at login stays in the menu bar again instead of showing Home. `CompanionAppDelegate`
+  read the launch Apple Event in `applicationWillFinishLaunching`, before AppKit delivers it, so every launch looked
+  like the user's; it now reads it in `applicationDidFinishLaunching` (and no longer implements
+  `applicationWillFinishLaunching`). `LaunchContext`'s doc says where the event can be read.
+
 ## 0.7.3 - 2026-10-12
 
 - **Tools**: the pre-commit hook's `verify.sh --staged` passes in a linked worktree (`git worktree add`,

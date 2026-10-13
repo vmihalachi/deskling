@@ -2,8 +2,10 @@
     import AppKit
     import Foundation
 
-    /// How the app was started. Reads the launch Apple Event, which is only there before launching
-    /// finishes: call `launchedAsLoginItem()` from `applicationWillFinishLaunching` and keep the answer.
+    /// How the app was started. Reads the launch Apple Event, which AppKit hands over only while it is being
+    /// handled: call `launchedAsLoginItem()` from `applicationDidFinishLaunching`, before anything async, and
+    /// keep the answer. In `applicationWillFinishLaunching` the event hasn't arrived yet, and after
+    /// `applicationDidFinishLaunching` returns it's gone: both read as not a login item.
     /// Reads only; never registers or changes anything.
     public enum LaunchContext {
         /// Whether macOS started the app as a login item (`kAEOpenApplication` with

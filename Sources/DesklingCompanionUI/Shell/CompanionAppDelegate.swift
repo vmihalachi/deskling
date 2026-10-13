@@ -13,8 +13,8 @@
     extension CompanionAppModel: CompanionLaunching {}
 
     /// Starts the app's model once the app has launched. Home is shown unless macOS started the app at login (the launch
-    /// Apple Event says so, and only before launching finishes); the first run shows onboarding instead. Tests host the
-    /// app without launching it; a Debug screenshot run can take over instead (`runScreenshots()`).
+    /// Apple Event says so, and only while `applicationDidFinishLaunching` runs); the first run shows onboarding instead.
+    /// Tests host the app without launching it; a Debug screenshot run can take over instead (`runScreenshots()`).
     ///
     /// Not generic (AppKit calls a delegate through Objective-C): the app subclasses it, holds its own model and hands it
     /// over as `companion`.
@@ -25,8 +25,6 @@
     ///     }
     @MainActor
     open class CompanionAppDelegate: NSObject, NSApplicationDelegate {
-        private var launchedAsLoginItem = false
-
         /// The app is hosting unit tests (`XCTestConfigurationFilePath` is set): nothing launches.
         public static var isRunningTests: Bool {
             ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -44,11 +42,9 @@
         /// Runs a screenshot session instead of launching, when the app is in one (Debug); true when it took over.
         open func runScreenshots() -> Bool { false }
 
-        open func applicationWillFinishLaunching(_ notification: Notification) {
-            launchedAsLoginItem = LaunchContext.launchedAsLoginItem()
-        }
-
         open func applicationDidFinishLaunching(_ notification: Notification) {
+            // Read first: the launch Apple Event is gone once this returns (and not there yet in willFinishLaunching).
+            let launchedAsLoginItem = LaunchContext.launchedAsLoginItem()
             guard !Self.isRunningTests, !runScreenshots() else { return }
             companion.launch(showHome: !launchedAsLoginItem)
         }
