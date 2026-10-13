@@ -61,3 +61,11 @@ and `Deskling.Testing` 0.7.7 depends on it. `Deskling.Windows.Companion` was not
 - `site/index.html`: six NuGet packages, the two in the companion row and the install card. Checked in a headless
   render: the long package names break at their dots, so they don't run into the next column.
 - The `release` skill says every NuGet package, not both.
+
+### 5.3
+
+- 0.8.0 in the four places. *Unreleased* became `## 0.8.0 - 2026-10-13`, with a lead paragraph for the release notes
+  and the `windows-port` skill's line. Since v0.7.7 the Swift side changed only its version.
+- `verify.sh --fast` is ok (versions agree, C# formatting). Every .NET test project passes in Release here: Core 210,
+  Companion 209, Companion.Shell 90, Windows 4, Windows.Companion 95.
+- The tag is the owner's: `v0.8.0` on this commit once `dotnet.yml` is green on it.

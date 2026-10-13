@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.8.0 - 2026-10-13
+
+The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 half over `Deskling.Companion.Shell`
+(on NuGet.org since 0.7.7), so a companion app on Windows is its model, its views and its words, as on the Mac
+(`README.md`, *A companion app on Windows*). The Swift side is unchanged.
+
 - **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
   over `Deskling.Companion.Shell` and `Deskling.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
   Windows' speech synthesizer with the chosen voice or the language's (`Speaker.Voices(language)` for a voice picker),
@@ -80,6 +86,8 @@ package and the NuGet packages together.
 - **Fixture app**: `scripts/fixture-screenshots.ps1` renders its windows.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.
+- **Tools**: the `windows-port` skill covers the companion shell: what each package holds, what stays in the app, and
+  the XAML compiler's traps.
 
 ## 0.7.7 - 2026-10-13
 
