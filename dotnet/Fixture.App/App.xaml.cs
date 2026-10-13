@@ -58,6 +58,7 @@ public partial class App : CompanionApp
             settings,
             FixtureBank.Load(root),
             FixtureArt.Load(root, FixtureIds.VectorSkin.RawValue),
+            FixtureArt.Load(root, FixtureIds.RasterSkin.RawValue),
             host,
             new SkippingClock(),
             idle,

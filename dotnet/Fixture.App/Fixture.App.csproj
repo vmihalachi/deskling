@@ -34,5 +34,11 @@
   <ItemGroup>
     <Content Include="..\..\conformance\companion\phrases.json" Link="conformance\companion\phrases.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\conformance\companion\characters\fixture-vector.json" Link="conformance\companion\characters\fixture-vector.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\conformance\companion\characters\fixture-raster.json" Link="conformance\companion\characters\fixture-raster.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The raster fixture's layers under Windows' names for scaled images (head@2x.png is fixture-raster.head.scale-200.png). -->
+    <Content
+      Include="..\..\Tests\Fixtures\characters\fixture-raster\layers\*.png"
+      Link="Assets\Characters\fixture-raster.$([System.String]::Copy('%(Filename)').Replace('@2x', '.scale-200').Replace('@3x', '.scale-300'))%(Extension)"
+      CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

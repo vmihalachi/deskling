@@ -31,6 +31,19 @@ package and the NuGet packages together.
   unless the startup task started the app at sign-in or a notification click did, and the app lives on with no window
   open. `CompanionNotifier.Configure` takes the click Windows started the app for; `WindowsCompanionHost.Quit` runs the
   app's `OnQuit`, then takes the tray icon, windows and hotkey away and exits.
+- **Windows.Companion**: `CharacterCanvas`, the twin of `CharacterView`.
+  - It draws a rig from its art: vector parts as XAML paths in a `CompanionPalette`'s paints, raster parts from the
+    app's `Assets\Characters\<skin>.<part>.scale-<n>.png`.
+  - It poses the character from the mood at up to 30 fps, with the talking mouth on the voice's level and the spring
+    back from Shh.
+  - It holds still when Windows' animation effects are off, with `Animated = false`, in a screenshot run, and while its
+    window is hidden.
+  - `IsDrawnAt` answers the desktop window's click-through from the shapes and the images' alpha in the pose on screen.
+
+  New alongside it:
+  - `CompanionPalette`: a `ThemedColor` per UI role and per paint, `System`, `Contrast`, and `ThemedColor.Resource`
+    to read a color from the app's theme dictionaries.
+  - `CharacterMotion`, `CharacterScene`, `CharacterImages` with `AlphaMask`, and `ScreenshotCapture.IsEnabled`.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.

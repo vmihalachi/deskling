@@ -12,6 +12,7 @@ using Deskling.Core.Scheduling;
 using Deskling.Core.Store;
 using Deskling.Testing.Fixtures;
 using Deskling.Windows.Companion.Shell;
+using Deskling.Windows.Companion.Views;
 using Size = Windows.Foundation.Size;
 
 namespace FixtureApp;
@@ -85,6 +86,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         CompanionSettings settings,
         PhraseBank bank,
         CharacterArt art,
+        CharacterArt rasterArt,
         WindowsCompanionHost<FixtureWindow> host,
         SkippingClock clock,
         IIdleTimeProvider idle,
@@ -115,7 +117,25 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         timers = host.Timers;
         DesktopLayout = new DesktopLayout(art);
         GlyphCharacter = new RiggedCharacter(art);
+        RasterCharacter = new RiggedCharacter(rasterArt);
     }
+
+    /// <summary>The fixture's paints (<c>Tests/Fixtures/characters/palette.json</c>) over Windows' colors.</summary>
+    public static CompanionPalette Palette { get; } =
+        CompanionPalette.System with
+        {
+            Paints = role =>
+                role.RawValue switch
+                {
+                    "body" => ThemedColor.Fixed(0xFFD25A),
+                    "edge" => ThemedColor.Fixed(0xEBAA2E),
+                    "eye" => ThemedColor.Fixed(0x2B1A0E),
+                    "blush" => ThemedColor.Fixed(0xF4A08C),
+                    "stem" => ThemedColor.Fixed(0x6E9E45),
+                    "inkSoft" => ThemedColor.Hex(0x7A6A55, 0xB8A890),
+                    _ => ThemedColor.Hex(0x000000, 0xFFFFFF),
+                },
+        };
 
     public override MenuCopy MenuCopy { get; } = new(
         Say: "Say something",
@@ -141,6 +161,9 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     public override DesktopLayout DesktopLayout { get; }
 
     public override RiggedCharacter GlyphCharacter { get; }
+
+    /// <summary>The raster fixture, drawn on Home from its PNGs.</summary>
+    public RiggedCharacter RasterCharacter { get; }
 
     /// <summary>How far the fixture's clock runs ahead of the wall clock, once skipped.</summary>
     public string ClockLine { get => clockLine; private set => Set(ref clockLine, value); }
