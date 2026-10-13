@@ -236,6 +236,20 @@ class FontsPlanTests(unittest.TestCase):
         self.assertIn("for sunnysays", plan.description())
         self.assertIn("no kerning after the space", plan.description())
 
+    def test_more_faces_share_the_license_and_the_checks(self):
+        data = json.loads((HERE / "sunnysays.companion.json").read_text("utf8"))
+        data["fonts"]["faces"] = [{"family": "FredokaUpright", "font": ["https://example.com/u.ttf", "0" * 64],
+                                   "weights": {"Bold": 700}}]
+        self.assertEqual(companion.validate(data), [])
+        plan = fonts.Plan(companion.Config(data, Path("/app")))
+        self.assertEqual([face.family for face in plan.faces], ["Fredoka", "FredokaUpright"])
+        self.assertEqual(plan.faces[1].path("Bold"), plan.out / "FredokaUpright-Bold.ttf")
+        self.assertEqual(plan.faces[1].font, ("https://example.com/u.ttf", "0" * 64))
+        self.assertEqual(plan.weights, {"Medium": 500, "SemiBold": 600})
+        self.assertIn("Modified version of FredokaUpright", plan.description("FredokaUpright"))
+        data["fonts"]["faces"][0].pop("weights")
+        self.assertIn("weights", "\n".join(companion.validate(data)))
+
     def test_no_fonts_section(self):
         with fixture_app():
             with self.assertRaises(SystemExit):

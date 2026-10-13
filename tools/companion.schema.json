@@ -170,7 +170,21 @@
         "weights": { "type": "object", "additionalProperties": { "type": "number" } },
         "required": { "type": "string", "description": "Characters every shipped language needs from the face." },
         "compose": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } }, "description": "Character → [base glyph, mark glyph, \"above\" or \"below\", alias characters…] to compose when missing." },
-        "dropSpaceKerning": { "type": "boolean" }
+        "dropSpaceKerning": { "type": "boolean" },
+        "faces": {
+          "type": "array",
+          "description": "More faces under the same license (an upright beside an italic), built with the same required, compose and dropSpaceKerning.",
+          "items": {
+            "type": "object",
+            "required": ["family", "font", "weights"],
+            "additionalProperties": false,
+            "properties": {
+              "family": { "type": "string" },
+              "font": { "type": "array", "items": { "type": "string" }, "minItems": 2, "description": "[url, sha256] of the variable font." },
+              "weights": { "type": "object", "additionalProperties": { "type": "number" } }
+            }
+          }
+        }
       }
     },
     "screenshots": {

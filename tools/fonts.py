@@ -2,10 +2,13 @@
 """Builds a companion's display font from a pinned upstream variable font (`fonts` in companion.json).
 
 Downloads the font and its license at their pinned URLs, checks their sha256, instances each weight the app uses
-(`fonts.weights`, e.g. {"Medium": 500, "SemiBold": 600}), composes letters the face lacks from its own base letters
+(`fonts.weights`, e.g. {"Medium": 500, "SemiBold": 600}) at the font's default for every other axis, composes letters the face lacks from its own base letters
 and marks (`fonts.compose`), optionally drops the kerning pairs that start with the space (some faces pull a following
 V, W or Y into the space, `fonts.dropSpaceKerning`), and checks every character in `fonts.required` is there. The
 modification is noted in each font's description. Outputs, in `fonts.out`: `<family>-<weight name>.ttf` and the license.
+
+`fonts.faces` adds faces from more variable fonts under the same license (an upright beside an italic), each
+`{"family", "font": [url, sha256], "weights"}`; `required`, `compose` and `dropSpaceKerning` apply to every face.
 
     python3 -m venv /tmp/fontenv && /tmp/fontenv/bin/pip install fonttools
     /tmp/fontenv/bin/python deskling/tools/fonts.py            # write the files
@@ -31,6 +34,19 @@ import companion  # noqa: E402
 BELOW_SCALE, BELOW_GAP = 0.8, 70
 
 
+class Face:
+    """One variable font and the static weights instanced from it."""
+
+    def __init__(self, spec: dict, out: Path):
+        self.family: str = spec["family"]
+        self.font = tuple(spec["font"][:2])
+        self.weights: dict[str, float] = spec["weights"]
+        self.out = out
+
+    def path(self, label: str) -> Path:
+        return self.out / f"{self.family}-{label}.ttf"
+
+
 class Plan:
     """What `fonts` in companion.json asks for."""
 
@@ -39,26 +55,27 @@ class Plan:
         if not fonts:
             sys.exit("fonts: companion.json has no fonts section (null means the app ships none)")
         self.out = config.require_path("fonts.out")
-        self.family = fonts["family"]
-        self.font = tuple(fonts["font"][:2])
+        self.faces = [Face(spec, self.out) for spec in [fonts, *fonts.get("faces", [])]]
+        self.family = self.faces[0].family
+        self.font = self.faces[0].font
         self.license = tuple(fonts["license"][:2])
         self.license_file = fonts.get("licenseFile") or f"OFL-{self.family}.txt"
-        self.weights: dict[str, float] = fonts["weights"]
+        self.weights = self.faces[0].weights
         self.required: str = fonts.get("required", "")
         self.compose: dict[str, list[str]] = fonts.get("compose", {})
         self.drop_space_kerning = bool(fonts.get("dropSpaceKerning", False))
         self.app = config.require("displayName")
 
     def path(self, label: str) -> Path:
-        return self.out / f"{self.family}-{label}.ttf"
+        return self.faces[0].path(label)
 
-    def description(self) -> str:
+    def description(self, family: str | None = None) -> str:
         changes = ["one static weight"]
         if self.compose:
             changes.append(f"plus {' '.join(self.compose)} composed from the font's own letters and marks")
         if self.drop_space_kerning:
             changes.append("no kerning after the space")
-        return f"Modified version of {self.family} (variable): {', '.join(changes)}, for {self.app}."
+        return f"Modified version of {family or self.family} (variable): {', '.join(changes)}, for {self.app}."
 
 
 def download(url: str, sha256: str) -> bytes:
@@ -166,7 +183,7 @@ def unkern_space(font) -> None:
         # Format 2 (class pairs) kerns only covered glyphs, so leaving the coverage is enough.
 
 
-def build(data: bytes, label: str, weight: float, plan: Plan):
+def build(data: bytes, face: Face, label: str, weight: float, plan: Plan):
     from fontTools.ttLib import TTFont
     from fontTools.varLib import instancer
 
@@ -177,10 +194,10 @@ def build(data: bytes, label: str, weight: float, plan: Plan):
     compose(static, plan)
     if plan.drop_space_kerning:
         unkern_space(static)
-    static["name"].setName(plan.description(), 10, 3, 1, 0x409)
+    static["name"].setName(plan.description(face.family), 10, 3, 1, 0x409)
     postscript = static["name"].getDebugName(6)
-    if postscript != f"{plan.family}-{label}":
-        raise SystemExit(f"unexpected PostScript name {postscript}; the app registers {plan.family}-{label}")
+    if postscript != f"{face.family}-{label}":
+        raise SystemExit(f"unexpected PostScript name {postscript}; the app registers {face.family}-{label}")
     return static
 
 
@@ -195,8 +212,8 @@ def check(plan: Plan) -> int:
     from fontTools.ttLib import TTFont
 
     status = 0
-    for label in plan.weights:
-        path = plan.path(label)
+    for face, label in [(face, label) for face in plan.faces for label in face.weights]:
+        path = face.path(label)
         if not path.exists():
             print(f"missing {path}")
             status = 1
@@ -220,14 +237,15 @@ def main(argv: list[str]) -> int:
     if "--check" in argv:
         return check(plan)
     plan.out.mkdir(parents=True, exist_ok=True)
-    data = download(*plan.font)
-    for label, weight in plan.weights.items():
-        path = plan.path(label)
-        build(data, label, weight, plan).save(path)
-        gaps = missing(path, plan.required)
-        if gaps:
-            raise SystemExit(f"{path.name} still lacks {' '.join(gaps)}")
-        print(path)
+    for face in plan.faces:
+        data = download(*face.font)
+        for label, weight in face.weights.items():
+            path = face.path(label)
+            build(data, face, label, weight, plan).save(path)
+            gaps = missing(path, plan.required)
+            if gaps:
+                raise SystemExit(f"{path.name} still lacks {' '.join(gaps)}")
+            print(path)
     (plan.out / plan.license_file).write_bytes(download(*plan.license))
     print(plan.out / plan.license_file)
     return 0

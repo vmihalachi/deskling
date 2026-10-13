@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: `fonts.py` builds more than one face: `fonts.faces` lists further variable fonts under the same
+  license (an upright beside an italic), each with its own `family`, pinned `font` and `weights`.
 - **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
   over `Deskling.Companion.Shell` and `Deskling.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
   Windows' speech synthesizer with the chosen voice or the language's (`Speaker.Voices(language)` for a voice picker),
