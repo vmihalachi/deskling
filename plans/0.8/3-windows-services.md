@@ -120,3 +120,29 @@ sealed partial class TransparentBackdrop : SystemBackdrop
     }
 }
 ```
+
+### 3.2, the package and speech (2026-10-13)
+
+`dotnet/Deskling.Windows.Companion/` (`Speech/`: `Speaker`, `ChimePlayer`) and `Deskling.Windows.Companion.Tests` (14
+tests), in the solution and in `dotnet.yml`'s windows job. `release.yml` doesn't pack it yet (5 does): a patch release
+cut before 0.8.0 shouldn't publish a half-built package. Differences from the brief, and what was measured:
+
+- **One `MediaPlayer` per line, not one for the speaker's life** (and one per sound in the chime). A player's
+  `MediaEnded` can't say which source ended, so a late event from a cut line could end the next one; with a player per
+  line and a generation number it's ignored, as Swift's per-clip `AVAudioPlayer` is. Every player is kept out of the
+  system media controls (`CommandManager.IsEnabled = false`): no "now playing" card in the volume flyout, no media keys.
+- **The clip's rate keeps its pitch.** `PlaybackSession.PlaybackRate`, set on `MediaOpened` (opening a source resets it).
+  On a real clip the clip time runs at 0.86× and 1.18× of the wall clock at the slider's ends (0.85× and 1.2× asked).
+  Speech at another tempo sounded higher to the owner, so a 440 Hz tone settled it: the same note at all three rates.
+  `ClipTime` is `PlaybackSession.Position`, the clip's own seconds whatever the rate.
+- **The synthesizer**: a new `SpeechSynthesizer` per line, synthesizing off the UI thread; a stop or a newer line drops
+  its result. `SpeakingRate` runs 0.5×–2× around 1× (`Speaker.SpeechRate`); Windows' 6× is past understanding. A line
+  that can't be synthesized (no voice installed) ends, as a broken clip's does.
+- **Voices**: `Speaker.Voices(language)` for the Settings picker lists the region's voices first, then Windows' default
+  voice (Windows has no quality to sort by, unlike the Mac), then by name; `Speaker.Voice(id, language)` falls back to
+  the first.
+- **The UI thread is a `SynchronizationContext`** (the current one by default), not a `DispatcherQueue`, so the speech
+  tests pump their own and need no Windows App SDK runtime.
+- **Tests** play generated WAVs at no volume: real playback here (a 0.4 s clip ends after 0.4 s); a runner without an
+  audio device should fail the player instead, and the line ends either way. The windows job is the first run without
+  one: check it once this is pushed. The Swift cases 1 left over (a broken clip, a missing sound) are here.

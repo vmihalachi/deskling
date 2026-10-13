@@ -1,7 +1,8 @@
 name: .NET
 
 # The pure packages (Deskling.Core, Deskling.Companion, Deskling.Companion.Shell, Deskling.Testing) build and test on Linux and Windows
-# (every conformance vector); Deskling.Windows builds on the Windows runner, where its Win32 calls can be exercised.
+# (every conformance vector); Deskling.Windows and Deskling.Windows.Companion build on the Windows runner, where their
+# Win32 and WinRT calls can be exercised.
 on:
   push:
     branches:
@@ -71,11 +72,15 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Build Deskling.Windows
-        run: dotnet build dotnet/Deskling.Windows/Deskling.Windows.csproj -c Release
+      - name: Build Deskling.Windows and Deskling.Windows.Companion
+        run: |
+          dotnet build dotnet/Deskling.Windows/Deskling.Windows.csproj -c Release
+          dotnet build dotnet/Deskling.Windows.Companion/Deskling.Windows.Companion.csproj -c Release
 
       - name: Windows tests
-        run: dotnet test dotnet/Deskling.Windows.Tests/Deskling.Windows.Tests.csproj -c Release
+        run: |
+          dotnet test dotnet/Deskling.Windows.Tests/Deskling.Windows.Tests.csproj -c Release
+          dotnet test dotnet/Deskling.Windows.Companion.Tests/Deskling.Windows.Companion.Tests.csproj -c Release
 
       # The same vectors under Windows' time zone database and math library.
       - name: Core, Companion and shell tests

@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
+  over `Deskling.Companion.Shell` and `Deskling.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
+  Windows' speech synthesizer with the chosen voice or the language's (`Speaker.Voices(language)` for a voice picker),
+  played through a `MediaPlayer` kept out of the system media controls; the clip's rate keeps its pitch and
+  `ClipTime` is the clip's own position; a clip that can't play ends the line. `ChimePlayer` (`IChimePlaying`): the app's
+  `Sounds/<sound>.wav`, several at once, at the user's volume.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of
   `DesklingCompanionUI`'s logic, tested on any OS. `SpeechSequencer` and `VoiceLibrary` (with `VoiceId`, `SpeechPart`,
   `SpeechRates.ClipRate`) over `ISpeaking`, `IChimePlaying` and `ITimers`; `DeliveryPerformer`, `PhraseLocalization`
