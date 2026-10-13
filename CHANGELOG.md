@@ -75,6 +75,13 @@ package and the NuGet packages together.
   - `SettingsBindings`: channels, flavors and the muted count.
   - `SupportWindow` (with `SupportCopy`, `SupportProducts`, `SupportLook`): the supporter purchase, then the tips, over
     `PurchaseStore`; one ask at a time and only thanks right after a purchase.
+- **Windows.Companion**: the screenshot run.
+  - `ScreenshotCapture` draws each window as the screen shows it (`PrintWindow`, caption buttons included) to
+    `<name>-<appearance>.png`, in light and dark, or in the contrast theme while Windows is in one. It checks each with
+    `LayoutCheck.TextProblems`, writes the problems next to the shots, and holds every animation still while it runs.
+  - `ScreenshotScript<TWindow, TSettings>` takes the shot list (windows, views at a size or their fitting size, the
+    supporter sequence, the app's own) over a model on a `SampleEnvironment`; `CompanionApp.RunScreenshots` starts it.
+- **Fixture app**: `scripts/fixture-screenshots.ps1` renders its windows.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.

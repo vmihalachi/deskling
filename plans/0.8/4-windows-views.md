@@ -247,3 +247,78 @@ Differences from the brief, and what was found:
   - the notification note (notifications are on here);
   - the light theme;
   - Narrator over the editors.
+
+### 4.5, screenshots (2026-10-13)
+
+`Screenshots/ScreenshotCapture` (grown from 4.1's flag) and `ScreenshotScript<TWindow, TSettings>`; 6 more tests (95 in
+all). The fixture app overrides `RunScreenshots` and shoots over a `SampleEnvironment`: a fixed Tuesday at 10:30,
+silent channels and sample prices. `scripts/fixture-screenshots.ps1` builds it, runs it and copies the PNGs; it fails
+when the run reports problems. Differences from the brief, and what was found:
+
+- **`PrintWindow`, not `RenderTargetBitmap`.** `RenderTargetBitmap` draws XAML only, so it would miss the character's
+  parts (moved on their composition visuals), the bubble's shadow and the dial. `PrintWindow` with full content,
+  cropped to the visible frame, captures what the screen shows, caption buttons included, as the Mac's shots show the
+  title bar (mybackhurts does the same). Real windows keep Windows 11's thin border. A view shot at its fitting size
+  (the panel, the desktop sheet) uses the context-menu presenter, so no frame edges it (seen, then fixed).
+- **The contrast theme can't be shot from inside the app.** An app can't turn a contrast theme on for itself, and
+  turning on the system's would be changing the user's settings. So the run shoots light and dark, or the contrast
+  theme alone while Windows is in one (`ScreenshotCapture.Appearances`): run it again with a contrast theme on. Not
+  done yet. The package's controls take Windows' contrast colors then (4.1's `ForCurrentContrast`).
+- **The run is Swift's:** the shots are a window, a view at a size, a view at its fitting size, the supporter sequence,
+  and the app's own, each named `<name>-<appearance>.png` and filtered by `DESKLING_SCREENSHOT_MODE` prefixes.
+  - The model is never launched: no tray icon, hotkey or desktop character. Its status comes from the fixed clock.
+  - While a run goes, `ReduceMotion.IsOn` is true and the character holds its still pose, so nothing animates mid-shot.
+  - A run claims no single instance (the fixture's `Program`), so it works beside a copy in use.
+- **`LayoutCheck.TextProblems`** runs on every window shot. The fixture's 16 shots report none.
+- **The desktop character's window is transparent,** so it isn't shot alone. The fixture shoots a sheet instead:
+  `DesktopCompanion.BubblePreview` beside `DesktopCompanion.Stand`, as the Mac's sheet.
+- **The status pill's minutes differ from run to run** (67, then 62). The fixed clock doesn't fix the scheduler's
+  randomness. A seeded random for screenshot runs would make the shots stable. Not done: the model takes no random from
+  outside yet.
+- **Checked** (JIT, and Native AOT with no warnings): all 16 shots of the fixture in light and dark (Home, Settings,
+  onboarding, Support asked, thanked and as a supporter, the panel, the desktop sheet). Each was looked at: the paper,
+  the cards and the pill follow the theme, and the bubble's shadow, the dial and the character all show.
+
+## Finish
+
+Done on this machine (2026-10-13), sequence 4's steps all committed:
+
+- The fixture's screenshots look right in light and dark. The contrast theme waits for a run with one on.
+- `LayoutCheck` is clean.
+- `dotnet.yml`'s windows job hasn't run on 4.x yet: it runs when these commits are pushed.
+
+### Hand to 5 (and to sunnysays' M3.2)
+
+What an app on `Deskling.Windows.Companion` must give or know:
+
+- **The look:** `CompanionLook.Current = new CompanionLook(palette) { DisplayFont = … }`, set first thing in
+  `MakeCompanion` (and in `RunScreenshots`).
+  - `CompanionPalette` takes a `ThemedColor` per role (`Paper`, `Card`, `Ink`, `InkSoft`, `Line`, `Outline`, `Shade`,
+    `Accent`, `AccentText`, `AccentSoft`, `Secondary…`, `OnInk`, `OnAccent`) and `Paints` for the art's paint roles.
+    `ThemedColor.Resource("PaperBrush")` reads one from the app's `Light` and `Dark` theme dictionaries, so the app's
+    `Palette.xaml` stays the source.
+  - The package defines no resources and needs none of the app's by name.
+  - Contrast themes map to Windows' colors by themselves.
+- **The views:** `CompanionViews.DesktopCharacter` is a `CharacterCanvas` bound to the model. `WindowInset.Content`,
+  `ContentOverActionBar` and `PanelPadding` are static properties for `{x:Bind}`; a function call with a number
+  crashes the XAML compiler. Don't name an element `Language`.
+- **Raster characters** keep their PNGs as `Assets\Characters\<skin>.<part>.scale-200.png` and so on, next to the exe
+  (`CharacterCanvas.ImageFolder` otherwise).
+- **Settings:** each row takes a copy record of the app's words and its `Style`s. `LaunchAtStartupToggle.TaskId` is
+  the manifest's `uap5:StartupTask` id; `LanguageRow.Languages` are the app's tags.
+- **Support:** `SupportWindow` takes the `PurchaseStore`, the products, a `SupportCopy`, a `SupportLook` and Done.
+  The model acknowledges a tip when the window closes.
+- **Screenshots:**
+  - The app overrides `RunScreenshots`, builds its model over a `SampleEnvironment` and runs a `ScreenshotScript`.
+  - Its `Program` passes a null instance key while `ScreenshotCapture.IsEnabled`.
+  - A runner like `scripts/fixture-screenshots.ps1` belongs in `tools/` for every app: for 5 or M3.2, with
+    `companion.json`'s Windows section.
+- **Cost:** a character on screen costs about 2.5–3 % of a core on this ARM64 machine (4.3). The owner decides
+  whether that's fine, or whether the sway moves to the compositor or a coarser skip.
+- **Still to do by hand,** besides 3.5's list:
+  - the light theme on screen;
+  - two displays;
+  - a touch pinch;
+  - shortcut recording;
+  - the startup task in a package;
+  - a language change.

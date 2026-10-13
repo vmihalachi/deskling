@@ -10,6 +10,6 @@ public static class ReduceMotion
 {
     private static readonly UISettings Settings = new();
 
-    /// <summary>Read each time, so a change applies to the next animation.</summary>
-    public static bool IsOn => !Settings.AnimationsEnabled;
+    /// <summary>Read each time, so a change applies to the next animation. A screenshot run counts as on: shots hold still.</summary>
+    public static bool IsOn => !Settings.AnimationsEnabled || Screenshots.ScreenshotCapture.IsEnabled;
 }

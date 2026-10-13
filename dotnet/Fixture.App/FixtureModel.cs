@@ -78,7 +78,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
                 + "you can still hear this sentence, the call wasn't noticed."),
         [Tag.General]);
 
-    private readonly SkippingClock clock;
+    private readonly IClock clock;
     private readonly ITimers timers;
     private string clockLine = "";
 
@@ -88,7 +88,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         CharacterArt art,
         CharacterArt rasterArt,
         WindowsCompanionHost<FixtureWindow> host,
-        SkippingClock clock,
+        IClock clock,
         IIdleTimeProvider idle,
         IBusyStateProvider busy,
         ISpeaking speaker,
@@ -199,10 +199,10 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     /// <summary>Skips the clock to the next line's time, then ticks: the line comes now, unless something holds it.</summary>
     public void MakeLineDue()
     {
-        if (Coordinator.Scheduler.NextFireDate is { } next && next > clock.Now)
+        if (clock is SkippingClock skipping && Coordinator.Scheduler.NextFireDate is { } next && next > skipping.Now)
         {
-            clock.Skip(next - clock.Now + TimeSpan.FromSeconds(1));
-            ClockLine = $"The clock runs {clock.Skipped:h\\:mm\\:ss} ahead.";
+            skipping.Skip(next - skipping.Now + TimeSpan.FromSeconds(1));
+            ClockLine = $"The clock runs {skipping.Skipped:h\\:mm\\:ss} ahead.";
         }
         Tick();
     }
