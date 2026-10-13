@@ -2,33 +2,47 @@
     x:Class="FixtureApp.Views.SettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ds="using:Deskling.Windows.Companion.Settings"
+    xmlns:dv="using:Deskling.Windows.Companion.Views"
     xmlns:views="using:FixtureApp.Views">
-    <ScrollViewer Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel Margin="24,40,24,24" Spacing="16">
+    <ScrollViewer>
+        <StackPanel Margin="{x:Bind dv:WindowInset.Content}" Spacing="24">
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
             <StackPanel Spacing="4">
                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Channels" />
                 <ToggleSwitch x:Name="VoiceSwitch" Header="Speak out loud" />
                 <ToggleSwitch x:Name="ChimeSwitch" Header="Chime" />
                 <ToggleSwitch x:Name="NotificationSwitch" Header="Notification" />
+                <ds:NotificationPermissionNote x:Name="NotificationNote" Permission="{x:Bind Model.NotificationPermission, Mode=OneWay}" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind views:Show.Permission(Model.NotificationPermission), Mode=OneWay}" />
-                <HyperlinkButton Click="{x:Bind Model.OpenNotificationSettings}" Content="Windows' notification settings" />
+            </StackPanel>
+            <StackPanel Spacing="12">
+                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="When" />
+                <ds:ActiveHoursEditor x:Name="Hours" />
+                <ds:QuietHoursEditor x:Name="Quiet" Title="Quiet hours" />
+                <ds:SettingsFooter Text="The fixture says nothing outside its active hours, nor in a quiet hour." />
             </StackPanel>
             <RadioButtons x:Name="AppearanceButtons" Header="Appearance">
                 <x:String>System</x:String>
                 <x:String>Light</x:String>
                 <x:String>Dark</x:String>
             </RadioButtons>
-            <StackPanel Spacing="4">
+            <StackPanel Spacing="8">
                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Shortcut" />
-                <TextBlock Text="Ctrl+Alt+F says something." />
+                <ds:ShortcutRecorder x:Name="Shortcut" />
                 <TextBlock
                     Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                    Text="Another app holds Ctrl+Alt+F."
+                    Text="Another app holds this shortcut."
+                    TextWrapping="Wrap"
                     Visibility="{x:Bind views:Show.When(Model.ShortcutUnavailable), Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel Spacing="12">
+                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="General" />
+                <ds:LaunchAtStartupToggle x:Name="Startup" />
+                <ds:LanguageRow x:Name="LanguageChoice" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Click="{x:Bind Model.OpenSupport}" Content="Support…" />

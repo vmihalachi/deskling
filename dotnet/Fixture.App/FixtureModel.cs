@@ -175,7 +175,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
             FixtureWindow.Home => new WindowSpec("Deskling fixture", new Size(440, 620)),
             FixtureWindow.Onboarding => new WindowSpec("Welcome", new Size(420, 320), IsExclusive: true),
             FixtureWindow.Settings => new WindowSpec("Settings", new Size(420, 600)),
-            FixtureWindow.Support => new WindowSpec("Support", new Size(360, 220)),
+            FixtureWindow.Support => new WindowSpec("Support", new Size(460, 580)),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, null),
         };
 

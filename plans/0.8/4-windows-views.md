@@ -200,3 +200,50 @@ and Home gets "On the desktop, or off". Differences from the brief, and what was
   - the fades by eye;
   - the light theme;
   - Windows 10.
+
+### 4.4, Settings and Support (2026-10-13)
+
+`Settings/` (`ActiveHoursEditor`, `QuietHoursEditor`, `ShortcutRecorder`, `LaunchAtStartupToggle`, `LanguageRow`,
+`NotificationPermissionNote`, `SettingsFooter`, the copy records, `SettingsBindings`) and `Support/` (`SupportWindow`,
+`SupportCopy`, `SupportProducts`, `SupportLook`, `SupportStage`); 7 more tests (89 in all). The fixture app's Settings
+uses every row, and its Support window is `SupportWindow` over the mock store, 460 × 580 as the Mac's test.
+Differences from the brief, and what was found:
+
+- **Words and styles from the app, bindings from the settings.** Each control takes the app's words as a copy record
+  (`ActiveHoursCopy`, `ShortcutCopy`…) and its styles as `Style` properties (`ChipStyle`, `ButtonStyle`). It takes the
+  `CompanionSettings` itself, and watches it only while loaded (`SettingsWatch`), since settings outlive their windows.
+  Swift's `CompanionSettings+Bindings` is `SettingsBindings`: `IsOn` for a channel or a flavor, `SetFlavor`,
+  `MutedCount`.
+- **The active hours' pickers stack,** each with its label ("From", "To"). Side by side, two WinUI time pickers cut
+  their minutes off at 420 points (seen on screen), so `ActiveHoursCopy` has no word for between them. The weekday
+  chips follow the culture's first day (Monday first, in Italian, on this machine).
+- **Quiet hours' labels** follow the culture's short time pattern without its minutes ("3 PM", "15", "09"). The
+  designator goes first where the pattern puts it first.
+- **The language row is a list in the app,** as in mybackhurts: Windows has no per-app language page for every app,
+  where the Mac has one. The list has Windows' language first, then each of the app's in its own words, through the
+  Windows App SDK's `ApplicationLanguages.PrimaryLanguageOverride` (packaged or not). A restart note and button show
+  once it changes; `OnRestart` is `AppInstance.Restart` unless the app sets it. An unknown tag shows as itself
+  (`predefinedOnly`).
+- **Startup** is the package's startup task (`StartupService`). Without package identity (the fixture) the toggle reads
+  off and can't be turned on. When Windows refuses, a line in the accent text says where to turn it back on.
+- **The shortcut recorder** is mybackhurts' over `SayShortcut`, with Swift's `OnCaptureStarted` and `OnCaptureEnded`
+  (the model's `SuspendHotKey` and `RegisterHotKey`), and `Describe` ("Ctrl+Alt+F", the layout's names).
+- **`SupportWindow`** follows Swift: one ask at a time, only thanks right after a purchase, a spring into the
+  celebration unless animation effects are off, and Esc as Done. Its stage is the same pure function, tested with the
+  Swift cases. The model acknowledges a tip when the window closes, so a reopened window shows the tips again.
+  - Found on the way: a button whose content is two texts has no name for Narrator, so a tip is named "title, price".
+  - `ActionBar` became a `Grid` (4.2's was a horizontal `StackPanel`, in which a grid can't push Done to the end, as
+    its doc wrongly said).
+- **`x:Name="Language"`** clashes with `FrameworkElement.Language` in an app's view (CS0108, and the XAML compiler's
+  WMC9999 with it): name the row something else.
+- **Checked by script** (JIT and Native AOT, no warnings):
+  - Settings draws every row (Italian culture, dark); a quiet hour turned on comes back on when Settings reopens.
+  - Support's pitch, then the purchase's thanks, then on reopening the supporter's thanks and the tip, the tip's
+    thanks, and the tips again.
+- **Not checked yet:**
+  - recording a shortcut by keyboard;
+  - the startup task in a package (sunnysays');
+  - a language change and the restart;
+  - the notification note (notifications are on here);
+  - the light theme;
+  - Narrator over the editors.

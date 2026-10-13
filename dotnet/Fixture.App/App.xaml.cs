@@ -83,7 +83,7 @@ public partial class App : CompanionApp
             FixtureWindow.Home => new HomeView(model),
             FixtureWindow.Onboarding => new OnboardingView(model),
             FixtureWindow.Settings => new SettingsView(model),
-            FixtureWindow.Support => new SupportView(),
+            FixtureWindow.Support => FixtureSupport.Make(model),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, null),
         };
 }

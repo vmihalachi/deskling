@@ -49,7 +49,7 @@ package and the NuGet packages together.
   - `SpeechBubble`: the tail toward the character on any side (`BubbleTail`, `BubbleShape`), a soft shadow, words that
     fill the width or hug, and a countdown dial the compositor drains.
   - `StatusPill`.
-  - `ActionBar`.
+  - `ActionBar`: a grid, so a row of buttons fills it, or a star column pushes them to the end.
   - `PanelRow`: a tray panel row that fills with `accentSoft` under the pointer.
   - `Pointer`: down and right toward the tray by default.
   - `Space` and `WindowInset`: the Mac's spacing, plus the title bar's band at the top.
@@ -64,6 +64,17 @@ package and the NuGet packages together.
     resizes it.
   - `DesktopWindow` is the floating window underneath. The host makes the companion from the app's
     `CompanionViews.DesktopCharacter`.
+- **Windows.Companion**: the Settings rows and the Support window, in the app's words (copy records) and styles.
+  - `ActiveHoursEditor`: the from and to pickers and the weekday chips, in the culture's week order.
+  - `QuietHoursEditor`: 24 hour chips, labelled as the culture writes hours.
+  - `ShortcutRecorder`: the say-something shortcut.
+  - `LaunchAtStartupToggle`: the package's startup task.
+  - `LanguageRow`: the app's languages in their own words, through `ApplicationLanguages.PrimaryLanguageOverride`,
+    with a restart.
+  - `NotificationPermissionNote` and `SettingsFooter`.
+  - `SettingsBindings`: channels, flavors and the muted count.
+  - `SupportWindow` (with `SupportCopy`, `SupportProducts`, `SupportLook`): the supporter purchase, then the tips, over
+    `PurchaseStore`; one ask at a time and only thanks right after a purchase.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.
