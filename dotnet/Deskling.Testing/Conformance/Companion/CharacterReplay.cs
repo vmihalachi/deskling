@@ -11,7 +11,8 @@ namespace Deskling.Testing.Conformance;
 /// <c>CharacterPoseVector.verify</c>) against the character of that skin. The art file must parse
 /// (<see cref="CharacterArt.Parse"/>) to the same art; the poses file's poses, still poses, glyph frames, resolved
 /// <c>shapes</c> (when the skin has vector parts) and placed <c>layers</c> (when it has image parts) must come out of
-/// <see cref="RiggedCharacter"/> within the vector's 6-decimal rounding.
+/// <see cref="RiggedCharacter"/> within the vector's 6-decimal rounding, and so must its <c>voiced</c> poses (present
+/// exactly when the talking rig has a rest mouth).
 /// </summary>
 public static class CharacterReplay
 {
@@ -73,6 +74,20 @@ public static class CharacterReplay
                 var (mood, time) = (MoodOf(c, file), c.GetProperty("time").GetDouble());
                 if (!SameLayers(c.GetProperty("layers"), character.Layers(character.Pose(mood, time))))
                     problems.Add($"{file}: the layers of {mood.RawValue()} at {Number(time)} differ");
+            }
+        }
+        var hasRest = character.Art.Rig.Moods.TryGetValue(Mood.Talking, out var talking) && talking.RestMouth is not null;
+        if (VectorSupport.Has(root, "voiced", out var voiced) != hasRest)
+            problems.Add($"{file}: voiced poses should be {(hasRest ? "present" : "absent")}");
+        else if (hasRest)
+        {
+            if (voiced.GetArrayLength() != 4)
+                problems.Add($"{file}: {voiced.GetArrayLength()} voiced poses, expected 4");
+            foreach (var c in voiced.EnumerateArray())
+            {
+                var (level, time) = (c.GetProperty("level").GetInt32(), c.GetProperty("time").GetDouble());
+                if (!SamePose(c.GetProperty("pose"), character.Pose(Mood.Talking, time, level)))
+                    problems.Add($"{file}: the voiced pose at level {level} differs");
             }
         }
         var glyphs = root.GetProperty("glyph").EnumerateArray().ToArray();
@@ -213,7 +228,7 @@ public static class CharacterReplay
         {
             Line(
                 $"mood {mood.RawValue()} {m.Eyes} {L(m.Mouth)} {N(m.MouthRate)} {L(m.HeadExtras)} {L(m.Overlays)} {m.Blink} "
-                    + $"{N(m.Droop)} {N(m.Sink)} {N(m.Sway)} {N(m.SwayPeriod)} {N(m.Pulse)}"
+                    + $"{N(m.Droop)} {N(m.Sink)} {N(m.Sway)} {N(m.SwayPeriod)} {N(m.Pulse)} {m.RestMouth}"
             );
         }
         foreach (var (mood, frames) in rig.Glyph.OrderBy(p => p.Key))

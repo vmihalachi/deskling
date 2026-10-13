@@ -68,6 +68,9 @@
         /// Audio is playing right now (the character's mouth).
         public var isVoicing: Bool { sequencer.isVoicing }
 
+        /// The recorded clip's mouth level (0–3) right now; nil when the mouth keeps its own timer. Read it every frame.
+        public var mouthLevel: Int? { sequencer.mouthLevel }
+
         /// Performs `delivery` as its plan says, with `settings`' voice, rate and volume and the recorded `voice`.
         public func perform(_ delivery: Delivery, settings: CompanionSettings, voice: VoiceID?) {
             generation += 1
@@ -82,6 +85,9 @@
             let parts = texts(of: phrase)
             guard !parts.isEmpty else { return }
             let clips = plan.speak ? self.clips(of: phrase, texts: parts, voice: voice) : nil
+            let mouths = zip(phrase.clipIDs, clips ?? []).map { id, clip in
+                clip == nil ? [] : voice.map { voices.mouth(for: id, voice: $0) } ?? []
+            }
             let notify = plan.notify ? post : nil
             onBubble?(parts[0])
             if parts.count == 1 { notify?(parts[0]) }
@@ -91,7 +97,7 @@
             }
             let speak = { [weak self] in
                 guard let self, self.generation == current else { return }
-                self.say(parts, clips: clips, settings: settings, notify: notify)
+                self.say(parts, clips: clips, mouths: mouths, settings: settings, notify: notify)
             }
             if plan.chime, let blipSound {
                 chime.play(blipSound, volume: settings.speechVolume) { speak() }
@@ -139,7 +145,9 @@
             return clips
         }
 
-        private func say(_ parts: [String], clips: [URL?], settings: CompanionSettings, notify: ((String) -> Void)?) {
+        private func say(
+            _ parts: [String], clips: [URL?], mouths: [[Int]], settings: CompanionSettings, notify: ((String) -> Void)?
+        ) {
             let last = parts.count - 1
             sequencer.onPartStarted = { [weak self] index in
                 guard let self else { return }
@@ -147,8 +155,11 @@
                 if index == last, last > 0 { notify?(parts.joined(separator: "\n")) }
             }
             onSpeechStarted?()
+            let speech = parts.indices.map { i in
+                SpeechPart(text: parts[i], clip: clips[i], mouth: i < mouths.count ? mouths[i] : [], mouthFPS: voices.mouthFPS)
+            }
             sequencer.speak(
-                zip(parts, clips).map { SpeechPart(text: $0, clip: $1) }, beat: PhraseTiming.partBeat,
+                speech, beat: PhraseTiming.partBeat,
                 voiceIdentifier: settings.voiceIdentifier, rate: settings.speechRate, volume: settings.speechVolume)
         }
 

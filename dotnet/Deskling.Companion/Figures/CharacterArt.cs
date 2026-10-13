@@ -62,6 +62,10 @@ public sealed record BubbleAnchor(string Pivot, double Tuck);
 /// <param name="Droop">Degrees, clockwise, around the head's pivot.</param>
 /// <param name="Sway">Sway amplitude in degrees over <paramref name="SwayPeriod"/> seconds.</param>
 /// <param name="Pulse">Pulse amplitude (0.03 = 3 %).</param>
+/// <param name="RestMouth">
+/// The closed mouth between words when a recorded clip's envelope drives the mouth (level 0); null uses the first of
+/// <paramref name="Mouth"/>. The talking mouths are listed from the least open to the most.
+/// </param>
 public sealed record MoodRig(
     string Eyes,
     IReadOnlyList<string> Mouth,
@@ -73,5 +77,6 @@ public sealed record MoodRig(
     double Sink,
     double Sway,
     double SwayPeriod,
-    double Pulse
+    double Pulse,
+    string? RestMouth = null
 );

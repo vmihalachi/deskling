@@ -18,27 +18,39 @@ public sealed class RiggedCharacter(CharacterArt art) : IDrawableCharacter
 
     public double GlyphSize => Art.GlyphSize;
 
-    public Pose Pose(Mood mood, double time)
+    public Pose Pose(Mood mood, double time) => Pose(mood, time, null);
+
+    /// <summary>
+    /// A <paramref name="mouthLevel"/> of 0 shows the rest mouth (closed between words) with no pulse; 1–3 step through
+    /// the talking mouths, least open first (with two mouths: 1 the first, 2 and 3 the second), and scale the pulse by
+    /// level / 3.
+    /// </summary>
+    public Pose Pose(Mood mood, double time, int? mouthLevel)
     {
         var rig = Art.Rig;
         var m = MoodRig(mood);
         var swayPhase = Wrapped(time, m.SwayPeriod) / m.SwayPeriod;
         var angle = m.Droop + m.Sway * Math.Sin(2 * Math.PI * swayPhase);
-        var mouthIndex = m.Mouth.Count > 1 ? (int)Math.Floor(Wrapped(time, m.Mouth.Count / m.MouthRate) * m.MouthRate) : 0;
-        var pulse = m.Pulse == 0 ? 0 : m.Pulse * Math.Abs(Math.Sin(Math.PI * Wrapped(time, 2 / m.MouthRate) * m.MouthRate));
+        string mouth;
+        double pulse;
+        if (mouthLevel is { } given)
+        {
+            var level = Math.Clamp(given, 0, 3);
+            mouth = level == 0 ? m.RestMouth ?? m.Mouth[0] : m.Mouth[VoicedMouthIndex(level, m.Mouth.Count)];
+            pulse = m.Pulse * level / 3;
+        }
+        else
+        {
+            var mouthIndex = m.Mouth.Count > 1 ? (int)Math.Floor(Wrapped(time, m.Mouth.Count / m.MouthRate) * m.MouthRate) : 0;
+            mouth = m.Mouth[mouthIndex % m.Mouth.Count];
+            pulse = m.Pulse == 0 ? 0 : m.Pulse * Math.Abs(Math.Sin(Math.PI * Wrapped(time, 2 / m.MouthRate) * m.MouthRate));
+        }
         var blinking = m.Blink && IsBlinking(time);
-        return new Pose(
-            mood,
-            angle,
-            m.Sink,
-            pulse,
-            blinking ? rig.Blink.ClosedEyes : m.Eyes,
-            m.Mouth[mouthIndex % m.Mouth.Count],
-            m.HeadExtras,
-            m.Overlays,
-            blinking
-        );
+        return new Pose(mood, angle, m.Sink, pulse, blinking ? rig.Blink.ClosedEyes : m.Eyes, mouth, m.HeadExtras, m.Overlays, blinking);
     }
+
+    /// <summary>Levels 1–3 spread over <paramref name="count"/> mouths, the loudest on the most open.</summary>
+    public static int VoicedMouthIndex(int level, int count) => Math.Min(count - 1, ((level - 1) * count + 1) / 3);
 
     public Pose StillPose(Mood mood)
     {

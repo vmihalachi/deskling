@@ -256,6 +256,8 @@ class RigTests(unittest.TestCase):
         del no_bubble["bubble"]
         no_rate = rig()
         no_rate["moods"]["talking"]["mouth"] = ["mouth-smile", "mouth-smile"]
+        rest_gone = rig()
+        rest_gone["moods"]["talking"]["restMouth"] = "mouth-gone"
         cases = {
             "missing part": (rig(always=["pot", "leaves"]), "leaves"),
             "missing pivot": (rig(head={"pivot": "hip", "parts": ["face"]}), "hip"),
@@ -268,12 +270,20 @@ class RigTests(unittest.TestCase):
             "bubble pivot": (rig(bubble={"pivot": "hat", "tuck": 0.1}), "hat"),
             "bubble tuck": (rig(bubble={"pivot": "neck", "tuck": 1.5}), "tuck"),
             "mouths without a rate": (no_rate, "mouthRate"),
+            "rest mouth part": (rest_gone, "mouth-gone"),
         }
         for name, (data, needle) in cases.items():
             with self.subTest(name):
                 with self.assertRaises(character.CompileError) as raised:
                     self.check(data)
                 self.assertIn(needle, str(raised.exception))
+
+    def test_rest_mouth_is_kept_only_when_given(self):
+        data = rig()
+        data["moods"]["talking"]["restMouth"] = "mouth-smile"
+        out = self.check(data)
+        self.assertEqual(out["moods"]["talking"]["restMouth"], "mouth-smile")
+        self.assertNotIn("restMouth", out["moods"]["awake"])
 
     def test_custom_moods(self):
         data = rig()

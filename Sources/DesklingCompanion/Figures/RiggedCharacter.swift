@@ -14,17 +14,33 @@ public struct RiggedCharacter: DrawableCharacter {
     public var viewBox: Size { art.viewBox }
     public var glyphSize: Double { art.glyphSize }
 
-    public func pose(mood: Mood, time: Double) -> Pose {
+    /// A `mouthLevel` of 0 shows the rest mouth (closed between words) with no pulse; 1–3 step through the talking
+    /// mouths, least open first (with two mouths: 1 the first, 2 and 3 the second), and scale the pulse by level / 3.
+    public func pose(mood: Mood, time: Double, mouthLevel: Int?) -> Pose {
         let rig = art.rig
         let m = moodRig(mood)
         let swayPhase = Self.wrapped(time, m.swayPeriod) / m.swayPeriod
         let angle = m.droop + m.sway * sin(2 * .pi * swayPhase)
-        let mouthIndex = m.mouth.count > 1 ? Int(floor(Self.wrapped(time, Double(m.mouth.count) / m.mouthRate) * m.mouthRate)) : 0
-        let pulse = m.pulse == 0 ? 0 : m.pulse * abs(sin(.pi * Self.wrapped(time, 2 / m.mouthRate) * m.mouthRate))
+        let mouth: String
+        let pulse: Double
+        if let mouthLevel {
+            let level = min(max(mouthLevel, 0), 3)
+            mouth = level == 0 ? m.restMouth ?? m.mouth[0] : m.mouth[Self.voicedMouthIndex(level: level, count: m.mouth.count)]
+            pulse = m.pulse * Double(level) / 3
+        } else {
+            let mouthIndex = m.mouth.count > 1 ? Int(floor(Self.wrapped(time, Double(m.mouth.count) / m.mouthRate) * m.mouthRate)) : 0
+            mouth = m.mouth[mouthIndex % m.mouth.count]
+            pulse = m.pulse == 0 ? 0 : m.pulse * abs(sin(.pi * Self.wrapped(time, 2 / m.mouthRate) * m.mouthRate))
+        }
         let blinking = m.blink && isBlinking(at: time)
         return Pose(
             mood: mood, headAngle: angle, sink: m.sink, pulse: pulse, eyes: blinking ? rig.blink.closedEyes : m.eyes,
-            mouth: m.mouth[mouthIndex % m.mouth.count], headExtras: m.headExtras, overlays: m.overlays, blinking: blinking)
+            mouth: mouth, headExtras: m.headExtras, overlays: m.overlays, blinking: blinking)
+    }
+
+    /// Levels 1–3 spread over `count` mouths, the loudest on the most open.
+    public static func voicedMouthIndex(level: Int, count: Int) -> Int {
+        min(count - 1, ((level - 1) * count + 1) / 3)
     }
 
     public func stillPose(mood: Mood) -> Pose {

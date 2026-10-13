@@ -13,6 +13,7 @@
         private(set) var spoken: [(text: String, clip: URL?)] = []
         var isSpeaking = false
         var onFinished: (() -> Void)?
+        var clipTime: TimeInterval?
 
         func speak(_ text: String, clip: URL?, voiceIdentifier: String?, rate: Double, volume: Double) {
             spoken.append((text, clip))
@@ -215,6 +216,19 @@
             speaker.finish()
             runTimer()
             XCTAssertEqual(speaker.spoken.map { $0.clip?.lastPathComponent }, ["joke-1.1.m4a", nil])
+        }
+
+        func testTheMouthFollowsTheRecordedPartsEnvelope() throws {
+            let speaker = HeldSpeaker()
+            let performer = performer(speaker: speaker, voices: try voices(["joke-1.1": setup], fallback: true))
+            performer.perform(delivery("joke-1"), settings: settings, voice: "male")
+            speaker.clipTime = 0.1  // the manifest's "0120" at 12.5 a second: frame 1
+            XCTAssertEqual(performer.mouthLevel, 1)
+            speaker.clipTime = 0.17
+            XCTAssertEqual(performer.mouthLevel, 2)
+            speaker.finish()
+            runTimer()
+            XCTAssertNil(performer.mouthLevel, "the system voice says the punchline: the mouth keeps its timer")
         }
 
         func testPreviewSpeaksWithoutChimeOrBanner() {

@@ -635,6 +635,8 @@ def validate_rig(rig: dict, parts: set, pivots: set, frames: set, filename: str,
         }
         if len(entry["mouth"]) > 1 and entry["mouthRate"] <= 0:
             fail(f"{where} alternates mouths, so it needs a positive mouthRate")
+        if "restMouth" in m:  # the closed mouth between words when a clip's envelope drives it; omitted when absent
+            entry["restMouth"] = part(m["restMouth"], where)
         out["moods"][mood] = entry
     glyph = need("glyph")
     out["glyph"] = {}
@@ -844,7 +846,9 @@ def swift_source(data: dict, module: str | None, moods: list[str] = MOODS) -> st
             f"mouthRate: {_swift_number(m['mouthRate'])}, headExtras: {_swift_strings(m['headExtras'])}, "
             f"overlays: {_swift_strings(m['overlays'])}, blink: {str(m['blink']).lower()}, "
             f"droop: {_swift_number(m['droop'])}, sink: {_swift_number(m['sink'])}, "
-            f"sway: {_swift_number(m['sway'])}, swayPeriod: {_swift_number(m['swayPeriod'])}, pulse: {_swift_number(m['pulse'])}),"
+            f"sway: {_swift_number(m['sway'])}, swayPeriod: {_swift_number(m['swayPeriod'])}, pulse: {_swift_number(m['pulse'])}"
+            + (f", restMouth: {json.dumps(m['restMouth'])}" if "restMouth" in m else "")
+            + "),"
         )
     glyph = ", ".join(f".{mood}: {_swift_strings(rig['glyph'][mood])}" for mood in moods)
     pivots = ", ".join(f'{json.dumps(k)}: {_swift_point(*v)}' for k, v in sorted(data["pivots"].items()))

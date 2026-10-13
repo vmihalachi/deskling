@@ -5,7 +5,8 @@ import Foundation
 /// makes of the art. The pose for every mood at a few moments, the still poses, every glyph frame and, for a few
 /// poses, the resolved `shapes` (when the skin has vector parts) and the placed `layers` (when it has image parts:
 /// name, the six affine numbers and the content kind, never pixels). Numbers are rounded to 6 decimals and each path
-/// is one string, so the file stays small and identical whichever platform's math library made it.
+/// is one string, so the file stays small and identical whichever platform's math library made it. A skin whose talking
+/// rig has a `restMouth` also pins the talking pose at every mouth level (`voiced`); the others omit it.
 public enum CharacterPoseVector {
     public static let directory = "characters"
 
@@ -60,6 +61,13 @@ public enum CharacterPoseVector {
         public var layers: [LayerJSON]
     }
 
+    /// The talking pose with a recorded clip's mouth level (0–3).
+    public struct VoicedCase: Codable, Equatable, Sendable {
+        public var level: Int
+        public var time: Double
+        public var pose: PoseJSON
+    }
+
     public struct GlyphCase: Codable, Equatable, Sendable {
         public var mood: String
         public var frame: Int
@@ -73,10 +81,13 @@ public enum CharacterPoseVector {
         public var shapes: [ShapesCase]?
         public var layers: [LayersCase]?
         public var glyph: [GlyphCase]
+        public var voiced: [VoicedCase]?
     }
 
     /// The moments every mood is posed at: rest, a sway, mid-blink and the second talking mouth.
     public static let times: [Double] = [0, 1, 4.15, 0.2]
+    /// The moment the voiced poses are taken at (a sway, no blink).
+    public static let voicedTime = 0.2
     /// The poses whose shapes or layers are pinned.
     public static let detailCases: [(Mood, Double)] = [
         (.awake, 0), (.talking, 0.2), (.shushed, 0), (.asleep, 1), (.offHours, 0), (.hushedForCall, 4.15),
@@ -145,9 +156,14 @@ public enum CharacterPoseVector {
                 glyph.append(GlyphCase(mood: mood.rawValue, frame: frame, shapes: character.glyph(mood: mood, frame: frame).map(json)))
             }
         }
+        let voiced = (0...3).map { level in
+            VoicedCase(
+                level: level, time: voicedTime, pose: json(character.pose(mood: .talking, time: voicedTime, mouthLevel: level)))
+        }
+        let hasRest = character.art.rig.moods[.talking]?.restMouth != nil
         return Vector(
             skin: character.skin.rawValue, poses: poses, still: still, shapes: hasShapes ? shapes : nil,
-            layers: hasImages ? layers : nil, glyph: glyph)
+            layers: hasImages ? layers : nil, glyph: glyph, voiced: hasRest ? voiced : nil)
     }
 
     /// The art file and the poses file for `character`.
@@ -177,6 +193,7 @@ public enum CharacterPoseVector {
             if committed.shapes != current.shapes { problems.append("\(file): shapes differ") }
             if committed.layers != current.layers { problems.append("\(file): layers differ") }
             if committed.glyph != current.glyph { problems.append("\(file): glyph frames differ") }
+            if committed.voiced != current.voiced { problems.append("\(file): voiced poses differ") }
             return problems
         }
         let art = try CharacterArtJSON.decode(data)

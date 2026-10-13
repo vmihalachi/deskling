@@ -25,6 +25,37 @@ public sealed class RiggedCharacterTests
     }
 
     [Theory]
+    [InlineData(0, "mouth-flat")]
+    [InlineData(1, "mouth-talk-1")]
+    [InlineData(2, "mouth-talk-2")]
+    [InlineData(3, "mouth-talk-2")]
+    public void MouthLevelsFollowTheVoice(int level, string mouth)
+    {
+        // The fixture talks with mouth-talk-1 and mouth-talk-2 and rests on mouth-flat between words.
+        var pose = Character.Pose(Mood.Talking, 0.05, level);
+        Assert.Equal(mouth, pose.Mouth);
+        Assert.Equal(0.03 * level / 3, pose.Pulse, 12);
+    }
+
+    [Fact]
+    public void MouthLevelsClampAndNilKeepsTheTimer()
+    {
+        Assert.Equal("mouth-talk-2", Character.Pose(Mood.Talking, 0.2, 9).Mouth);
+        Assert.Equal("mouth-flat", Character.Pose(Mood.Talking, 0.2, -1).Mouth);
+        Assert.Equal(Character.Pose(Mood.Talking, 0.2), Character.Pose(Mood.Talking, 0.2, null));
+        Assert.Equal(Character.Pose(Mood.Talking, 0.2).HeadAngle, Character.Pose(Mood.Talking, 0.2, 2).HeadAngle);
+    }
+
+    [Fact]
+    public void VoicedMouthIndexSpreadsTheLevels()
+    {
+        Assert.Equal([0, 0, 0], new[] { 1, 2, 3 }.Select(l => RiggedCharacter.VoicedMouthIndex(l, 1)));
+        Assert.Equal([0, 1, 1], new[] { 1, 2, 3 }.Select(l => RiggedCharacter.VoicedMouthIndex(l, 2)));
+        Assert.Equal([0, 1, 2], new[] { 1, 2, 3 }.Select(l => RiggedCharacter.VoicedMouthIndex(l, 3)));
+        Assert.Equal([0, 1, 3], new[] { 1, 2, 3 }.Select(l => RiggedCharacter.VoicedMouthIndex(l, 4)));
+    }
+
+    [Theory]
     [InlineData(Mood.Shushed, 14, 2)]
     [InlineData(Mood.Asleep, 24, 4)]
     [InlineData(Mood.OffHours, 10, 0)]

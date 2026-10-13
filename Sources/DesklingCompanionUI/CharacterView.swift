@@ -7,7 +7,9 @@
     /// comes from the mood and the seconds since the view appeared, and everything holds the still pose when `animated`
     /// is false, Reduce Motion is on or a `ScreenshotCapture` run is going (so shots are the same every run). Waking from Shh springs from the drooped pose back over 0.6 s. Vector parts are
     /// filled and stroked with the `companionPalette`'s paints; image parts are drawn from `artBundle`'s assets
-    /// (`<skin>.<part>`) under the rig's transform. VoiceOver reads `line`, else `accessibilityLabel` (the app's words).
+    /// (`<skin>.<part>`) under the rig's transform. While talking, `mouthLevel` (read every frame; the app model's
+    /// `mouthLevel`) moves the mouth with a recorded clip's loudness; nil keeps the mood's timer. VoiceOver reads
+    /// `line`, else `accessibilityLabel` (the app's words).
     public struct CharacterView: View {
         public let character: RiggedCharacter
         public var mood: Mood
@@ -18,6 +20,8 @@
         public var artBundle: Bundle
         /// What VoiceOver says when there's no line, such as "Sunny, asleep".
         public var accessibilityLabel: String?
+        /// The voice's mouth level (0–3) right now, or nil for the mood's timer.
+        public var mouthLevel: (@MainActor () -> Int?)?
 
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
         @Environment(\.companionPalette) private var palette
@@ -30,7 +34,7 @@
 
         public init(
             character: RiggedCharacter, mood: Mood, talking: Bool, line: String?, animated: Bool = true, artBundle: Bundle = .main,
-            accessibilityLabel: String? = nil
+            accessibilityLabel: String? = nil, mouthLevel: (@MainActor () -> Int?)? = nil
         ) {
             self.character = character
             self.mood = mood
@@ -39,17 +43,19 @@
             self.animated = animated
             self.artBundle = artBundle
             self.accessibilityLabel = accessibilityLabel
+            self.mouthLevel = mouthLevel
         }
 
         private var paused: Bool { reduceMotion || !animated || ScreenshotCapture.isEnabled }
 
         public var body: some View {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: paused)) { timeline in
+                let level = talking && !paused ? mouthLevel?() : nil
                 Canvas { context, size in
                     var pose =
                         paused
                         ? character.stillPose(mood: shownMood)
-                        : character.pose(mood: shownMood, time: timeline.date.timeIntervalSince(start))
+                        : character.pose(mood: shownMood, time: timeline.date.timeIntervalSince(start), mouthLevel: level)
                     if let wokeAt, !paused, timeline.date.timeIntervalSince(wokeAt) < Self.wakeDuration {
                         let drooped = character.stillPose(mood: .shushed)
                         pose = Self.pose(waking: drooped, to: pose, elapsed: timeline.date.timeIntervalSince(wokeAt))

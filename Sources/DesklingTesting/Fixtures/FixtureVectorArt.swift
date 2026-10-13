@@ -32,7 +32,7 @@ extension CharacterArt {
             blink: Blink(duration: 0.12, intervals: [4.2, 5.6, 3.8], closedEyes: "eyes-closed"),
             moods: [
                 .awake: MoodRig(eyes: "eyes-open", mouth: ["mouth-smile"], mouthRate: 0, headExtras: ["cheeks"], overlays: [], blink: true, droop: 0, sink: 0, sway: 4, swayPeriod: 4, pulse: 0),
-                .talking: MoodRig(eyes: "eyes-wide", mouth: ["mouth-talk-1", "mouth-talk-2"], mouthRate: 6, headExtras: ["cheeks"], overlays: [], blink: true, droop: 0, sink: 0, sway: 4, swayPeriod: 4, pulse: 0.03),
+                .talking: MoodRig(eyes: "eyes-wide", mouth: ["mouth-talk-1", "mouth-talk-2"], mouthRate: 6, headExtras: ["cheeks"], overlays: [], blink: true, droop: 0, sink: 0, sway: 4, swayPeriod: 4, pulse: 0.03, restMouth: "mouth-flat"),
                 .shushed: MoodRig(eyes: "eyes-open", mouth: ["mouth-flat"], mouthRate: 0, headExtras: ["cheeks"], overlays: [], blink: false, droop: 14, sink: 2, sway: 0, swayPeriod: 4, pulse: 0),
                 .hushedForCall: MoodRig(eyes: "eyes-open", mouth: ["mouth-flat"], mouthRate: 0, headExtras: [], overlays: [], blink: true, droop: 0, sink: 0, sway: 0, swayPeriod: 4, pulse: 0),
                 .hushedFullScreen: MoodRig(eyes: "eyes-open", mouth: ["mouth-flat"], mouthRate: 0, headExtras: [], overlays: [], blink: true, droop: 0, sink: 0, sway: 0, swayPeriod: 4, pulse: 0),

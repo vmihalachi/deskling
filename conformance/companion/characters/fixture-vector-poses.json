@@ -1130,5 +1130,79 @@
         "sink" : 0
       }
     }
+  ],
+  "voiced" : [
+    {
+      "level" : 0,
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-flat",
+        "overlays" : [
+
+        ],
+        "pulse" : 0,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "level" : 1,
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-1",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.01,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "level" : 2,
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.02,
+        "sink" : 0
+      },
+      "time" : 0.2
+    },
+    {
+      "level" : 3,
+      "pose" : {
+        "blinking" : false,
+        "eyes" : "eyes-wide",
+        "headAngle" : 1.236068,
+        "headExtras" : [
+          "cheeks"
+        ],
+        "mouth" : "mouth-talk-2",
+        "overlays" : [
+
+        ],
+        "pulse" : 0.03,
+        "sink" : 0
+      },
+      "time" : 0.2
+    }
   ]
 }

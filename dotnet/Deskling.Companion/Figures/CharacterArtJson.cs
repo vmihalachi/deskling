@@ -131,7 +131,8 @@ public sealed partial record CharacterArt
             Get(e, "sink").GetDouble(),
             Get(e, "sway").GetDouble(),
             Get(e, "swayPeriod").GetDouble(),
-            Get(e, "pulse").GetDouble()
+            Get(e, "pulse").GetDouble(),
+            e.TryGetProperty("restMouth", out var rest) && rest.ValueKind != JsonValueKind.Null ? rest.GetString() : null
         );
 
     private static RigGroup Group(JsonElement e) =>
@@ -188,7 +189,7 @@ public sealed partial record CharacterArt
                 throw new InvalidDataException($"{label} needs at least one mouth");
             if (m.Mouth.Count > 1 && !(m.MouthRate > 0))
                 throw new InvalidDataException($"{label} alternates mouths without a mouthRate");
-            foreach (var name in new[] { m.Eyes }.Concat(m.Mouth).Concat(m.HeadExtras).Concat(m.Overlays))
+            foreach (var name in new[] { m.Eyes }.Concat(m.Mouth).Concat(m.HeadExtras).Concat(m.Overlays).Concat(m.RestMouth is { } rest ? [rest] : []))
                 Part(name, label);
             IReadOnlyList<string> frames = rig.Glyph.TryGetValue(mood, out var list) ? list : [];
             if (frames.Count == 0)

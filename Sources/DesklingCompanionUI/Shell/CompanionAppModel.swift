@@ -59,6 +59,9 @@
         public private(set) var isSpeaking = false
         /// Audio is playing: the mouth moves. False in the beat between a setup and its punchline.
         public private(set) var isVoicing = false
+        /// The recorded clip's mouth level (0–3) right now, or nil for the mood's timer: pass `{ model.mouthLevel }` to
+        /// `CharacterView`, which reads it every frame (not observed).
+        public var mouthLevel: Int? { performer.mouthLevel }
         public private(set) var isShushed = false
         public private(set) var notificationPermission: NotificationPermission = .notDetermined
         /// The global shortcut couldn't be registered (another app owns it).

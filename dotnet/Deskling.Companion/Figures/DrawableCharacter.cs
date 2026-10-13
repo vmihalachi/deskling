@@ -17,7 +17,14 @@ public interface IDrawableCharacter
 
     double GlyphSize { get; }
 
-    Pose Pose(Mood mood, double time);
+    /// <summary>The pose at <paramref name="time"/>, the mouth on the mood's timer.</summary>
+    Pose Pose(Mood mood, double time) => Pose(mood, time, null);
+
+    /// <summary>
+    /// The pose at <paramref name="time"/>; with a <paramref name="mouthLevel"/> (0–3, a recorded clip's envelope right
+    /// now) the mouth and the pulse follow the voice's loudness instead of the mood's timer.
+    /// </summary>
+    Pose Pose(Mood mood, double time, int? mouthLevel);
 
     /// <summary>The pose shown when nothing moves: no blink, the first mouth.</summary>
     Pose StillPose(Mood mood);

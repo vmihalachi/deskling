@@ -123,10 +123,13 @@ public struct MoodRig: Equatable, Sendable {
     public let swayPeriod: Double
     /// Pulse amplitude (0.03 = 3 %).
     public let pulse: Double
+    /// The closed mouth between words when a recorded clip's envelope drives the mouth (level 0); nil uses the first
+    /// of `mouth`. The talking mouths are listed from the least open to the most.
+    public let restMouth: String?
 
     public init(
         eyes: String, mouth: [String], mouthRate: Double, headExtras: [String], overlays: [String], blink: Bool,
-        droop: Double, sink: Double, sway: Double, swayPeriod: Double, pulse: Double
+        droop: Double, sink: Double, sway: Double, swayPeriod: Double, pulse: Double, restMouth: String? = nil
     ) {
         self.eyes = eyes
         self.mouth = mouth
@@ -139,5 +142,6 @@ public struct MoodRig: Equatable, Sendable {
         self.sway = sway
         self.swayPeriod = swayPeriod
         self.pulse = pulse
+        self.restMouth = restMouth
     }
 }

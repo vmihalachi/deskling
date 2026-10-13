@@ -8,7 +8,7 @@
   "blink": {"duration": 0.12, "intervals": [4.2, 5.6, 3.8], "closedEyes": "eyes-closed"},
   "moods": {
     "awake": {"eyes": "eyes-open", "mouth": ["mouth-smile"], "cheeks": true, "blink": true, "sway": 4},
-    "talking": {"eyes": "eyes-wide", "mouth": ["mouth-talk-1", "mouth-talk-2"], "mouthRate": 6, "pulse": 0.03, "cheeks": true, "blink": true, "sway": 4},
+    "talking": {"eyes": "eyes-wide", "mouth": ["mouth-talk-1", "mouth-talk-2"], "mouthRate": 6, "restMouth": "mouth-flat", "pulse": 0.03, "cheeks": true, "blink": true, "sway": 4},
     "shushed": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "headExtras": ["cheeks"], "droop": 14, "sink": 2},
     "hushedForCall": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "blink": true},
     "hushedFullScreen": {"eyes": "eyes-open", "mouth": ["mouth-flat"], "blink": true},

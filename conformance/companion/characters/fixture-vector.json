@@ -332,6 +332,7 @@
         "mouthRate": 6,
         "overlays": [],
         "pulse": 0.03,
+        "restMouth": "mouth-flat",
         "sink": 0,
         "sway": 4,
         "swayPeriod": 4

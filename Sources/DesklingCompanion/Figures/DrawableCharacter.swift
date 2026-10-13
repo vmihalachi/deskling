@@ -8,7 +8,9 @@ public protocol DrawableCharacter: Sendable {
     var skin: SkinID { get }
     var viewBox: Size { get }
     var glyphSize: Double { get }
-    func pose(mood: Mood, time: Double) -> Pose
+    /// The pose at `time`; with a `mouthLevel` (0–3, a recorded clip's envelope right now) the mouth and the pulse
+    /// follow the voice's loudness instead of the mood's timer.
+    func pose(mood: Mood, time: Double, mouthLevel: Int?) -> Pose
     /// The pose shown when nothing moves: no blink, the first mouth.
     func stillPose(mood: Mood) -> Pose
     /// The parts to draw, in order: `always` parts under the pulse, head or stem transform (or none), then the head
@@ -19,6 +21,13 @@ public protocol DrawableCharacter: Sendable {
     /// Glyph frames: the mood's frames cycle (two while talking).
     func glyph(mood: Mood, frame: Int) -> [PathShape]
     func glyphFrameCount(mood: Mood) -> Int
+}
+
+extension DrawableCharacter {
+    /// The pose at `time`, the mouth on the mood's timer.
+    public func pose(mood: Mood, time: Double) -> Pose {
+        pose(mood: mood, time: time, mouthLevel: nil)
+    }
 }
 
 /// One part placed for drawing: its content in view-box units and the transform the rig gives it.

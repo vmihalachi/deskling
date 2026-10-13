@@ -10,6 +10,8 @@
         private(set) var stops = 0
         var isSpeaking = false
         var onFinished: (() -> Void)?
+        /// Where the playing clip is; nil plays like the system voice.
+        var clipTime: TimeInterval?
 
         func speak(_ text: String, clip: URL?, voiceIdentifier: String?, rate: Double, volume: Double) {
             spoken.append(text)
@@ -95,6 +97,28 @@
             XCTAssertEqual(voicing, [true, false, true, false, true, false], "a stop ends the audio")
             sequencer.stop()
             XCTAssertEqual(voicing.count, 6, "reported once")
+        }
+
+        func testMouthLevelFollowsTheClipsEnvelope() {
+            let parts = [
+                SpeechPart(text: "Setup", mouth: [0, 2, 3, 1], mouthFPS: 10),
+                SpeechPart(text: "Punchline"),
+            ]
+            XCTAssertNil(sequencer.mouthLevel, "nothing playing")
+            sequencer.speak(parts, beat: 1.2, voiceIdentifier: nil, rate: 0.5, volume: 1)
+            XCTAssertNil(sequencer.mouthLevel, "no clip time: the mouth keeps its timer")
+            speaker.clipTime = 0
+            XCTAssertEqual(sequencer.mouthLevel, 0)
+            speaker.clipTime = 0.15
+            XCTAssertEqual(sequencer.mouthLevel, 2)
+            speaker.clipTime = 0.29
+            XCTAssertEqual(sequencer.mouthLevel, 3)
+            speaker.clipTime = 0.5
+            XCTAssertEqual(sequencer.mouthLevel, 0, "past the envelope the mouth rests")
+            speaker.finish()
+            XCTAssertNil(sequencer.mouthLevel, "the beat is silent")
+            runBeat()
+            XCTAssertNil(sequencer.mouthLevel, "the punchline has no envelope")
         }
 
         func testStopCancelsThePendingPart() {

@@ -11,6 +11,12 @@
         /// Plays `clip` (a recorded voice) when given, else says `text` with the system voice.
         func speak(_ text: String, clip: URL?, voiceIdentifier: String?, rate: Double, volume: Double)
         func stop()
+        /// How far into the playing clip it is, in the clip's own seconds; nil when no clip plays (the system voice).
+        var clipTime: TimeInterval? { get }
+    }
+
+    extension Speaking {
+        public var clipTime: TimeInterval? { nil }
     }
 
     /// A character's voice: a recorded clip (`VoiceLibrary`) when there is one, else the system speech synthesizer with
@@ -27,6 +33,7 @@
         public let language: String
         public private(set) var isSpeaking = false
         public var onFinished: (() -> Void)?
+        public var clipTime: TimeInterval? { isSpeaking ? player?.currentTime : nil }
 
         public init(language: String = Speaker.appLanguage()) {
             self.language = language

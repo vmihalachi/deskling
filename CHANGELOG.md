@@ -6,6 +6,23 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.6 - 2026-10-13
+
+- **Companion**: the mouth can follow a recorded voice's loudness. `RiggedCharacter.pose(mood:time:mouthLevel:)` takes
+  a level 0–3 (the clip's envelope right now): 0 shows the mood's new optional `restMouth` (the closed mouth between
+  words; the first mouth without one) with no pulse, 1–3 step through the talking mouths, least open first, and scale
+  the pulse by level / 3. `pose(mood:time:)` (nil) keeps the timer, so every existing pose is unchanged. The art JSON
+  writes `restMouth` only when set, and a skin whose talking rig has one also pins `voiced[]` in its poses vector
+  (levels 0–3 at 0.2 s); C# mirrors both (`Pose(mood, time, mouthLevel)`, `CharacterReplay`). `tools/character.py`
+  reads `restMouth` from a mood in the rig and checks the part exists.
+- **Shell**: `Speaking.clipTime` (default nil; `Speaker` reports the playing clip's position), `SpeechPart.mouth` and
+  `mouthFPS` (the clip's envelope from the voice manifest), and `SpeechSequencer.mouthLevel`, the envelope's level at
+  the clip's position (nil without an envelope, so the system voice keeps the timer; 0 past its end).
+- **Companion UI**: `DeliveryPerformer` gives each recorded part its envelope (`VoiceLibrary.mouth(for:voice:)`, which
+  nothing read before) and exposes `mouthLevel`, as does `CompanionAppModel`; `CharacterView(…, mouthLevel:)` reads
+  it every frame while talking, so pass `{ model.mouthLevel }` where the view gets `talking: model.isVoicing`. Reduce
+  Motion and screenshot runs still hold the still pose.
+
 ## 0.7.5 - 2026-10-13
 
 - **Shell**: `WindowManager` leaves the activation policy alone in a process hosting unit tests

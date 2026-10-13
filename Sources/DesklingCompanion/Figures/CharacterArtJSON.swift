@@ -85,12 +85,14 @@ public enum CharacterArtJSON {
         }
         var moods: [String: Node] = [:]
         for (mood, m) in rig.moods {
-            moods[mood.rawValue] = .object([
+            var fields: [String: Node] = [
                 "eyes": .string(m.eyes), "mouth": strings(m.mouth), "mouthRate": .number(m.mouthRate),
                 "headExtras": strings(m.headExtras), "overlays": strings(m.overlays), "blink": .bool(m.blink),
                 "droop": .number(m.droop), "sink": .number(m.sink), "sway": .number(m.sway),
                 "swayPeriod": .number(m.swayPeriod), "pulse": .number(m.pulse),
-            ])
+            ]
+            if let rest = m.restMouth { fields["restMouth"] = .string(rest) }  // omitted at its default: older art stays byte-identical
+            moods[mood.rawValue] = .object(fields)
         }
         var glyph: [String: Node] = [:]
         for (mood, frames) in rig.glyph { glyph[mood.rawValue] = strings(frames) }
@@ -336,11 +338,12 @@ public enum CharacterArtJSON {
         var sway: Double
         var swayPeriod: Double
         var pulse: Double
+        var restMouth: String?
 
         var moodRig: MoodRig {
             MoodRig(
                 eyes: eyes, mouth: mouth, mouthRate: mouthRate, headExtras: headExtras, overlays: overlays, blink: blink,
-                droop: droop, sink: sink, sway: sway, swayPeriod: swayPeriod, pulse: pulse)
+                droop: droop, sink: sink, sway: sway, swayPeriod: swayPeriod, pulse: pulse, restMouth: restMouth)
         }
     }
 
@@ -394,7 +397,7 @@ public enum CharacterArtJSON {
             let label = "mood '\(mood.rawValue)'"
             guard !m.mouth.isEmpty else { throw Failure("\(label) needs at least one mouth") }
             guard m.mouth.count == 1 || m.mouthRate > 0 else { throw Failure("\(label) alternates mouths without a mouthRate") }
-            for name in [m.eyes] + m.mouth + m.headExtras + m.overlays { try part(name, label) }
+            for name in [m.eyes] + m.mouth + m.headExtras + m.overlays + (m.restMouth.map { [$0] } ?? []) { try part(name, label) }
             let frames = rig.glyph[mood] ?? []
             guard !frames.isEmpty else { throw Failure("\(label) has no glyph frames") }
             for frame in frames where art.glyphFrames[frame] == nil {

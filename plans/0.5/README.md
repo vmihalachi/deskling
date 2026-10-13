@@ -156,7 +156,7 @@ public struct BubbleAnchor: Equatable, Sendable { pivot: String; tuck: Double } 
 public struct CharacterArt: Sendable { skin: SkinID; viewBox; pivots: [String: Point]; parts: [String: PartContent]; rig: Rig; glyphSize; glyphFrames: [String: [PathShape]]
     public var bubblePoint: Point /* pivots[rig.bubble.pivot] */ }
 public struct Rig: Sendable { period, stillTime, always: [String], head, stem, pulse: RigGroup, blink: Blink, moods: [Mood: MoodRig], glyph: [Mood: [String]], bubble: BubbleAnchor }
-public struct MoodRig: Sendable { eyes, mouth: [String], mouthRate, headExtras: [String] /* ride on the head, e.g. ["cheeks"] */, overlays: [String] /* drawn last, untransformed, e.g. ["zz"] */, blink, droop, sink, sway, swayPeriod, pulse }
+public struct MoodRig: Sendable { eyes, mouth: [String], mouthRate, headExtras: [String] /* ride on the head, e.g. ["cheeks"] */, overlays: [String] /* drawn last, untransformed, e.g. ["zz"] */, blink, droop, sink, sway, swayPeriod, pulse, restMouth: String? /* 0.7.6: closed between words when a clip's envelope drives the mouth */ }
 public struct Pose: Equatable, Sendable { mood, headAngle, sink, pulse, eyes, mouth, headExtras: [String], overlays: [String], blinking; func blended(to:progress:) }
 public struct PlacedPart: Equatable, Sendable { name: String; transform: Transform; content: PartContent }
 public protocol DrawableCharacter: Sendable {

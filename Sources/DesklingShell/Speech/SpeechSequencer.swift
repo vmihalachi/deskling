@@ -1,14 +1,19 @@
 #if os(macOS)
     import Foundation
 
-    /// One beat of a spoken joke: its text (shown and, without a clip, synthesized) and its recorded clip, if any.
+    /// One beat of a spoken joke: its text (shown and, without a clip, synthesized), its recorded clip, if any, and the
+    /// clip's mouth envelope (`VoiceLibrary.mouth(for:voice:)`: a level 0–3 per 1/`mouthFPS` s; empty for none).
     public struct SpeechPart: Equatable, Sendable {
         public var text: String
         public var clip: URL?
+        public var mouth: [Int]
+        public var mouthFPS: Double
 
-        public init(text: String, clip: URL? = nil) {
+        public init(text: String, clip: URL? = nil, mouth: [Int] = [], mouthFPS: Double = 12.5) {
             self.text = text
             self.clip = clip
+            self.mouth = mouth
+            self.mouthFPS = mouthFPS
         }
     }
 
@@ -59,6 +64,16 @@
 
         /// Audio is playing right now.
         public var isVoicing: Bool { isActive && speaker.isSpeaking }
+
+        /// The playing clip's mouth level (0–3) right now, from its envelope; nil without one (the system voice, or a
+        /// manifest without an envelope), so the mouth keeps its own timer. Past the envelope's end the mouth rests (0).
+        public var mouthLevel: Int? {
+            guard isVoicing, index < parts.count else { return nil }
+            let part = parts[index]
+            guard !part.mouth.isEmpty, part.mouthFPS > 0, let time = speaker.clipTime else { return nil }
+            let frame = max(0, Int(time * part.mouthFPS))
+            return frame < part.mouth.count ? part.mouth[frame] : 0
+        }
 
         /// Speaks `parts` in order, waiting `beat` seconds after each one before the next. Stops anything still running
         /// first. An empty list finishes at once.

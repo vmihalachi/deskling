@@ -20,6 +20,29 @@ final class RiggedCharacterTests: XCTestCase {
         XCTAssertEqual(character.stillPose(mood: .hushedForCall).mouth, "mouth-flat")
     }
 
+    func testMouthLevelsFollowTheVoice() {
+        // The fixture talks with mouth-talk-1 and mouth-talk-2 and rests on mouth-flat between words.
+        let expected = [(0, "mouth-flat"), (1, "mouth-talk-1"), (2, "mouth-talk-2"), (3, "mouth-talk-2")]
+        for (level, mouth) in expected {
+            let pose = character.pose(mood: .talking, time: 0.05, mouthLevel: level)
+            XCTAssertEqual(pose.mouth, mouth, "level \(level)")
+            XCTAssertEqual(pose.pulse, 0.03 * Double(level) / 3, accuracy: 1e-12, "level \(level)")
+        }
+        XCTAssertEqual(character.pose(mood: .talking, time: 0.2, mouthLevel: 9).mouth, "mouth-talk-2", "clamped")
+        XCTAssertEqual(character.pose(mood: .talking, time: 0.2, mouthLevel: -1).mouth, "mouth-flat", "clamped")
+        let timed = character.pose(mood: .talking, time: 0.2)
+        XCTAssertEqual(character.pose(mood: .talking, time: 0.2, mouthLevel: nil), timed, "nil keeps the timer")
+        let level = character.pose(mood: .talking, time: 0.2, mouthLevel: 2)
+        XCTAssertEqual(level.headAngle, timed.headAngle, "the sway is the mood's either way")
+    }
+
+    func testVoicedMouthIndexSpreadsTheLevels() {
+        XCTAssertEqual((1...3).map { RiggedCharacter.voicedMouthIndex(level: $0, count: 1) }, [0, 0, 0])
+        XCTAssertEqual((1...3).map { RiggedCharacter.voicedMouthIndex(level: $0, count: 2) }, [0, 1, 1])
+        XCTAssertEqual((1...3).map { RiggedCharacter.voicedMouthIndex(level: $0, count: 3) }, [0, 1, 2])
+        XCTAssertEqual((1...3).map { RiggedCharacter.voicedMouthIndex(level: $0, count: 4) }, [0, 1, 3])
+    }
+
     func testDroopAndSink() {
         let expected: [(Mood, Double, Double)] = [(.shushed, 14, 2), (.asleep, 24, 4), (.offHours, 10, 0), (.awake, 0, 0)]
         for (mood, angle, sink) in expected {
