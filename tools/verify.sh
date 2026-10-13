@@ -17,6 +17,8 @@
 #   strings (app Swift, .xcstrings, landing i18n)   l10n.py check, phrases.py check, .resw export is current
 #   voices, voice config, catalog, phrases.json     voice.py check, the voices pointer is pushed
 #   windows/**/*.cs                        dotnet format whitespace, dotnet test (windows.coreTests)
+#   windows.app, windows.appTests          check-winui.py; dotnet test (windows.appTests, any OS); on Windows, the app builds
+#   windows.assets (the icon, Assets/)     windows/assets.py --check (the MSIX images match the icon)
 #   landing/, phrases/settings vectors     <landing.tool> check and build
 #   store.dir/*.md                         store/check.py (the listing's field limits)
 #   always                                 the Deskling pins agree (submodule tag = deskling.tag = SwiftPM = XcodeGen = NuGet)
@@ -76,6 +78,7 @@ touched() {
 }
 
 darwin=0; [ "$(uname)" = Darwin ] && darwin=1
+windows=0; case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) windows=1 ;; esac
 has() { command -v "$1" >/dev/null 2>&1; }
 # The landing tool from PATH, or the one its node_modules brings (CI, cloud containers: setup-linux.sh).
 landing_tool="$LANDING_TOOL"
@@ -166,6 +169,18 @@ swift_format() {
   xcrun swift-format lint --strict --configuration "$config" $files
 }
 
+# The WinUI traps (untyped XAML casts under Native AOT, XAML compiler crashes) in the changed app files, or all of them.
+winui_check() {
+  if [ "$all" = 1 ]; then
+    python3 "$TOOLS/windows/check-winui.py"
+    return
+  fi
+  local files=()
+  while read -r f; do [ -f "$f" ] && files+=("$f"); done < <(printf '%s\n' "$changed" | grep -E "$RE_WINDOWS_APP" | grep -E '\.(cs|xaml)$')
+  [ ${#files[@]} -gt 0 ] || return 0
+  python3 "$TOOLS/windows/check-winui.py" "${files[@]}"
+}
+
 csharp_format() {
   local files=()
   while read -r f; do [ -f "$f" ] && files+=("${f#"$WINDOWS_DIR"/}"); done < <(printf '%s\n' "$changed" | grep -E "$RE_CSHARP")
@@ -215,6 +230,10 @@ if touched "$RE_CSHARP"; then
   else skip "dotnet format: needs the .NET SDK"; fi
 fi
 
+if touched "$RE_WINDOWS_APP"; then
+  check "check-winui.py" winui_check
+fi
+
 if touched "$RE_STORE"; then
   if [ -f "$STORE_LISTING" ]; then check "store listing (store/check.py)" python3 "$TOOLS/store/check.py"
   else skip "store listing: no $STORE_LISTING yet"; fi
@@ -247,8 +266,19 @@ if [ "$fast" = 0 ]; then
       check "dotnet test ($WINDOWS_CORE_TESTS)" dotnet test "$WINDOWS_DIR/$WINDOWS_CORE_TESTS/$WINDOWS_CORE_TESTS.csproj" -v q --nologo
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
+  if touched "$RE_WINDOWS_APP_TESTS" && [ -n "$WINDOWS_APP_TESTS" ]; then
+    if has dotnet; then
+      check "dotnet test ($WINDOWS_APP_TESTS)" dotnet test "$WINDOWS_DIR/$WINDOWS_APP_TESTS/$WINDOWS_APP_TESTS.csproj" -v q --nologo
+    else skip "dotnet test ($WINDOWS_APP_TESTS): needs the .NET SDK"; fi
+  fi
   if touched "$RE_WINDOWS_APP"; then
-    skip "WinUI app: builds only on Windows; push the branch and run the Windows workflow"
+    if [ "$windows" = 1 ] && has dotnet; then
+      # Debug, unpackaged, for this machine's architecture (companion.targets picks it when no platform is named).
+      check "WinUI app builds ($WINDOWS_APP)" dotnet build "$WINDOWS_DIR/$WINDOWS_APP/$WINDOWS_APP.csproj" -v q --nologo
+    else skip "WinUI app: builds only on Windows; push the branch and run the Windows workflow"; fi
+  fi
+  if touched "$RE_WINDOWS_ASSETS"; then
+    check "Windows images match the icon (windows/assets.py)" python3 "$TOOLS/windows/assets.py" --check
   fi
   if touched "$RE_LANDING" && [ -n "$LANDING_DIR" ] && [ -d "$ROOT/$LANDING_DIR" ] && [ -n "$landing_tool" ] &&
     { has "$landing_tool" || [ -x "$landing_tool" ]; }; then

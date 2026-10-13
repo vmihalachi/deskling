@@ -156,11 +156,18 @@ public static partial class ScreenshotCapture
         Desktop.DesktopNative.DwmSetWindowAttribute(hwnd, Desktop.DesktopNative.DWMWA_WINDOW_CORNER_PREFERENCE, Desktop.DesktopNative.DWMWCP_DONOTROUND, sizeof(uint));
         Desktop.DesktopNative.DwmSetWindowAttribute(hwnd, Desktop.DesktopNative.DWMWA_BORDER_COLOR, Desktop.DesktopNative.DWMWA_COLOR_NONE, sizeof(uint));
         var scale = Scale(window);
-        root.Measure(new XamlSize(double.PositiveInfinity, double.PositiveInfinity));
-        var fit = root.DesiredSize;
-        Shell.NativeMethods.SetClientSize(window.AppWindow, new SizeInt32((int)Math.Ceiling(fit.Width * scale), (int)Math.Ceiling(fit.Height * scale)));
+        void Fit()
+        {
+            root.Measure(new XamlSize(double.PositiveInfinity, double.PositiveInfinity));
+            var fit = root.DesiredSize;
+            Shell.NativeMethods.SetClientSize(window.AppWindow, new SizeInt32((int)Math.Ceiling(fit.Width * scale), (int)Math.Ceiling(fit.Height * scale)));
+        }
+        Fit();
         window.Activate();
         await Task.Delay(Settle);
+        // What x:Bind sets arrives once the view has loaded, so it can be taller now than when it was first measured.
+        Fit();
+        await Task.Delay(TimeSpan.FromSeconds(0.3));
         Capture(window, path);
         window.Close();
     }

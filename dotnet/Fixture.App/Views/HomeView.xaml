@@ -7,7 +7,15 @@
     <ScrollViewer>
         <StackPanel Margin="{x:Bind dv:WindowInset.Content}" Spacing="16">
             <StackPanel Spacing="8">
-                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Deskling fixture" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Deskling fixture" />
+                    <!-- The tray glyph in the window, talking while a line is heard (the apps' Home pictures the tray with it). -->
+                    <dv:GlyphWave
+                        VerticalAlignment="Center"
+                        Active="{x:Bind Model.IsVoicing, Mode=OneWay}"
+                        Character="{x:Bind Model.GlyphCharacter}"
+                        GlyphSize="24" />
+                </StackPanel>
                 <dv:StatusPill Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"

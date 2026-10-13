@@ -141,6 +141,7 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         signals.OnCallStarted = StopSpeaking;
         signals.OnBusyPoll = BusyPolled;
         notifier.OnAction = HandleNotificationAction;
+        purchases.Changed += () => OnPropertyChanged(nameof(IsSupporter));
         RefreshVoice();
         RefreshStatus();
         settings.PropertyChanged += SettingChanged;
@@ -219,7 +220,15 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
     public BubbleCountdown? DesktopCountdown { get => desktopCountdown; private set => Set(ref desktopCountdown, value); }
 
     /// <summary>The character is off the desktop for a while, until then.</summary>
-    public DateTimeOffset? DesktopHiddenUntil { get => desktopHiddenUntil; private set => Set(ref desktopHiddenUntil, value); }
+    public DateTimeOffset? DesktopHiddenUntil
+    {
+        get => desktopHiddenUntil;
+        private set
+        {
+            if (Set(ref desktopHiddenUntil, value))
+                OnPropertyChanged(nameof(DesktopBackLine));
+        }
+    }
 
     // For the app (virtual, abstract)
 
@@ -638,6 +647,8 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
                 RegisterHotKey();
                 break;
             case { } name when DesktopSettings.Contains(name):
+                if (name == nameof(CompanionSettings.ShowOnDesktop))
+                    OnPropertyChanged(nameof(DesktopBackLine));
                 RefreshStatus();
                 break;
         }

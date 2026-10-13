@@ -1,6 +1,7 @@
 using Deskling.Companion.Rules;
 using Deskling.Windows.Companion.Support;
 using Deskling.Windows.Companion.Views;
+using Deskling.Windows.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -50,5 +51,6 @@ public static class FixtureSupport
             () => model.Windows.Close(FixtureWindow.Support)
         );
 
-    private static Style Style(string key) => (Style)Application.Current.Resources[key];
+    /// <summary>Through XamlCast: under Native AOT an untyped resource can arrive as a plain DependencyObject.</summary>
+    private static Style Style(string key) => XamlCast.As<Style>(Application.Current.Resources[key])!;
 }

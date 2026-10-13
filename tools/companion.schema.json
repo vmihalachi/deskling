@@ -52,7 +52,20 @@
         "coreTests": { "type": "string" },
         "app": { "type": "string" },
         "sln": { "type": "string" },
-        "strings": { "type": "string", "description": "Where l10n.py export-windows writes <lang>/Resources.resw." }
+        "strings": { "type": "string", "description": "Where l10n.py export-windows writes <lang>/Resources.resw." },
+        "appTests": { "type": "string", "description": "The WinUI app's model tests (net10.0, any OS), under dir; verify.sh runs them when the app or they change." },
+        "assets": {
+          "type": "object",
+          "required": ["source", "out"],
+          "additionalProperties": false,
+          "description": "windows/assets.py: the MSIX logos and AppIcon.ico from the app icon.",
+          "properties": {
+            "source": { "type": "string", "description": "A square PNG: the Mac's 1024-pixel app icon." },
+            "devSource": { "type": "string", "description": "The DEV-banded icon, for the Debug build's Dev/AppIcon.ico." },
+            "out": { "type": "string", "description": "The app's Assets folder." }
+          }
+        },
+        "screenshots": { "type": "string", "description": "Where windows/screenshots.ps1 copies the shots, e.g. screenshots/windows." }
       }
     },
     "languages": {

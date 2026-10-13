@@ -1,3 +1,4 @@
+using Deskling.Windows.Companion.Views;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FixtureApp.Views;
@@ -10,6 +11,8 @@ public sealed partial class PanelView : UserControl
         Model = model;
         InitializeComponent();
         Figure.MouthLevel = () => Model.Performer.MouthLevel;
+        // Press and hold the character: Shh for an hour, as the apps' panels do.
+        HoldGesture.Attach(Figure, Model.ShushForAnHour);
     }
 
     public FixtureModel Model { get; }

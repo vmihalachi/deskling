@@ -7,21 +7,10 @@
     <!-- The name notifications show for an unpackaged app. -->
     <AssemblyTitle>Deskling fixture</AssemblyTitle>
     <IsPackable>false</IsPackable>
-    <Platforms>x64;ARM64</Platforms>
-    <!-- The machine's own architecture when no platform is named (dotnet build Deskling.sln). -->
-    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
-    <UseWinUI>true</UseWinUI>
-    <!-- Unpackaged, as the template's unpackaged app: no MSIX, the Windows App Runtime found at start. -->
+    <!-- Unpackaged in every configuration (the apps' Release is an MSIX): the Windows App Runtime found at start. -->
     <WindowsPackageType>None</WindowsPackageType>
-    <EnableMsixTooling>true</EnableMsixTooling>
-    <!-- Main is Program's: CompanionApp.Start. -->
-    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- As the apps: Native AOT on publish, and its analyzers on every build. -->
-    <PublishAot>true</PublishAot>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
@@ -41,4 +30,7 @@
       Link="Assets\Characters\fixture-raster.$([System.String]::Copy('%(Filename)').Replace('@2x', '.scale-200').Replace('@3x', '.scale-300'))%(Extension)"
       CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <!-- What every companion's WinUI project has, as the apps take it from their deskling/ submodule: x64 and ARM64,
+       Main left to CompanionApp.Start, Native AOT on publish (tools/windows/companion.targets). -->
+  <Import Project="../../tools/windows/companion.targets" />
 </Project>

@@ -45,6 +45,27 @@
   </ItemGroup>
 
   <!--
+    The voice clips are read from disk by path (VoiceLibrary), never through the resource index, and their folders are
+    named after languages (Voice\it\…), which the index would take for language qualifiers: a warning per clip, and a
+    Store bundle could split them into language resource packs. So they leave the index's inputs (PriOutputs, and
+    PackagingOutputs in the tooling's other PRI path) while its file lists are written, and come back right after.
+  -->
+  <Target Name="CompanionKeepVoiceOutOfPri" BeforeTargets="_GenerateProjectPriConfigurationFiles" Condition="'$(CompanionVoiceFolder)' != ''">
+    <ItemGroup>
+      <_CompanionVoicePriOutputs Include="@(PriOutputs)" Condition="$([System.String]::Copy('%(PriOutputs.TargetPath)').StartsWith('Voice\'))" />
+      <PriOutputs Remove="@(_CompanionVoicePriOutputs)" />
+      <_CompanionVoicePackagingOutputs Include="@(PackagingOutputs)" Condition="$([System.String]::Copy('%(PackagingOutputs.TargetPath)').StartsWith('Voice\'))" />
+      <PackagingOutputs Remove="@(_CompanionVoicePackagingOutputs)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CompanionVoiceBackIntoPackage" AfterTargets="_GenerateProjectPriConfigurationFiles" Condition="'$(CompanionVoiceFolder)' != ''">
+    <ItemGroup>
+      <PriOutputs Include="@(_CompanionVoicePriOutputs)" />
+      <PackagingOutputs Include="@(_CompanionVoicePackagingOutputs)" />
+    </ItemGroup>
+  </Target>
+
+  <!--
     A Native AOT package takes the app from the publish output, but the MSIX tooling also packs the JIT build's
     runtimeconfig.json and deps.json, which only a .NET runtime reads (`dotnet publish` leaves them out), so the package
     looks like it needs one installed. Drop them; smoke-package.ps1 -CheckOnly fails on a runtimeconfig.json. Same

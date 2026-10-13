@@ -139,6 +139,7 @@ def derived(config: Config) -> dict[str, str]:
     mac, core, app, tests = rel("mac.dir"), rel("mac.core", "mac.dir"), rel("mac.app", "mac.dir"), rel("mac.tests", "mac.dir")
     windows, conformance = rel("windows.dir"), rel("conformance.dir")
     win_core, win_core_tests = config.get("windows.core", ""), config.get("windows.coreTests", "")
+    win_app_tests = config.get("windows.appTests", "")
     landing, landing_i18n = rel("landing.dir"), rel("l10n.landing")
     store = rel("store.dir")
     values = {
@@ -164,6 +165,8 @@ def derived(config: Config) -> dict[str, str]:
         "WINDOWS_CORE": win_core,
         "WINDOWS_CORE_TESTS": win_core_tests,
         "WINDOWS_APP": config.get("windows.app", ""),
+        "WINDOWS_APP_TESTS": win_app_tests,
+        "WINDOWS_ASSETS": rel("windows.assets.out"),
         "WINDOWS_STRINGS": rel("windows.strings"),
         "CONFORMANCE_DIR": conformance,
         "VOICE_DIR": rel("voice.dir"),
@@ -190,6 +193,15 @@ def derived(config: Config) -> dict[str, str]:
         f"^{ere(windows)}/{ere(win_core)}(\\.Tests)?/|^{ere(conformance)}/" if windows and win_core else never
     )
     values["RE_WINDOWS_APP"] = f"^{ere(windows)}/{ere(values['WINDOWS_APP'])}/" if windows and values["WINDOWS_APP"] else never
+    # The app's model tests compile the app's own files, so either side changing runs them.
+    values["RE_WINDOWS_APP_TESTS"] = (
+        f"^{ere(windows)}/({ere(values['WINDOWS_APP'])}|{ere(win_app_tests)})/" if windows and win_app_tests else never
+    )
+    asset_sources = [rel(key) for key in ("windows.assets.source", "windows.assets.devSource") if config.get(key)]
+    values["RE_WINDOWS_ASSETS"] = (
+        "|".join([f"^{ere(source)}$" for source in asset_sources] + [f"^{ere(values['WINDOWS_ASSETS'])}/"])
+        if values["WINDOWS_ASSETS"] else never
+    )
     values["RE_LANDING"] = (
         f"^{ere(landing)}/|^{ere(conformance)}/(phrases|settings)\\.json$|Localizable\\.xcstrings$" if landing else never
     )

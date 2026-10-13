@@ -736,6 +736,23 @@ public sealed class CompanionAppModelTests
     }
 
     [Fact]
+    public async Task ComputedStateAnnouncesItsChanges()
+    {
+        var model = MakeModel(configure: s => s.ShowOnDesktop = true);
+        var changed = new List<string?>();
+        model.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        model.HideDesktop(DesktopHide.Hour);
+        Assert.Contains(nameof(model.DesktopBackLine), changed); // the panel row says when he's back
+        changed.Clear();
+        settings.ShowOnDesktop = false;
+        Assert.Contains(nameof(model.DesktopBackLine), changed);
+        changed.Clear();
+        await model.Purchases.BuyAsync(FixtureModel.Supporter);
+        Assert.True(model.IsSupporter);
+        Assert.Contains(nameof(model.IsSupporter), changed); // the Support row thanks instead of asking
+    }
+
+    [Fact]
     public async Task ClosingSupportAcknowledgesATip()
     {
         var model = MakeModel();
