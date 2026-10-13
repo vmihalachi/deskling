@@ -1,0 +1,78 @@
+<UserControl
+    x:Class="FixtureApp.Views.HomeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:views="using:FixtureApp.Views">
+    <ScrollViewer Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <StackPanel Margin="24,40,24,24" Spacing="16">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Deskling fixture" />
+            <StackPanel Spacing="2">
+                <TextBlock Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind Model.ClockLine, Mode=OneWay}" />
+            </StackPanel>
+            <Border
+                Padding="12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Bind views:Show.Bubble(Model.Bubble), Mode=OneWay}" TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Click="{x:Bind Model.MuteBubbleLine}"
+                            Content="Don't say that again"
+                            IsEnabled="{x:Bind views:Show.Has(Model.BubblePhraseId), Mode=OneWay}" />
+                        <Button
+                            Click="{x:Bind Model.UndoMute}"
+                            Content="Undo"
+                            Visibility="{x:Bind views:Show.WhenSet(Model.JustMuted), Mode=OneWay}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Click="{x:Bind Model.SayNow}" Content="Say something" Style="{StaticResource AccentButtonStyle}" />
+                <Button
+                    Click="{x:Bind Model.ShushForAnHour}"
+                    Content="Shh for an hour"
+                    Visibility="{x:Bind views:Show.Unless(Model.IsShushed), Mode=OneWay}" />
+                <Button
+                    Click="{x:Bind Model.Wake}"
+                    Content="Wake up"
+                    Visibility="{x:Bind views:Show.When(Model.IsShushed), Mode=OneWay}" />
+                <Button Click="{x:Bind Model.OpenSettings}" Content="Settings" />
+            </StackPanel>
+            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="For the hand checks" />
+            <StackPanel Spacing="4">
+                <Button Click="{x:Bind Model.SayLongLine}" Content="Say a long line" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Then start a call (opening the Camera app will do): the line stops."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Click="{x:Bind Model.MakeLineDue}" Content="Next line now" />
+                    <Button Click="{x:Bind Model.MakeLineDueSoon}" Content="Next line in 10 s" />
+                </StackPanel>
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Skips the clock to the next line. Go full screen within the 10 s: the line waits until 30 s after you leave it."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <Button Click="{x:Bind Model.Quit}" Content="Quit" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="As the tray menu's Quit. A notification left behind starts the app again, without Home."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

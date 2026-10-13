@@ -28,6 +28,8 @@ package and the NuGet packages together.
   open. `CompanionNotifier.Configure` takes the click Windows started the app for; `WindowsCompanionHost.Quit` runs the
   app's `OnQuit`, then takes the tray icon, windows and hotkey away and exits.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
+- **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
+  for checking the Windows shell by hand; also the smallest example of a companion app on it.
 - **Windows**: `TrayMenuItem.Command` takes `IsChecked` (a check mark), and `TrayIconHost.MenuOpening` is raised before
   the menu opens, so its owner can rebuild it from the current state. Both additive.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of

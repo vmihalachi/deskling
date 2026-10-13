@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>FixtureApp</RootNamespace>
+    <!-- The name notifications show for an unpackaged app. -->
+    <AssemblyTitle>Deskling fixture</AssemblyTitle>
+    <IsPackable>false</IsPackable>
+    <Platforms>x64;ARM64</Platforms>
+    <!-- The machine's own architecture when no platform is named (dotnet build Deskling.sln). -->
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <!-- Unpackaged, as the template's unpackaged app: no MSIX, the Windows App Runtime found at start. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <!-- Main is Program's: CompanionApp.Start. -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- As the apps: Native AOT on publish, and its analyzers on every build. -->
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Deskling.Windows.Companion\Deskling.Windows.Companion.csproj" />
+    <!-- The fixture bank, defaults and art. -->
+    <ProjectReference Include="..\Deskling.Testing\Deskling.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\conformance\companion\phrases.json" Link="conformance\companion\phrases.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\conformance\companion\characters\fixture-vector.json" Link="conformance\companion\characters\fixture-vector.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

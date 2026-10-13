@@ -224,3 +224,38 @@ no AOT warnings) was driven by script. Differences from the brief, and what was 
   unpackaged template does (not tried without it).
 - **Not checked yet**, for 3.5 by hand: a notification button clicked while the app isn't running (it should act without
   Home). The startup task's quiet launch needs package identity, so it waits for sunnysays' package.
+
+### 3.5, the fixture app (2026-10-13)
+
+`dotnet/Fixture.App`, in `Deskling.sln`, never packed (CI builds it from 5.1). The hand checks are still to do: they are
+listed at the end, and sequence 3 isn't finished until they are. Differences from the brief, and what was found:
+
+- **The smallest companion app on the package.** `App.xaml` rooted on `CompanionApp`; `MakeCompanion` makes the host
+  (plain XAML views: Home, Settings, onboarding, Support, the panel), the notifier with two buttons, the signal hub over
+  the system's sources, a `PurchaseStore` over `MockStoreBackend` and the model. Settings live in memory, so every launch
+  starts fresh, onboarding done unless `--first-run`. The fixture's defaults change two things for Windows: Ctrl+Alt+F
+  says something (the fixture's shortcut is a Mac key code), and every hour of every day is active. The sounds are tones
+  written to the temp folder at launch.
+- **`x:Bind` to the model works** (`Mode=OneWay` through the generic base's `PropertyChanged`, and events bound to its
+  methods). A function call nested in another generates code that doesn't compile, so each binding gets its own function.
+- **Controls for the checks, on Home:** a long line, to start a call while it plays; a clock that skips to the
+  scheduler's next line (now or in 10 s, time to go full screen); Quit.
+- **Checked by script** (UI Automation, JIT and Native AOT on ARM64, 8 MB, no warnings): a poke speaks a line into the
+  bubble; Shh shows "Shh until …" and Wake up says the Shh-ended line; coming back after 5 idle minutes says a welcome
+  back line; the clock's skip brings a scheduled line; the notification channel turned on reads authorized; Quit exits
+  with code 0 and removes the tray icon; a second launch reopens Home. Automation's clicks aren't input, so after 5 idle
+  minutes the model holds its lines as for an absent user, rightly (a zero-distance mouse move ends it).
+- **For sunnysays:** Windows 11 puts a new tray icon in the overflow (the ^), and `Shell_NotifyIconGetRect` then gives
+  the chevron's rect, so the panel opens by the chevron until the user drags the icon onto the taskbar.
+- **Not checked yet, by hand** (the fixture app running, its icon dragged onto the taskbar):
+  1. Left click opens the panel by the icon; a second click closes it without reopening; Esc closes it.
+  2. The right-click menu is rebuilt (after Shh ▸ For an hour it offers Wake up) and shows its check marks.
+  3. Say something speaks through the system voice; the glyph's mouth moves while it does.
+  4. Ctrl+Alt+F from another app says something.
+  5. Shh for an hour, then Wake up (the status, then a line).
+  6. A long line stops within a second when a call starts (the Camera app, or Teams); the status says so.
+  7. A line due during a full-screen video waits, and comes 30 to 50 s after leaving full screen.
+  8. The glyph's ink: black on a light taskbar, white on a dark one; it waves when Home opens.
+  9. The app's appearance setting turns the windows and their caption buttons light or dark.
+  10. A notification with its two buttons, each acting.
+  11. After Quit, a button on the notification left in Notification Center starts the app without Home and acts.
