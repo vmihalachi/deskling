@@ -6,6 +6,18 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows**: `LocalSettingsStore.ForApp(appFolder)` keeps an app's settings wherever it runs: in the package's
+  local settings when it has package identity, else in a JSON file under `%LOCALAPPDATA%\<appFolder>`
+  (`FileSettingsStore`), so an unpackaged Debug build remembers them too. `PackageIdentity.IsPackaged` says which.
+- **Windows**: `Loc.Choose(languages)` picks the app's language at launch (the one picked in `LanguageRow`, else the
+  first of Windows' preferred languages the app has, by base language), and `Loc.UseLanguage` now pins the strings to
+  it too, not only the .NET culture, so `Loc.Language` and the words shown can't disagree. `Loc.Localize(key, source)`
+  is the phrase lookup (`CompanionAppConfiguration.Localize`): a missing translation shows the phrase's source, not its
+  key.
+- **Windows**: `TrayIconHost` adds its icon by window and id when Windows refuses the GUID, which it ties to the first
+  executable that used it (the same app built in another folder showed no icon).
+- **Core**: `ReswName.FallbackText(key)`, the English a missing `.resw` string falls back to.
+
 ## 0.8.0 - 2026-10-13
 
 The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 half over `Deskling.Companion.Shell`

@@ -17,9 +17,20 @@ public sealed class LocalSettingsStore : ISettingsStore
 
     private readonly IDictionary<string, object> values;
 
-    /// <summary>The app's local settings container.</summary>
+    /// <summary>The app's local settings container (throws without package identity).</summary>
     public LocalSettingsStore()
         : this(ApplicationData.Current.LocalSettings) { }
+
+    /// <summary>
+    /// The app's settings wherever it runs: the package's local settings when it has package identity, else a
+    /// <see cref="FileSettingsStore"/> at <c>%LOCALAPPDATA%\<paramref name="appFolder"/>\settings.json</c> (an
+    /// unpackaged Debug build, which has no package data). Name the folder after the build ("My App Dev") so a Debug
+    /// run never reads a Release install's settings.
+    /// </summary>
+    public static ISettingsStore ForApp(string appFolder) =>
+        PackageIdentity.IsPackaged
+            ? new LocalSettingsStore()
+            : new FileSettingsStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appFolder, "settings.json"));
 
     /// <summary>A container of your choice, such as a sub-container for one feature.</summary>
     public LocalSettingsStore(ApplicationDataContainer container)

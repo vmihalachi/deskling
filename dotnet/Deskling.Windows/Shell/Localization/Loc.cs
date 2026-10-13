@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using Deskling.Core.Localization;
 using Microsoft.Windows.ApplicationModel.Resources;
 
@@ -12,10 +11,13 @@ namespace Deskling.Windows.Shell.Localization;
 /// variants are <c>name__one</c>, <c>name__other</c> and so on, picked with <see cref="PluralRules"/>. The package
 /// ships no strings of its own: a missing string falls back to the English key, so nothing ever shows up blank.
 /// </summary>
-public static partial class Loc
+public static class Loc
 {
     private static readonly ResourceManager Manager = new();
     private static ResourceMap? strings;
+
+    /// <summary>The language lookups resolve in, once <see cref="UseLanguage"/> chose one; else MRT's default.</summary>
+    private static ResourceContext? context;
 
     /// <summary>The language the strings resolve to, for plural rules and formatting.</summary>
     public static string Language { get; private set; } = "en";
@@ -31,7 +33,10 @@ public static partial class Loc
         strings = Manager.MainResourceMap.GetSubtree(resourceSubtree);
     }
 
-    /// <summary>Sets the language once at launch. Strings follow it on the next lookup.</summary>
+    /// <summary>
+    /// Sets the language once at launch: the strings, the plural rules and the .NET culture (dates, numbers) all
+    /// follow it, so <see cref="Language"/> never disagrees with the words shown.
+    /// </summary>
     public static void UseLanguage(string language)
     {
         Language = language;
@@ -40,9 +45,30 @@ public static partial class Loc
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
+        context = Manager.CreateResourceContext();
+        context.QualifierValues["Language"] = language;
     }
 
+    /// <summary>
+    /// The language to run in, out of the app's <paramref name="languages"/> (its <c>Strings</c> folders, the default
+    /// first): the one picked in the app (<c>ApplicationLanguages.PrimaryLanguageOverride</c>, which
+    /// <c>LanguageRow</c> sets), else the first of Windows' preferred languages the app has, else the default. Pass the
+    /// result to <see cref="UseLanguage"/>.
+    /// </summary>
+    public static string Choose(IReadOnlyList<string> languages) =>
+        LanguageMatch.Choose(
+            languages,
+            Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride,
+            global::Windows.System.UserProfile.GlobalizationPreferences.Languages
+        );
+
     public static string Get(string key) => Lookup(ReswName.For(key)) ?? Fallback(key);
+
+    /// <summary>
+    /// A phrase's text: its translation under <paramref name="key"/> (<c>phrase.&lt;id&gt;</c>), else
+    /// <paramref name="source"/>, the line as the bank has it. Unlike <see cref="Get(string)"/> it never shows the key.
+    /// </summary>
+    public static string Localize(string key, string source) => Lookup(ReswName.For(key)) ?? source;
 
     public static string Format(string key, params object[] args) => string.Format(Culture, Get(key), args);
 
@@ -79,23 +105,12 @@ public static partial class Loc
     private static string? Lookup(string name)
     {
         strings ??= Manager.MainResourceMap.GetSubtree("Resources");
-        return strings.TryGetValue(name)?.ValueAsString;
+        return (context is null ? strings.TryGetValue(name) : strings.TryGetValue(name, context))?.ValueAsString;
     }
 
-    /// <summary>English straight from the key, with Apple's format specifiers turned into .NET placeholders.</summary>
     private static string Fallback(string key)
     {
         Debug.WriteLine($"Missing string: {key}");
-        var index = 0;
-        return Specifier().Replace(
-            key.Replace("{", "{{").Replace("}", "}}"),
-            m => m.Value == "%%" ? "%"
-                : m.Groups[1].Success ? $"{{{int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) - 1}}}"
-                : $"{{{index++}}}"
-        );
+        return ReswName.FallbackText(key);
     }
-
-    /// <summary>Apple format specifiers: <c>%lld</c>, <c>%@</c>, positional <c>%2$@</c> and <c>%%</c>.</summary>
-    [GeneratedRegex(@"%%|%(?:(\d+)\$)?(?:lld|ld|d|@)")]
-    private static partial Regex Specifier();
 }

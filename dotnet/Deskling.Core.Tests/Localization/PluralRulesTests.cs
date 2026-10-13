@@ -120,6 +120,14 @@ public sealed class PluralRulesTests
     }
 
     [Fact]
+    public void TestFallbackTextTurnsAppleSpecifiersIntoPlaceholders()
+    {
+        Assert.Equal("Shh until {0}", ReswName.FallbackText("Shh until %@"));
+        Assert.Equal("{1} of {0}, 100%", ReswName.FallbackText("%2$@ of %1$lld, 100%%"));
+        Assert.Equal("{{braces}} {0}", ReswName.FallbackText("{braces} %lld"));
+    }
+
+    [Fact]
     public void TestReswNameEscapesLikeL10nPy()
     {
         Assert.Equal("_0043hair_0020_0053quat", ReswName.For("Chair Squat"));

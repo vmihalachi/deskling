@@ -35,6 +35,12 @@ internal static partial class NativeMethods
     [LibraryImport("shell32.dll")]
     public static partial int SHQueryUserNotificationState(out UserNotificationState state);
 
+    // MARK: Package identity
+
+    /// <summary>15700 (APPMODEL_ERROR_NO_PACKAGE) when the process has no package identity.</summary>
+    [LibraryImport("kernel32.dll")]
+    public static partial int GetCurrentPackageFullName(ref uint packageFullNameLength, nint packageFullName);
+
     // MARK: Windows that receive messages (hot keys, the tray icon, session changes)
 
     public const uint WM_NULL = 0x0000;

@@ -16,6 +16,9 @@ public sealed class TrayIconHost : IDisposable
 {
     private const uint CallbackMessage = NativeMethods.WM_APP + 1;
 
+    /// <summary>The icon's id under its window when Windows refuses the GUID.</summary>
+    private const uint FallbackId = 1;
+
     /// <summary>Broadcast when Explorer (re)starts, which drops every icon.</summary>
     private static readonly uint TaskbarCreated = NativeMethods.RegisterWindowMessageW("TaskbarCreated");
 
@@ -28,6 +31,9 @@ public sealed class TrayIconHost : IDisposable
     private nint hicon;
     private string toolTip = "";
     private bool added;
+
+    /// <summary>Whether the icon is known by <see cref="iconId"/>; false once Windows refused it.</summary>
+    private bool byGuid = true;
 
     /// <param name="dispatcher">The UI thread's queue; menu commands and <see cref="Selected"/> run on it.</param>
     /// <param name="iconId">
@@ -80,7 +86,8 @@ public sealed class TrayIconHost : IDisposable
         {
             cbSize = (uint)Marshal.SizeOf<NativeMethods.NOTIFYICONIDENTIFIER>(),
             hWnd = window.Handle,
-            guidItem = iconId,
+            uID = byGuid ? 0 : FallbackId,
+            guidItem = byGuid ? iconId : Guid.Empty,
         };
         if (added && NativeMethods.Shell_NotifyIconGetRect(identifier, out var location) == 0)
         {
@@ -159,9 +166,17 @@ public sealed class TrayIconHost : IDisposable
             return;
         // An icon left behind with our GUID (a crash, say) makes NIM_ADD fail.
         Notify(NativeMethods.NIM_DELETE, 0);
-        added =
-            Notify(NativeMethods.NIM_ADD, Content | NativeMethods.NIF_MESSAGE)
-            && Notify(NativeMethods.NIM_SETVERSION, 0);
+        added = Add();
+        // Windows ties the GUID to the executable that first used it, so the same app built in another folder (a
+        // second checkout, the other architecture) is refused: that copy goes by window and id instead, and its
+        // taskbar settings aren't remembered.
+        if (!added && byGuid)
+        {
+            byGuid = false;
+            added = Add();
+        }
+
+        bool Add() => Notify(NativeMethods.NIM_ADD, Content | NativeMethods.NIF_MESSAGE) && Notify(NativeMethods.NIM_SETVERSION, 0);
     }
 
     private unsafe bool Notify(uint message, uint flags)
@@ -170,11 +185,12 @@ public sealed class TrayIconHost : IDisposable
         {
             cbSize = (uint)sizeof(NativeMethods.NOTIFYICONDATAW),
             hWnd = window.Handle,
-            uFlags = flags | NativeMethods.NIF_GUID,
+            uID = byGuid ? 0 : FallbackId,
+            uFlags = flags | (byGuid ? NativeMethods.NIF_GUID : 0),
             uCallbackMessage = CallbackMessage,
             hIcon = hicon,
             uVersion = NativeMethods.NOTIFYICON_VERSION_4,
-            guidItem = iconId,
+            guidItem = byGuid ? iconId : Guid.Empty,
         };
         // 127 characters and the terminator the zeroed buffer already has.
         toolTip.AsSpan(0, Math.Min(toolTip.Length, 127)).CopyTo(new Span<char>(data.szTip, 128));

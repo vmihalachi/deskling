@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Deskling.Core.Localization;
 
@@ -94,7 +95,7 @@ public static class PluralRules
 /// over <see cref="MaxLength"/> keeps its first <see cref="PrefixLength"/> characters plus <c>_h</c> and 16 hex digits
 /// of the key's SHA-256, leaving room for a <c>__other</c> plural suffix.
 /// </summary>
-public static class ReswName
+public static partial class ReswName
 {
     public const int MaxLength = 240;
     public const int PrefixLength = 200;
@@ -114,4 +115,24 @@ public static class ReswName
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
         return sb.ToString(0, PrefixLength) + "_h" + Convert.ToHexStringLower(hash)[..16];
     }
+
+    /// <summary>
+    /// The text for a key the strings don't have: English straight from the key (the Mac's catalog keys are the English
+    /// source), with Apple's format specifiers (<c>%lld</c>, <c>%@</c>, positional <c>%2$@</c>, <c>%%</c>) turned into
+    /// .NET placeholders, so nothing ever shows up blank.
+    /// </summary>
+    public static string FallbackText(string key)
+    {
+        var index = 0;
+        return Specifier().Replace(
+            key.Replace("{", "{{").Replace("}", "}}"),
+            m => m.Value == "%%" ? "%"
+                : m.Groups[1].Success ? $"{{{int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) - 1}}}"
+                : $"{{{index++}}}"
+        );
+    }
+
+    /// <summary>Apple format specifiers: <c>%lld</c>, <c>%@</c>, positional <c>%2$@</c> and <c>%%</c>.</summary>
+    [GeneratedRegex(@"%%|%(?:(\d+)\$)?(?:lld|ld|d|@)")]
+    private static partial Regex Specifier();
 }
