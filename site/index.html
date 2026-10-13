@@ -133,7 +133,7 @@
   <div class="wrap">
     <div class="section-head">
       <h2>What's inside</h2>
-      <p>Seven Swift products and four NuGet packages. Take the pure logic alone, the whole shell, or the companion on top.</p>
+      <p>Seven Swift products and six NuGet packages. Take the pure logic alone, the whole shell, or the companion on top.</p>
     </div>
 
     <div class="parts" role="table" aria-label="Products">
@@ -178,18 +178,18 @@
         <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
         <div role="cell">
           <h3>App shell</h3>
-          <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a global hotkey without Accessibility permission, a floating desktop window for a pet or a sticky note, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble. On the Mac also a status item with a popover and an animated glyph, and speech: the system voice or recorded clips, jokes told in beats, chimes.</p>
+          <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a global hotkey without Accessibility permission, a floating desktop window for a pet or a sticky note, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble. On the Mac also a status item with a popover and an animated glyph, and speech: the system voice or recorded clips, jokes told in beats, chimes. On Windows those come with the companion shell, below.</p>
           <p class="types"><code>WindowManager</code> <code>NotificationPoster</code> <code>GlobalHotKey</code> <code>LoginItem</code> <code>FloatingWindow</code> <code>StatusItemController</code> <code>SpeechSequencer</code> <code>TrayIconHost</code> <code>SingleInstance</code></p>
         </div>
       </div>
 
       <div class="parts-row" role="row">
         <div role="cell" class="pkg"><code>DesklingCompanionUI</code></div>
-        <div role="cell" class="pkg none"><span>macOS only</span></div>
+        <div role="cell" class="pkg"><code>Deskling.Companion<wbr>.Shell</code> + <code>Deskling.Windows<wbr>.Companion</code></div>
         <div role="cell">
           <h3>The companion on screen</h3>
-          <p>The character view (vector and image parts), the character and its speech bubble on the desktop, the menu bar glyph, delivery through bubble, voice, chime and notification, the system signals gathered into one snapshot, a palette your app sets, and a screenshot mode. And the shell your app subclasses: the model that runs the day, its delegate and menus, the Settings rows, the Support window and a screenshot script, every word passed in by your app.</p>
-          <p class="types"><code>CharacterView</code> <code>DesktopCompanion</code> <code>DeliveryPerformer</code> <code>SignalHub</code> <code>CompanionPalette</code> <code>CompanionAppModel</code> <code>SupportWindow</code> <code>ScreenshotScript</code></p>
+          <p>The character view (vector and image parts), the character and its speech bubble on the desktop, the menu bar or tray glyph, delivery through bubble, voice, chime and notification, the system signals gathered into one snapshot, a palette your app sets, and a screenshot mode. And the shell your app subclasses: the model that runs the day, its delegate and menus, the Settings rows, the Support window and a screenshot script, every word passed in by your app. On Windows the logic is its own package, tested on any OS, and the WinUI 3 half draws it.</p>
+          <p class="types"><code>CharacterView</code> <code>CharacterCanvas</code> <code>DesktopCompanion</code> <code>DeliveryPerformer</code> <code>SignalHub</code> <code>CompanionPalette</code> <code>CompanionAppModel</code> <code>SupportWindow</code> <code>ScreenshotScript</code></p>
         </div>
       </div>
 
@@ -310,12 +310,13 @@
       </div>
       <div class="install-card">
         <h3>NuGet</h3>
-        <p class="req">.NET 10; Core and Companion are Native AOT compatible</p>
+        <p class="req">.NET 10; every package an app ships is Native AOT compatible</p>
 <pre tabindex="0"><code>dotnet add package Deskling.Core
 dotnet add package Deskling.Companion <span class="c"># a desk companion</span>
 dotnet add package Deskling.Windows   <span class="c"># net10.0-windows</span>
+dotnet add package Deskling.Windows.Companion <span class="c"># WinUI 3</span>
 dotnet add package Deskling.Testing   <span class="c"># test projects</span></code></pre>
-        <p><code>Deskling.Core</code> and <code>Deskling.Companion</code> build anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, hotkey, idle and busy services.</p>
+        <p><code>Deskling.Core</code>, <code>Deskling.Companion</code> and <code>Deskling.Companion.Shell</code> build anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, hotkey, idle and busy services, and <code>Deskling.Windows.Companion</code> a companion app's whole shell on WinUI 3, with <code>Deskling.Companion.Shell</code> under it.</p>
       </div>
     </div>
   </div>

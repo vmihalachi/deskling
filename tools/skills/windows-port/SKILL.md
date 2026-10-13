@@ -7,10 +7,11 @@ description: Work on a Deskling companion app's Windows port (companion.json `wi
 
 The Windows app mirrors the Mac app on Deskling's .NET packages: `Deskling.Core` (scheduler, settings store, store),
 `Deskling.Companion` (phrases, picker, cadence, quiet rules, settings, coordinator, desktop presence, skins, the rig),
-`Deskling.Windows` (tray, hotkey, idle, busy, startup, notifications, single instance, `.resw` lookup) and, in tests,
-`Deskling.Testing` (fakes, fixture loaders, the conformance replay bodies). The app's own core (`windows.core`) holds
-what's app-specific; its tests (`windows.coreTests`) replay the app's vectors. Platform differences and the folder
-map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
+`Deskling.Windows` (tray, hotkey, idle, busy, startup, notifications, single instance, `.resw` lookup), since 0.8 the
+companion shell (`Deskling.Companion.Shell` and `Deskling.Windows.Companion`, below) and, in tests, `Deskling.Testing`
+(fakes, fixture loaders, the conformance replay bodies, the shell's `FakeHost`). The app's own core (`windows.core`)
+holds what's app-specific; its tests (`windows.coreTests`) replay the app's vectors. Platform differences and the
+folder map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
 
 - Core tests run anywhere with the .NET 10 SDK: `dotnet test <windows.dir>/<windows.coreTests>`. The WinUI app's
   XAML compiler needs Windows: push and run the app's Windows workflow.
@@ -20,12 +21,41 @@ map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
   The app's bank and art load from the generated JSON (`PhraseBank.Parse`, `CharacterArt.Parse`), so new phrases and
   art need no port.
 
+## The companion shell (0.8)
+
+The Mac app's `DesklingCompanionUI` has a Windows twin in two packages, with the same type and member names, mirrored
+by role (Deskling's `plans/0.8/README.md`, *The map*):
+
+- `Deskling.Companion.Shell` (any OS): `CompanionAppModel<TWindow, TSettings>`, which the app subclasses as on the
+  Mac (the tick, channels, Shh and wake, the bubble, previews, the status line, the desktop character, the menus as
+  `MenuItem` data), the copy records (`StatusCopy`, `MenuCopy`, `DesktopCopy`, `CompanionAppConfiguration`), speech
+  in beats and recorded voices, `DeliveryPerformer`, `SignalHub`, `DesktopLayout`, `SampleEnvironment`. Test the app's
+  model with `Deskling.Testing`'s `FakeHost`, `ManualTimers` and fakes.
+- `Deskling.Windows.Companion` (WinUI 3): `CompanionApp` (the app's `Application`; `Program.Main` is one
+  `CompanionApp.Start` call), `WindowsCompanionHost<TWindow>` over the app's `CompanionViews` (window specs and
+  content, the tray panel, the desktop character), `Speaker`, `ChimePlayer`, `CompanionNotifier`, the system signals,
+  and the controls: `CharacterCanvas`, `SpeechBubble`, `StatusPill`, `ActionBar`, `PanelRow`, `Pointer`,
+  `WindowInset`, the Settings rows (each over a copy record of the app's words), `SupportWindow`, and the screenshot
+  run (`ScreenshotCapture`, `ScreenshotScript`).
+
+What stays in the app: the words (`.resw`, passed in as copy records), the look (`Theme/*.xaml`; the controls paint
+from `CompanionLook.Current`, set first in `MakeCompanion`, whose `CompanionPalette` can read the app's theme
+dictionaries through `ThemedColor.Resource`), Home, onboarding, the panel's layout, the app's own settings and
+windows, `Program.cs`, `App.xaml` (a `CompanionApp` root) and the MSIX manifest. Deskling's `dotnet/Fixture.App` is a
+whole companion on these packages.
+
+- `{x:Bind}` to `WindowInset`'s static properties (`Content`, `ContentOverActionBar`, `PanelPadding`): a function
+  call with a number argument crashes the XAML compiler. Don't name an element `Language`.
+- Raster characters ship their layers as `Assets\Characters\<skin>.<part>.scale-200.png` (and `-300`).
+- A screenshot run: override `RunScreenshots`, build the model over a `SampleEnvironment` and run a
+  `ScreenshotScript`; `Program` passes a null instance key while `ScreenshotCapture.IsEnabled`.
+
 ## Conventions
 
 - User-facing text uses the Mac's catalog keys (`Loc.Get("…")`, `Loc.Plural(key, count, args)`, `{l:Loc Key='…'}` in
   XAML). Strings only Windows uses go in with `l10n.py add`, then the `localization` skill, then
   `l10n.py export-windows`. Never read or edit the generated `.resw` files.
-- Colors come from the app's palette resources (`{ThemeResource}`), never hard-coded.
+- Colors come from the app's palette resources (`{ThemeResource}`) or its `CompanionPalette`, never hard-coded.
 - When Swift behavior covered by vectors changes, regenerate them (`conformance` skill); failing `dotnet test` cases
   tell you what to port.
 - **Voices**: link the shared voices folder into the package, keeping the tree the Mac bundles

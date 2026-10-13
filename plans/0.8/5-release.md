@@ -49,3 +49,15 @@ and `Deskling.Testing` 0.7.7 depends on it. `Deskling.Windows.Companion` was not
   - Its Native AOT publish had no warnings, and that build's home and desktop shots had no problems either.
   - The XAML compiler can't read a package past 260 characters of path, so the copy restored into the user's package
     cache, not a deep scratch folder.
+
+### 5.2
+
+- `README.md`: the two packages in *What's inside* and *Install*, the companion shell's fakes under `Deskling.Testing`,
+  *A companion app on Windows* (`Program`, the `App`'s `MakeCompanion` and `RunScreenshots`, and what the app keeps),
+  and the shell's tests, the fixture app and its screenshots under *Develop*.
+- `AGENTS.md`: `Deskling.Windows.Companion`'s row lists every folder and is no longer "in progress".
+- `tools/skills/windows-port/SKILL.md`: *The companion shell (0.8)*, what each package holds, what stays in the app,
+  and the XAML traps from 4 (`WindowInset`'s static properties, no element named `Language`).
+- `site/index.html`: six NuGet packages, the two in the companion row and the install card. Checked in a headless
+  render: the long package names break at their dots, so they don't run into the next column.
+- The `release` skill says every NuGet package, not both.

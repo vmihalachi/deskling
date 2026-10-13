@@ -5,7 +5,7 @@ description: Use when cutting a Deskling release (vX.Y.Z) or bumping the version
 
 # Release vX.Y.Z
 
-One tag versions the Swift package and both NuGet packages. Pick the number by SemVer from *Unreleased*
+One tag versions the Swift package and every NuGet package. Pick the number by SemVer from *Unreleased*
 (while `0.x`: breaking public API → minor, otherwise patch).
 
 ## 1. Bump the version everywhere (one commit)
@@ -38,6 +38,6 @@ never move).
 - `git tag -a vX.Y.Z -m "Deskling X.Y.Z" && git push origin vX.Y.Z`, or
 - without tag-push rights: dispatch `release.yml` with `version: X.Y.Z`, which tags `master` itself.
 
-`release.yml` tests, packs both NuGet packages, pushes them through Trusted Publishing, stages `@deskling/landing` on
+`release.yml` tests, packs the six NuGet packages, pushes them through Trusted Publishing, stages `@deskling/landing` on
 npm and drafts the GitHub release. Publishing the draft, and approving the staged npm version with 2FA (npmjs.com, or
 `npm stage approve <id>`), are the user's.

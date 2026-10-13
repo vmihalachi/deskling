@@ -19,9 +19,9 @@ requests aren't monitored, and releases follow what the apps need.
 | `DesklingCompanion` | `Deskling.Companion` | The pure core of a desk companion: a phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence presets, quiet rules and mood, write-through settings an app subclasses, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or raster character art. The app injects its lines, defaults, skins and palette; the .NET side loads them from the JSON the Swift side writes (`PhraseBank.Parse`, `CharacterArt.Parse`). |
 | `DesklingSystem` | `Deskling.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
 | `DesklingShell` | `Deskling.Windows` | Menu bar / tray app plumbing. A status item with a popover panel, a right-click menu and an animated glyph the app draws. Speech: a speaker (the system voice or a recorded clip), a sequencer that tells a joke in beats, a library of recorded voices that knows which clips are current, a chime player. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a global hotkey that needs no Accessibility permission (Carbon on macOS, `RegisterHotKey` on Windows), a floating desktop window (macOS), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
-| `DesklingCompanionUI` | — | macOS: the companion on screen, over `DesklingCompanion`. `SignalHub` (the snapshot and the events from the system signals), the menu bar glyph, `CharacterView` (vector and image parts, the wake spring), `DesktopCompanion` (the character and its speech bubble on the desktop), `DeliveryPerformer` (bubble, blip, speech in beats, the notification), `CompanionNotifier`, a `CompanionPalette` the app sets, the speech bubble and status pill, and `ScreenshotCapture` for screenshot runs. Since 0.7 also the companion shell an app subclasses: `CompanionAppModel` (the tick, the channels, the status item, the desktop, the windows, the hotkey, previews, mute and undo, the status line), its delegate and menus, the Settings rows and editors, the Support window, the window chrome and a `ScreenshotScript`; each takes its words from the app. The Windows twins come with the apps' ports. |
+| `DesklingCompanionUI` | `Deskling.Companion.Shell` + `Deskling.Windows.Companion` | macOS: the companion on screen, over `DesklingCompanion`. `SignalHub` (the snapshot and the events from the system signals), the menu bar glyph, `CharacterView` (vector and image parts, the wake spring), `DesktopCompanion` (the character and its speech bubble on the desktop), `DeliveryPerformer` (bubble, blip, speech in beats, the notification), `CompanionNotifier`, a `CompanionPalette` the app sets, the speech bubble and status pill, and `ScreenshotCapture` for screenshot runs. Since 0.7 also the companion shell an app subclasses: `CompanionAppModel` (the tick, the channels, the status item, the desktop, the windows, the hotkey, previews, mute and undo, the status line), its delegate and menus, the Settings rows and editors, the Support window, the window chrome and a `ScreenshotScript`; each takes its words from the app. Since 0.8 the same shell on Windows, in two packages: `Deskling.Companion.Shell` (`net10.0`, tested on any OS) is the logic against small interfaces (the app model, the menus as data, speech in beats and recorded voices, the delivery performer, the signal hub, the desktop layout, a screenshot run's sample environment), and `Deskling.Windows.Companion` (WinUI 3) implements them: the app's `Application`, the tray status item with its glyph and panel, the windows, the speaker, chime, hotkey and notifier, the character on the desktop, and the character canvas, speech bubble, status pill, chrome, Settings rows, Support window and screenshot capture. |
 | `DesklingStore` | `Deskling.Core` (`Store/`) + `Deskling.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
-| `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). The standard picker and quiet case lists, `CompanionVectors` and `ConformanceSuite.companion` build an app's whole suite; `CompanionReplay` replays it. |
+| `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). The standard picker and quiet case lists, `CompanionVectors` and `ConformanceSuite.companion` build an app's whole suite; `CompanionReplay` replays it. On .NET also the companion shell's fakes (`FakeHost`, `ManualTimers`, `FakeSpeaker`…), for testing an app model without a screen. |
 | `tools/` | `tools/` | Not a package: Python tools, shell scripts and agent skills for companion apps, which vendor this repo as a `deskling/` git submodule pinned to the release. Localization, phrase sync, recorded voices, character art compiling, sounds, fonts, screenshots, verification (including a check that every Deskling pin agrees), the store listing tools (field limits, App Store Connect, Partner Center) and agent hooks, all driven by the app's `companion.json`; and `@deskling/landing`, the landing page's plumbing as Vite plugins, published to npm. See [`tools/README.md`](tools/README.md). |
 
 Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
@@ -40,6 +40,8 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 dotnet add package Deskling.Core
 dotnet add package Deskling.Companion  # the desk companion layer
 dotnet add package Deskling.Windows   # net10.0-windows; the tray, hotkey, idle and busy services
+dotnet add package Deskling.Companion.Shell    # a companion app's shell, platform-free (0.8)
+dotnet add package Deskling.Windows.Companion  # net10.0-windows, WinUI 3: that shell on Windows (0.8)
 dotnet add package Deskling.Testing   # in test projects: fakes, fixtures, vector replays
 ```
 
@@ -81,11 +83,57 @@ The package ships no strings, product ids or window lists: the app passes them i
 - **Languages.** `PhraseContext` takes the app's language: a phrase with `languages` set (`["it"]`) is only picked
   in those, so a joke that only works in Italian is written in Italian. The bank holds source text; the app's String
   Catalog (`phrase.<id>`) supplies the words on screen.
-- **Windows. in `Deskling.Windows`: `TrayIconHost`, `GlobalHotKey` (`KeyShortcut` keeps the Mac
+- **Windows.** In `Deskling.Windows`: `TrayIconHost`, `GlobalHotKey` (`KeyShortcut` keeps the Mac
   shape; Carbon masks map onto `MOD_*`), `AppNotifier<TAction>`, `StartupService(taskId)`, `LocalSettingsStore`,
   `SingleInstance.Claim(key)`, `WavPlayer`, and the signals `PowerSource`, `OutputMute`, `AppearanceWatcher`,
   `SessionLockWatcher`. String lookup is `Loc` (`Loc.Configure("Resources")`, `Loc.UseLanguage(...)` at launch) and
   `Formats.Configure(new FormatKeys(...))` names the six catalog keys the formatters need.
+
+## A companion app on Windows
+
+On `Deskling.Windows.Companion` (0.8) a WinUI 3 app is a model, its views and three small files.
+[`dotnet/Fixture.App`](dotnet/Fixture.App) is the whole of one, over the fixture bank.
+
+```csharp
+// Program.cs: the whole of Main (the csproj defines DISABLE_XAML_GENERATED_MAIN). One copy runs; a second launch
+// reopens it. A screenshot run claims no single instance.
+public static class Program
+{
+    [STAThread]
+    private static void Main() => CompanionApp.Start(ScreenshotCapture.IsEnabled ? null : "example.myapp", () => new App());
+}
+
+// App.xaml is a <shell:CompanionApp> (xmlns:shell="using:Deskling.Windows.Companion.Shell") with XamlControlsResources.
+public partial class App : CompanionApp
+{
+    private MyModel? model;
+
+    public App() => InitializeComponent();
+
+    protected override ICompanionLaunching MakeCompanion()
+    {
+        CompanionLook.Current = new CompanionLook(MyPalette.Value);  // first: every control paints from it
+        var host = new WindowsCompanionHost<MyWindow>(
+            new CompanionViews<MyWindow>(MyModel.Spec, id => MyViews.Window(model!, id), () => new MyPanel(model!))
+            {
+                DesktopCharacter = () => MyViews.Desktop(model!),  // a CharacterCanvas bound to the model
+            },
+            TrayIconId,
+            "My app");
+        var settings = new MySettings(new LocalSettingsStore(), MyDefaults.Value);
+        // The speaker, chime, notifier, signal hub and store, as dotnet/Fixture.App/App.xaml.cs makes them.
+        return model = new MyModel(settings, MyBank.Load(), host /* , … */);  // a CompanionAppModel<MyWindow, MySettings>
+    }
+
+    // With DESKLING_SCREENSHOT_MODE set: the same model over a SampleEnvironment, through a ScreenshotScript.
+    protected override bool RunScreenshots() => false;
+}
+```
+
+The app keeps its words (copy records, from its `.resw`), its look (a `CompanionPalette` of `ThemedColor`s, which can
+read the app's own theme dictionaries; buttons, cards, titles as `Style`s), Home, onboarding, the tray panel's layout,
+its own settings and windows, and the MSIX manifest (the startup task's id goes to `LaunchAtStartupToggle`). Image
+parts of a raster character ship as `Assets\Characters\<skin>.<part>.scale-200.png`.
 
 ## The two implementations stay identical
 
@@ -101,6 +149,10 @@ swift build && swift test                       # macOS: the package and its tes
 scripts/conformance.sh                          # regenerate conformance/ from the Swift code
 cd dotnet && dotnet test Deskling.Core.Tests    # .NET: Core builds and tests anywhere; Deskling.Windows builds on Windows (its PRI tooling)
 cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, anywhere
+cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, anywhere
+cd dotnet && dotnet test Deskling.Windows.Companion.Tests # Windows: the shell's Windows half
+dotnet run --project dotnet/Fixture.App         # Windows: the fixture app, a companion on the fixture bank
+scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark
 python3 tools/tests/run.py                      # the tools' tests
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
