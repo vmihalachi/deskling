@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.4 - 2026-10-13
+
 - **Shell**: an app macOS opens at login stays in the menu bar again instead of showing Home. `CompanionAppDelegate`
   read the launch Apple Event in `applicationWillFinishLaunching`, before AppKit delivers it, so every launch looked
   like the user's; it now reads it in `applicationDidFinishLaunching` (and no longer implements
