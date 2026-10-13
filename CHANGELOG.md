@@ -55,6 +55,15 @@ package and the NuGet packages together.
   - `Space` and `WindowInset`: the Mac's spacing, plus the title bar's band at the top.
 
   The windows and the tray panel get the look's paper behind their content.
+- **Windows.Companion**: the character on the desktop.
+  - `DesktopCompanion` (`IDesktopCompanion`): the app's character view standing on a soft contact shadow, by the
+    taskbar's corner or where it was dragged. It is in neither the taskbar nor Alt+Tab, never takes the keyboard, and
+    clicks pass through everywhere it isn't drawn.
+  - Its speech bubble rides beside it, toward the screen's middle.
+  - A click says something, a drag moves it, a right click opens the model's desktop menu, and Ctrl+wheel or a pinch
+    resizes it.
+  - `DesktopWindow` is the floating window underneath. The host makes the companion from the app's
+    `CompanionViews.DesktopCharacter`.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.

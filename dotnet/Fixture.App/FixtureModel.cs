@@ -210,6 +210,9 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     /// <summary><see cref="MakeLineDue"/> in 10 s: time to go full screen.</summary>
     public void MakeLineDueSoon() => timers.After(10, MakeLineDue);
 
+    /// <summary>The character on the desktop, on or off (the tray menu's "On the desktop" has the rest).</summary>
+    public void ToggleDesktop() => SetShowOnDesktop(!Settings.ShowOnDesktop);
+
     /// <summary>The tray panel, as a click on the icon opens it (for when the icon sits in the overflow).</summary>
     public void OpenPanel() => StatusItem?.OpenPanel();
 }

@@ -55,6 +55,14 @@
             </StackPanel>
             <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="For the hand checks" />
             <StackPanel Spacing="4">
+                <Button Click="{x:Bind Model.ToggleDesktop}" Content="On the desktop, or off" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="The character stands by the taskbar: click it, drag it, right-click it, Ctrl+wheel over it. Clicks pass through around it."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Spacing="4">
                 <Button Click="{x:Bind Model.OpenPanel}" Content="Open the panel" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"

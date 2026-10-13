@@ -32,9 +32,9 @@ namespace Deskling.Windows.Companion.Views;
 /// </summary>
 /// <remarks>
 /// Each part's elements are made once; a frame only sets the transforms of the parts that moved (on the visual, so XAML
-/// doesn't lay out or render anything again) and, when the eyes or mouth change, which parts are in the stage. Measured
-/// on an ARM64 Release build: two characters moving cost about 6 % of a core, against 10 % through XAML's
-/// <c>RenderTransform</c>.
+/// doesn't lay out or render anything again) and, when the eyes or mouth change, which parts are in the stage. A frame
+/// that moves nothing by half a screen pixel is skipped, and the idle sway runs at 15 frames a second (talking at 30).
+/// The plan's 4.1 to 4.3 outcomes have the measurements.
 /// </remarks>
 public sealed partial class CharacterCanvas : UserControl
 {
@@ -57,6 +57,7 @@ public sealed partial class CharacterCanvas : UserControl
     private const double SkipBelowPixels = 0.5;
 
     private bool moving;
+    private bool fast;
     private double? wokeAt;
     private Pose? drawn;
     private IReadOnlyList<PlacedPart> layers = [];
@@ -223,6 +224,7 @@ public sealed partial class CharacterCanvas : UserControl
         if (was == Mood.Shushed && now != Mood.Shushed && !IsStill)
             wokeAt = Now;
         Draw(force: true);
+        UpdateMoving();
     }
 
     private void OnRootChanged(XamlRoot sender, XamlRootChangedEventArgs args)
@@ -233,15 +235,19 @@ public sealed partial class CharacterCanvas : UserControl
             Draw(force: true);
     }
 
-    /// <summary>On the shared frame clock while the character may move and shows.</summary>
+    /// <summary>
+    /// On the shared frame clock while the character may move and shows: fast while talking or springing back from Shh,
+    /// slow for the idle sway.
+    /// </summary>
     private void UpdateMoving()
     {
         if (IsShowing && !IsStill && character is not null)
         {
-            if (moving)
+            var wantsFast = talking || wokeAt is not null;
+            if (moving && fast == wantsFast)
                 return;
-            moving = true;
-            FrameClock.Add(frame);
+            (moving, fast) = (true, wantsFast);
+            FrameClock.Add(frame, fast);
         }
         else
             StopMoving();
@@ -294,7 +300,10 @@ public sealed partial class CharacterCanvas : UserControl
         var still = IsStill;
         var since = wokeAt is { } woke ? now - woke : (double?)null;
         if (since >= CharacterMotion.WakeDuration)
+        {
             wokeAt = null;
+            UpdateMoving();
+        }
         var level = talking && !still ? MouthLevel?.Invoke() : null;
         var pose = CharacterMotion.PoseAt(c, mood, talking, still, now, level, since);
         if (!force && pose.Equals(drawn))

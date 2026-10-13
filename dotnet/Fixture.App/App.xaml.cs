@@ -34,7 +34,10 @@ public partial class App : CompanionApp
         FixtureModel? made = null;
         FixtureModel Model() => made ?? throw new InvalidOperationException("The views open after the model is made.");
         var host = new WindowsCompanionHost<FixtureWindow>(
-            new CompanionViews<FixtureWindow>(FixtureModel.Spec, id => Content(Model(), id), () => new PanelView(Model())),
+            new CompanionViews<FixtureWindow>(FixtureModel.Spec, id => Content(Model(), id), () => new PanelView(Model()))
+            {
+                DesktopCharacter = () => DesktopCharacter.Make(Model()),
+            },
             TrayIconId,
             FixtureModel.Configuration.StatusItemTooltip
         );

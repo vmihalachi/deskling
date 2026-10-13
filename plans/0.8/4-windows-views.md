@@ -133,3 +133,70 @@ was found:
   - the display face, which the fixture doesn't set;
   - the bubble's trailing, top and bottom tails on screen (only tested as geometry);
   - Narrator over the bubble and the pill.
+
+### 4.3, DesktopCompanion (2026-10-13)
+
+`Desktop/` in the package: `DesktopWindow` (Swift's `FloatingWindow`), `DesktopCompanion` (`IDesktopCompanion`) with its
+stand, and `DesktopNative`; 4 more tests (82 in all). `CompanionViews.Desktop`, 3.3's placeholder that took a whole
+`IDesktopCompanion`, became `DesktopCharacter`: the app gives only the character view, and the host stands it in a
+`DesktopCompanion` the first time the model shows it. The fixture app gives a `CharacterCanvas` that follows the model,
+and Home gets "On the desktop, or off". Differences from the brief, and what was found:
+
+- **`DesktopWindow` is 3.1's recipe:** the context-menu presenter, the transparent backdrop, `WS_EX_LAYERED`, tool
+  window, no-activate, no rounded corners or border. It adds the following:
+  - **Positions are screen pixels:** the anchor (the bottom middle) with y down, as `FloatingPlacement` takes it. Sizes
+    are DIPs at the scale of the display under the anchor. `DesktopPosition` saves the anchor in pixels.
+  - **The work areas** come from `DisplayArea.FindAll()`, read by index: enumerating the projected list throws
+    `InvalidCastException` (seen at the first try).
+  - **Display changes** come from `DisplayAreaWatcher`, so no window subclass is needed. A scale change re-places the
+    window through `XamlRoot.Changed`.
+  - **The root is transparent but hit-testable,** so every press reaches the window's handlers. The canvas's own hit
+    test decides where clicks land, through the click-through poll.
+  - **The poll** checks every 33 ms while the pointer is within 160 pixels of the window, and every 100 ms when it's
+    farther. It is one-shot and re-armed each time, so no poll runs after a hide.
+  - **The bubble rides along as an owned window** (`GWLP_HWNDPARENT`), which Windows keeps above the character. It
+    follows drags step by step (`OnDragging`).
+  - **Ctrl+wheel** (which a precision touchpad's pinch sends) steps the size once per gesture; a gesture ends after
+    0.4 s without the wheel. A touch pinch does the same through `ManipulationDelta`.
+- **The menu's owner is a second `TrayIconHost` with no glyph,** so no icon shows (as the spike did). After the menu
+  closes, the foreground goes back to the app that had it, once the chosen command has run, unless that command opened
+  a window.
+- **The stand** is the character over a radial-gradient ellipse in the palette's shade (the Mac blurs a filled one).
+  The shadow isn't hit-testable. Narrator sees one button named like the character, with the say action's name as its
+  help text, and its Invoke says something.
+- **A bug the tests caught:** the bubble's vertical place was the Mac's y-up formula. It only looked right on screen
+  because, for a one-line bubble, both formulas give the same answer. `DesktopCompanion.BubbleFrame` is now pure and
+  tested (side, the tail level with the head, scale 2 against 1, kept on the display), and on screen a nine-line
+  bubble's tail meets the head.
+- **Checked by script** (JIT and Native AOT, no warnings):
+  - It shows by the taskbar's corner.
+  - The pointer over the head or stem reaches the window. Over the window's corner, beside the stem or on the shadow,
+    it reaches the app below (`WindowFromPoint`).
+  - A click says a line into the bubble, on the side toward the screen's middle with its tail toward the character. A
+    click on the bubble puts it away.
+  - A drag moves the character, the bubble follows, and the model keeps the spot (off and on again, it comes back
+    there). Near the screen's edge a tall bubble is held inside the work area.
+  - The right-click menu shows the model's desktop menu. Esc closes it, and Notepad gets the foreground back.
+  - Ctrl+wheel steps the size up and back around the anchor; a plain wheel does nothing.
+  - With Notepad in front, a click on the character leaves Notepad in front. With the fixture's own window in front,
+    a click does make the character's window the foreground, within the same app.
+- **Cost:** the desktop character alone uses 2.5–3.1 % of a core (Native AOT 2.7–3.1 %), noisy by about ±1 %. That
+  is:
+  - 0.6 % for the two timers;
+  - 0.8 % for computing the pose;
+  - the rest for about 15 composition commits a second, roughly 1.3 ms of CPU each across the UI thread and the
+    in-process compositor.
+
+  The idle sway now asks the shared `FrameClock` for 15 fps; talking and the wake spring ask for 30. Side by side in
+  one session, the two rates measured the same (3.4 against 3.6 %), because the half-pixel skip already kept commits
+  near 15 a second. 15 is kept for the halved pose work.
+- **For the owner:** going lower means fewer commits. Either a coarser skip (1 pixel instead of half: about half the
+  cost, the sway in visible steps), or moving the sway into a compositor animation (no UI-thread work, but the
+  compositor then draws at the display's rate). Neither was tried.
+- **Not checked yet:**
+  - a touch pinch;
+  - two displays, or a scale change while dragging;
+  - the hide during a call or full screen (the model's, checked by 3.5's hand list);
+  - the fades by eye;
+  - the light theme;
+  - Windows 10.

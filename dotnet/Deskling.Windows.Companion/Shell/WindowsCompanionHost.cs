@@ -23,8 +23,11 @@ public sealed record CompanionViews<TWindow>(
 )
     where TWindow : notnull
 {
-    /// <summary>The desktop character's window (the layout, size, saved position and the click's accessible name); none shows without it.</summary>
-    public Func<DesktopLayout, DesktopSize, DesktopPosition?, string, IDesktopCompanion>? Desktop { get; init; }
+    /// <summary>
+    /// The character on the desktop (a <see cref="Views.CharacterCanvas"/> bound to the model), which the host stands in a
+    /// <see cref="Desktop.DesktopCompanion"/> the first time the model shows it; none shows without it.
+    /// </summary>
+    public Func<UIElement>? DesktopCharacter { get; init; }
 }
 
 /// <summary>
@@ -104,7 +107,9 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
 
     public IDesktopCompanion MakeDesktop(DesktopLayout layout, DesktopSize size, DesktopPosition? position, string sayActionName)
     {
-        Desktop = views.Desktop?.Invoke(layout, size, position, sayActionName) ?? new AbsentDesktop();
+        Desktop = views.DesktopCharacter is { } character
+            ? new Desktop.DesktopCompanion(character(), layout, size, position, sayActionName)
+            : new AbsentDesktop();
         return Desktop;
     }
 
