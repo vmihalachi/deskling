@@ -69,3 +69,14 @@ and `Deskling.Testing` 0.7.7 depends on it. `Deskling.Windows.Companion` was not
 - `verify.sh --fast` is ok (versions agree, C# formatting). Every .NET test project passes in Release here: Core 210,
   Companion 209, Companion.Shell 90, Windows 4, Windows.Companion 95.
 - The tag is the owner's: `v0.8.0` on this commit once `dotnet.yml` is green on it.
+
+### Released
+
+- 5.1 and 5.2 were pushed first; `.NET` (fixture app build included), `Tools`, `Pages` and CodeQL were green on them.
+  `c84b749` went up with the tag at the owner's word, so the site showed 0.8.0 only once it existed.
+- `release.yml` run 38428336861 succeeded in every job. It pushed the six packages to NuGet.org, staged
+  `@deskling/landing` 0.8.0 on npm for the owner's 2FA approval, and published the GitHub release
+  (https://github.com/vmihalachi/deskling/releases/tag/v0.8.0) with the packages and the landing tarball.
+- 5.4 is the apps': sunnysays M3.2 and Pagliacci's M6 each start with their pin bump.
+- Left for later: the screenshot runner in `tools/` (with M3.2), the contrast-theme shots, the hand checks in 3.5 and
+  4, and the desktop character's CPU (4.3).
