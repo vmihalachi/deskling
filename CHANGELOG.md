@@ -17,6 +17,16 @@ package and the NuGet packages together.
 - **Windows**: `TrayIconHost` adds its icon by window and id when Windows refuses the GUID, which it ties to the first
   executable that used it (the same app built in another folder showed no icon).
 - **Core**: `ReswName.FallbackText(key)`, the English a missing `.resw` string falls back to.
+- **Companion.Shell**: `IStrings`, an app's words by catalog key for the parts of a Windows app that compile without
+  WinUI (its model and copy), so their tests run on any OS. **Windows.Companion**: `LocStrings`, the one over `Loc`.
+  **Testing**: `ReswStrings`, the one over an app's generated `.resw` (with `Missing`, the keys asked for that aren't
+  there), and `FakeAudio`.
+- **Windows.Companion**: `SpeechBubble.Header`, something above the words in the same card (a joke's setup over its
+  punchline), and `OutlineThickness`. `GlyphWave`, the tray glyph inside a window (Home's picture of the notification
+  area), stepping its talking frames while active. `HoldGesture`, press and hold on an element, touch, pen and mouse.
+  `ScreenshotCapture.Language` (`DESKLING_SCREENSHOT_LANGUAGE`), so one machine shoots every language.
+- **Windows.Companion**: `ThemedColor.Resource` reads the app's theme dictionaries through `XamlCast`; under Native
+  AOT the `is` checks it used could miss and throw at launch.
 
 ## 0.8.0 - 2026-10-13
 

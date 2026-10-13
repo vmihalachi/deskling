@@ -1,3 +1,4 @@
+using Deskling.Companion.Shell.Signals;
 using Deskling.Companion.Shell.Speech;
 
 namespace Deskling.Testing;
@@ -59,4 +60,12 @@ public sealed class FakeChime : IChimePlaying
     }
 
     public void Stop() { }
+}
+
+/// <summary>The output's mute state, set by the test (null: unknown, as when no device answers).</summary>
+public sealed class FakeAudio : IAudioOutputState
+{
+    public bool? Muted { get; set; }
+
+    public bool? IsOutputMuted() => Muted;
 }

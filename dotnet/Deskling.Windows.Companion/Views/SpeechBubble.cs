@@ -21,7 +21,8 @@ namespace Deskling.Windows.Companion.Views;
 /// don't fit; <c>MaxWidth</c> caps it). With a <see cref="Countdown"/>, a tiny dial in its bottom-trailing corner runs
 /// down until the bubble goes away (on the compositor, so it costs the UI thread nothing); <see cref="RoomForDial"/>
 /// keeps the words clear of that corner (set it where a countdown can appear, so the size doesn't change when it does).
-/// New words fade in over 0.15 s, unless Windows' animation effects are off.
+/// New words fade in over 0.15 s, unless Windows' animation effects are off. A <see cref="Header"/> sits above the words
+/// in the same card (a joke's setup over its punchline), and <see cref="OutlineThickness"/> draws a hairline instead.
 /// </summary>
 public sealed partial class SpeechBubble : UserControl
 {
@@ -36,6 +37,7 @@ public sealed partial class SpeechBubble : UserControl
     private readonly Canvas shadowHost = new();
     private readonly XamlPath outline = new() { StrokeThickness = 2, StrokeLineJoin = PenLineJoin.Round };
     private readonly Grid card = new();
+    private readonly StackPanel lines = new() { Spacing = Space.Tight };
     private readonly TextBlock words = new() { TextWrapping = TextWrapping.WrapWholeWords, TextAlignment = TextAlignment.Left };
     private readonly Canvas dialHost = new()
     {
@@ -47,6 +49,7 @@ public sealed partial class SpeechBubble : UserControl
         Visibility = Visibility.Collapsed,
     };
     private string? text;
+    private UIElement? header;
     private BubbleTail tail = BubbleTail.Leading;
     private bool fillsWidth = true;
     private bool roomForDial;
@@ -62,7 +65,8 @@ public sealed partial class SpeechBubble : UserControl
         IsTabStop = false;
         backdrop.Children.Add(shadowHost);
         backdrop.Children.Add(outline);
-        card.Children.Add(words);
+        lines.Children.Add(words);
+        card.Children.Add(lines);
         frame.Children.Add(backdrop);
         frame.Children.Add(card);
         frame.Children.Add(dialHost);
@@ -92,6 +96,32 @@ public sealed partial class SpeechBubble : UserControl
             words.Text = string.IsNullOrEmpty(value) ? "…" : value;
             FadeIn();
         }
+    }
+
+    /// <summary>
+    /// Something above the words, inside the card (a joke's setup, small, over its punchline); null for none. It keeps
+    /// its own look: the bubble sets only the words' font and color.
+    /// </summary>
+    public UIElement? Header
+    {
+        get => header;
+        set
+        {
+            if (header == value)
+                return;
+            if (header is not null)
+                lines.Children.Remove(header);
+            header = value;
+            if (value is not null)
+                lines.Children.Insert(0, value);
+        }
+    }
+
+    /// <summary>The outline's width: 2 by default, 1 for a hairline.</summary>
+    public double OutlineThickness
+    {
+        get => outline.StrokeThickness;
+        set => outline.StrokeThickness = value;
     }
 
     /// <summary>The side the tail comes out of, toward the character; leading by default.</summary>

@@ -5,7 +5,7 @@ namespace Deskling.Companion.Shell.Performance;
 /// <summary>
 /// A phrase in the user's language (Swift's <c>Phrase+Localized</c>), through the app's lookup: <c>localize(catalogKey,
 /// source)</c> returns the app's text for a catalog key (<c>phrase.&lt;id&gt;</c>, <c>.1</c>, <c>.2</c>), the bank's
-/// source when it has none. On Windows the app passes <c>Loc.Get</c> over its <c>.resw</c>.
+/// source when it has none. On Windows the app passes <c>Loc.Localize</c> over its <c>.resw</c>.
 /// </summary>
 public static class PhraseLocalization
 {

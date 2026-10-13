@@ -1,4 +1,5 @@
 using Deskling.Companion.Figures;
+using Deskling.Windows.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -40,7 +41,13 @@ public readonly record struct ThemedColor(Color Light, Color Dark)
         var resources = Application.Current.Resources;
         foreach (var dictionary in resources.MergedDictionaries.Reverse().Append(resources))
         {
-            if (dictionary.ThemeDictionaries.TryGetValue(theme, out var themed) && themed is ResourceDictionary colors && colors.TryGetValue(key, out var value))
+            // Through XamlCast: under Native AOT a theme dictionary or a brush read untyped can arrive as a plain
+            // DependencyObject, so `is` misses and the app throws at launch (a Debug run never shows it).
+            if (
+                dictionary.ThemeDictionaries.TryGetValue(theme, out var themed)
+                && XamlCast.As<ResourceDictionary>(themed) is { } colors
+                && colors.TryGetValue(key, out var value)
+            )
                 return ColorOf(value);
             if (dictionary.TryGetValue(key, out var plain))
                 return ColorOf(plain);
@@ -49,12 +56,9 @@ public readonly record struct ThemedColor(Color Light, Color Dark)
     }
 
     private static Color? ColorOf(object value) =>
-        value switch
-        {
-            SolidColorBrush brush => brush.Color,
-            Color color => color,
-            _ => null,
-        };
+        XamlCast.As<SolidColorBrush>(value) is { } brush ? brush.Color
+        : value is Color color ? color
+        : null;
 
     private static Color Rgb(uint hex, double alpha) =>
         Color.FromArgb((byte)Math.Round(Math.Clamp(alpha, 0, 1) * 255), (byte)(hex >> 16), (byte)(hex >> 8), (byte)hex);

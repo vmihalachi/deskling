@@ -41,7 +41,17 @@ public static partial class ScreenshotCapture
 
     private static readonly List<string> Found = [];
 
+    /// <summary>The language a run shoots in, an app's tag ("it"); unset runs in the language the app would choose.</summary>
+    public const string LanguageVariable = "DESKLING_SCREENSHOT_LANGUAGE";
+
     public static bool IsEnabled => Environment.GetEnvironmentVariable(ModeVariable) is not null;
+
+    /// <summary>
+    /// The language asked for (<see cref="LanguageVariable"/>), else null. An app passes it to <c>Loc.UseLanguage</c>
+    /// instead of <c>Loc.Choose</c>'s pick, so one machine shoots every language without changing its own.
+    /// </summary>
+    public static string? Language =>
+        IsEnabled && Environment.GetEnvironmentVariable(LanguageVariable) is { Length: > 0 } language ? language : null;
 
     /// <summary>The shot name prefixes asked for; empty means all.</summary>
     public static IReadOnlyList<string> Wanted => WantedIn(Environment.GetEnvironmentVariable(ModeVariable));
