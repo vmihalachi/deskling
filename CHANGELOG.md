@@ -30,6 +30,11 @@ package and the NuGet packages together.
   hand, moving a `MockClock`), `FakeSpeaker`, `FakeChime`, `FakeNotifier` and `FakeHost<TWindow>` (with
   `FakeStatusItem`, `FakeWindowHost`, `FakeDesktopCompanion`, `FakeHotKey`).
 
+- **Tools**: `l10n.py status --since REF` and `export --since REF` flag the landing page's changed English when the
+  landing page is a submodule (or any nested repository): its files are read from that repository, at the commit the
+  app's `REF` records for it, else (not recorded, or not fetched) at its own `REF`. Before, `git show` in the app's
+  repository found only the gitlink, so nothing was flagged.
+
 ## 0.7.6 - 2026-10-13
 
 - **Companion**: the mouth can follow a recorded voice's loudness. `RiggedCharacter.pose(mood:time:mouthLevel:)` takes

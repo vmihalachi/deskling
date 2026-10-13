@@ -229,9 +229,34 @@ def set_path(tree: dict, dotted: str, value: object, reference: dict) -> None:
         node.update(items)
 
 
+def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+    # Without the GIT_DIR… a git hook exports, so `-C` picks the repository, a submodule's own (companion.git_env).
+    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, env=companion.git_env())
+
+
+def git_repository(folder: Path) -> Path | None:
+    """The top of the git repository `folder` lies in (a submodule's or nested checkout's own), or None."""
+    while not folder.exists():
+        folder = folder.parent
+    result = git(folder, "rev-parse", "--show-toplevel")
+    return Path(result.stdout.strip()).resolve() if result.returncode == 0 else None
+
+
 def git_show(ref: str, path: Path) -> str | None:
-    rel = path.relative_to(ROOT).as_posix()
-    result = subprocess.run(["git", "-C", str(ROOT), "show", f"{ref}:{rel}"], capture_output=True, text=True)
+    """`path` as it was at `ref`, or None. A path inside a submodule or any nested repository (a landing page kept in
+    its own repository) is read from that repository: at the commit the app's `ref` records for it, else (not recorded
+    there, or that commit isn't fetched) at that repository's own `ref`."""
+    path = path.resolve()
+    repo = git_repository(path.parent)
+    if repo is None:
+        return None
+    app = git_repository(ROOT.resolve())
+    if app is not None and repo != app and repo.is_relative_to(app):
+        recorded = git(app, "rev-parse", "--verify", "--quiet", f"{ref}:{repo.relative_to(app).as_posix()}")
+        commit = recorded.stdout.strip()
+        if recorded.returncode == 0 and git(repo, "cat-file", "-e", f"{commit}^{{commit}}").returncode == 0:
+            ref = commit
+    result = git(repo, "show", f"{ref}:{path.relative_to(repo).as_posix()}")
     return result.stdout if result.returncode == 0 else None
 
 
@@ -1057,13 +1082,15 @@ def main() -> int:
     ):
         cmd = sub.add_parser(name, help=help_text)
         cmd.add_argument("-v", "--verbose", action="store_true", help="list every problem")
-        cmd.add_argument("--since", metavar="REF", help="also flag strings whose English changed since a git ref")
+        cmd.add_argument("--since", metavar="REF", help="also flag strings whose English changed since a git ref "
+                         "(the app's; a submodule at the commit it records)")
         cmd.add_argument("--strict", action="store_true", help=argparse.SUPPRESS)
         cmd.set_defaults(func=func)
 
     export = sub.add_parser("export", help="write per-language work files with only the strings to translate")
     export.add_argument("--lang", action="append", help="language code (repeatable); default: all with gaps")
-    export.add_argument("--since", metavar="REF", help="also re-export strings whose English changed since a git ref")
+    export.add_argument("--since", metavar="REF", help="also re-export strings whose English changed since a git ref "
+                        "(the app's; a submodule at the commit it records)")
     export.add_argument("--out", help="output directory (default <mac.dir>/build/l10n)")
     export.set_defaults(func=cmd_export)
 
