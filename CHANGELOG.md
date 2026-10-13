@@ -6,10 +6,6 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-## 0.7.7 - 2026-10-13
-
-- **Tools**: `fonts.py` builds more than one face: `fonts.faces` lists further variable fonts under the same
-  license (an upright beside an italic), each with its own `family`, pinned `font` and `weights`.
 - **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
   over `Deskling.Companion.Shell` and `Deskling.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
   Windows' speech synthesizer with the chosen voice or the language's (`Speaker.Voices(language)` for a voice picker),
@@ -82,9 +78,14 @@ package and the NuGet packages together.
   - `ScreenshotScript<TWindow, TSettings>` takes the shot list (windows, views at a size or their fitting size, the
     supporter sequence, the app's own) over a model on a `SampleEnvironment`; `CompanionApp.RunScreenshots` starts it.
 - **Fixture app**: `scripts/fixture-screenshots.ps1` renders its windows.
-- **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.
+
+## 0.7.7 - 2026-10-13
+
+- **Tools**: `fonts.py` builds more than one face: `fonts.faces` lists further variable fonts under the same
+  license (an upright beside an italic), each with its own `family`, pinned `font` and `weights`.
+- **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Windows**: `TrayMenuItem.Command` takes `IsChecked` (a check mark), and `TrayIconHost.MenuOpening` is raised before
   the menu opens, so its owner can rebuild it from the current state. Both additive.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of
