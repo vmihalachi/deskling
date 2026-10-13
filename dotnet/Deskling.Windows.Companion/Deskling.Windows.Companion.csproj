@@ -5,7 +5,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsPackable>true</IsPackable>
     <PackageId>Deskling.Windows.Companion</PackageId>
-    <Description>The Windows half of a desk-companion app's shell, over Deskling.Companion.Shell and Deskling.Windows: the speaker (recorded clips and the system speech synthesizer), the chime, and (as 0.8 grows) the tray status item and glyph, the window manager, the hotkey, the notifier, the desktop character's window and the WinUI controls every companion draws the same. Code only: no XAML, no strings, no permission prompts.</Description>
+    <Description>The Windows half of a desk-companion app's shell, over Deskling.Companion.Shell and Deskling.Windows, for WinUI 3: the app's Application and its launch, the speaker (recorded clips and the system speech synthesizer), the chime, the tray status item with its glyph and panel, the window manager, the hotkey, the notifier, the character on the desktop, and the controls every companion draws the same (the character canvas, the speech bubble, the status pill, the window chrome, the Settings rows, the Support window), plus the screenshot run. Code only: no XAML, no strings, no permission prompts.</Description>
     <!-- Restores and compiles on Linux and macOS too (code only, no XAML), like Deskling.Windows; the Windows App SDK's
          PRI step needs Windows, so CI builds it on windows-latest (dotnet.yml). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

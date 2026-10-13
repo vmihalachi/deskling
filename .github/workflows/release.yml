@@ -87,7 +87,8 @@ jobs:
           name: nupkg-core
           path: dotnet/artifacts/*.nupkg
 
-  # Deskling.Windows needs the Windows App SDK's MakePri.exe, so it packs on Windows.
+  # Deskling.Windows and Deskling.Windows.Companion need the Windows App SDK's MakePri.exe, so they test and pack on
+  # Windows.
   windows:
     needs: version
     runs-on: windows-latest
@@ -98,10 +99,18 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Pack Deskling.Windows
-        run: >
-          dotnet pack dotnet/Deskling.Windows/Deskling.Windows.csproj -c Release
-          -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+      - name: Test
+        run: |
+          dotnet test dotnet/Deskling.Windows.Tests/Deskling.Windows.Tests.csproj -c Release
+          dotnet test dotnet/Deskling.Windows.Companion.Tests/Deskling.Windows.Companion.Tests.csproj -c Release
+
+      - name: Pack Deskling.Windows, Deskling.Windows.Companion
+        shell: bash
+        run: |
+          for project in Deskling.Windows Deskling.Windows.Companion; do
+            dotnet pack "dotnet/$project/$project.csproj" -c Release \
+              -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+          done
 
       - uses: actions/upload-artifact@v7
         with:

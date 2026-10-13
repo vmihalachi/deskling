@@ -285,7 +285,7 @@ Done on this machine (2026-10-13), sequence 4's steps all committed:
 
 - The fixture's screenshots look right in light and dark. The contrast theme waits for a run with one on.
 - `LayoutCheck` is clean.
-- `dotnet.yml`'s windows job hasn't run on 4.x yet: it runs when these commits are pushed.
+- `dotnet.yml` is green on 4.x, its windows job included (run 38422091815).
 
 ### Hand to 5 (and to sunnysays' M3.2)
 

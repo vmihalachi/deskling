@@ -2,7 +2,7 @@ name: .NET
 
 # The pure packages (Deskling.Core, Deskling.Companion, Deskling.Companion.Shell, Deskling.Testing) build and test on Linux and Windows
 # (every conformance vector); Deskling.Windows and Deskling.Windows.Companion build on the Windows runner, where their
-# Win32 and WinRT calls can be exercised.
+# Win32 and WinRT calls can be exercised, with the fixture app (a WinUI app on them, never packed).
 on:
   push:
     branches:
@@ -72,10 +72,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Build Deskling.Windows and Deskling.Windows.Companion
+      - name: Build Deskling.Windows, Deskling.Windows.Companion and the fixture app
         run: |
           dotnet build dotnet/Deskling.Windows/Deskling.Windows.csproj -c Release
           dotnet build dotnet/Deskling.Windows.Companion/Deskling.Windows.Companion.csproj -c Release
+          dotnet build dotnet/Fixture.App/Fixture.App.csproj -c Release
 
       - name: Windows tests
         run: |
