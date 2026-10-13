@@ -1,0 +1,60 @@
+<Project>
+  <!--
+    What every companion app's WinUI project needs, shared instead of copied (tools/windows/README.md). Import it at the
+    end of the app's .csproj, after its own properties:
+
+      <Import Project="..\..\deskling\tools\windows\companion.targets" />
+
+    - x64 and ARM64, the RuntimeIdentifier for the Platform built (the machine's own when none is named), and the same for
+      publishing (Native AOT needs one, and an ARM64 publish on an x64 PC would otherwise take the machine's).
+    - Program.cs owns Main (CompanionApp.Start), so XAML generates none.
+    - Debug runs unpackaged (WindowsPackageType None: `dotnet run`, the screenshot runner, no Developer Mode, no
+      registration); every other configuration is an MSIX from Package.appxmanifest (which the MSIX tooling takes up
+      only for a packaged build). Either can be set on the command
+      line (`-p:WindowsPackageType=None` builds a Release, Native AOT exe that runs unpackaged, for screenshot runs).
+    - Native AOT on publish, and its analyzers on every build.
+    - The app's shared files linked, not copied, from the properties it sets before the import:
+        CompanionVoiceFolder   the voices submodule's Voice folder   → Voice\<language>\<voice>\<id>.m4a, manifest.json
+        CompanionSoundsFolder  the WAVs the Mac bundles             → Sounds\<name>.wav (ChimePlayer's default folder)
+        CompanionFontsFolder   the display faces and their licence  → Fonts\*.ttf (ms-appx:///Fonts/<file>#<family>)
+    - The Native AOT package without the JIT build's runtimeconfig.json and deps.json, which only an installed .NET reads.
+  -->
+  <PropertyGroup>
+    <Platforms Condition="'$(Platforms)' == ''">x64;ARM64</Platforms>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <PublishRuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</PublishRuntimeIdentifier>
+    <PublishRuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</PublishRuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType Condition="'$(WindowsPackageType)' == '' and '$(Configuration)' == 'Debug'">None</WindowsPackageType>
+    <WindowsPackageType Condition="'$(WindowsPackageType)' == ''">MSIX</WindowsPackageType>
+    <PublishAot Condition="'$(PublishAot)' == ''">true</PublishAot>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(CompanionVoiceFolder)' != ''">
+    <Content Include="$(CompanionVoiceFolder)\**\*" Link="Voice\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(CompanionSoundsFolder)' != ''">
+    <Content Include="$(CompanionSoundsFolder)\*.wav" Link="Sounds\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(CompanionFontsFolder)' != ''">
+    <Content Include="$(CompanionFontsFolder)\*.ttf;$(CompanionFontsFolder)\*.otf;$(CompanionFontsFolder)\OFL*.txt" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    A Native AOT package takes the app from the publish output, but the MSIX tooling also packs the JIT build's
+    runtimeconfig.json and deps.json, which only a .NET runtime reads (`dotnet publish` leaves them out), so the package
+    looks like it needs one installed. Drop them; smoke-package.ps1 -CheckOnly fails on a runtimeconfig.json. Same
+    conditions and timing as the tooling's own AOT cleanup, WinAppSdkRemoveLinkedFilesFromPayload.
+  -->
+  <Target Name="CompanionRemoveRuntimeFilesFromNativePackage" Condition="'$(PublishAot)' == 'true'"
+          AfterTargets="GetPackagingOutputs" BeforeTargets="_ComputeAppxPackagePayload">
+    <ItemGroup Condition="'$(IncludePublishItemsOutputGroup)' == 'true'">
+      <PackagingOutputs Remove="@(PackagingOutputs)"
+                        Condition="'%(PackagingOutputs.TargetPath)' == '$(ProjectRuntimeConfigFileName)' or '%(PackagingOutputs.TargetPath)' == '$(ProjectDepsFileName)'" />
+    </ItemGroup>
+  </Target>
+</Project>
