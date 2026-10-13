@@ -209,6 +209,9 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
 
     /// <summary><see cref="MakeLineDue"/> in 10 s: time to go full screen.</summary>
     public void MakeLineDueSoon() => timers.After(10, MakeLineDue);
+
+    /// <summary>The tray panel, as a click on the icon opens it (for when the icon sits in the overflow).</summary>
+    public void OpenPanel() => StatusItem?.OpenPanel();
 }
 
 /// <summary>The wall clock, skipped ahead by hand (the scheduler knows the time only through it).</summary>

@@ -1,3 +1,4 @@
+using Deskling.Windows.Companion.Views;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -78,7 +79,9 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
             return window;
         content = makeContent() as FrameworkElement ?? throw new InvalidOperationException("The panel must be a FrameworkElement.");
         // A canvas measures its child without a limit, so the child keeps the size it asks for and the window follows it.
-        root = new Canvas { RequestedTheme = theme };
+        var canvas = new Canvas { RequestedTheme = theme };
+        LookBinding.Keep(canvas, () => canvas.Background = LookBinding.Brush(canvas, p => p.Paper));
+        root = canvas;
         root.Children.Add(content);
         var accelerator = new KeyboardAccelerator { Key = VirtualKey.Escape };
         accelerator.Invoked += (_, args) =>

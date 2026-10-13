@@ -1,12 +1,15 @@
 <UserControl
     x:Class="FixtureApp.Views.OnboardingView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel Margin="24,40,24,24" Spacing="16">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dv="using:Deskling.Windows.Companion.Views">
+    <Grid RowDefinitions="*,Auto">
+        <StackPanel Margin="{x:Bind dv:WindowInset.ContentOverActionBar}" Spacing="16">
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Welcome" />
             <TextBlock Text="The fixture's first run. Get started opens Home, as an app's onboarding does." TextWrapping="Wrap" />
-            <Button Click="{x:Bind Model.CompleteOnboarding}" Content="Get started" Style="{StaticResource AccentButtonStyle}" />
         </StackPanel>
+        <dv:ActionBar Grid.Row="1">
+            <Button Click="{x:Bind Model.CompleteOnboarding}" Content="Get started" Style="{StaticResource AccentButtonStyle}" />
+        </dv:ActionBar>
     </Grid>
 </UserControl>

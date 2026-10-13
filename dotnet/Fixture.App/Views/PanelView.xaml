@@ -2,26 +2,40 @@
     x:Class="FixtureApp.Views.PanelView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dv="using:Deskling.Windows.Companion.Views"
     xmlns:views="using:FixtureApp.Views"
     Width="320">
-    <StackPanel Padding="16" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Spacing="12">
-        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
-        <TextBlock Text="{x:Bind views:Show.Bubble(Model.Bubble), Mode=OneWay}" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Click="{x:Bind Model.SayNow}" Content="Say something" Style="{StaticResource AccentButtonStyle}" />
-            <Button
+    <StackPanel Padding="{x:Bind dv:WindowInset.PanelPadding}" Spacing="12">
+        <dv:StatusPill Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="2">
+            <dv:CharacterCanvas
+                x:Name="Figure"
+                Width="64"
+                Height="64"
+                AccessibilityLabel="The fixture"
+                Character="{x:Bind Model.GlyphCharacter}"
+                Line="{x:Bind Model.Bubble, Mode=OneWay}"
+                Mood="{x:Bind Model.Mood, Mode=OneWay}"
+                Talking="{x:Bind Model.IsVoicing, Mode=OneWay}" />
+            <dv:SpeechBubble
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                FontSize="14"
+                Text="{x:Bind Model.Bubble, Mode=OneWay}" />
+        </Grid>
+        <StackPanel>
+            <dv:PanelRow Click="{x:Bind Model.SayNow}" Content="Say something" />
+            <dv:PanelRow
                 Click="{x:Bind Model.ShushForAnHour}"
                 Content="Shh for an hour"
                 Visibility="{x:Bind views:Show.Unless(Model.IsShushed), Mode=OneWay}" />
-            <Button
+            <dv:PanelRow
                 Click="{x:Bind Model.Wake}"
                 Content="Wake up"
                 Visibility="{x:Bind views:Show.When(Model.IsShushed), Mode=OneWay}" />
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <HyperlinkButton Click="{x:Bind Model.OpenHome}" Content="Home" />
-            <HyperlinkButton Click="{x:Bind Model.OpenSettings}" Content="Settings" />
-            <HyperlinkButton Click="{x:Bind Model.Quit}" Content="Quit" />
+            <dv:PanelRow Click="{x:Bind Model.OpenHome}" Content="Home" />
+            <dv:PanelRow Click="{x:Bind Model.OpenSettings}" Content="Settings…" />
+            <dv:PanelRow Click="{x:Bind Model.Quit}" Content="Quit" />
         </StackPanel>
     </StackPanel>
 </UserControl>

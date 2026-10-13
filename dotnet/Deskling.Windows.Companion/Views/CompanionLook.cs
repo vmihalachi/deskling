@@ -1,0 +1,93 @@
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI.Text;
+using Windows.UI.ViewManagement;
+
+namespace Deskling.Windows.Companion.Views;
+
+/// <summary>
+/// The app's look for the package's controls (on the Mac, <c>companionWindowRoot</c>'s palette and display face): its
+/// <see cref="CompanionPalette"/>, and the display face the speech bubble speaks in. The app sets <see cref="Current"/>
+/// once, in <c>MakeCompanion</c> before any window opens; the controls read it, and repaint when it changes, when their
+/// theme changes and when Windows' contrast theme turns on or off. The windows' background is its paper.
+/// </summary>
+public sealed record CompanionLook(CompanionPalette Palette)
+{
+    private static CompanionLook? current;
+
+    /// <summary>The display face, such as the app's own font from its package; null keeps the control's font.</summary>
+    public FontFamily? DisplayFont { get; init; }
+
+    /// <summary>The display face's weight: medium by default, as the Mac's rounded system face.</summary>
+    public FontWeight DisplayWeight { get; init; } = new() { Weight = 500 };
+
+    /// <summary>The app's look; Windows' colors and font until the app sets its own.</summary>
+    public static CompanionLook Current
+    {
+        get => current ??= new CompanionLook(CompanionPalette.System);
+        set
+        {
+            current = value;
+            LookWatch.Raise();
+        }
+    }
+
+    /// <summary>The palette to paint with right now: <see cref="Palette"/>, or Windows' contrast colors under a contrast theme.</summary>
+    public CompanionPalette PaletteNow => Palette.ForCurrentContrast();
+}
+
+/// <summary>
+/// Tells the controls on screen to repaint: the app set a new look, or Windows' colors changed (a contrast theme on or
+/// off, a new accent). UI thread only; Windows' change arrives on another thread and is brought over.
+/// </summary>
+internal static class LookWatch
+{
+    private static readonly List<Action> Listeners = [];
+    private static UISettings? settings;
+    private static DispatcherQueue? queue;
+
+    public static void Add(Action listener)
+    {
+        if (settings is null)
+        {
+            queue = DispatcherQueue.GetForCurrentThread();
+            // Kept in a field: Windows forgets the handler of a collected UISettings.
+            settings = new UISettings();
+            settings.ColorValuesChanged += (_, _) => queue?.TryEnqueue(Raise);
+        }
+        if (!Listeners.Contains(listener))
+            Listeners.Add(listener);
+    }
+
+    public static void Remove(Action listener) => Listeners.Remove(listener);
+
+    public static void Raise()
+    {
+        foreach (var listener in Listeners.ToArray())
+            listener();
+    }
+}
+
+/// <summary>
+/// Keeps a code-built element in the look's colors (what <c>{ThemeResource}</c> does in XAML): <c>apply</c> runs now,
+/// when the element's theme changes and, while it is loaded, when the look or Windows' colors change.
+/// </summary>
+internal static class LookBinding
+{
+    public static void Keep(FrameworkElement element, Action apply)
+    {
+        apply();
+        element.ActualThemeChanged += (_, _) => apply();
+        element.Loaded += (_, _) =>
+        {
+            LookWatch.Add(apply);
+            apply();
+        };
+        element.Unloaded += (_, _) => LookWatch.Remove(apply);
+    }
+
+    /// <summary>A brush of <paramref name="color"/> picked for <paramref name="element"/>'s theme from the look's palette now.</summary>
+    public static SolidColorBrush Brush(FrameworkElement element, Func<CompanionPalette, ThemedColor> color) =>
+        new(color(CompanionLook.Current.PaletteNow).For(element.ActualTheme));
+}

@@ -51,7 +51,7 @@ public sealed partial class CharacterCanvas : UserControl
     private bool animated = true;
     private string? line;
     private string? accessibilityLabel;
-    private CompanionPalette palette = CompanionPalette.System;
+    private CompanionPalette? palette;
     private string imageFolder = IOPath.Combine(AppContext.BaseDirectory, "Assets", "Characters");
     /// <summary>A frame that moves nothing by this many screen pixels or more is skipped: the slow sway draws at half the rate or less.</summary>
     private const double SkipBelowPixels = 0.5;
@@ -84,7 +84,7 @@ public sealed partial class CharacterCanvas : UserControl
             StopMoving();
         };
         SizeChanged += (_, _) => RefreshImages();
-        ActualThemeChanged += (_, _) => Repaint();
+        LookBinding.Keep(this, Repaint);
     }
 
     /// <summary>The character drawn; nothing without one.</summary>
@@ -166,10 +166,10 @@ public sealed partial class CharacterCanvas : UserControl
     /// <summary>The voice's mouth level (0–3) right now, or null for the mood's timer; read every frame while talking.</summary>
     public Func<int?>? MouthLevel { get; set; }
 
-    /// <summary>The paints; Windows' colors by default.</summary>
+    /// <summary>The paints; the look's (<see cref="CompanionLook.Current"/>) when unset.</summary>
     public CompanionPalette Palette
     {
-        get => palette;
+        get => palette ?? CompanionLook.Current.Palette;
         set
         {
             palette = value;
@@ -379,7 +379,7 @@ public sealed partial class CharacterCanvas : UserControl
             return null;
         var theme = ActualTheme;
         if (!brushes.TryGetValue((r.RawValue, theme), out var brush))
-            brushes[(r.RawValue, theme)] = brush = new SolidColorBrush(palette.Paints(r).For(theme));
+            brushes[(r.RawValue, theme)] = brush = new SolidColorBrush(Palette.Paints(r).For(theme));
         return brush;
     }
 
@@ -413,7 +413,7 @@ public sealed partial class CharacterCanvas : UserControl
             {
                 var path = new XamlPath
                 {
-                    Data = Geometry(shape),
+                    Data = Geometries.Path(shape.Path, shape.EvenOdd),
                     StrokeThickness = shape.StrokeWidth,
                     StrokeLineJoin = PenLineJoin.Round,
                     StrokeStartLineCap = PenLineCap.Round,
@@ -474,34 +474,6 @@ public sealed partial class CharacterCanvas : UserControl
             File = next;
             element.Source = next is null ? null : new BitmapImage(new Uri(next));
         }
-
-        private static PathGeometry Geometry(PathShape shape)
-        {
-            var geometry = new PathGeometry { FillRule = shape.EvenOdd ? FillRule.EvenOdd : FillRule.Nonzero };
-            PathFigure? figure = null;
-            foreach (var command in shape.Path)
-            {
-                switch (command)
-                {
-                    case PathCommand.Move move:
-                        figure = new PathFigure { StartPoint = P(move.To), IsFilled = true };
-                        geometry.Figures.Add(figure);
-                        break;
-                    case PathCommand.Line line when figure is not null:
-                        figure.Segments.Add(new LineSegment { Point = P(line.To) });
-                        break;
-                    case PathCommand.Cubic cubic when figure is not null:
-                        figure.Segments.Add(new BezierSegment { Point1 = P(cubic.Control1), Point2 = P(cubic.Control2), Point3 = P(cubic.To) });
-                        break;
-                    case PathCommand.Close when figure is not null:
-                        figure.IsClosed = true;
-                        break;
-                }
-            }
-            return geometry;
-        }
-
-        private static XamlPoint P(FigurePoint point) => new(point.X, point.Y);
     }
 
     /// <summary>One image to Narrator, named by the line or the label; the parts inside aren't elements of their own.</summary>

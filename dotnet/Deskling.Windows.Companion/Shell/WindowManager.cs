@@ -1,4 +1,5 @@
 using Deskling.Companion.Shell.App;
+using Deskling.Windows.Companion.Views;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -92,6 +93,8 @@ public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
         var spec = this.spec(id);
         var view = content(id);
         var root = new Grid();
+        // The look's paper behind the content and under the title bar, as the Mac's window background.
+        LookBinding.Keep(root, () => root.Background = LookBinding.Brush(root, p => p.Paper));
         root.Children.Add(view);
         var window = new Window
         {

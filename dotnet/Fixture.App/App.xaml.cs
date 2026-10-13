@@ -7,6 +7,7 @@ using Deskling.Testing.Fixtures;
 using Deskling.Windows.Companion.Shell;
 using Deskling.Windows.Companion.Signals;
 using Deskling.Windows.Companion.Speech;
+using Deskling.Windows.Companion.Views;
 using Deskling.Windows.System;
 using FixtureApp.Views;
 
@@ -28,6 +29,7 @@ public partial class App : CompanionApp
 
     protected override ICompanionLaunching MakeCompanion()
     {
+        CompanionLook.Current = new CompanionLook(FixtureModel.Palette);
         var root = Path.Combine(AppContext.BaseDirectory, "conformance");
         FixtureModel? made = null;
         FixtureModel Model() => made ?? throw new InvalidOperationException("The views open after the model is made.");

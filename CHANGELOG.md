@@ -44,6 +44,17 @@ package and the NuGet packages together.
   - `CompanionPalette`: a `ThemedColor` per UI role and per paint, `System`, `Contrast`, and `ThemedColor.Resource`
     to read a color from the app's theme dictionaries.
   - `CharacterMotion`, `CharacterScene`, `CharacterImages` with `AlphaMask`, and `ScreenshotCapture.IsEnabled`.
+- **Windows.Companion**: the controls every companion draws the same, in the colors of `CompanionLook.Current` (the
+  app's palette and display face; the controls repaint when the theme, the look or Windows' contrast theme changes).
+  - `SpeechBubble`: the tail toward the character on any side (`BubbleTail`, `BubbleShape`), a soft shadow, words that
+    fill the width or hug, and a countdown dial the compositor drains.
+  - `StatusPill`.
+  - `ActionBar`.
+  - `PanelRow`: a tray panel row that fills with `accentSoft` under the pointer.
+  - `Pointer`: down and right toward the tray by default.
+  - `Space` and `WindowInset`: the Mac's spacing, plus the title bar's band at the top.
+
+  The windows and the tray panel get the look's paper behind their content.
 - **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.
