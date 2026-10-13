@@ -191,3 +191,36 @@ the taskbar's light mode) is on 3.5's fixture checklist. Differences from the br
 - **Not checked yet**, for 3.5's fixture app by hand: a left click toggling the panel and the reopen guard, Esc, the
   right-click menu's checks and rebuild, the hotkey's press (it registers), a notification button reaching the app, and
   the glyph's frames and light-taskbar ink on screen.
+
+### 3.4, CompanionApp (2026-10-13)
+
+`Shell/CompanionApp.cs`, `ICompanionLaunching` in Companion.Shell, 5 more tests (50 in all). A scratch app whose
+`App.xaml` is rooted on `CompanionApp` (unpackaged, with `XamlControlsResources`, run under JIT and as Native AOT on ARM64,
+no AOT warnings) was driven by script. Differences from the brief, and what was found:
+
+- **A base class, as on the Mac.** The app's `App` derives from `CompanionApp` and `App.xaml`'s root is
+  `<shell:CompanionApp>`: XAML takes an abstract base from a package (checked). `CompanionApp.Start(instanceKey, makeApp)`
+  is all of `Main`: the COM wrappers, `SingleInstance.Claim`, then `Application.Start` with the UI thread's
+  `SynchronizationContext`. A null key skips the claim, so a screenshot run works beside the running app. `OnLaunched`
+  is sealed; the app supplies `MakeCompanion()` (called on the UI thread after the App's constructor) and may override
+  `RunScreenshots()`.
+- **No tests check.** No Windows test host starts the app's `Application` (xUnit runs no WinUI app, and a WinUI test app
+  brings its own), so the Mac's `isRunningTests` has no twin.
+- **What a launch means** (`CompanionActivation.IsOpening`, tested): Home, unless the startup task (sign-in) or a
+  notification click started the app. A launch redirected from a second copy reopens (the open windows, or Home), except
+  for those two kinds. The Mac shows Home when a notification click launches the app; here the button acts without Home.
+- **The click that started the app belongs to the notifier.** `CompanionNotifier.Configure` (the model calls it at launch)
+  reads the launch activation and posts its action once the launch is done. It also takes a click redirected from a
+  second copy. 3.3's `Activated(args)` is gone.
+- **Quit.** `WindowsCompanionHost.Quit` now always runs the app's `OnQuit`, then disposes the host and exits. Without
+  the dispose, the tray icon would linger until hovered; checked gone after quit with `Shell_NotifyIconGetRect`. The app's
+  `OnQuit` disposes its notifier, which unregisters, so a later click on a notification starts the app again.
+- **Checked by script** (JIT and AOT): the launch shows Home. A second launch exits in about 250 ms with code 0, and the
+  first reopens. With every window closed the app runs on, and a launch brings Home back. Quit ends the process and
+  removes the tray icon. A copy with a null key runs beside the first. `RunScreenshots` takes over before any model is
+  made.
+- **For the fixture app and sunnysays:** `Application.Resources` throws `E_UNEXPECTED` in the App's constructor, even
+  after `InitializeComponent`; read it from `MakeCompanion` on. The scratch app set `EnableMsixTooling`, as the
+  unpackaged template does (not tried without it).
+- **Not checked yet**, for 3.5 by hand: a notification button clicked while the app isn't running (it should act without
+  Home). The startup task's quiet launch needs package identity, so it waits for sunnysays' package.

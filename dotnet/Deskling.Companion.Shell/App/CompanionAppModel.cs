@@ -42,7 +42,7 @@ namespace Deskling.Companion.Shell.App;
 /// }
 /// </code>
 /// </remarks>
-public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyChanged
+public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyChanged, ICompanionLaunching
     where TWindow : notnull
     where TSettings : CompanionSettings
 {

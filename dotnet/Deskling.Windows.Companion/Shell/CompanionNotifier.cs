@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Deskling.Companion.Shell.App;
 using Deskling.Windows.Shell;
+using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 
 namespace Deskling.Windows.Companion.Shell;
@@ -8,7 +9,7 @@ namespace Deskling.Windows.Companion.Shell;
 /// <summary>
 /// The character's line as a Windows notification (<see cref="ICompanionNotifying"/>, Swift's <c>CompanionNotifier</c>)
 /// over <see cref="AppNotifier{TAction}"/>, with the app's buttons: each action id travels in the notification and
-/// comes back through <see cref="OnAction"/> on the UI thread. One tag, so a new line replaces the last instead of piling
+/// comes back through <see cref="OnAction"/> on the UI thread, also when Windows started the app for the click. One tag, so a new line replaces the last instead of piling
 /// up in Notification Center. Posted silently. A click on the banner itself does nothing but bring Windows' focus (as on
 /// the Mac). Windows never asks for permission: it is on unless the user turned the app's notifications off.
 /// </summary>
@@ -22,6 +23,7 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
     private readonly IReadOnlyList<NotificationButton> buttons;
     private readonly SynchronizationContext ui;
     private bool available = true;
+    private bool configured;
 
     /// <param name="title">The notification's first line (the app's or the character's name), already localized.</param>
     /// <param name="actions">The buttons, in order: action id (short, stable, ASCII; not "banner") and localized title.</param>
@@ -48,9 +50,15 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
 
     public Action<string>? OnAction { get; set; }
 
-    /// <summary>Registers with Windows; a process Windows won't register (no identity it accepts) posts nothing.</summary>
+    /// <summary>
+    /// Registers with Windows and takes the clicks: those while the app runs, and the one Windows started the app for
+    /// (raised once the launch is done). A process Windows won't register (no identity it accepts) posts nothing.
+    /// </summary>
     public void Configure()
     {
+        if (configured)
+            return;
+        configured = true;
         try
         {
             notifier.Register();
@@ -59,10 +67,10 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
         {
             available = false;
         }
+        var instance = AppInstance.GetCurrent();
+        instance.Activated += Redirected;
+        Clicked(instance.GetActivatedEventArgs());
     }
-
-    /// <summary>The click Windows launched the app with (it wasn't running), as an action.</summary>
-    public void Activated(AppNotificationActivatedEventArgs args) => Raise(notifier.ActionFrom(args));
 
     public void RequestAuthorization(Action<bool> completion) => completion(IsAllowed);
 
@@ -75,9 +83,27 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
             _ = PostAsync(line);
     }
 
-    public void Dispose() => notifier.Dispose();
+    /// <summary>Unregisters, so a click on a notification left in Notification Center starts the app again.</summary>
+    public void Dispose()
+    {
+        if (configured)
+            AppInstance.GetCurrent().Activated -= Redirected;
+        notifier.Dispose();
+    }
 
     private bool IsAllowed => available && !notifier.IsDenied;
+
+    /// <summary>A click that started another copy, which handed it here (rare: Windows gives a registered app its clicks).</summary>
+    private void Redirected(object? sender, AppActivationArguments activation) => Clicked(activation);
+
+    /// <summary>Posted: the launch finishes first, and a redirected click (on a background thread) reaches the UI thread.</summary>
+    private void Clicked(AppActivationArguments activation)
+    {
+        if (activation.Kind != ExtendedActivationKind.AppNotification || activation.Data is not AppNotificationActivatedEventArgs args)
+            return;
+        var action = notifier.ActionFrom(args);
+        ui.Post(_ => Raise(action), null);
+    }
 
     private async Task PostAsync(string line)
     {

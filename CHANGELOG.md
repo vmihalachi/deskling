@@ -21,6 +21,13 @@ package and the NuGet packages together.
   (`ITimers`); `HotKey` (`IHotKey`); `CompanionNotifier` (`ICompanionNotifying`: the line as a silent notification with
   the app's buttons); `MenuConversion` (`MenuItem` to `TrayMenuItem`); `ReduceMotion`; and `SystemAudioOutput`,
   `SystemScreenLock`, `SystemPowerSource`, `SystemAppearance` as the signal hub's sources.
+- **Windows.Companion**: `CompanionApp`, the app's `Application` (Swift's `CompanionAppDelegate`) and its `App.xaml`
+  root. `CompanionApp.Start(instanceKey, makeApp)` is the whole of `Program.Main` (one copy runs; a second launch reopens
+  the first); the app overrides `MakeCompanion()` (and `RunScreenshots()` for a screenshot run). The launch shows Home
+  unless the startup task started the app at sign-in or a notification click did, and the app lives on with no window
+  open. `CompanionNotifier.Configure` takes the click Windows started the app for; `WindowsCompanionHost.Quit` runs the
+  app's `OnQuit`, then takes the tray icon, windows and hotkey away and exits.
+- **Companion.Shell**: `ICompanionLaunching` (`Launch`, `Reopen`), which `CompanionAppModel` implements.
 - **Windows**: `TrayMenuItem.Command` takes `IsChecked` (a check mark), and `TrayIconHost.MenuOpening` is raised before
   the menu opens, so its owner can rebuild it from the current state. Both additive.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of

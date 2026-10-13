@@ -80,7 +80,10 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
 
     public bool ReduceMotion => Shell.ReduceMotion.IsOn;
 
-    /// <summary>Runs on <see cref="Quit"/>: the app's exit (closing what it holds, then <c>Application.Exit</c>).</summary>
+    /// <summary>
+    /// Runs first on <see cref="Quit"/>: the app lets go of what else it holds (its <see cref="CompanionNotifier"/>, so a
+    /// click on a notification left behind starts the app again).
+    /// </summary>
     public Action? OnQuit { get; set; }
 
     IWindowHost<TWindow> ICompanionHost<TWindow>.Windows => Windows;
@@ -116,12 +119,12 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     /// <summary>Settings › System › Notifications, where the app's switch is.</summary>
     public void OpenNotificationSettings() => _ = Launcher.LaunchUriAsync(new Uri("ms-settings:notifications"));
 
+    /// <summary>The app's <see cref="OnQuit"/>, then the tray icon (which would linger until hovered), the windows and the hotkey go, and the app exits.</summary>
     public void Quit()
     {
-        if (OnQuit is { } quit)
-            quit();
-        else
-            Application.Current.Exit();
+        OnQuit?.Invoke();
+        Dispose();
+        Application.Current.Exit();
     }
 
     /// <summary>Closes the windows and takes the tray icon and hotkey away; once, at exit.</summary>
