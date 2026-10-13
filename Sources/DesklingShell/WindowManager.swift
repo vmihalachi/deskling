@@ -39,8 +39,9 @@
     /// `LSUIElement` app, with SwiftUI content from `contentProvider`.
     ///
     /// The app is menu-bar-only while idle. While any window is open it becomes a regular app (Dock icon,
-    /// ⌘Tab, main menu) and drops back when the last closes. Needs the main actor and a running
-    /// `NSApplication`; never changes anything but its own windows and the activation policy.
+    /// ⌘Tab, main menu) and drops back when the last closes (not while hosting unit tests, see `hostsTests`). Needs
+    /// the main actor and a running `NSApplication`; never changes anything but its own windows and the activation
+    /// policy.
     @MainActor
     public final class WindowManager<ID: WindowID> {
         private var windows: [ID: NSWindow] = [:]
@@ -57,6 +58,11 @@
         /// activation to the app behind, and macOS may not give it back, so the next window would be drawn
         /// inactive.
         public var staysRegular = false
+
+        /// A process hosting unit tests never changes its activation policy. Tests open and close windows many
+        /// times a second, and the Dock keeps a tile for each switch to regular after the process exits: one run of
+        /// an app's window tests left a row of dead icons.
+        private let hostsTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
         public init(backgroundColor: NSColor, contentProvider: @escaping (ID) -> AnyView) {
             self.backgroundColor = backgroundColor
@@ -168,6 +174,7 @@
         }
 
         private func updateActivationPolicy() {
+            guard !hostsTests else { return }
             let policy: NSApplication.ActivationPolicy = windows.isEmpty ? .accessory : .regular
             if staysRegular && policy == .accessory { return }
             if NSApp.activationPolicy() != policy { NSApp.setActivationPolicy(policy) }

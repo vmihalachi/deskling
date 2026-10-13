@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.7.5 - 2026-10-13
+
+- **Shell**: `WindowManager` leaves the activation policy alone in a process hosting unit tests
+  (`XCTestConfigurationFilePath` is set). Window tests open and close windows many times a second, and the Dock kept a
+  tile for every switch to regular after the test host exited: one run of mybackhurts' `AppFlowTests` left ten dead
+  icons, a day of runs a full Dock.
+
 ## 0.7.4 - 2026-10-13
 
 - **Shell**: an app macOS opens at login stays in the menu bar again instead of showing Home. `CompanionAppDelegate`
