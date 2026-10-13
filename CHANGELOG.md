@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of
+  `DesklingCompanionUI`'s logic, tested on any OS. `SpeechSequencer` and `VoiceLibrary` (with `VoiceId`, `SpeechPart`,
+  `SpeechRates.ClipRate`) over `ISpeaking`, `IChimePlaying` and `ITimers`; `DeliveryPerformer`, `PhraseLocalization`
+  (`LocalizedParts`, `LocalizedText` through the app's lookup) and `VoiceLibraryBank.PendingIds`; `SignalHub` over
+  `IIdleTimeProvider`, `IBusyStateProvider` and the new `IAudioOutputState`, `IScreenLock`, `IPowerSource`, `IAppearance`;
+  `DesktopLayout`, `FloatingPlacement` (y-down screen coordinates), `BubbleMetrics`, `DesktopHide`. `SilentSpeaker` and
+  `SilentChime`.
+- **Testing**: `Deskling.Testing` depends on `Deskling.Companion.Shell` and adds `ManualTimers` (timers a test runs by
+  hand, moving a `MockClock`), `FakeSpeaker` and `FakeChime`.
+
 ## 0.7.6 - 2026-10-13
 
 - **Companion**: the mouth can follow a recorded voice's loudness. `RiggedCharacter.pose(mood:time:mouthLevel:)` takes

@@ -18,14 +18,16 @@ conformance vectors.
 | `conformance/` | Generated vectors (`scheduler/`, `companion/`). Never hand-edit; `scripts/conformance.sh`. Formats in `conformance/README.md`. |
 | `dotnet/Deskling.Core/` | Pure C# mirror of `DesklingCore`, file for file, plus `Store/` (mirrors `DesklingStore`; its `MockStoreBackend` mirrors `DesklingTesting`'s, shipped here because apps use it in preview modes). `IsAotCompatible`. |
 | `dotnet/Deskling.Companion/` | Pure C# mirror of `DesklingCompanion`, folder for folder, plus the loaders `Phrases/PhraseBankJson.cs` and `Figures/CharacterArtJson.cs`. `IsAotCompatible`. |
-| `dotnet/Deskling.Testing/` | Mirrors `DesklingTesting` for .NET apps' test projects (no xunit): mocks, `Conformance/` (root, support, `Companion/*Replay.cs` bodies and `CompanionReplay`, one call per file kind) and `Fixtures/` loading `conformance/companion/`. |
+| `dotnet/Deskling.Companion.Shell/` | The platform-free half of a companion app's shell (0.8, `plans/0.8/`): the C# twin of `DesklingCompanionUI`'s and `DesklingShell`'s logic, mirrored **by role, not file for file** (*The map* in `plans/0.8/README.md`), written against small interfaces (`ISpeaking`, `IChimePlaying`, `ITimers`, the signal sources) so its tests run on any OS. `Speech/` (sequencer, voice library), `Performance/` (`DeliveryPerformer`, phrase localization, pending ids), `Signals/` (`SignalHub` and its source interfaces), `Desktop/` (layout and placement in y-down screen coordinates). `IsAotCompatible`. |
+| `dotnet/Deskling.Testing/` | Mirrors `DesklingTesting` for .NET apps' test projects (no xunit): mocks, `Conformance/` (root, support, `Companion/*Replay.cs` bodies and `CompanionReplay`, one call per file kind), `Fixtures/` loading `conformance/companion/`, and `Shell/` (`ManualTimers`, `FakeSpeaker`, `FakeChime`) for the shell's tests. |
 | `dotnet/Deskling.Windows/` | Win32 / Windows App SDK services (`net10.0-windows`, no XAML). Restores on Linux and macOS with `EnableWindowsTargeting`, but its Windows App SDK PRI step needs Windows: build it through `dotnet.yml`'s windows job. `System/` and `Shell/` (with `Shell/Localization/`). |
 | `dotnet/Deskling.Core.Tests/`, `dotnet/Deskling.Companion.Tests/` | xUnit; `Conformance/` replays every vector (`scheduler/`, `companion/`). |
+| `dotnet/Deskling.Companion.Shell.Tests/` | xUnit, any OS: the Swift shell tests ported case for case (`SpeechSequencerTests`, `VoiceLibraryTests`, `DeliveryPerformerTests`, `DesktopLayoutTests`, `FloatingPlacementTests`), over the Swift tests' own `Resources/Voice` and sunflower. |
 | `dotnet/Deskling.Windows.Tests/` | xUnit for `Deskling.Windows`; runs only in `dotnet.yml`'s windows job. |
 | `tools/` | Tools for companion apps, which vendor this repo as a `deskling/` submodule (`tools/README.md`): every one reads the app's `companion.json` (`companion.py`, `companion.schema.json`). `l10n.py`, `phrases.py`, `voice.py`, `character.py`, `synth.py`, `fonts.py`, the shell scripts (`verify.sh`, `setup-linux.sh`, `screenshots.sh`…), `hooks/hook.py`, `store/` (the listing's checks, App Store Connect push, Partner Center import), `landing/` (`@deskling/landing`, published to npm) and `skills/` (the apps symlink them). Shared by every app, so no file names one. Tests in `tools/tests/` over `fixture-app/`. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `fixture-art.sh` (compiles the fixture skins; `--check`), `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
-| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it; `plans/0.7/README.md` the companion shell (0.7.0: what the apps still repeat on top of 0.6 moves here), `1-…`–`6-…` its sessions. |
+| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it; `plans/0.7/README.md` the companion shell (0.7.0: what the apps still repeat on top of 0.6 moves here), `1-…`–`6-…` its sessions; `plans/0.8/README.md` the Windows companion shell (0.8.0: `Deskling.Companion.Shell` and `Deskling.Windows.Companion`), `1-…`–`5-…` its sessions. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `tools.yml` (the Python tools' tests), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
@@ -36,6 +38,7 @@ DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVect
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
 cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, the same anywhere
+cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, the same anywhere
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 python3 tools/tests/run.py                     # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
@@ -91,7 +94,9 @@ Step-by-step procedures for the multi-step changes live in `.agents/skills/` (sy
 - **C# mirrors Swift** folder for folder and file for file (`Sources/DesklingCore/Scheduling/ReminderScheduler.swift` ↔
   `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Input/`, `Localization/`, `Settings/`; Companion folders:
   `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`. `DesklingSystem`
-  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. Tests mirror the same folders, with
+  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. The exception is the companion shell
+  (`Deskling.Companion.Shell`, `Deskling.Windows.Companion`): the Swift files mix logic and AppKit, so the C# side splits
+  them and mirrors by role, with the same type and member names; `plans/0.8/README.md` maps every Swift file. Tests mirror the same folders, with
   `Conformance/` in each Core and Companion test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.

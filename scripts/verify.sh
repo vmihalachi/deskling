@@ -46,7 +46,7 @@ check() {
 skip() { notes+=("$1"); }
 
 swift='^Package\.swift$|^Sources/|^Tests/|^\.swift-format$'
-dotnet='^dotnet/|^conformance/|^Tests/DesklingCompanionTests/Resources/'
+dotnet='^dotnet/|^conformance/|^Tests/DesklingCompanionTests/Resources/|^Tests/DesklingShellTests/Resources/'
 tools='^tools/|^Tests/Fixtures/'
 
 vectors_current() {
@@ -118,6 +118,7 @@ if [ "$fast" = 0 ]; then
     if has dotnet; then
       check "dotnet build + test (Core)" dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -v q --nologo
       check "dotnet build + test (Companion)" dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -v q --nologo
+      check "dotnet build + test (Companion.Shell)" dotnet test dotnet/Deskling.Companion.Shell.Tests/Deskling.Companion.Shell.Tests.csproj -v q --nologo
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
 fi
