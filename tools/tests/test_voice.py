@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import json
+import ntpath
 import subprocess
 import sys
 import unittest
@@ -14,6 +15,7 @@ import wave
 from array import array
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
@@ -122,6 +124,12 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Copyright (c) Fixture", (site / "LICENSE").read_text("utf8"))
         self.assertIn("`deskling/tools/voice.py` in fixture", (site / "README.md").read_text("utf8"))
         self.assertIn("The recorded lines of Fixy, in Fixture, made with ElevenLabs:", (site / "README.md").read_text("utf8"))
+
+    def test_clip_urls_use_forward_slashes_on_windows(self):
+        # os.path is ntpath on Windows: the relative path comes back with backslashes, which a URL can't use.
+        with mock.patch.object(voice.os, "path", ntpath):
+            url = voice.url_path(Path("/app/voices/Voice/it/clown/hello.m4a"), Path("/app/voices/review"))
+        self.assertEqual(url, "../Voice/it/clown/hello.m4a")
 
     def test_site_for_an_app_named_after_its_character(self):
         path = self.root / "companion.json"

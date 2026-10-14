@@ -4,6 +4,12 @@ All notable changes to Deskling. The format follows [Keep a Changelog](https://k
 and the project uses [Semantic Versioning](https://semver.org/). One tag (`vX.Y.Z`) versions the Swift
 package and the NuGet packages together.
 
+## Unreleased
+
+- **Tools**: `voice.py` writes the review pages' clip URLs with forward slashes on every OS. On Windows they came out
+  as `..\Voice\…`, so `voice.py site` rewrote the friends' site and `voice.py check` (in `verify.sh --fast`) called a
+  site generated on a Mac stale.
+
 ## 0.9.0 - 2026-10-14
 
 The global shortcut is gone. None of the apps on Deskling keeps one, so the package stops carrying it. **Breaking.**

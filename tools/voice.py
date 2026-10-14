@@ -815,6 +815,12 @@ def review_colors() -> str:
     return css
 
 
+def url_path(path: Path, start: Path) -> str:
+    """`path` relative to the directory `start`, as a URL path: forward slashes on every OS, so a page generated on
+    Windows is byte-identical to one generated on a Mac."""
+    return os.path.relpath(path, start).replace(os.path.sep, "/")
+
+
 def review_page(lang: str, kinds: list[str], page: Path, site: bool, config: dict, manifest: dict) -> tuple[str, int]:
     """The review page's HTML for `lang` (clip paths relative to `page`) and how many lines it lists. A clip plays only
     while it says the current text; a line whose voices are all missing or stale is listed as waiting, text only.
@@ -833,7 +839,7 @@ def review_page(lang: str, kinds: list[str], page: Path, site: bool, config: dic
         for k in kinds:
             if states[k][clip] is None:
                 version = manifest_clips(manifest, lang, k)[clip].get("renderHash", "")[:12]
-                path = os.path.relpath(clip_path(lang, k, clip), page.parent)
+                path = url_path(clip_path(lang, k, clip), page.parent)
                 clips[k], versions[k] = f"{path}?v={version}" if version else path, version
         line, part, count = parts.get(clip, ({}, 1, 1))
         rows.append({"id": clip, "text": texts[clip], "en": english.get(clip, ""), "flavor": line.get("flavor") or "",
