@@ -32,8 +32,8 @@ Commit as `X.Y.Z: <headline change>` (the history's style), then merge to `maste
 
 ## 4. Tag
 
-Ask the user before tagging: it publishes to NuGet, stages `@deskling/landing` on npm and tags are protected (they
-never move).
+Ask the user before tagging: it publishes to NuGet, stages `@deskling/landing` on npm if it changed, and tags are
+protected (they never move).
 
 - `git tag -a vX.Y.Z -m "Deskling X.Y.Z" && git push origin vX.Y.Z`, or
 - without tag-push rights: dispatch `release.yml` with `version: X.Y.Z`, which tags `master` itself.
@@ -41,3 +41,8 @@ never move).
 `release.yml` tests, packs the six NuGet packages, pushes them through Trusted Publishing, stages `@deskling/landing` on
 npm and drafts the GitHub release. Publishing the draft, and approving the staged npm version with 2FA (npmjs.com, or
 `npm stage approve <id>`), are the user's.
+
+The NuGet packages ship at every tag, changed or not: an app pins one Deskling version everywhere (`companion.py
+pins`). `@deskling/landing` ships only when `tools/landing` changed since the version on npm (the run's summary says
+which), so its versions skip the releases that leave it alone; nothing waits for approval on those. A breaking change
+to it still counts toward the release number (a minor bump while `0.x`).

@@ -6,6 +6,10 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Release**: `@deskling/landing` is staged on npm only when `tools/landing` changed since the version npm has, at the
+  tag's version as before, so its versions skip the releases that leave it alone (and there's nothing to approve). The
+  NuGet packages still ship at every tag.
+
 ## 0.8.1 - 2026-10-14
 
 What the first app on the Windows companion shell (Mister Pagliacci) needed, in Deskling instead of the app: launch-time

@@ -40,7 +40,8 @@ The template's `{{key}}` placeholders are the app's own (`placeholders`, asked f
 locale's dotted keys. Locale files must share the default's keys. `csp.mediaSrc` allows recorded audio, `headers` adds
 `_headers` rules, `extraPlugins` runs the app's own plugins between the hosting and social-asset ones.
 
-Released from Deskling's `release.yml` on each `vX.Y.Z` tag, at that version (the `version` here is a placeholder):
+Released from Deskling's `release.yml` on each `vX.Y.Z` tag that changes `tools/landing` since the version on npm, at
+the tag's version (the `version` here is a placeholder), so its versions skip the Deskling releases that leave it alone:
 its `npm` job stages the tarball on npm through trusted publishing (no stored token; provenance attached), and it goes
 live once an owner approves it with 2FA, on npmjs.com (the package's Staged tab) or with `npm stage list
 @deskling/landing` and `npm stage approve <id>`. The trusted publisher on npmjs.com is repository `vmihalachi/deskling`,

@@ -4,9 +4,9 @@ name: Release
 # Publishing (OIDC: no stored key; nuget.org → your account → Trusted Publishing → a policy for repository
 # vmihalachi/deskling and workflow file release.yml, plus the NUGET_USER repository variable set to your nuget.org
 # username) and drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
-# the tag itself; @deskling/landing (tools/landing) is staged on npm at the tag's version for an owner to approve (see
-# the npm job). Run it from Actions with a version to have it create the tag on master (for sessions whose credentials
-# can't push tags), or push the tag yourself.
+# the tag itself; @deskling/landing (tools/landing) is staged on npm at the tag's version for an owner to approve, when
+# tools/landing changed since the version npm has (see the version and npm jobs). Run it from Actions with a version to
+# have it create the tag on master (for sessions whose credentials can't push tags), or push the tag yourself.
 on:
   push:
     tags:
@@ -26,13 +26,16 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  # Decides the version and, for manual runs, puts the tag on this commit.
+  # Decides the version and whether @deskling/landing ships, and, for manual runs, puts the tag on this commit.
   version:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}
+      landing: ${{ steps.landing.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # the tags, for the landing's diff
 
       - id: v
         name: Version from the tag or the input
@@ -57,6 +60,25 @@ jobs:
           else
             echo "v$v already exists at $existing (tags are protected and never move): release the next version"; exit 1
           fi
+
+      # @deskling/landing ships only when tools/landing changed since the version npm has, so its versions skip the
+      # releases that leave it alone. Compared with npm rather than the previous tag: a release whose landing was never
+      # staged or approved is caught up by the next one, and a re-run after the approval stages nothing twice.
+      - id: landing
+        name: Whether tools/landing changed since npm's version
+        run: |
+          published=$(npm view @deskling/landing version 2>/dev/null || true)
+          if [ -z "$published" ]; then
+            changed=true; why="npm has no version of it (or didn't answer)"
+          elif ! git rev-parse -q --verify "refs/tags/v$published" >/dev/null; then
+            changed=true; why="npm's $published has no tag here"
+          elif git diff --quiet "v$published" HEAD -- tools/landing; then
+            changed=false; why="tools/landing is unchanged since $published, the version on npm: not staged"
+          else
+            changed=true; why="tools/landing changed since $published, the version on npm"
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "@deskling/landing: $why" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Deskling.Core, Deskling.Companion, Deskling.Companion.Shell and Deskling.Testing: tests and the packages, on Linux.
   core:
@@ -117,9 +139,11 @@ jobs:
           name: nupkg-windows
           path: dotnet/artifacts/*.nupkg
 
-  # @deskling/landing (tools/landing) at the tag's version: tested and packed here, staged on npm by `npm`.
+  # @deskling/landing (tools/landing) at the tag's version: tested and packed here, staged on npm by `npm`. Skipped,
+  # with `npm`, when tools/landing is unchanged since npm's version.
   landing:
     needs: version
+    if: needs.version.outputs.landing == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -150,6 +174,7 @@ jobs:
   # environment npm, stage publish only. Its own job, so only it can mint the token; re-run it if it fails.
   npm:
     needs: [version, core, windows, landing]
+    if: needs.version.outputs.landing == 'true'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -177,8 +202,12 @@ jobs:
             echo "or with \`npm stage list @deskling/landing\` and \`npm stage approve <id>\`."
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Runs when the landing was skipped as well as when it succeeded.
   publish:
     needs: [version, core, windows, landing]
+    if: >-
+      !cancelled() && needs.core.result == 'success' && needs.windows.result == 'success' &&
+      (needs.landing.result == 'success' || needs.landing.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -220,8 +249,9 @@ jobs:
           dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-      # The landing's tarball rides along on the GitHub release.
+      # The landing's tarball, when this release has one, rides along on the GitHub release.
       - uses: actions/download-artifact@v7
+        if: needs.landing.result == 'success'
         with:
           name: npm-landing
           path: npm
@@ -237,9 +267,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          assets=(dotnet/artifacts/*.nupkg)
+          if [ -d npm ]; then assets+=(npm/*.tgz); fi
           if gh release view "v$DESKLING_VERSION" >/dev/null 2>&1; then
-            gh release upload "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg npm/*.tgz --clobber
+            gh release upload "v$DESKLING_VERSION" "${assets[@]}" --clobber
           else
-            gh release create "v$DESKLING_VERSION" dotnet/artifacts/*.nupkg npm/*.tgz --title "v$DESKLING_VERSION" \
+            gh release create "v$DESKLING_VERSION" "${assets[@]}" --title "v$DESKLING_VERSION" \
               --notes-file "$RUNNER_TEMP/notes.md"
           fi
