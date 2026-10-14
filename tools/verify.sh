@@ -17,7 +17,8 @@
 #   strings (app Swift, .xcstrings, landing i18n)   l10n.py check, phrases.py check, .resw export is current
 #   voices, voice config, catalog, phrases.json     voice.py check, the voices pointer is pushed
 #   windows/**/*.cs                        dotnet format whitespace, dotnet test (windows.coreTests)
-#   windows.app, windows.appTests          check-winui.py; dotnet test (windows.appTests, any OS); on Windows, the app builds
+#   windows.app, windows.appTests          check-winui.py; dotnet test (windows.appTests, any OS); the app builds on
+#                                          Windows, or on a Mac in the Parallels VM (windows/vm.sh build)
 #   windows.assets (the icon, Assets/)     windows/assets.py --check (the MSIX images match the icon)
 #   landing/, phrases/settings vectors     <landing.tool> check and build
 #   store.dir/*.md                         store/check.py (the listing's field limits)
@@ -39,7 +40,7 @@ while [ $# -gt 0 ]; do
     --staged) mode=staged ;;
     --base) mode=base; base="$2"; shift ;;
     --) shift; mode=paths; paths=("$@"); break ;;
-    -h|--help) sed -n '2,24p' "$TOOLS/verify.sh" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,25p' "$TOOLS/verify.sh" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown argument: $1 (see --help)" >&2; exit 2 ;;
   esac
   shift
@@ -275,7 +276,10 @@ if [ "$fast" = 0 ]; then
     if [ "$windows" = 1 ] && has dotnet; then
       # Debug, unpackaged, for this machine's architecture (companion.targets picks it when no platform is named).
       check "WinUI app builds ($WINDOWS_APP)" dotnet build "$WINDOWS_DIR/$WINDOWS_APP/$WINDOWS_APP.csproj" -v q --nologo
-    else skip "WinUI app: builds only on Windows; push the branch and run the Windows workflow"; fi
+    elif vm="$("$TOOLS/windows/vm.sh" status 2>&1)"; then
+      # On a Mac with the Parallels Windows VM: this working tree, Debug, x64 and ARM64.
+      check "WinUI app builds in the VM ($WINDOWS_APP, x64 + ARM64)" "$TOOLS/windows/vm.sh" build
+    else skip "WinUI app: builds on Windows or in the Parallels VM (${vm#vm.sh: }); push the branch and run the Windows workflow"; fi
   fi
   if touched "$RE_WINDOWS_ASSETS"; then
     check "Windows images match the icon (windows/assets.py)" python3 "$TOOLS/windows/assets.py" --check

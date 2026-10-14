@@ -1,0 +1,493 @@
+#!/usr/bin/env python3
+r"""Builds and checks a companion app's Windows side in a Parallels Windows VM on this Mac, from the working tree as it is
+(uncommitted changes included), so the WinUI app is built and looked at in the same session as the change instead of
+in the app's Windows workflow. `vm.sh` runs this file.
+
+    deskling/tools/windows/vm.sh status                         # can the VM run commands? One line; exit 0 when it can
+    deskling/tools/windows/vm.sh sync                           # mirror the working tree into the VM (every command does)
+    deskling/tools/windows/vm.sh build [x64|ARM64…] [-- ARGS]   # the WinUI app (windows.app), Debug; both platforms
+    deskling/tools/windows/vm.sh test [-- ARGS]                 # windows.coreTests and windows.appTests
+    deskling/tools/windows/vm.sh screenshots DIR [-- ARGS]      # the screenshot script; the PNGs land in DIR on the Mac
+    deskling/tools/windows/vm.sh smoke [x64|ARM64] [-- ARGS]    # publish the MSIX (Native AOT), then smoke-package.ps1
+    deskling/tools/windows/vm.sh run -- COMMAND…                # a PowerShell command in the VM's copy
+
+ARGS go as they are, in PowerShell syntax, to `dotnet build`, `dotnet test`, the screenshot script (`-Language fr`,
+`-Only home,settings`) or smoke-package.ps1 (`-SideBySide`). The screenshot and smoke scripts are the app's own
+(`<windows.dir>/scripts/screenshots.ps1`, `smoke-package.ps1`) when it has them, else Deskling's beside this file.
+`screenshots` and `smoke` run for the VM's own platform unless `-Platform` / a platform is given.
+
+The copy: the files git sees (tracked and untracked but not ignored, submodules included, symlinks left out) are
+mirrored into `%USERPROFILE%\deskling-vm\<checkout>-<hash>` in the VM through the Mac's shared folders. The VM lists
+the files it lacks or holds in another version (size, mtime), the Mac sends a tar of just those, and the VM unpacks
+it and deletes the files the Mac no longer has, leaving build output (bin, obj) alone so builds stay incremental. One
+vm.sh run at a time per checkout; others wait.
+
+Environment:
+  DESKLING_VM        the VM's name in Parallels ("Windows 11")
+  DESKLING_VM_SHARE  the VM's path to the Mac's / (\\Mac\AllFiles, Parallels' "All Files" share)
+  DESKLING_VM_DIR    where the copies go in the VM (%USERPROFILE%\deskling-vm)
+
+Without prlctl or the VM (Linux, a cloud session, a Mac without Parallels) every command prints one line saying so and
+exits 3, so a caller skips instead of failing. A suspended or paused VM is resumed; a stopped one is left alone.
+Commands run as the user signed in to Windows (`prlctl exec --current-user`), who sees the shares and the desktop.
+Standard library only.
+"""
+
+from __future__ import annotations
+
+import base64
+import fcntl
+import hashlib
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import threading
+import time
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+
+TOOLS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(TOOLS))
+import companion  # noqa: E402
+
+HERE = Path(__file__).resolve().parent
+GUEST_SCRIPT = HERE / "vm-guest.ps1"
+UNAVAILABLE = 3
+PLATFORMS = ("x64", "ARM64")
+COMMANDS = ("status", "sync", "build", "test", "screenshots", "smoke", "run")
+
+
+class Unavailable(Exception):
+    """The VM can't run commands here: no prlctl, no VM by that name, a stopped VM or no one signed in."""
+
+
+class Usage(Exception):
+    """A mistake in the command line or a command companion.json has nothing for."""
+
+
+def vm_name() -> str:
+    return os.environ.get("DESKLING_VM") or "Windows 11"
+
+
+def share_root() -> str:
+    return (os.environ.get("DESKLING_VM_SHARE") or r"\\Mac\AllFiles").rstrip("\\")
+
+
+def guest_base() -> str:
+    return (os.environ.get("DESKLING_VM_DIR") or r"%USERPROFILE%\deskling-vm").rstrip("\\")
+
+
+def guest_path(mac_path: Path | str, share: str | None = None) -> str:
+    """The VM's path to a Mac file or folder, through the share that shows the Mac's /."""
+    return (share or share_root()) + os.path.realpath(mac_path).replace("/", "\\")
+
+
+def checkout_key(root: Path) -> str:
+    """The VM folder's name for a checkout: its folder's name and a hash of its path, so worktrees get their own."""
+    digest = hashlib.sha1(os.path.realpath(root).encode()).hexdigest()[:6]
+    return f"{re.sub(r'[^A-Za-z0-9._-]', '-', Path(root).name) or 'app'}-{digest}"
+
+
+def ps(text: str) -> str:
+    """`text` as a single-quoted PowerShell string."""
+    return "'" + text.replace("'", "''") + "'"
+
+
+def windows_rel(path: str) -> str:
+    return path.replace("/", "\\")
+
+
+# MARK: The files to mirror
+
+
+def list_files(root: Path, prefix: str = "") -> list[tuple[str, int, int]]:
+    """What git sees in `root`, as (path from the outermost root, size, mtime in whole seconds): tracked files and
+    untracked ones that aren't ignored, in every checked-out submodule too. Symlinks, deleted files and paths with a
+    tab or a line break are left out."""
+
+    def git(*args: str) -> bytes:
+        return subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=True,
+                              env=companion.git_env()).stdout
+
+    submodules = {os.fsdecode(entry.split(b"\t", 1)[1]) for entry in git("ls-files", "-z", "--stage").split(b"\0")
+                  if entry.startswith(b"160000 ")}
+    found: dict[str, tuple[str, int, int]] = {}
+    for raw in git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split(b"\0"):
+        name = os.fsdecode(raw)
+        if not name or name in found or "\t" in name or "\n" in name or "\r" in name:
+            continue
+        path = root / name
+        if name in submodules:
+            if (path / ".git").exists():
+                for entry in list_files(path, f"{prefix}{name}/"):
+                    found[entry[0]] = entry
+            continue
+        if path.is_symlink() or not path.is_file():
+            continue
+        stat = path.stat()
+        found[prefix + name] = (prefix + name, stat.st_size, int(stat.st_mtime))
+    return sorted(found.values())
+
+
+def write_list(files: list[tuple[str, int, int]], path: Path) -> None:
+    path.write_text("".join(f"{name}\t{size}\t{mtime}\n" for name, size, mtime in files), "utf8")
+
+
+def write_tar(root: Path, names: list[str], archive: Path) -> None:
+    """The files `names` (relative to `root`) in a tar whose mtimes are whole seconds, as the VM compares them."""
+    with tarfile.open(archive, "w", format=tarfile.PAX_FORMAT) as tar:
+        for name in names:
+            path = root / name
+            try:
+                info = tar.gettarinfo(str(path), arcname=name)
+                with open(path, "rb") as handle:
+                    info.mtime = int(info.mtime)
+                    info.uid = info.gid = 0
+                    info.uname = info.gname = ""
+                    tar.addfile(info, handle)
+            except FileNotFoundError:
+                continue  # gone since the listing: the VM's check after unpacking reports it
+
+
+# MARK: The VM
+
+
+@dataclass
+class Context:
+    root: Path
+    config: companion.Config
+    vm: str
+    key: str
+    stage: Path  # on the Mac, seen by the VM through the share
+
+    @property
+    def guest_root(self) -> str:
+        return f"{guest_base()}\\{self.key}"
+
+    @property
+    def guest_out(self) -> str:
+        return f"{guest_base()}\\{self.key}.out"
+
+    def guest_tool(self, path: Path) -> str:
+        """The VM's path to a file of this checkout's: inside the copy when it's in the checkout, else through the share."""
+        try:
+            return windows_rel(path.resolve().relative_to(self.root.resolve()).as_posix())
+        except ValueError:
+            return guest_path(path)
+
+    def windows_project(self, key: str) -> str | None:
+        """`<windows.dir>/<name>/<name>.csproj` for the project companion.json names at `key`, relative to the root."""
+        name = self.config.get(key)
+        folder = self.config.get("windows.dir")
+        if not name or not folder:
+            return None
+        return f"{folder}/{name}/{name}.csproj"
+
+    def script(self, name: str) -> str:
+        """The app's own `<windows.dir>/scripts/<name>` when it has one, else Deskling's beside this file."""
+        folder = self.config.path("windows.dir")
+        own = folder / "scripts" / name if folder else None
+        return self.guest_tool(own if own and own.is_file() else HERE / name)
+
+
+def prlctl(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
+    return subprocess.run(["prlctl", *args], stdin=subprocess.DEVNULL, capture_output=capture, text=True)
+
+
+# What prlctl exec prints, now and then, when it loses a job in Parallels Tools: the command may not have run at all.
+LOST_JOB = re.compile(r"^PrlJob_\w+: .*$", re.M)
+
+
+def prlctl_exec(args: list[str], capture: bool, attempts: int = 3) -> subprocess.CompletedProcess:
+    """`prlctl exec` with its output streamed (unless `capture`) and kept; tried again after a lost job that printed
+    nothing, which prlctl reports with exit code 255 and a PrlJob_ line."""
+    for attempt in range(1, attempts + 1):
+        process = subprocess.Popen(["prlctl", "exec", *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        out, err = [], []
+
+        def pump(stream, kept: list, echo):
+            for line in iter(stream.readline, b""):
+                kept.append(line)
+                if echo is not None and not LOST_JOB.match(line.decode("utf-8", "replace")):
+                    echo.write(line)
+                    echo.flush()
+
+        threads = [threading.Thread(target=pump, args=(process.stdout, out, None if capture else sys.stdout.buffer)),
+                   threading.Thread(target=pump, args=(process.stderr, err, None if capture else sys.stderr.buffer))]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        process.wait()
+        stdout, stderr = (b"".join(lines).decode("utf-8", "replace") for lines in (out, err))
+        lost = process.returncode == 255 and LOST_JOB.search(stderr)
+        if lost and not stdout.strip() and attempt < attempts:
+            time.sleep(2 * attempt)
+            continue
+        if lost and not capture:
+            print(f"vm.sh: prlctl lost the command in the VM ({LOST_JOB.search(stderr).group(0)}); run it again",
+                  file=sys.stderr)
+        return subprocess.CompletedProcess(args, process.returncode, stdout, stderr)
+    raise AssertionError("unreachable")
+
+
+def vm_state(vm: str) -> str:
+    """running, suspended, paused, stopped…; raises Unavailable without prlctl or the VM."""
+    if not shutil.which("prlctl"):
+        raise Unavailable("no prlctl here (Parallels Desktop on a Mac), so no Windows VM to build in")
+    done = prlctl("status", vm)
+    match = re.search(r"\bexists?\s+(\w+)", done.stdout)
+    if done.returncode or not match:
+        raise Unavailable(f"Parallels has no VM named {vm!r} (set DESKLING_VM to its name)")
+    return match.group(1)
+
+
+def signed_in(vm: str) -> bool:
+    return prlctl_exec([vm, "--current-user", "cmd", "/c", "exit 0"], capture=True).returncode == 0
+
+
+def ensure_ready(vm: str) -> None:
+    """Resumes a suspended or paused VM and waits for the signed-in user; raises Unavailable otherwise."""
+    state = vm_state(vm)
+    deadline = time.monotonic()
+    if state in ("suspended", "paused"):
+        print(f"vm.sh: resuming the VM {vm!r} ({state})", file=sys.stderr)
+        prlctl("resume", vm)
+        state = vm_state(vm)
+        deadline += 90
+    if state != "running":
+        raise Unavailable(f"the VM {vm!r} is {state}: start it in Parallels Desktop and sign in to Windows")
+    while not signed_in(vm):
+        if time.monotonic() > deadline:
+            raise Unavailable(f"the VM {vm!r} is running but no one is signed in to Windows")
+        time.sleep(3)
+
+
+def status(vm: str) -> str:
+    """One line on whether vm.sh can use the VM; raises Unavailable when it can't."""
+    state = vm_state(vm)
+    if state in ("suspended", "paused"):
+        return f"the VM {vm!r} is {state}; vm.sh resumes it"
+    if state != "running":
+        raise Unavailable(f"the VM {vm!r} is {state}: start it in Parallels Desktop and sign in to Windows")
+    if not signed_in(vm):
+        raise Unavailable(f"the VM {vm!r} is running but no one is signed in to Windows")
+    return f"the VM {vm!r} is ready"
+
+
+def encode(script: str) -> str:
+    return base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+
+
+def guest_script(ctx: Context, body: str) -> str:
+    """A PowerShell script for the VM: vm-guest.ps1's functions, the copy as the current folder, then `body`, which
+    ends in `exit`. An exception exits 1 with its message."""
+    return "\n".join((
+        "$ErrorActionPreference = 'Stop'",
+        "$ProgressPreference = 'SilentlyContinue'",
+        "try { [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false } catch { }",
+        "$env:DOTNET_CLI_UI_LANGUAGE = 'en'; $env:DOTNET_NOLOGO = '1'; $env:MSBUILDDISABLENODEREUSE = '1'",
+        "try {",
+        f". {ps(guest_path(GUEST_SCRIPT))}",
+        f"$Root = Resolve-GuestFolder {ps(ctx.guest_root)}",
+        "Set-Location -LiteralPath $Root",
+        body,
+        "} catch { [Console]::Error.WriteLine(\"vm.sh: $($_.Exception.Message)\"); exit 1 }",
+    ))
+
+
+def powershell(ctx: Context, body: str, capture: bool = False) -> subprocess.CompletedProcess:
+    """Runs `body` (see guest_script) in the VM as the signed-in user; the output streams unless `capture`."""
+    return prlctl_exec([ctx.vm, "--current-user", "powershell.exe", "-NoProfile", "-NonInteractive",
+                        "-ExecutionPolicy", "Bypass", "-EncodedCommand", encode(guest_script(ctx, body))], capture)
+
+
+@contextmanager
+def one_at_a_time(stage: Path):
+    stage.mkdir(parents=True, exist_ok=True)
+    with open(stage / "lock", "w") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("vm.sh: waiting for another vm.sh run in this checkout", file=sys.stderr)
+            fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
+
+
+# MARK: Commands
+
+
+def sync(ctx: Context) -> None:
+    """Mirrors the working tree into the VM's copy (see the module's docstring)."""
+    try:
+        files = list_files(ctx.root)
+    except subprocess.CalledProcessError as error:
+        sys.exit(f"vm.sh: git can't list the files of {ctx.root}: {error.stderr.decode(errors='replace').strip()}")
+    write_list(files, ctx.stage / "files.tsv")
+    archive, need_file = ctx.stage / "sync.tar", ctx.stage / "need.txt"
+
+    def round_trip() -> tuple[list[str], str, int]:
+        need_file.unlink(missing_ok=True)
+        done = powershell(ctx, f"Sync-Tree $Root {ps(guest_path(ctx.stage))}\nexit 0", capture=True)
+        match = re.search(r"^synced\t(.+)\t(\d+)\s*$", done.stdout, re.M)
+        if done.returncode or not match or not need_file.exists():
+            sys.exit(f"vm.sh: the copy into the VM failed:\n{done.stdout[-2000:]}{done.stderr[-2000:]}")
+        return [line for line in need_file.read_text("utf-8-sig").splitlines() if line], match.group(1), int(match.group(2))
+
+    archive.unlink(missing_ok=True)
+    need, where, removed = round_trip()
+    if need:
+        write_tar(ctx.root, need, archive)
+        missing, _, _ = round_trip()
+        archive.unlink(missing_ok=True)
+        if missing:
+            sys.exit(f"vm.sh: {len(missing)} files didn't arrive in the VM, e.g. {missing[0]}")
+    print(f"vm.sh: {len(files)} files in {ctx.vm}:{where} ({len(need)} copied, {removed} removed)", flush=True)
+
+
+def parse_platforms(words: list[str]) -> list[str]:
+    chosen = []
+    for word in words:
+        match = next((p for p in PLATFORMS if p.lower() == word.lower()), None)
+        if match is None:
+            raise Usage(f"unknown platform {word!r} (x64 or ARM64)")
+        chosen.append(match)
+    return list(dict.fromkeys(chosen))
+
+
+def step(label: str, command: str) -> str:
+    return f"Invoke-Step {ps(label)} {{ {command} }}"
+
+
+def build_body(ctx: Context, platforms: list[str], extra: str) -> str:
+    project = ctx.windows_project("windows.app")
+    if not project:
+        raise Usage("companion.json has no windows.app to build")
+    lines = [step(f"dotnet build {project} ({platform}, Debug)",
+                  f"dotnet build {ps(windows_rel(project))} -p:Platform={platform} -v q -nologo '-clp:NoSummary' {extra}".rstrip())
+             for platform in platforms]
+    return "\n".join([*lines, "Exit-Steps"])
+
+
+def test_body(ctx: Context, extra: str) -> str:
+    projects = [p for p in (ctx.windows_project("windows.coreTests"), ctx.windows_project("windows.appTests")) if p]
+    if not projects:
+        raise Usage("companion.json names no windows.coreTests or windows.appTests")
+    lines = [step(f"dotnet test {project}", f"dotnet test {ps(windows_rel(project))} -v q --nologo {extra}".rstrip())
+             for project in projects]
+    return "\n".join([*lines, "Exit-Steps"])
+
+
+def screenshots_body(ctx: Context, mac_dir: Path, extra: str) -> str:
+    script, shots = ctx.script("screenshots.ps1"), ctx.guest_out + "\\shots"
+    return "\n".join((
+        f"$shots = Reset-GuestFolder {ps(shots)}",
+        "try {",
+        f"  {step(f'screenshots ({script})', f'& {ps(script)} -Out $shots {extra}'.rstrip())}",
+        f"}} finally {{ Copy-Shots $shots {ps(guest_path(mac_dir))} }}",
+        "Exit-Steps",
+    ))
+
+
+def smoke_body(ctx: Context, platform: str | None, extra: str) -> str:
+    project = ctx.windows_project("windows.app")
+    if not project:
+        raise Usage("companion.json has no windows.app to package")
+    script, packages = ctx.script("smoke-package.ps1"), ctx.guest_out + "\\packages\\"
+    return "\n".join((
+        f"$platform = {ps(platform) if platform else 'Get-GuestPlatform'}",
+        f"$packages = Reset-GuestFolder ({ps(packages)} + $platform)",
+        "Add-VsWhere",
+        step(f"dotnet publish {project} (Release, Native AOT)",
+             f"dotnet publish {ps(windows_rel(project))} -c Release -p:Platform=$platform "
+             "-p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:AppxBundle=Never "
+             "\"-p:AppxPackageDir=$packages/\" -v q -nologo '-clp:NoSummary'"),
+        "if ($global:VmFailures.Count) { Exit-Steps }",
+        "$msix = Find-Package $packages",
+        step(f"smoke ({script})", f"& {ps(script)} -Package $msix.FullName {extra}".rstrip()),
+        "Exit-Steps",
+    ))
+
+
+def split_extra(args: list[str]) -> tuple[list[str], str]:
+    """The words before `--`, and the ones after it joined as PowerShell text."""
+    if "--" in args:
+        index = args.index("--")
+        return args[:index], " ".join(args[index + 1:])
+    return args, ""
+
+
+def command_body(ctx: Context, command: str, words: list[str], extra: str) -> str | None:
+    """The PowerShell `command` runs in the VM after the sync (None for sync alone); raises Usage on a mistake."""
+    if command in ("sync", "test", "run") and words:
+        raise Usage(f"{command} takes no {words[0]!r} (ARGS go after --)")
+    if command == "sync":
+        return None
+    if command == "build":
+        return build_body(ctx, parse_platforms(words) or list(PLATFORMS), extra)
+    if command == "test":
+        return test_body(ctx, extra)
+    if command == "screenshots":
+        if len(words) != 1:
+            raise Usage("screenshots needs one folder on the Mac for the PNGs (ARGS go after --)")
+        return screenshots_body(ctx, shots_folder(words[0]), extra)
+    if command == "smoke":
+        platforms = parse_platforms(words)
+        if len(platforms) > 1:
+            raise Usage("smoke takes one platform")
+        return smoke_body(ctx, platforms[0] if platforms else None, extra)
+    if command == "run":
+        if not extra:
+            raise Usage("run needs a command after --")
+        return f"$global:LASTEXITCODE = 0\n{extra}\nexit $LASTEXITCODE"
+    raise Usage(f"unknown command {command!r} ({', '.join(COMMANDS)}; --help)")
+
+
+def shots_folder(word: str) -> Path:
+    return Path(word).expanduser().resolve()
+
+
+def main(argv: list[str]) -> int:
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0 if argv else 2
+    command, (words, extra) = argv[0], split_extra(argv[1:])
+    vm = vm_name()
+    try:
+        if command == "status":
+            print(f"vm.sh: {status(vm)}")
+            return 0
+        if command not in COMMANDS:
+            raise Usage(f"unknown command {command!r} ({', '.join(COMMANDS)}; --help)")
+        config = companion.load()
+        key = checkout_key(config.root)
+        ctx = Context(config.root, config, vm, key, Path.home() / "Library" / "Caches" / "deskling-vm" / key)
+        body = command_body(ctx, command, words, extra)
+        ensure_ready(vm)
+        with one_at_a_time(ctx.stage):
+            sync(ctx)
+            if body is None:
+                return 0
+            if command != "screenshots":
+                return powershell(ctx, body).returncode
+            folder = shots_folder(words[0])
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "problems.txt").unlink(missing_ok=True)
+            code = powershell(ctx, body).returncode
+            print(f"vm.sh: the shots are in {folder}")
+            return code
+    except Usage as mistake:
+        print(f"vm.sh: {mistake}", file=sys.stderr)
+        return 2
+    except Unavailable as reason:
+        print(f"vm.sh: {reason}", file=sys.stderr)
+        return UNAVAILABLE
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

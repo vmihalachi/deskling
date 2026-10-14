@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: `tools/windows/vm.sh` builds and checks a companion app's WinUI side in a Parallels Windows VM on the
+  Mac, from the working tree as it is (uncommitted changes and submodules too, copied incrementally through the Mac's
+  shared folders; `bin` and `obj` stay between runs): `build` (Debug, x64 and ARM64), `test`, `screenshots <folder>`
+  (the PNGs back in the Mac folder), `smoke` (the Native AOT package through `smoke-package.ps1`), `run -- <command>`
+  and `status`. Without prlctl or the VM it says so in one line and exits 3. `verify.sh` builds the WinUI app through
+  it when the VM is there. The hook gains a built-in `winui-build` reminder (on `windows.app`'s paths) that `vm.sh
+  build`, `screenshots` or `smoke`, or a `dotnet build`/`publish` of the app, satisfies; `vm.sh test` counts as the
+  dotnet tests. An app's own `hooks.slow` entry for the WinUI build takes the name `winui-build`, or it's reminded
+  twice.
+
 ## 0.9.1 - 2026-10-14
 
 Moving the apps to a release takes one command, and a change that spans Deskling and the apps can be tried in them

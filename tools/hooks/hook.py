@@ -10,7 +10,7 @@
                                regenerate the Xcode project when Swift files come or go or the XcodeGen spec changes.
   hook.py stop   Stop:        run the app's verify.sh --fast on this session's edits and remind about the slow checks
                                (xcodebuild test, conformance, swift/dotnet test, the Windows app's model tests, the
-                               landing build, hooks.slow) not run since the last edit; remind once about porting Mac UI changes to Windows
+                               WinUI app build, the landing build, hooks.slow) not run since the last edit; remind once about porting Mac UI changes to Windows
                                (hooks.macUI/windowsUI).
   hook.py cloud-stop  Copilot agentStop: inside GitHub Actions only (the cloud coding agent, which has no session
                                log), run the app's verify.sh on the branch's changes and ask for fixes.
@@ -96,6 +96,8 @@ def setup(root=None):
         ("dotnet-app-test", NAMES["RE_WINDOWS_APP_TESTS"],
          f"Windows app model tests (dotnet test {NAMES['WINDOWS_DIR']}/{NAMES['WINDOWS_APP_TESTS']})"),
         ("landing-build", NAMES["RE_LANDING"], f"landing build ({landing} build)"),
+        ("winui-build", NAMES["RE_WINDOWS_APP"],
+         f"WinUI app build ({tools}/windows/vm.sh build in the Parallels VM, or dotnet build on Windows)"),
     ]
     RAN = []
     for check in CONFIG.get("hooks.slow", []):
@@ -290,12 +292,21 @@ def post_one(event):
                 record(event, "ran", "dotnet-app-test")
         if re.search(r"\bswift\s+test\b", command):
             record(event, "ran", "swift-test")
+        # The WinUI app built: in the Parallels VM (vm.sh's build, and screenshots and smoke, which build it), or by
+        # dotnet on Windows. vm.sh test runs the same test projects as dotnet test.
+        app = NAMES["WINDOWS_APP"]
+        if re.search(r"\bvm\.sh\s+(build|screenshots|smoke)\b", command) or (
+                app and re.search(rf"\bdotnet\s+(build|publish)\b.*{re.escape(app)}", command)):
+            record(event, "ran", "winui-build")
+        if re.search(r"\bvm\.sh\s+test\b", command):
+            record(event, "ran", "dotnet-test")
+            record(event, "ran", "dotnet-app-test")
         for kind, pattern in RAN:
             if re.search(pattern, command):
                 record(event, "ran", kind)
         if re.search(r"verify\.sh(?!.*--fast)", command):
             for ran in dict.fromkeys(("xcodebuild-test", "conformance", "swift-test", "dotnet-test", "dotnet-app-test",
-                                      "landing-build",
+                                      "landing-build", "winui-build",
                                       *(kind for kind, _, _ in SLOW))):
                 record(event, "ran", ran)
         tool_name = NAMES["LANDING_TOOL"]

@@ -28,6 +28,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
 | `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
+| `windows/vm.sh` | On a Mac, the WinUI app built and checked in a Parallels Windows VM from the working tree as it is (uncommitted changes too): `build` (x64 and ARM64), `test`, `screenshots <folder>` (the PNGs back on the Mac), `smoke`, `run -- <command>`, `status`. Without prlctl or the VM it says so in one line and exits 3. |
 | `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks, the Windows parity reminder. |
 | `skills/` | `localization`, `add-phrase`, `add-setting`, `conformance`, `voice`, `windows-port`, `release-mac`, `review-invariants`. |
 
@@ -179,6 +180,17 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
   assertions read the real words; `verify.sh` runs it when the app or it changes.
 - **The images** come from the Mac's app icon: `python3 deskling/tools/windows/assets.py` after the icon changes
   (`windows.assets`), and `verify.sh` checks them.
+- **On a Mac, in the Parallels VM.** `deskling/tools/windows/vm.sh build` mirrors the working tree (what git sees,
+  uncommitted changes and submodules included) into a Windows VM in Parallels Desktop and builds the app there, Debug,
+  for x64 and ARM64, so a Mac change is ported and built in the same session. `screenshots <folder>` runs the
+  screenshot script there and copies the PNGs into the Mac folder, `smoke` publishes the Native AOT package for the
+  VM's platform and runs `smoke-package.ps1` on it (`-- -SideBySide` where the Store copy is installed), `test` runs
+  the test projects and `run -- <command>` anything else in the copy; arguments after `--` go to the command. The copy
+  is incremental (only changed files travel, `bin` and `obj` stay), and `verify.sh` builds through it when the VM is
+  there. The VM needs the .NET SDK, the Visual Studio Build Tools with the x64 and ARM64 C++ tools (Native AOT),
+  Developer Mode (screenshots and smoke install packages), Parallels Tools, a user signed in, and the Mac's files
+  shared (Parallels' "All Files", `\\Mac\AllFiles`). `DESKLING_VM`, `DESKLING_VM_SHARE` and `DESKLING_VM_DIR` change the
+  VM's name, the share and the folder the copies go in (`%USERPROFILE%\deskling-vm`).
 - **Wrappers**, as for the shell scripts: `windows/scripts/screenshots.ps1` and `smoke-package.ps1`, e.g.
 
   ```powershell

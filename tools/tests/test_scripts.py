@@ -185,6 +185,24 @@ chmod +x "$app/Fixture"
         self.git(self.root, "add", "-A")
         self.git(self.root, "commit", "-q", "-m", "app")
 
+    def test_verify_builds_the_winui_app_in_the_vm_when_there_is_one(self):
+        self.commit_app()
+        self.fake("dotnet", "exit 0\n")
+        app = "windows/Fixture.App/Views/HomeView.xaml"
+        self.fake("prlctl", 'echo "Failed to get VM config: The virtual machine could not be found."; exit 255\n')
+        result = self.run_script("verify.sh", "--", app, env={"HOME": str(self.root)})
+        self.assertIn("skip  WinUI app: builds on Windows or in the Parallels VM (Parallels has no VM named "
+                      "'Windows 11'", result.stdout, result.stderr)
+        # With a VM, vm.sh builds it (this fake one runs nothing, so the copy into it fails).
+        self.fake("prlctl", f'''echo "$*" >> "{self.log}"
+case "$1" in status) echo "VM $2 exist running" ;; exec) [ "$3" = --current-user ] && [ "$4" = cmd ] || exit 1 ;; esac
+''')
+        result = self.run_script("verify.sh", "--", app, env={"HOME": str(self.root)})
+        self.assertIn("FAIL  WinUI app builds in the VM (Fixture.App, x64 + ARM64)", result.stdout, result.stderr)
+        self.assertIn("the copy into the VM failed", result.stdout)
+        self.assertIn("powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand",
+                      self.log.read_text())
+
     def test_verify_reads_the_submodules_under_a_git_hook(self):
         self.commit_app()
         # What git exports to a pre-commit hook in a linked worktree: absolute paths into the app's repository.

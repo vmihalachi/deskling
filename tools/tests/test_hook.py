@@ -176,8 +176,10 @@ class StopAndParity(HookTestCase):
 
     def test_slow_checks_come_from_companion_json(self):
         kinds = {kind: pattern for kind, pattern, _ in self.hook.SLOW}
-        self.assertEqual(set(kinds), {"xcodebuild-test", "conformance", "swift-test", "dotnet-test", "dotnet-app-test"},
-                         "no landing")
+        self.assertEqual(set(kinds), {"xcodebuild-test", "conformance", "swift-test", "dotnet-test", "dotnet-app-test",
+                                      "winui-build"}, "no landing")
+        self.assertRegex("windows/Fixture.App/Views/HomeView.xaml", kinds["winui-build"])
+        self.assertNotRegex("windows/Fixture.Core/A.cs", kinds["winui-build"])
         self.assertRegex("macos/FixtureCore/Sources/FixtureCore/A.swift", kinds["conformance"])
         self.assertRegex("windows/Fixture.Core/A.cs", kinds["dotnet-test"])
         self.assertNotRegex("windows/Fixture.App/A.cs", kinds["dotnet-test"])
@@ -197,6 +199,37 @@ class StopAndParity(HookTestCase):
         self.assertTrue(reminded_after("dotnet test windows/Fixture.Core.Tests"), "another test project")
         self.assertFalse(reminded_after("dotnet test windows/Fixture.App.Tests"))
         self.assertFalse(reminded_after("cd windows && dotnet test"), "the solution")
+
+    def test_the_winui_build_counts_from_the_vm_or_dotnet(self):
+        sessions = iter(range(100))
+
+        def reminded_after(command):
+            session = f"winui{next(sessions)}"  # the log has whole seconds: one session per command
+            self.run_hook("post", {"session_id": session, "tool_name": "Edit",
+                                   "tool_input": {"file_path": str(self.root / "windows/Fixture.App/Views/HomeView.xaml")}})
+            if command:
+                self.run_hook("post", {"session_id": session, "tool_name": "Bash", "tool_input": {"command": command}})
+            return "WinUI app build" in self.run_hook("stop", {"session_id": session}).stderr
+
+        self.assertTrue(reminded_after(None))
+        self.assertIn("vm.sh build", self.hook.SLOW[-1][2])
+        for command in ("deskling/tools/windows/vm.sh build", "deskling/tools/windows/vm.sh build ARM64 -- -c Release",
+                        "deskling/tools/windows/vm.sh screenshots /tmp/shots -- -Language fr",
+                        "deskling/tools/windows/vm.sh smoke", "dotnet build windows/Fixture.App -p:Platform=x64",
+                        "dotnet publish windows/Fixture.App/Fixture.App.csproj -c Release"):
+            self.assertFalse(reminded_after(command), command)
+        for command in ("deskling/tools/windows/vm.sh status", "deskling/tools/windows/vm.sh sync",
+                        "dotnet build windows/Fixture.Core"):
+            self.assertTrue(reminded_after(command), command)
+
+    def test_vm_tests_count_as_the_dotnet_tests(self):
+        edit = {"session_id": "vmtest", "tool_name": "Edit",
+                "tool_input": {"file_path": str(self.root / "windows/Fixture.Core/A.cs")}}
+        self.run_hook("post", edit)
+        self.assertIn("Windows Core tests", self.run_hook("stop", {"session_id": "vmtest"}).stderr)
+        self.run_hook("post", {"session_id": "vmtest", "tool_name": "Bash",
+                               "tool_input": {"command": "deskling/tools/windows/vm.sh test"}})
+        self.assertNotIn("Windows Core tests", self.run_hook("stop", {"session_id": "vmtest"}).stderr)
 
     def test_app_slow_checks_replace_and_add(self):
         self.configure(slow=[

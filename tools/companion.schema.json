@@ -318,7 +318,7 @@
         },
         "slow": {
           "type": "array",
-          "description": "The app's slow checks, reminded at stop when a matching path changed since they last ran. A `name` of a built-in check (xcodebuild-test, conformance, swift-test, dotnet-test, landing-build) replaces its paths (and label); any other name adds a check, counted as run when a shell command matches `ran` (or a full verify.sh).",
+          "description": "The app's slow checks, reminded at stop when a matching path changed since they last ran. A `name` of a built-in check (xcodebuild-test, conformance, swift-test, dotnet-test, dotnet-app-test, landing-build, winui-build) replaces its paths (and label); any other name adds a check, counted as run when a shell command matches `ran` (or a full verify.sh).",
           "items": {
             "type": "object",
             "required": ["name", "paths"],
