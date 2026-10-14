@@ -6,6 +6,26 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.8.1 - 2026-10-14
+
+What the first app on the Windows companion shell (Mister Pagliacci) needed, in Deskling instead of the app: launch-time
+fixes, two controls both apps draw, model tests on any OS, and the tools that build, shoot, lint and package a WinUI
+companion app (`tools/README.md`, *Windows apps*). Nothing breaks.
+
+- **Tools**: `tools/windows/`, the WinUI app kit, every app name taken out of mybackhurts' scripts and the fixture's
+  runner. `companion.targets`, which the app's project imports last: x64 and ARM64, Debug unpackaged and every other
+  configuration an MSIX with Native AOT, `Main` left to `CompanionApp.Start`, the voice clips, sounds and fonts linked
+  from the Mac's folders (`CompanionVoiceFolder`, `CompanionSoundsFolder`, `CompanionFontsFolder`) with the clips kept
+  out of the resource index, and no JIT runtime files in a native package. `screenshots.ps1` (from companion.json;
+  `-Language`, `-Only`, and `-Configuration Release` for the Native AOT build). `smoke-package.ps1` (installs a built
+  `.msix` fresh and checks it starts; `-CheckOnly`, `-Keep`, `-SideBySide`). `check-winui.py` (untyped XAML casts,
+  shape data in a `Style`, an element named `Language`, an `x:Bind` call with a number argument, `App.xaml` off the
+  project's root). `assets.py` (the MSIX logos and `AppIcon.ico` from the app icon, standard library only; `--check`).
+- **Tools**: `companion.json` gains `windows.appTests`, `windows.assets` and `windows.screenshots`. `verify.sh` lints
+  the changed WinUI files, runs the app's model tests on any OS, builds the WinUI app on Windows instead of skipping
+  it, and checks the Windows images against the icon. The hook reminds about the model tests after the app changes.
+- **Fixture app**: on `companion.targets`, with `GlyphWave` on Home and hold to shush on the panel;
+  `scripts/fixture-screenshots.ps1` wraps the shared runner. `dotnet.yml` runs `check-winui.py`.
 - **Windows**: `LocalSettingsStore.ForApp(appFolder)` keeps an app's settings wherever it runs: in the package's
   local settings when it has package identity, else in a JSON file under `%LOCALAPPDATA%\<appFolder>`
   (`FileSettingsStore`), so an unpackaged Debug build remembers them too. `PackageIdentity.IsPackaged` says which.
@@ -27,6 +47,8 @@ package and the NuGet packages together.
   `ScreenshotCapture.Language` (`DESKLING_SCREENSHOT_LANGUAGE`), so one machine shoots every language.
 - **Windows.Companion**: `ThemedColor.Resource` reads the app's theme dictionaries through `XamlCast`; under Native
   AOT the `is` checks it used could miss and throw at launch.
+- **Companion.Shell**: `CompanionAppModel` raises `IsSupporter` when a purchase changes and `DesktopBackLine` when the
+  desktop character is hidden or shown, so `x:Bind` views showing them update.
 
 ## 0.8.0 - 2026-10-13
 
