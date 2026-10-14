@@ -226,6 +226,21 @@ class BumpTests(PinsTestCase):
         self.assertIn("ok             app", passing.stdout)
         self.assertEqual(self.bump_apps().returncode, 2)
 
+    def test_bump_apps_finds_the_apps_next_to_its_checkout_but_not_worktrees(self):
+        tools = self.root.parent / "checkout" / "tools"
+        tools.mkdir(parents=True)
+        for name in ("bump-apps.sh", "companion.py", "companion.schema.json"):
+            (tools / name).write_bytes((TOOLS / name).read_bytes())
+        worktree = self.root.parent / "app-worktree"
+        worktree.mkdir()
+        (worktree / "companion.json").write_text("{}", "utf8")
+        (worktree / ".git").write_text("gitdir: elsewhere\n", "utf8")
+        result = subprocess.run(["bash", str(tools / "bump-apps.sh"), "0.7.0"], capture_output=True, text=True,
+                                env={key: value for key, value in os.environ.items() if key != "COMPANION_ROOT"})
+        self.assertIn("Skipping app-worktree: a git worktree", result.stdout)
+        self.assertIn("bump failed    app", result.stdout)
+        self.assertNotIn("== app-worktree", result.stdout)
+
 
 class LinkTests(PinsTestCase):
     """The app is a git repository (committed) and the Deskling checkout sits next to it, at ../deskling."""

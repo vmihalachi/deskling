@@ -2,7 +2,7 @@
 # Moves companion apps to Deskling X.Y.Z: `companion.py bump X.Y.Z` in each, then its `scripts/verify.sh --fast`.
 # Commits nothing: read each app's diff and commit there (the landing page's change inside its own repository). Runs
 # this checkout's companion.py, so an app whose submodule predates `bump` moves too. The apps are the folders with a
-# companion.json next to this Deskling checkout, unless named.
+# companion.json next to this Deskling checkout (not a linked git worktree: its main checkout is the app), unless named.
 #
 #   deskling/tools/bump-apps.sh 0.9.1                     # ../*/companion.json, next to this checkout
 #   deskling/tools/bump-apps.sh 0.9.1 ../app-a ../app-b
@@ -25,7 +25,12 @@ if [ $# -gt 0 ]; then
 else
   siblings="$(dirname "$(dirname "$TOOLS")")"
   for manifest in "$siblings"/*/companion.json; do
-    [ -f "$manifest" ] && apps+=("$(dirname "$manifest")")
+    [ -f "$manifest" ] || continue
+    if [ -f "$(dirname "$manifest")/.git" ]; then
+      echo "Skipping $(basename "$(dirname "$manifest")"): a git worktree (name it to move it)"
+      continue
+    fi
+    apps+=("$(dirname "$manifest")")
   done
   [ ${#apps[@]} -gt 0 ] || { echo "No companion app (a folder with a companion.json) in $siblings" >&2; exit 2; }
 fi
