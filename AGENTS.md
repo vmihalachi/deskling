@@ -58,9 +58,7 @@ on your branch and pull the commit it pushes.
 ## Finding code
 
 The layout above is the map: every Swift file has a C# twin at the same relative path, so `grep -rn` on a type name
-finds both sides. If `jbcontext` is installed (JetBrains Context; optional, not every environment has it),
-`jbcontext search "<what the code does>"` finds code by meaning and `jbcontext search -p <dir> "<query>"` narrows it.
-Use it when you don't know where something lives; grep once you have a name. The `context-search` skill and `context-explorer` agent are installed per user, not in this repository.
+finds both sides.
 
 ## Skills
 
