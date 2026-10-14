@@ -7,7 +7,8 @@
     <!-- The name notifications show for an unpackaged app. -->
     <AssemblyTitle>Deskling fixture</AssemblyTitle>
     <IsPackable>false</IsPackable>
-    <!-- Unpackaged in every configuration (the apps' Release is an MSIX): the Windows App Runtime found at start. -->
+    <!-- Unpackaged in every configuration (the apps' Release is an MSIX): the installed Windows App Runtime in Debug,
+         its own copy in Release. -->
     <WindowsPackageType>None</WindowsPackageType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

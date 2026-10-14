@@ -14,7 +14,8 @@ companion app (`tools/README.md`, *Windows apps*). Nothing breaks.
 
 - **Tools**: `tools/windows/`, the WinUI app kit, every app name taken out of mybackhurts' scripts and the fixture's
   runner. `companion.targets`, which the app's project imports last: x64 and ARM64, Debug unpackaged and every other
-  configuration an MSIX with Native AOT, `Main` left to `CompanionApp.Start`, the voice clips, sounds and fonts linked
+  configuration an MSIX with Native AOT (an unpackaged Release, a screenshot run's build, carries the Windows App SDK,
+  so it runs on GitHub's runners), `Main` left to `CompanionApp.Start`, the voice clips, sounds and fonts linked
   from the Mac's folders (`CompanionVoiceFolder`, `CompanionSoundsFolder`, `CompanionFontsFolder`) with the clips kept
   out of the resource index, and no JIT runtime files in a native package. `screenshots.ps1` (from companion.json;
   `-Language`, `-Only`, and `-Configuration Release` for the Native AOT build). `smoke-package.ps1` (installs a built

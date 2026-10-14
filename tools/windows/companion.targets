@@ -10,8 +10,8 @@
     - Program.cs owns Main (CompanionApp.Start), so XAML generates none.
     - Debug runs unpackaged (WindowsPackageType None: `dotnet run`, the screenshot runner, no Developer Mode, no
       registration); every other configuration is an MSIX from Package.appxmanifest (which the MSIX tooling takes up
-      only for a packaged build). Either can be set on the command
-      line (`-p:WindowsPackageType=None` builds a Release, Native AOT exe that runs unpackaged, for screenshot runs).
+      only for a packaged build). Either can be set on the command line (`-p:WindowsPackageType=None` builds a
+      Release, Native AOT exe that runs unpackaged, for screenshot runs, with the Windows App SDK beside it).
     - Native AOT on publish, and its analyzers on every build.
     - The app's shared files linked, not copied, from the properties it sets before the import:
         CompanionVoiceFolder   the voices submodule's Voice folder   → Voice\<language>\<voice>\<id>.m4a, manifest.json
@@ -30,6 +30,9 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType Condition="'$(WindowsPackageType)' == '' and '$(Configuration)' == 'Debug'">None</WindowsPackageType>
     <WindowsPackageType Condition="'$(WindowsPackageType)' == ''">MSIX</WindowsPackageType>
+    <!-- An unpackaged Release (a screenshot run's Native AOT build) carries the Windows App SDK, so it runs where the
+         Windows App Runtime isn't installed (GitHub's runners); Debug uses the installed one. -->
+    <WindowsAppSDKSelfContained Condition="'$(WindowsAppSDKSelfContained)' == '' and '$(WindowsPackageType)' == 'None' and '$(Configuration)' != 'Debug'">true</WindowsAppSDKSelfContained>
     <PublishAot Condition="'$(PublishAot)' == ''">true</PublishAot>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
