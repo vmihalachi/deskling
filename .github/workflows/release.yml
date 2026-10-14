@@ -6,7 +6,11 @@ name: Release
 # username) and drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
 # the tag itself; @deskling/landing (tools/landing) is staged on npm at the tag's version for an owner to approve, when
 # tools/landing changed since the version npm has (see the version and npm jobs). Run it from Actions with a version to
-# have it create the tag on master (for sessions whose credentials can't push tags), or push the tag yourself.
+# have it create the tag on master (for sessions whose credentials can't push tags), or push the tag yourself. Either
+# way the version job first runs `scripts/verify.sh --version`: the release fails before it tags or packs anything when
+# the version disagrees with the pinned version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
+# site/index.html, README.md) or has no CHANGELOG.md section, so a mistyped tag can't ship packages whose
+# Deskling.version says otherwise.
 on:
   push:
     tags:
@@ -44,11 +48,14 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "Releasing $v"
 
-      - name: Check CHANGELOG.md has the section and tag this commit (manual runs)
+      # The same check scripts/verify.sh --all runs by hand, against the version being released.
+      - name: Check the version against the pinned version strings and CHANGELOG.md
+        run: scripts/verify.sh --version "${{ steps.v.outputs.version }}"
+
+      - name: Tag this commit (manual runs)
         if: github.event_name == 'workflow_dispatch'
         run: |
           v="${{ steps.v.outputs.version }}"
-          grep -q "^## $v " CHANGELOG.md || { echo "CHANGELOG.md has no '## $v' section"; exit 1; }
           existing=$(git ls-remote --tags origin "refs/tags/v$v^{}" | cut -f1)
           [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$v" | cut -f1)
           git config user.name "github-actions[bot]"
