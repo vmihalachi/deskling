@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.9.4 - 2026-10-15
+
+The Windows screenshot run of the Native AOT build can run twice in a row, as the apps' workflows do for two languages.
+The packages are unchanged.
+
 - **Tools**: `windows/screenshots.ps1 -Configuration Release` tries again for up to a minute when it can't empty its
   build folder. Right after a run Windows can hold one of the app's DLLs for a few seconds (seen the first time an x64
   build ran from that folder on ARM64, with nothing having it loaded), so a second run straight after the first, as in
