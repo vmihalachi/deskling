@@ -8,8 +8,9 @@ desk companion in development whose character became the companion layer. [Miste
 clown who tells jokes from the menu bar, is the second companion app built on that layer (in design). It is `0.x` until
 the second app has settled the API, so minor versions may change public types.
 
-**No support.** Deskling is shared as is, for anyone to use, but it is built for these apps: issues and pull
-requests aren't monitored, and releases follow what the apps need.
+**No support.** Deskling is shared as is, for anyone to use, but it is built for these apps: its
+[issues](https://github.com/vmihalachi/deskling/issues) are the owner's own plans, issues and pull requests from
+others aren't monitored, and releases follow what the apps need.
 
 ## What's inside
 

@@ -26,11 +26,11 @@ conformance vectors.
 | `dotnet/Deskling.Companion.Shell.Tests/` | xUnit, any OS: the Swift shell tests ported case for case (`SpeechSequencerTests`, `VoiceLibraryTests`, `DeliveryPerformerTests`, `DesktopLayoutTests`, `FloatingPlacementTests`, `CompanionAppModelTests` with the launch and host cases Swift can't run), over the Swift tests' own `Resources/Voice` and sunflower. |
 | `dotnet/Deskling.Windows.Tests/` | xUnit for `Deskling.Windows`; runs only in `dotnet.yml`'s windows job. |
 | `dotnet/Deskling.Windows.Companion.Tests/` | xUnit for `Deskling.Windows.Companion`, an unpackaged host; runs only in `dotnet.yml`'s windows job. Speech tests play generated WAVs at no volume: real playback where there is an audio device, the failure path where there isn't (a CI runner), and the line ends either way. The shell tests cover what runs without a WinUI app (the glyph's drawing and timing, the menu conversion, the placement next to the tray, the signal adapters, which launches show Home); the views' tests cover their pure parts (the character's scene and hit test against the pose vectors, the bubble's outline, the desktop bubble's place, the Settings rows' and Support's logic). Windows, the panel, the desktop character, notifications and the app's launch are checked by running the fixture app, and its screenshot run draws every window. |
-| `dotnet/Fixture.App/` | The fixture app (Windows only, unpackaged, never packed): `Deskling.Windows.Companion` running `CompanionAppModel` over the fixture bank, the fixture vector character in the tray, XAML windows (Home, Settings, onboarding) and panel built from the package's controls (the character canvas, bubble, pill, Settings rows, `SupportWindow` over a mock store), the raster fixture from its PNGs, the desktop character, speech through the system voice, tones written at launch for the sounds, settings in memory. Home has the hand checks' controls: a long line to start a call during, a clock that skips to the next line, the desktop character on and off, the panel. Run it with `dotnet run --project dotnet/Fixture.App` (`--first-run` for onboarding); the checks it is for are in `plans/0.8/3-windows-services.md` and `4-windows-views.md`. `scripts/fixture-screenshots.ps1` renders its windows in light and dark. |
+| `dotnet/Fixture.App/` | The fixture app (Windows only, unpackaged, never packed): `Deskling.Windows.Companion` running `CompanionAppModel` over the fixture bank, the fixture vector character in the tray, XAML windows (Home, Settings, onboarding) and panel built from the package's controls (the character canvas, bubble, pill, Settings rows, `SupportWindow` over a mock store), the raster fixture from its PNGs, the desktop character, speech through the system voice, tones written at launch for the sounds, settings in memory. Home has the hand checks' controls: a long line to start a call during, a clock that skips to the next line, the desktop character on and off, the panel. Run it with `dotnet run --project dotnet/Fixture.App` (`--first-run` for onboarding); the checks still to do by hand are the issues labeled `hand-check`. `scripts/fixture-screenshots.ps1` renders its windows in light and dark. |
 | `tools/` | Tools for companion apps, which vendor this repo as a `deskling/` submodule (`tools/README.md`): every one reads the app's `companion.json` (`companion.py`, `companion.schema.json`). `l10n.py`, `phrases.py`, `voice.py`, `character.py`, `synth.py`, `fonts.py`, the shell scripts (`verify.sh`, `setup-linux.sh`, `screenshots.sh`…), `hooks/hook.py`, `windows/` (the WinUI app kit: `companion.targets` every app's project imports, the screenshot runner, the package smoke test, `check-winui.py`, `assets.py`), `store/` (the listing's checks, App Store Connect push, Partner Center import), `landing/` (`@deskling/landing`, published to npm) and `skills/` (the apps symlink them). Shared by every app, so no file names one. Tests in `tools/tests/` over `fixture-app/`. |
 | `scripts/` | `verify.sh` (checks for what changed), `conformance.sh`, `fixture-art.sh` (compiles the fixture skins; `--check`), `agent-stop-check.sh` (`verify.sh --fast` as an agent Stop hook), `fixture-screenshots.ps1` (Windows: the fixture app's screenshot run). |
 | `.agents/skills/` | Agent skills (see *Skills*); `.claude/skills`, `.junie/skills` and `.github/skills` are symlinks to it. `.codex/` holds Codex config and rules. |
-| `plans/` | Design and sequence briefs for releases in progress: `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that build it; `plans/0.7/README.md` the companion shell (0.7.0: what the apps still repeat on top of 0.6 moves here), `1-…`–`6-…` its sessions; `plans/0.8/README.md` the Windows companion shell (0.8.0: `Deskling.Companion.Shell` and `Deskling.Windows.Companion`), `1-…`–`5-…` its sessions. |
+| `plans/` | The design and sequence briefs of 0.5, 0.7 and 0.8, all released, kept as the record of why things are as they are (nothing new goes here: see *Planned work*): `plans/0.5/README.md` is the companion-layer design, `1-…`–`6-…` the sessions that built it; `plans/0.7/README.md` the companion shell (0.7.0: what the apps still repeat on top of 0.6 moves here), `1-…`–`6-…` its sessions; `plans/0.8/README.md` the Windows companion shell (0.8.0: `Deskling.Companion.Shell` and `Deskling.Windows.Companion`), `1-…`–`5-…` its sessions. |
 | `.github/workflows/` | `swift.yml` (macos-26), `dotnet.yml` (ubuntu + windows), `release.yml` (tags → NuGet + GitHub release), `tools.yml` (the Python tools' tests), `regenerate-vectors.yml`, `copilot-setup-steps.yml` (Copilot's cloud agent). |
 
 ## Commands
@@ -54,6 +54,21 @@ scripts/verify.sh                              # runs what applies to your chang
 In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
 read the failed job's log). Vectors need the Swift code to regenerate: without a Mac, dispatch `regenerate-vectors.yml`
 on your branch and pull the commit it pushes.
+
+## Planned work
+
+Planned work lives in [GitHub Issues](https://github.com/vmihalachi/deskling/issues), not in files: `gh issue list`,
+`gh issue view N`. One issue per piece of work, saying what's already known (measurements, what was tried, links to the
+code or the `plans/` record), the options when there's a choice to make, and what done looks like. Labels: `windows`,
+`hand-check` (needs a person at a real machine), `decision` (the owner chooses before work starts), `performance`,
+`accessibility`, `enhancement`, `bug`.
+
+- Read the issue before starting, and work only on what it says. A `decision` issue waits for the owner's choice in
+  its comments.
+- Write what you found as a comment as you go, tick its checkboxes as they're done, and close it from the commit or
+  PR that finishes it (`Fixes #N`).
+- Something found along the way that isn't this change's job is a new issue, not a note in a file.
+- A release-sized design is one issue with its pieces as sub-issues, each written to be started cold.
 
 ## Finding code
 
