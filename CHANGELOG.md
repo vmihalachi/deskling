@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: `windows/screenshots.ps1 -Configuration Release` tries again for up to a minute when it can't empty its
+  build folder. Right after a run Windows can hold one of the app's DLLs for a few seconds (seen the first time an x64
+  build ran from that folder on ARM64, with nothing having it loaded), so a second run straight after the first, as in
+  the apps' workflows that render two languages, stopped at once on "access denied".
+
 ## 0.9.3 - 2026-10-14
 
 The agent hook keeps big files out of an agent's context, and the Windows screenshot run of the Native AOT build works
