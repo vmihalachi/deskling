@@ -194,18 +194,29 @@ class BumpTests(PinsTestCase):
         tool = self.root.parent / "fake-vp"
         landing = self.landing(str(tool))
         self.npm = ["0.4.0", "0.6.0"]
-        tool.write_text('#!/bin/sh\n[ "$1" = install ] && echo \'{ "lock": "0.6.0" }\' > package-lock.json\n', "utf8")
+        (landing / "pnpm-workspace.yaml").write_text("minimumReleaseAgeExclude: []\n", "utf8")
+        git(landing, "init", "-q")
+        git(landing, "add", "-A")
+        git(landing, "commit", "-q", "-m", "landing")
+        tool.write_text('#!/bin/sh\n[ "$1" = install ] && echo \'{ "lock": "0.6.0" }\' > package-lock.json'
+                        ' && echo "minimumReleaseAgeExclude: [0.6.0]" > pnpm-workspace.yaml\n', "utf8")
         tool.chmod(0o755)
         code, out = self.cli("bump", "0.6.0")
         self.assertEqual(code, 0, out)
         self.assertIn("0.6.0", (landing / "package-lock.json").read_text("utf8"))
-        self.assertIn("changed  landing/package-lock.json", out)
+        self.assertIn("changed  landing/package-lock.json (`", out)
+        self.assertIn("changed  landing/pnpm-workspace.yaml (`", out)
+        git(landing, "commit", "-q", "-am", "0.6.0")
 
         self.cli("bump", "0.5.0")  # npm has 0.4.0 at or below it, older than the page's: it stays
         self.assertIn('"0.6.0"', (landing / "package.json").read_text("utf8"))
         (landing / "package.json").write_text('{ "devDependencies": { "@deskling/landing": "0.4.0" } }\n', "utf8")
         (landing / "package-lock.json").write_text('{ "lock": "0.4.0" }\n', "utf8")
         tool.write_text("#!/bin/sh\necho 'no network' >&2\nexit 1\n", "utf8")
+        code, out = self.cli("bump", "0.6.0")
+        self.assertIn("landing has uncommitted dependency changes, so the lockfile is yours", out)
+        (landing / "package.json").write_text('{ "devDependencies": { "@deskling/landing": "0.4.0" } }\n', "utf8")
+        git(landing, "commit", "-q", "-am", "back to 0.4.0")
         code, out = self.cli("bump", "0.6.0")
         self.assertIn("failed, so @deskling/landing stays at 0.4.0", out)
         self.assertIn('"0.4.0"', (landing / "package.json").read_text("utf8"))

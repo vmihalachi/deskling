@@ -6,6 +6,9 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: `companion.py bump` names every landing file the landing tool's `install` rewrote, not only the lockfile
+  (pnpm adds a fresh `@deskling/landing` to `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude`).
+
 ## 0.9.2 - 2026-10-14
 
 On a Mac, a companion app's WinUI side builds and gets looked at in a Parallels Windows VM from the working tree, so

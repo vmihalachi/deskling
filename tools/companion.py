@@ -454,6 +454,15 @@ def npm_versions(package: str) -> list[str]:
     return versions if isinstance(versions, list) else [versions]
 
 
+def _modified(folder: Path) -> set[Path]:
+    """The tracked files git reports changed under `folder` (none outside a repository)."""
+    top = _git(folder, "rev-parse", "--show-toplevel")
+    status = _git(folder, "status", "--porcelain", "--untracked-files=no", "--", ".")
+    if top.returncode or status.returncode:
+        return set()
+    return {(Path(top.stdout.strip()) / line[3:]).resolve() for line in status.stdout.splitlines()}
+
+
 def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     """Moves `@deskling/landing` to npm's newest version at or below `version`, and its lockfile with the landing tool's
     `install` when that's safe: the tool is installed and neither file has uncommitted changes to mix in. What changed,
@@ -475,6 +484,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     status = _git(folder, "status", "--porcelain", "--", *(file.name for file in files))
     dirty = status.returncode == 0 and status.stdout.strip()
     originals = {file: file.read_bytes() for file in files}
+    before = _modified(folder)
     text = read_text(pin.file)
     write_text(pin.file, text[: pin.span[0]] + target + text[pin.span[1]:])
     changed = [f"{pin.label}: {pin.version} → {target}"]
@@ -489,8 +499,11 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
         for file, data in originals.items():
             file.write_bytes(data)
         return [], [f"`{tool} install` in {where} failed, so {_LANDING_PACKAGE} stays at {pin.version}:\n{_tail(result)}"]
+    # The lockfile, and whatever else the install rewrote (pnpm adds a fresh release to minimumReleaseAgeExclude).
+    installed = _modified(folder) - before - {pin.file.resolve()}
     if lockfile and lockfile.read_bytes() != originals[lockfile]:
-        changed.append(f"{_rel(config, lockfile)} (`{tool} install`)")
+        installed.add(lockfile.resolve())
+    changed += [f"{_rel(config, file)} (`{tool} install`)" for file in sorted(installed)]
     return changed, []
 
 
