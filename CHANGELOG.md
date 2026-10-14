@@ -6,9 +6,25 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.9.1 - 2026-10-14
+
+Moving the apps to a release takes one command, and a change that spans Deskling and the apps can be tried in them
+before it's tagged, so one release covers a batch. The packages are unchanged.
+
 - **Tools**: `voice.py` writes the review pages' clip URLs with forward slashes on every OS. On Windows they came out
   as `..\Voice\…`, so `voice.py site` rewrote the friends' site and `voice.py check` (in `verify.sh --fast`) called a
   site generated on a Mac stale.
+- **Tools**: `companion.py bump X.Y.Z` moves an app to a release in one go: every pin `pins` lists, the committed
+  `Package.resolved` files (the Xcode project's through `xcodebuild -resolvePackageDependencies`), the submodule (at the
+  tag) and the landing page's `@deskling/landing` (npm's newest version at or below the release, and its lockfile). It
+  refuses a tag that isn't on origin. `tools/bump-apps.sh X.Y.Z` runs it in every app next to the Deskling checkout,
+  then each app's `verify.sh --fast`, and commits nothing.
+- **Tools**: `companion.py link [PATH]` builds an app against a Deskling checkout (`../deskling`) before a release: the
+  Swift packages become `path:` packages, and a `Directory.Build.targets` in the Windows folder turns the `Deskling.*`
+  package references into references to the checkout's projects. While linked, `pins` fails, and with it `verify.sh`
+  and the pre-commit hook; `unlink` puts every file back byte for byte. `pins` also shows the landing page's
+  `@deskling/landing` version, which it doesn't compare.
+
 
 ## 0.9.0 - 2026-10-14
 

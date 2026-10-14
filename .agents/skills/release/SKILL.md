@@ -46,3 +46,17 @@ The NuGet packages ship at every tag, changed or not: an app pins one Deskling v
 pins`). `@deskling/landing` ships only when `tools/landing` changed since the version on npm (the run's summary says
 which), so its versions skip the releases that leave it alone; nothing waits for approval on those. A breaking change
 to it still counts toward the release number (a minor bump while `0.x`).
+
+## 5. Move the apps
+
+Once NuGet lists the packages (`release.yml`'s run is green; nuget.org indexes them a few minutes later), from this
+checkout:
+
+```sh
+tools/bump-apps.sh X.Y.Z   # companion.py bump in every app next to this checkout, then its verify.sh --fast
+```
+
+It commits nothing: read each app's diff, build what the release touched, and commit there (the landing page's
+`@deskling/landing` change inside its own repository first). A change that spans Deskling and the apps is tried before
+the tag with `companion.py link` in each app (`tools/README.md`, *Moving to a release, or trying one first*), so one
+release covers the batch.

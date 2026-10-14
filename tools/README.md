@@ -7,7 +7,8 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 
 | Tool | What |
 |---|---|
-| `companion.py` | Loads and validates `companion.json`; `get`, `path`, `root`, `validate`, `env` (paths and path patterns for shell), `pins` (the Deskling version everywhere it's pinned). |
+| `companion.py` | Loads and validates `companion.json`; `get`, `path`, `root`, `validate`, `env` (paths and path patterns for shell), `pins` (the Deskling version everywhere it's pinned), `bump` (every pin to a release), `link`/`unlink` (build against a Deskling checkout): below, *Moving to a release, or trying one first*. |
+| `bump-apps.sh` | `companion.py bump` in every app checked out next to this Deskling checkout (or the ones named), then each one's `verify.sh --fast`; commits nothing. |
 | `l10n.py` | String Catalog gaps, work files for translators, apply with validation, `.resw`/`.po` exports; language-scoped phrases. |
 | `phrases.py` | Keeps the catalog's `phrase.<id>` (and `.n` for jokes) keys in step with `phrases.json`. |
 | `voice.py`, `voice-review.html` | Records, reviews and publishes the character's voices with ElevenLabs; a clip per joke part. |
@@ -48,7 +49,8 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
    The submodule is tools and skills only; the code still comes from the package registries. `scripts/verify.sh`
    fails whenever the submodule's tag, `deskling.tag`, the core `Package.swift`'s `exact:`, the XcodeGen spec's
-   `exactVersion` and the `Deskling.*` NuGet versions disagree (`python3 deskling/tools/companion.py pins` shows them).
+   `exactVersion` and the `Deskling.*` NuGet versions disagree (`python3 deskling/tools/companion.py pins` shows them;
+   `companion.py bump` moves them all).
 
 2. **`companion.json`** at the app's root, every section the app has (see the schema and the drafts in
    `tools/tests/*.companion.json`). Check it: `python3 deskling/tools/companion.py validate`.
@@ -103,6 +105,50 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 6. **The app's own files** the tools read: `l10n.rulesFile` (transcreation rules for this app), the voice config and
    direction (`voice.config`, `voice.direction`), the sounds recipes (`sounds.recipes`), the store captions, the
    character design folder (`characters.design`).
+
+## Moving to a release, or trying one first
+
+**`bump`** moves an app to a release in one go: every pin `pins` lists (`deskling.tag`, the core package's `exact:`, the
+XcodeGen spec's `exactVersion`, each `Deskling.*` NuGet version), the committed `Package.resolved` files, the submodule
+(checked out at the tag) and the landing page's `@deskling/landing`; it regenerates the Xcode project and prints `pins`.
+It refuses a tag origin doesn't have, and changes nothing when the app is already there.
+
+```sh
+python3 deskling/tools/companion.py bump 0.9.1   # in an app
+tools/bump-apps.sh 0.9.1                         # in the Deskling checkout: every app next to it, then each verify.sh --fast
+```
+
+- `bump-apps.sh` runs the Deskling checkout's `companion.py`, so it moves an app whose submodule predates `bump`.
+- `@deskling/landing` ships only when `tools/landing` changed, so the landing page gets npm's newest version at or below
+  the release (a staged version counts once approved: run `bump` again then). Its lockfile follows through the landing
+  tool's `install` (`landing.tool`), unless the tool is missing or the landing page has uncommitted dependency changes,
+  which `bump` then says.
+- The core package's `Package.resolved` is rewritten in place (its `originHash` is the SHA-256 of its manifest). The Xcode
+  project's goes through `xcodebuild -resolvePackageDependencies`, because its `originHash` covers the checkout's path;
+  without Xcode, `bump` says what's left.
+- Nothing is staged or committed: commit the app's paths, and the landing page's change inside its own repository.
+
+**`link`** builds an app against a Deskling checkout instead of the release, so a change that spans Deskling and the
+apps can be tried in each of them before one tag covers the batch:
+
+```sh
+python3 deskling/tools/companion.py link     # ../deskling, next to the app (or: link PATH)
+# build and test as usual: xcodebuild, swift test, dotnet build and test
+python3 deskling/tools/companion.py unlink   # before committing
+```
+
+- **Swift:** the XcodeGen spec's and the core package's Deskling become `path:` packages, and the project is
+  regenerated. SwiftPM names a local package after its folder, so keep the checkout's folder named `deskling`.
+- **.NET:** a `Directory.Build.targets` in the Windows folder (created, or added to before its `</Project>`) swaps each
+  `Deskling.*` PackageReference for a ProjectReference to the checkout's `dotnet/<Package>/<Package>.csproj`: no feed,
+  no version, nothing to pack, and every build compiles the checkout as it is. The WinUI packages build on Windows
+  only, as before.
+- **While linked, `pins` fails**, and with it `verify.sh` and the pre-commit hook, so a linked app can't be committed;
+  `bump` refuses too.
+- **`unlink`** puts back every file `link` changed, byte for byte, and the `Package.resolved` files and the project the
+  linked builds rewrote, then regenerates the project. A file edited meanwhile keeps that edit: only the link's own
+  change comes out. The record of the link is in the repository's git folder (`.git/deskling-link`, one per worktree).
+- The tools stay the submodule's: `link` switches the packages, not `deskling/tools`.
 
 ## Windows apps
 
