@@ -89,7 +89,9 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    `.github/hooks/<app>.json`: `PreToolUse` and `PostToolUse` running `python3 deskling/tools/hooks/hook.py pre|post`,
    and for Copilot's cloud coding agent `agentStop` running `hook.py cloud-stop` (the app's `verify.sh` on the branch,
    inside GitHub Actions only). The hook reads the guards, the slow-check table and the parity patterns (`hooks.*`) from `companion.json`, and
-   fails open when the file is missing or invalid.
+   fails open when the file is missing or invalid. It also refuses to load any text file over `hooks.bigFileLines`
+   lines (600) whole: a `Read` without `offset`/`limit`, `cat`, or `sed` without a range; the refusal names the outline
+   command (`grep -n '^\(func\|class\|...\)'`) to run first.
 
 5. **Skills.** Symlink the generic ones next to the app's own:
 

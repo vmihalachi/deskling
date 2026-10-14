@@ -89,6 +89,36 @@ class PreToolUse(HookTestCase):
         self.assertFalse(self.blocked("Bash", command="cat > notes.md <<'EOF'\nsee Localizable.xcstrings\nEOF"))
         self.assertFalse(self.blocked("Bash", command="cat companion.json"))
 
+    def test_big_files_are_read_by_range(self):
+        (self.root / "macos/Fixture/Views").mkdir(parents=True, exist_ok=True)
+        big = self.root / "macos/Fixture/Views/Big.swift"
+        big.write_text("".join(f"func f{i}() {{}}\n" for i in range(700)), "utf8")
+        small = self.root / "macos/Fixture/Views/Small.swift"
+        small.write_text("func f() {}\n" * 100, "utf8")
+        done = self.run_hook("pre", {"session_id": "t", "tool_name": "Read", "tool_input": {"file_path": str(big)}})
+        self.assertEqual(done.returncode, 2)
+        self.assertIn("macos/Fixture/Views/Big.swift is 700 lines: read its outline first", done.stderr)
+        self.assertFalse(self.blocked("Read", file_path=str(big), offset=100, limit=80))
+        self.assertFalse(self.blocked("Read", file_path=str(big), limit=50))
+        self.assertFalse(self.blocked("Read", file_path=str(small)))
+        self.assertFalse(self.blocked("Read", file_path=str(self.root / "macos/Fixture/Views/Missing.swift")))
+        self.assertTrue(self.blocked("Bash", command="cat macos/Fixture/Views/Big.swift"))
+        self.assertTrue(self.blocked("Bash", command=f"cat {big} | grep func"))
+        self.assertTrue(self.blocked("Bash", command="sed -n p macos/Fixture/Views/Big.swift"))
+        self.assertTrue(self.blocked("Bash", command="sed 's/a/b/' macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="sed -n '100,180p' macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="sed -n '/^func f1/,/^}/p' macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="sed -i '' 's/a/b/' macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="head -40 macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="grep -n '^func' macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="wc -l macos/Fixture/Views/Big.swift"))
+        self.assertFalse(self.blocked("Bash", command="cat > macos/Fixture/Views/Big.swift"), "a redirect target")
+        self.assertFalse(self.blocked("Bash", command="cat macos/Fixture/Views/Small.swift"))
+        self.configure(bigFileLines=0)
+        self.assertFalse(self.blocked("Read", file_path=str(big)), "hooks.bigFileLines 0 disables")
+        self.configure(bigFileLines=50)
+        self.assertTrue(self.blocked("Read", file_path=str(small)))
+
     def test_grep(self):
         path = "macos/Fixture/Resources/Localizable.xcstrings"
         self.assertTrue(self.blocked("Grep", pattern="Skip", path=path, **{"-C": 3}))

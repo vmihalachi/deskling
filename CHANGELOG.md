@@ -6,8 +6,19 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools**: the agent hook refuses to load any text file over `hooks.bigFileLines` lines (600 by default, 0 disables)
+  whole: a `Read` without `offset`/`limit`, `cat`, `less`, `nl`, or `sed` without a range or `-i`. The refusal names the
+  outline command to run first, then the range to read. Most of an agent's oversized reads were 1,000–3,000-line
+  source files loaded whole several times per session.
 - **Tools**: `companion.py bump` names every landing file the landing tool's `install` rewrote, not only the lockfile
   (pnpm adds a fresh `@deskling/landing` to `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude`).
+- **Tools**: `windows/screenshots.ps1 -Configuration Release` builds from scratch in a folder of its own,
+  `<project>\obj\screenshots\<platform>` (restore, intermediate, output and publish, through `--artifacts-path`),
+  emptied first. It built in the project's `obj\` and `bin\`, so after a packaged publish (`GenerateAppxPackageOnBuild`,
+  as in the apps' Windows workflows) the unpackaged app died at start with a XAML parse failure (0xC000027B); and it
+  published into a fixed folder under `%TEMP%` that it never emptied, so a run for one platform kept the other's files
+  (`BadImageFormatException`) and runs on one machine shared it. The apps' workflows can drop their step that deletes
+  `obj\` and `bin\` first.
 
 ## 0.9.2 - 2026-10-14
 

@@ -302,6 +302,7 @@
       "additionalProperties": false,
       "properties": {
         "guardedExtra": { "type": "array", "items": { "type": "string" }, "description": "More paths (regular expressions) agents must not edit by hand." },
+        "bigFileLines": { "type": "integer", "description": "A text file over this many lines may only be read by range (Read with offset/limit, sed -n 'A,Bp'), never whole; the hook says to read the outline first. Default 600; 0 disables." },
         "guards": {
           "type": "array",
           "description": "More guarded paths, each with the reason the agent is shown: never edited by hand, and with `reads`, never loaded either.",

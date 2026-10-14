@@ -5,7 +5,8 @@
 
   hook.py pre    PreToolUse:  refuse to load huge or generated files and to edit generated ones (the String Catalogs,
                                .resw, project.pbxproj, the voice manifest and clips, the vectors, hooks.guards and
-                               hooks.guardedExtra).
+                               hooks.guardedExtra), and to read any file over hooks.bigFileLines lines (600) whole:
+                               Read without offset/limit, `cat`, `sed -n` without a range.
   hook.py post   PostToolUse: remember what this session edited and ran; format the Swift or C# file just edited;
                                regenerate the Xcode project when Swift files come or go or the XcodeGen spec changes.
   hook.py stop   Stop:        run the app's verify.sh --fast on this session's edits and remind about the slow checks
@@ -44,15 +45,19 @@ SLOW: list = []  # (ran-kind, path pattern, reminder)
 RAN: list = []  # (ran-kind, command pattern) of the app's own slow checks (hooks.slow)
 MAC_UI = None
 WINDOWS_UI = None
+BIG_LINES = 600  # hooks.bigFileLines; 0 disables
 
 READERS = re.compile(r"(^|[|;&(]\s*|\s)(cat|less|more|head|tail|bat|nl|xxd|od|strings|jq|view|awk|sed|python3?\s+-c)\b")
 CONTEXT = re.compile(r"\s-(?:[ABC]\s*\d+|[a-zA-Z]*[ABC]\d*)\b|--(?:after|before)?-?context\b")
+WHOLE = re.compile(r"(^|[|;&(]\s*|\s)(cat|less|more|bat|nl|view)\b")  # readers that print a file whole
+SED_RANGE = re.compile(r"(\d+|/[^/]*/)\s*,\s*(\d+|\$|\+\d+|/[^/]*/)\s*[pP]|\b\d+\s*[pP]\b|/[^/]*/\s*[pP]")
+OUTLINE = "grep -n '^\\(func\\|class\\|struct\\|extension\\|public\\|private\\|internal\\|##\\)'"
 NEVER = "^$a"
 
 
 def setup(root=None):
     """Reads companion.json at `root` ($CLAUDE_PROJECT_DIR, else found from the current directory)."""
-    global ROOT, CONFIG, NAMES, L10N, GUARDED, I18N, SLOW, RAN, MAC_UI, WINDOWS_UI
+    global ROOT, CONFIG, NAMES, L10N, GUARDED, I18N, SLOW, RAN, MAC_UI, WINDOWS_UI, BIG_LINES
     root = Path(root or os.environ.get("CLAUDE_PROJECT_DIR") or companion.find_root())
     CONFIG = companion.load(root)
     ROOT = CONFIG.root
@@ -111,6 +116,7 @@ def setup(root=None):
     SLOW = [(kind, pattern, label) for kind, pattern, label in SLOW if pattern != NEVER]
     MAC_UI = re.compile(CONFIG.get("hooks.macUI")) if CONFIG.get("hooks.macUI") else None
     WINDOWS_UI = re.compile(CONFIG.get("hooks.windowsUI")) if CONFIG.get("hooks.windowsUI") else None
+    BIG_LINES = int(CONFIG.get("hooks.bigFileLines", BIG_LINES) or 0)
 
 
 def rel(path):
@@ -127,6 +133,30 @@ def guarded(path, for_edit):
         if re.search(pattern, path) and (edits if for_edit else reads):
             return f"{path}: {why}"
     return None
+
+
+def big(path):
+    """The line count of `path` when it is a text file over BIG_LINES lines, else 0."""
+    if not BIG_LINES:
+        return 0
+    for candidate in (Path(path), ROOT / path):
+        try:
+            if not candidate.is_file() or candidate.stat().st_size < BIG_LINES:
+                continue
+            data = candidate.read_bytes()
+        except OSError:
+            continue
+        if b"\0" in data[:8192]:  # binary
+            return 0
+        lines = data.count(b"\n")
+        return lines if lines > BIG_LINES else 0
+    return 0
+
+
+def whole_read(path, lines):
+    path = rel(path)
+    return (f"{path} is {lines} lines: read its outline first (`{OUTLINE} {path}`), then only the range you need "
+            f"(Read with offset and limit, or `sed -n 'A,Bp'`), never the whole file.")
 
 
 def deny(reason):
@@ -180,6 +210,8 @@ def pre_one(event):
             deny(reason)
         if I18N and I18N.search(rel(path)) and not args.get("limit"):
             deny(f"{rel(path)} is large: `grep -n '\"<key>\"' {rel(path)}`, or Read with a small limit.")
+        if not args.get("limit") and not args.get("offset") and (lines := big(path)):
+            deny(whole_read(path, lines))
     elif tool in ("Edit", "MultiEdit", "Write", "NotebookEdit"):
         path = args.get("file_path") or args.get("notebook_path") or ""
         if reason := guarded(path, for_edit=True):
@@ -195,6 +227,9 @@ def pre_one(event):
         command = re.sub(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n.*?^\s*\1\s*$", "", command, flags=re.S | re.M)
         # Judge each simple command on its own: `git status -- x.xcstrings | head` is fine.
         for segment in re.split(r"\|\||&&|[|;\n]", command):
+            segment = re.sub(r">>?\s*\S+", "", segment)  # a redirect's target is written, not read
+            whole = WHOLE.search(segment) or (re.search(r"(^|\s)sed\b", segment) and not SED_RANGE.search(segment)
+                                              and not re.search(r"\s-[a-zA-Z]*i\b|--in-place", segment))
             for word in re.findall(r"[^\s'\"`|;&<>()]+", segment):
                 if not re.search(r"[\w*-]\.\w+$", word):  # a file name, not a bare extension in prose
                     continue
@@ -202,6 +237,8 @@ def pre_one(event):
                 if reason and (READERS.search(segment) or CONTEXT.search(segment) or re.search(
                         r"\bgit\s+(diff|show|log\s+-p)\b(?!.*--(stat|name-only|numstat|shortstat))", segment)):
                     deny(reason)
+                if whole and (lines := big(word)):
+                    deny(whole_read(word, lines))
 
 
 def state_file(event):
