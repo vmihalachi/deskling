@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.9.3 - 2026-10-14
+
+The agent hook keeps big files out of an agent's context, and the Windows screenshot run of the Native AOT build works
+after a packaged publish and on either platform, so the apps' Windows workflows need no clean-up step before it. The
+packages are unchanged.
+
 - **Tools**: the agent hook refuses to load any text file over `hooks.bigFileLines` lines (600 by default, 0 disables)
   whole: a `Read` without `offset`/`limit`, `cat`, `less`, `nl`, or `sed` without a range or `-i`. The refusal names the
   outline command to run first, then the range to read. Most of an agent's oversized reads were 1,000–3,000-line
