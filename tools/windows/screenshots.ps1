@@ -10,10 +10,12 @@ Usage: deskling/tools/windows/screenshots.ps1 [-Only name,name] [-Out folder] [-
   -Language       the language to shoot in ("it"); the app's own choice otherwise.
   -Configuration  Debug (the default) builds and runs the unpackaged Debug app. Release publishes the Native AOT app
                   unpackaged with screenshot mode compiled in (-p:ScreenshotMode=true), so the shots come from the build
-                  that ships: Native AOT breaks some things a JIT build hides.
+                  that ships: Native AOT breaks some things a JIT build hides. It builds from scratch in
+                  <project>\obj\screenshots\<platform>, emptied first, never in the obj\ and bin\ a packaged build uses.
   -Project        another WinUI project than companion.json's (Deskling's fixture app).
 Fails, after copying the shots, when the run reports problems (problems.txt): a window that didn't open or couldn't be
-drawn, a shot that wasn't written, text that doesn't fit (LayoutCheck).
+drawn, a shot that wasn't written, text that doesn't fit (LayoutCheck); or when the app didn't finish the run (it
+crashed or was closed partway, so some windows have no shot).
 #>
 param(
     [string] $Only = "",
@@ -59,8 +61,14 @@ if ($Configuration -eq "Release") {
     if (-not (Get-Command vswhere.exe -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $installer "vswhere.exe"))) {
         $env:PATH = "$installer;$env:PATH"
     }
-    $publish = Join-Path ([IO.Path]::GetTempPath()) "$name-screenshots.publish"
-    dotnet publish $Project -c Release -p:Platform=$Platform -p:WindowsPackageType=None -p:ScreenshotMode=true -o $publish -v quiet -nologo | Out-Null
+    # Everything this build writes (restore, intermediate, output, publish) goes to a folder of its own per platform under
+    # the project's obj\, emptied first. In the project's own obj\ and bin\, after a packaged publish
+    # (GenerateAppxPackageOnBuild), the incremental build kept what it had made for the package and the app died at
+    # start (a XAML parse failure, 0xC000027B); a publish folder kept between runs mixed in the other platform's files.
+    $artifacts = Join-Path (Split-Path $Project) "obj\screenshots\$Platform"
+    if (Test-Path $artifacts) { Remove-Item -LiteralPath $artifacts -Recurse -Force }
+    $publish = Join-Path $artifacts "app"
+    dotnet publish $Project -c Release -p:Platform=$Platform -p:WindowsPackageType=None -p:ScreenshotMode=true --artifacts-path $artifacts -o $publish -v quiet -nologo | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "The app didn't publish." }
     $folder = $publish
 }
@@ -95,5 +103,9 @@ $problems = Join-Path $work "problems.txt"
 if (Test-Path $problems) {
     [Console]::Error.WriteLine("Problems:")
     Get-Content $problems | ForEach-Object { [Console]::Error.WriteLine("  $_") }
+    exit 1
+}
+if ($run.ExitCode -ne 0) {
+    [Console]::Error.WriteLine("The app stopped before the end of the run (exit code $($run.ExitCode)), so some windows have no shot.")
     exit 1
 }

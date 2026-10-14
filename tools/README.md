@@ -24,7 +24,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits; App Store Connect (text, in-app purchases, screenshots, previews, review notes; `--status` reads only); a Partner Center import folder. |
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
-| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports. |
+| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. |
 | `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
 | `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
@@ -206,4 +206,7 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
   named after languages, so the targets keep them out of the resource index; a tray icon's GUID belongs to the first
   executable path that used it (`TrayIconHost` falls back to an id), so keep the Debug and Release GUIDs apart and never
   change one; Native AOT links through the Visual Studio tools that `vswhere.exe` finds, which a plain shell may not
-  have on its `PATH` (`screenshots.ps1` adds the installer's).
+  have on its `PATH` (`screenshots.ps1` adds the installer's); an unpackaged build in the `obj\` and `bin\` a packaged
+  publish left dies at start (a XAML parse failure, 0xC000027B), since the incremental build keeps what it made for the
+  package, so `screenshots.ps1 -Configuration Release` builds in `obj\screenshots\<platform>` (`--artifacts-path`),
+  emptied first.

@@ -17,8 +17,11 @@ package and the NuGet packages together.
   emptied first. It built in the project's `obj\` and `bin\`, so after a packaged publish (`GenerateAppxPackageOnBuild`,
   as in the apps' Windows workflows) the unpackaged app died at start with a XAML parse failure (0xC000027B); and it
   published into a fixed folder under `%TEMP%` that it never emptied, so a run for one platform kept the other's files
-  (`BadImageFormatException`) and runs on one machine shared it. The apps' workflows can drop their step that deletes
-  `obj\` and `bin\` first.
+  (the copy skips a file when the one there is as new, and NuGet keeps the packages' timestamps): a
+  `BadImageFormatException` at start, or on ARM64 `CLASS_E_CLASSNOTAVAILABLE` (0x80040111) from `Application` with
+  x64 WinUI DLLs in the folder. Runs on one machine shared that folder too. The apps' workflows can drop their step
+  that deletes `obj\` and `bin\` first. It also fails when the app stops before the end of the run (a crash, or closed
+  partway), where it passed with the shots it had.
 
 ## 0.9.2 - 2026-10-14
 
