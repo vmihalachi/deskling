@@ -32,7 +32,7 @@ public sealed record CompanionViews<TWindow>(
 
 /// <summary>
 /// Everything native the model drives on Windows (<see cref="ICompanionHost{TWindow}"/>): the windows
-/// (<see cref="WindowManager{TWindow}"/>), the hotkey, timers on the UI thread, the tray icon
+/// (<see cref="WindowManager{TWindow}"/>), timers on the UI thread, the tray icon
 /// (<see cref="TrayStatusItem"/>), the desktop character, the appearance, the notification settings and quitting. The
 /// app makes one on the UI thread, before the model, and hands both its views. UI thread only.
 /// </summary>
@@ -65,13 +65,10 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
             ?? DispatcherQueue.GetForCurrentThread()
             ?? throw new InvalidOperationException("Create the host on the UI thread, or pass its DispatcherQueue.");
         Windows = new WindowManager<TWindow>(views.WindowSpec, views.WindowContent, windowIconPath);
-        HotKey = new HotKey();
         Timers = new DispatcherTimers(this.queue);
     }
 
     public WindowManager<TWindow> Windows { get; }
-
-    public HotKey HotKey { get; }
 
     public DispatcherTimers Timers { get; }
 
@@ -90,8 +87,6 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     public Action? OnQuit { get; set; }
 
     IWindowHost<TWindow> ICompanionHost<TWindow>.Windows => Windows;
-
-    IHotKey ICompanionHost<TWindow>.HotKey => HotKey;
 
     ITimers ICompanionHost<TWindow>.Timers => Timers;
 
@@ -124,7 +119,7 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     /// <summary>Settings › System › Notifications, where the app's switch is.</summary>
     public void OpenNotificationSettings() => _ = Launcher.LaunchUriAsync(new Uri("ms-settings:notifications"));
 
-    /// <summary>The app's <see cref="OnQuit"/>, then the tray icon (which would linger until hovered), the windows and the hotkey go, and the app exits.</summary>
+    /// <summary>The app's <see cref="OnQuit"/>, then the tray icon (which would linger until hovered), and the windows go, and the app exits.</summary>
     public void Quit()
     {
         OnQuit?.Invoke();
@@ -132,14 +127,13 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
         Application.Current.Exit();
     }
 
-    /// <summary>Closes the windows and takes the tray icon and hotkey away; once, at exit.</summary>
+    /// <summary>Closes the windows and takes the tray icon away; once, at exit.</summary>
     public void Dispose()
     {
         Windows.CloseAll();
         StatusItem?.Dispose();
         StatusItem = null;
         (Desktop as IDisposable)?.Dispose();
-        HotKey.Dispose();
     }
 
     /// <summary>The appearance setting as a XAML theme (<see cref="ElementTheme.Default"/> follows Windows' app mode).</summary>

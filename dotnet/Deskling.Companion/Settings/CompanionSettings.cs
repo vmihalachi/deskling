@@ -1,11 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Deskling.Companion.Cadence;
 using Deskling.Companion.Phrases;
 using Deskling.Companion.Rules;
-using Deskling.Core.Input;
 using Deskling.Core.Settings;
 
 namespace Deskling.Companion.Settings;
@@ -58,7 +55,6 @@ public class CompanionSettings : INotifyPropertyChanged
     private double speechVolume;
     private IReadOnlySet<FlavorId> phraseFlavors;
     private IReadOnlySet<string> mutedPhraseIDs;
-    private KeyShortcut? sayShortcut;
     private AppearanceSetting appearance;
     private SkinId skin;
     private DateTimeOffset? shushedUntil;
@@ -90,7 +86,6 @@ public class CompanionSettings : INotifyPropertyChanged
         mutedPhraseIDs = store.GetStrings(SettingsKeys.MutedPhraseIDs) is { } muted
             ? muted.ToHashSet(StringComparer.Ordinal)
             : defaults.MutedPhraseIDs;
-        sayShortcut = store.GetString(SettingsKeys.SayShortcut) is { } stored ? DecodeShortcut(stored) : defaults.SayShortcut;
         appearance = Appearances.Parse(store.GetString(SettingsKeys.Appearance)) ?? defaults.Appearance;
         skin = store.GetString(SettingsKeys.Skin) is { Length: > 0 } skinName ? new SkinId(skinName) : defaults.Skin;
         shushedUntil = store.GetDouble(SettingsKeys.ShushedUntil) is { } seconds ? DateTimeOffset.UnixEpoch.AddSeconds(seconds) : defaults.ShushedUntil;
@@ -206,13 +201,6 @@ public class CompanionSettings : INotifyPropertyChanged
         set => SetProperty(ref mutedPhraseIDs, value, () => Store.SetStrings(SettingsKeys.MutedPhraseIDs, value.Order(StringComparer.Ordinal).ToArray()));
     }
 
-    /// <summary>Stored as JSON; null is stored as an empty string, so "the user cleared it" differs from "never set".</summary>
-    public KeyShortcut? SayShortcut
-    {
-        get => sayShortcut;
-        set => SetProperty(ref sayShortcut, value, () => Store.SetString(SettingsKeys.SayShortcut, value is null ? "" : EncodeShortcut(value)));
-    }
-
     public AppearanceSetting Appearance
     {
         get => appearance;
@@ -303,7 +291,6 @@ public class CompanionSettings : INotifyPropertyChanged
         SpeechVolume = Defaults.SpeechVolume;
         PhraseFlavors = Defaults.PhraseFlavors;
         MutedPhraseIDs = Defaults.MutedPhraseIDs;
-        SayShortcut = Defaults.SayShortcut;
         Appearance = Defaults.Appearance;
         Skin = Defaults.Skin;
         ShushedUntil = Defaults.ShushedUntil;
@@ -335,32 +322,4 @@ public class CompanionSettings : INotifyPropertyChanged
     /// <summary><c>[x, y]</c>; anything else is unreadable and falls back to the default spot.</summary>
     internal static DesktopPosition? DecodePosition(IReadOnlyList<int> values) =>
         values.Count == 2 ? new DesktopPosition(values[0], values[1]) : null;
-
-    /// <summary>The Swift <c>encodeShortcut</c> shape: a JSON object with <c>keyCode</c>, <c>modifiers</c> and <c>key</c>.</summary>
-    internal static string EncodeShortcut(KeyShortcut shortcut) =>
-        JsonSerializer.Serialize(new ShortcutJson(shortcut.KeyCode, shortcut.Modifiers, shortcut.Key), ShortcutJsonContext.Default.ShortcutJson);
-
-    /// <summary>The inverse of <see cref="EncodeShortcut"/>: null for an empty string or anything malformed.</summary>
-    internal static KeyShortcut? DecodeShortcut(string json)
-    {
-        if (json.Length == 0)
-            return null;
-        try
-        {
-            var decoded = JsonSerializer.Deserialize(json, ShortcutJsonContext.Default.ShortcutJson);
-            return decoded?.Key is null ? null : new KeyShortcut(decoded.KeyCode, decoded.Modifiers, decoded.Key);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
 }
-
-/// <summary>The stored shortcut, the same fields as <c>KeyShortcut</c> in the Swift (Codable) order.</summary>
-internal sealed record ShortcutJson(uint KeyCode, uint Modifiers, string Key);
-
-/// <summary>Source-generated, so apps can compile it with Native AOT.</summary>
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
-[JsonSerializable(typeof(ShortcutJson))]
-internal sealed partial class ShortcutJsonContext : JsonSerializerContext;

@@ -4,6 +4,9 @@
 > `6-…`) are self-contained briefs, one per working session, in order; `3` and `4` can run in parallel with `2`.
 > Start a sequence from its brief, not from this file, and read only the files the brief lists.
 
+> **Since 0.9** the global shortcut is gone: `KeyShortcut`, `GlobalHotKey`, `ShortcutCapture`, `ShortcutRecorder`,
+> the `sayShortcut` setting, `hotKeySignature` and (on Windows) `IHotKey`, `HotKey` and `ShortcutCopy`. Read past them below.
+
 ## Why
 
 sunnysays (`../sunnysays`) built a desk companion on Deskling: a character that says lines on a cadence, knows when
@@ -97,7 +100,7 @@ Moved verbatim from `SS/Cadence`, `SS/Rules`, `SS/Desktop`: `Frequency`, `Chatte
 ```swift
 public enum SettingsKeys { /* the 23 generic key constants of SS/Settings/SettingsKeys.swift, same strings */ }
 public struct CompanionDefaults: Equatable, Sendable {  // today's numbers as package defaults; the three product choices are required
-    public init(skin: SkinID, phraseFlavors: Set<FlavorID>, sayShortcut: KeyShortcut?)   // then adjust the vars
+    public init(skin: SkinID, phraseFlavors: Set<FlavorID>)   // then adjust the vars
 }
 @Observable open class CompanionSettings {
     public let store: any SettingsStore; public let defaults: CompanionDefaults
@@ -296,7 +299,7 @@ code still comes from the package registries), keeps two-line wrappers so its do
 symlinks the generic skills. `verify.sh` fails when the submodule commit, the SwiftPM pin and the NuGet pins disagree.
 
 `companion.json` sections: `name`, `displayName`, `character`, `bundleId`, `devBundleId`, `domain`; `deskling.{tag,path}`;
-`mac.{dir,project,projectSpec,scheme,app,core,coreModule,tests,devAppName,hotkeySignature,screenshotEnv,derivedData}`;
+`mac.{dir,project,projectSpec,scheme,app,core,coreModule,tests,devAppName,screenshotEnv,derivedData}`;
 `windows.{dir,core,coreTests,app,sln,strings}`; `languages.{source,all}`; `l10n.{catalog,plist,landing,glossaryKeys,keepNames,rulesFile,pluralCategories,linuxPo}`;
 `conformance.{dir,writeFlag,corePackagePath}`; `characters.{design,swiftOut,swiftModule,assets,windowsAssets,moods,paletteFile,mode}`;
 `voice.{dir,repo,config,direction,voices,defaultVoice,keychainService,reviewTitle,siteCopyright,extraClips,required}`;

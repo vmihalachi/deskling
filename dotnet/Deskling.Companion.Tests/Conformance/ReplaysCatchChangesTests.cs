@@ -35,10 +35,6 @@ public sealed class ReplaysCatchChangesTests
         Assert.Single(SettingsReplay.Verify(rate, "settings.json", Fixture.Defaults));
         var beat = Changed("companion/settings.json", n => n["partBeatSeconds"] = 1.5);
         Assert.Single(SettingsReplay.Verify(beat, "settings.json", Fixture.Defaults));
-        var shortcut = Changed("companion/settings.json", n => n["defaults"]!["sayShortcut"]!["keyCode"] = 1);
-        Assert.Single(SettingsReplay.Verify(shortcut, "settings.json", Fixture.Defaults));
-        shortcut = Changed("companion/settings.json", n => n["defaults"]!["sayShortcut"]!["keyCode"] = 1);
-        Assert.Empty(SettingsReplay.Verify(shortcut, "settings.json", Fixture.Defaults, compareShortcut: false));
         // An app's own keys sit beside the generic ones.
         var app = Changed(
             "companion/settings.json",

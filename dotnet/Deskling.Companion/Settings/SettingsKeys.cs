@@ -3,7 +3,7 @@ namespace Deskling.Companion.Settings;
 /// <summary>
 /// The storage key of every generic companion preference. Persisted on users' machines and listed in settings.json:
 /// never rename one (a new key must keep the old one readable). An app adds its own keys next to these, in its
-/// <see cref="CompanionSettings"/> subclass.
+/// <see cref="CompanionSettings"/> subclass. Retired, never to be reused: <c>sayShortcut</c> (the global shortcut, until 0.9).
 /// </summary>
 public static class SettingsKeys
 {
@@ -22,7 +22,6 @@ public static class SettingsKeys
     public const string SpeechVolume = "speechVolume";
     public const string PhraseFlavors = "phraseFlavors";
     public const string MutedPhraseIDs = "mutedPhraseIDs";
-    public const string SayShortcut = "sayShortcut";
     public const string Appearance = "appearance";
     public const string Skin = "skin";
     public const string ShushedUntil = "shushedUntil";
@@ -49,7 +48,6 @@ public static class SettingsKeys
         SpeechVolume,
         PhraseFlavors,
         MutedPhraseIDs,
-        SayShortcut,
         Appearance,
         Skin,
         ShushedUntil,

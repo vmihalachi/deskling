@@ -17,7 +17,6 @@
     "coreModule": "FixtureCore",
     "tests": "FixtureTests",
     "devAppName": "Fixture Dev",
-    "hotkeySignature": "FXTR",
     "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
     "derivedData": "macos/build/dd.noindex"
   },

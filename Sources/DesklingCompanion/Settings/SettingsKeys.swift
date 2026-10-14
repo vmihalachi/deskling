@@ -2,7 +2,7 @@ import Foundation
 
 /// The storage key of every generic companion preference. Persisted on users' machines and listed in
 /// `settings.json`: never rename one (a new key must keep the old one readable). An app adds its own keys next to
-/// these, in its `CompanionSettings` subclass.
+/// these, in its `CompanionSettings` subclass. Retired, never to be reused: `sayShortcut` (the global shortcut, until 0.9).
 public enum SettingsKeys {
     public static let channels = "channels"
     public static let frequency = "frequency"
@@ -19,7 +19,6 @@ public enum SettingsKeys {
     public static let speechVolume = "speechVolume"
     public static let phraseFlavors = "phraseFlavors"
     public static let mutedPhraseIDs = "mutedPhraseIDs"
-    public static let sayShortcut = "sayShortcut"
     public static let appearance = "appearance"
     public static let skin = "skin"
     public static let shushedUntil = "shushedUntil"
@@ -32,8 +31,7 @@ public enum SettingsKeys {
     public static let all: [String] = [
         channels, frequency, activeStartMinute, activeEndMinute, activeWeekdays, quietHours, hushInFullScreen,
         greetOnReturn, commentOnPower, commentOnAppearance, voiceIdentifier, speechRate, speechVolume,
-        phraseFlavors, mutedPhraseIDs, sayShortcut,
-        appearance, skin, shushedUntil, showOnDesktop, desktopSize, desktopPosition, hasCompletedOnboarding,
+        phraseFlavors, mutedPhraseIDs, appearance, skin, shushedUntil, showOnDesktop, desktopSize, desktopPosition, hasCompletedOnboarding,
     ]
 
     /// The generic keys "Reset to defaults" clears. Onboarding stays done.

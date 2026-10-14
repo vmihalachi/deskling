@@ -1,8 +1,8 @@
 import DesklingCore
 import Foundation
 
-/// Every generic preference's value on first launch. The package's numbers are the defaults; the three product
-/// choices (the default skin, the flavors on, the "Say something" shortcut) have none, so every app states them.
+/// Every generic preference's value on first launch. The package's numbers are the defaults; the two product
+/// choices (the default skin, the flavors on) have none, so every app states them.
 /// Adjust any other value after `init`. Pinned by the app's `settings.json`, which its Windows port loads.
 public struct CompanionDefaults: Equatable, Sendable {
     /// Speak out loud; no notification until the user turns that channel on, so first launch asks for nothing.
@@ -27,8 +27,6 @@ public struct CompanionDefaults: Equatable, Sendable {
     public var phraseFlavors: Set<FlavorID>
     /// No line muted ("Don't say that again").
     public var mutedPhraseIDs: Set<String> = []
-    /// "Say something"; nil means none.
-    public var sayShortcut: KeyShortcut?
     public var appearance: AppearanceSetting = .system
     public var skin: SkinID
     public var shushedUntil: Date? = nil
@@ -39,9 +37,8 @@ public struct CompanionDefaults: Equatable, Sendable {
     public var desktopPosition: DesktopPosition? = nil
     public var hasCompletedOnboarding = false
 
-    public init(skin: SkinID, phraseFlavors: Set<FlavorID>, sayShortcut: KeyShortcut?) {
+    public init(skin: SkinID, phraseFlavors: Set<FlavorID>) {
         self.skin = skin
         self.phraseFlavors = phraseFlavors
-        self.sayShortcut = sayShortcut
     }
 }

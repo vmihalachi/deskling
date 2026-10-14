@@ -7,7 +7,7 @@ description: Work on a Deskling companion app's Windows port (companion.json `wi
 
 The Windows app mirrors the Mac app on Deskling's .NET packages: `Deskling.Core` (scheduler, settings store, store),
 `Deskling.Companion` (phrases, picker, cadence, quiet rules, settings, coordinator, desktop presence, skins, the rig),
-`Deskling.Windows` (tray, hotkey, idle, busy, startup, notifications, single instance, `.resw` lookup), since 0.8 the
+`Deskling.Windows` (tray, idle, busy, startup, notifications, single instance, `.resw` lookup), since 0.8 the
 companion shell (`Deskling.Companion.Shell` and `Deskling.Windows.Companion`, below) and, in tests, `Deskling.Testing`
 (fakes, fixture loaders, the conformance replay bodies, the shell's `FakeHost`). The app's own core (`windows.core`)
 holds what's app-specific; its tests (`windows.coreTests`) replay the app's vectors. Platform differences and the

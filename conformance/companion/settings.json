@@ -43,11 +43,6 @@
     "quietHours" : [
 
     ],
-    "sayShortcut" : {
-      "key" : "F",
-      "keyCode" : 3,
-      "modifiers" : 6400
-    },
     "showOnDesktop" : false,
     "shushedUntil" : null,
     "skin" : "fixture-vector",
@@ -108,7 +103,6 @@
     "speechVolume",
     "phraseFlavors",
     "mutedPhraseIDs",
-    "sayShortcut",
     "appearance",
     "skin",
     "shushedUntil",
@@ -134,7 +128,6 @@
     "mutedPhraseIDs" : "mutedPhraseIDs",
     "phraseFlavors" : "phraseFlavors",
     "quietHours" : "quietHours",
-    "sayShortcut" : "sayShortcut",
     "showOnDesktop" : "showOnDesktop",
     "shushedUntil" : "shushedUntil",
     "skin" : "skin",
@@ -162,7 +155,6 @@
     "speechVolume",
     "phraseFlavors",
     "mutedPhraseIDs",
-    "sayShortcut",
     "appearance",
     "skin",
     "shushedUntil",

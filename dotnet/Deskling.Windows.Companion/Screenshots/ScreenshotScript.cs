@@ -13,7 +13,7 @@ namespace Deskling.Windows.Companion.Screenshots;
 /// contrast theme alone while Windows is in one), saved as <c>&lt;name&gt;-&lt;appearance&gt;.png</c> in
 /// <see cref="ScreenshotCapture.OutputDirectory"/>, skipping the ones <see cref="ScreenshotCapture.Wants"/> doesn't ask
 /// for. The app gives the shots in order: its windows, views at a size, views at their fitting size, the supporter
-/// sequence, its own. Quits when done. The model is never launched: no tray icon, hotkey or desktop character.
+/// sequence, its own. Quits when done. The model is never launched: no tray icon or desktop character.
 /// </summary>
 public sealed class ScreenshotScript<TWindow, TSettings>(
     CompanionAppModel<TWindow, TSettings> model,

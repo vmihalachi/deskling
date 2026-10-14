@@ -4,8 +4,22 @@ All notable changes to Deskling. The format follows [Keep a Changelog](https://k
 and the project uses [Semantic Versioning](https://semver.org/). One tag (`vX.Y.Z`) versions the Swift
 package and the NuGet packages together.
 
-## Unreleased
+## 0.9.0 - 2026-10-14
 
+The global shortcut is gone. None of the apps on Deskling keeps one, so the package stops carrying it. **Breaking.**
+
+- **Removed**: `KeyShortcut` (`DesklingCore` / `Deskling.Core`), `GlobalHotKey` and `ShortcutCapture`
+  (`DesklingShell`; `Deskling.Windows`' `GlobalHotKey` and its `RegisterHotKey` imports), and `ShortcutRecorder`
+  (`DesklingCompanionUI`; `Deskling.Windows.Companion`, with `ShortcutCopy`).
+- **Removed**: the `sayShortcut` setting. `CompanionDefaults(skin:phraseFlavors:)` (C#: `CompanionDefaults(skin,
+  phraseFlavors)`) states the two product choices, and `SettingsKeys.all` has 22 keys. A value stored under
+  `sayShortcut` by an earlier version is ignored and left where it is; the key is retired, never to be reused.
+  `settings.json` loses `defaults.sayShortcut` and the key: regenerate the app's vectors.
+- **Removed**: in the companion shell, `CompanionAppConfiguration.hotKeySignature`, `registerHotKey()`,
+  `suspendHotKey()` and `shortcutUnavailable` (C#: `RegisterHotKey`, `SuspendHotKey`, `ShortcutUnavailable`,
+  `ICompanionHost.HotKey`, `IHotKey`, `HotKey`; `Deskling.Testing`'s `FakeHotKey`). `CompanionReplay.Settings` and
+  `SettingsReplay.Verify` lose `compareShortcut`.
+- **Tools**: `companion.json` loses `mac.hotkeySignature` (the schema no longer allows it).
 - **Release**: `@deskling/landing` is staged on npm only when `tools/landing` changed since the version npm has, at the
   tag's version as before, so its versions skip the releases that leave it alone (and there's nothing to approve). The
   NuGet packages still ship at every tag.

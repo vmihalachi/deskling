@@ -17,7 +17,6 @@
     "coreModule": "SunnySaysCore",
     "tests": "SunnySaysTests",
     "devAppName": "sunnysays Dev",
-    "hotkeySignature": "SNNY",
     "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
     "derivedData": "macos/build/dd.noindex"
   },

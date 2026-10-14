@@ -46,14 +46,14 @@ class SchemaTests(unittest.TestCase):
 
     def test_problems_are_named(self):
         data = json.loads((FIXTURE_APP / "companion.json").read_text("utf8"))
-        data["mac"]["hotkeySignature"] = "TOOLONG"
+        data["mac"]["scheme"] = 5
         data["characters"] = {"design": "d", "mode": "pixels"}
         data["nonsense"] = 1
         del data["l10n"]
         data["voice"]["defaultVoice"] = "mime"
         problems = companion.validate(data) + companion.consistency(data)
         joined = "\n".join(problems)
-        for needle in ("hotkeySignature", "'pixels' is not one of", "unknown key nonsense", "missing l10n", "defaultVoice"):
+        for needle in ("scheme", "'pixels' is not one of", "unknown key nonsense", "missing l10n", "defaultVoice"):
             self.assertIn(needle, joined)
 
     def test_nullable_sections(self):

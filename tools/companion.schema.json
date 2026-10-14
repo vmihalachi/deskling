@@ -37,7 +37,6 @@
         "coreModule": { "type": "string" },
         "tests": { "type": "string", "description": "The app's test target folder, relative to mac.dir." },
         "devAppName": { "type": "string", "description": "The Debug app's name (install-dev, dev icon)." },
-        "hotkeySignature": { "type": "string", "pattern": "^.{4}$" },
         "screenshotEnv": { "type": "string", "description": "The environment variable that starts a screenshot run." },
         "derivedData": { "type": "string", "description": "xcodebuild's -derivedDataPath, relative to the root." }
       }

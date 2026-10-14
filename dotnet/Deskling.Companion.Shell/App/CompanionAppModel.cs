@@ -19,7 +19,7 @@ namespace Deskling.Companion.Shell.App;
 /// <summary>
 /// The shell of a desk companion app around <see cref="CompanionCoordinator"/> (Swift's <c>CompanionAppModel</c>): the
 /// 20 s tick, the channels through a <see cref="DeliveryPerformer"/> (voice, chime, notification), the tray icon, the
-/// character on the desktop, the windows, the hotkey, the store's start, the speech bubble with "don't say that again"
+/// character on the desktop, the windows, the store's start, the speech bubble with "don't say that again"
 /// and its Undo, previews and the status pill's words. Views read <see cref="Mood"/>, <see cref="Bubble"/>,
 /// <see cref="StatusLine"/> and the rest (each raises <see cref="PropertyChanged"/>), and call the actions. Every side
 /// effect goes through the <see cref="ICompanionHost{TWindow}"/> or an injected interface, so tests drive a whole day
@@ -83,7 +83,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
     private bool isVoicing;
     private bool isShushed;
     private NotificationPermission notificationPermission = NotificationPermission.NotDetermined;
-    private bool shortcutUnavailable;
     private bool isOnDesktop;
     private string? desktopBubble;
     private BubbleCountdown? desktopCountdown;
@@ -207,9 +206,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         private set => Set(ref notificationPermission, value);
     }
 
-    /// <summary>Another app holds the shortcut.</summary>
-    public bool ShortcutUnavailable { get => shortcutUnavailable; private set => Set(ref shortcutUnavailable, value); }
-
     /// <summary>The character stands on the desktop right now.</summary>
     public bool IsOnDesktop { get => isOnDesktop; private set => Set(ref isOnDesktop, value); }
 
@@ -304,8 +300,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         WillLaunch();
         Notifier.Configure();
         ApplyAppearance();
-        host.HotKey.OnPress = SayNow;
-        RegisterHotKey();
         var statusItem = host.MakeStatusItem();
         statusItem.Menu = MenuBarMenu;
         StatusItem = statusItem;
@@ -391,7 +385,7 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
 
     // Actions
 
-    /// <summary>Say something: the panel button, the shortcut, a click on the desktop character, the notification's button.</summary>
+    /// <summary>Say something: the panel button, a click on the desktop character, the notification's button.</summary>
     public void SayNow()
     {
         if (Coordinator.Poke(Signals.Snapshot()) is { } delivery)
@@ -597,24 +591,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         RefreshStatus();
     }
 
-    /// <summary>Registers the shortcut; <see cref="SuspendHotKey"/> while a new one is being recorded.</summary>
-    public void RegisterHotKey()
-    {
-        if (!IsLaunched)
-            return;
-        if (Settings.SayShortcut is { } shortcut)
-        {
-            ShortcutUnavailable = !host.HotKey.Register(shortcut);
-        }
-        else
-        {
-            host.HotKey.Unregister();
-            ShortcutUnavailable = false;
-        }
-    }
-
-    public void SuspendHotKey() => host.HotKey.Unregister();
-
     /// <summary>
     /// Calls <paramref name="react"/> whenever one of the settings named in <paramref name="propertyNames"/> changes:
     /// for the app's own preferences (<c>nameof(AppSettings.Voice)</c>).
@@ -630,8 +606,8 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
     }
 
     /// <summary>
-    /// Watches the settings: timing changes reach the scheduler after 300 ms of quiet; appearance, the shortcut and the
-    /// desktop apply right away.
+    /// Watches the settings: timing changes reach the scheduler after 300 ms of quiet; appearance and the desktop
+    /// apply right away.
     /// </summary>
     private void SettingChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -642,9 +618,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
                 break;
             case nameof(CompanionSettings.Appearance):
                 ApplyAppearance();
-                break;
-            case nameof(CompanionSettings.SayShortcut):
-                RegisterHotKey();
                 break;
             case { } name when DesktopSettings.Contains(name):
                 if (name == nameof(CompanionSettings.ShowOnDesktop))

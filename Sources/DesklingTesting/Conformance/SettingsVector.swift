@@ -13,10 +13,6 @@ public enum SettingsVector {
         let s = CompanionSettings(store: InMemorySettingsStore(), defaults: defaults)
         func ints(_ values: [Int]) -> JSONValue { .array(values.map(JSONValue.int)) }
         func optional(_ value: String?) -> JSONValue { value.map(JSONValue.string) ?? .null }
-        let shortcut: JSONValue =
-            s.sayShortcut.map {
-                .object(["keyCode": .int(Int($0.keyCode)), "modifiers": .int(Int($0.modifiers)), "key": .string($0.key)])
-            } ?? .null
         let values: JSONValue = .object([
             "channels": .strings(s.channels.names), "frequency": .string(s.frequency.rawValue),
             "activeStartMinute": .int(s.activeStartMinute), "activeEndMinute": .int(s.activeEndMinute),
@@ -25,7 +21,7 @@ public enum SettingsVector {
             "commentOnPower": .bool(s.commentOnPower), "commentOnAppearance": .bool(s.commentOnAppearance),
             "voiceIdentifier": optional(s.voiceIdentifier), "speechRate": .double(s.speechRate),
             "speechVolume": .double(s.speechVolume), "phraseFlavors": .strings(s.phraseFlavors.map(\.rawValue).sorted()),
-            "mutedPhraseIDs": .strings(s.mutedPhraseIDs.sorted()), "sayShortcut": shortcut,
+            "mutedPhraseIDs": .strings(s.mutedPhraseIDs.sorted()),
             "appearance": .string(s.appearance.rawValue), "skin": .string(s.skin.rawValue),
             "shushedUntil": optional(s.shushedUntil.map { ConformanceSupport.string($0, in: TimeZone(identifier: "UTC")!) }),
             "showOnDesktop": .bool(s.showOnDesktop), "desktopSize": .string(s.desktopSize.rawValue),

@@ -17,7 +17,6 @@ final class CompanionSettingsTests: XCTestCase {
         XCTAssertTrue(settings.greetOnReturn)
         XCTAssertNil(settings.voiceIdentifier)
         XCTAssertEqual(settings.speechRate, 0.5)
-        XCTAssertEqual(settings.sayShortcut, CompanionDefaults.fixture.sayShortcut)
         XCTAssertEqual(settings.appearance, .system)
         XCTAssertEqual(settings.skin, FixtureIDs.vectorSkin)
         XCTAssertNil(settings.shushedUntil)
@@ -35,7 +34,6 @@ final class CompanionSettingsTests: XCTestCase {
         settings.quietHours = [13]
         settings.voiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
         settings.shushedUntil = Date(timeIntervalSince1970: 1_800_000_000)
-        settings.sayShortcut = nil
         settings.hasCompletedOnboarding = true
         XCTAssertEqual(store.strings(forKey: SettingsKeys.channels), ["chime", "notification"])
         XCTAssertEqual(store.string(forKey: SettingsKeys.frequency), "chatty")
@@ -43,7 +41,6 @@ final class CompanionSettingsTests: XCTestCase {
         XCTAssertEqual(store.integers(forKey: SettingsKeys.quietHours), [13])
         XCTAssertEqual(store.string(forKey: SettingsKeys.voiceIdentifier), "com.apple.voice.compact.en-US.Samantha")
         XCTAssertEqual(store.double(forKey: SettingsKeys.shushedUntil), 1_800_000_000)
-        XCTAssertEqual(store.string(forKey: SettingsKeys.sayShortcut), "")
         XCTAssertEqual(store.bool(forKey: SettingsKeys.hasCompletedOnboarding), true)
 
         let reloaded = CompanionSettings(store: store, defaults: .fixture)
@@ -51,7 +48,6 @@ final class CompanionSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.frequency, .chatty)
         XCTAssertEqual(reloaded.activeWeekdays, [1, 7])
         XCTAssertEqual(reloaded.shushedUntil, Date(timeIntervalSince1970: 1_800_000_000))
-        XCTAssertNil(reloaded.sayShortcut)
         XCTAssertTrue(reloaded.hasCompletedOnboarding)
     }
 
@@ -72,12 +68,13 @@ final class CompanionSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.mutedPhraseIDs, [])
     }
 
-    func testShortcutRoundTrips() {
+    func testTheRetiredShortcutKeyIsIgnored() {
+        // 0.8 stored the global shortcut under "sayShortcut"; a value left from then reads as nothing and stays put.
         let store = InMemorySettingsStore()
+        store.set(string: #"{"keyCode":3,"modifiers":6400,"key":"F"}"#, forKey: "sayShortcut")
         let settings = CompanionSettings(store: store, defaults: .fixture)
-        let shortcut = KeyShortcut(keyCode: 96, modifiers: KeyShortcut.option, key: "F5")
-        settings.sayShortcut = shortcut
-        XCTAssertEqual(CompanionSettings(store: store, defaults: .fixture).sayShortcut, shortcut)
+        XCTAssertFalse(SettingsKeys.all.contains("sayShortcut"))
+        XCTAssertEqual(settings.defaults, .fixture)
     }
 
     func testUnknownStoredValuesFallBackToDefaults() {
@@ -107,13 +104,12 @@ final class CompanionSettingsTests: XCTestCase {
     }
 
     func testDefaultsComeFromTheApp() {
-        var defaults = CompanionDefaults(skin: "one", phraseFlavors: ["x"], sayShortcut: nil)
+        var defaults = CompanionDefaults(skin: "one", phraseFlavors: ["x"])
         defaults.frequency = .chatty
         defaults.channels = [.voice, .chime]
         let settings = CompanionSettings(store: InMemorySettingsStore(), defaults: defaults)
         XCTAssertEqual(settings.skin, "one")
         XCTAssertEqual(settings.phraseFlavors, ["x"])
-        XCTAssertNil(settings.sayShortcut)
         XCTAssertEqual(settings.frequency, .chatty)
         XCTAssertEqual(settings.channels, [.voice, .chime])
         XCTAssertEqual(settings.defaults, defaults)
@@ -127,8 +123,8 @@ final class CompanionSettingsTests: XCTestCase {
         settings.resetToDefaults()
         XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertTrue(settings.hasCompletedOnboarding)
-        XCTAssertEqual(SettingsKeys.all.count, 23)
-        XCTAssertEqual(Set(SettingsKeys.all).count, 23)
+        XCTAssertEqual(SettingsKeys.all.count, 22)
+        XCTAssertEqual(Set(SettingsKeys.all).count, 22)
         XCTAssertEqual(SettingsKeys.resettable.count, SettingsKeys.all.count - 1)
         XCTAssertFalse(SettingsKeys.resettable.contains(SettingsKeys.hasCompletedOnboarding))
     }

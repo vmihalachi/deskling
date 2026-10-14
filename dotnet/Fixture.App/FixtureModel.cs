@@ -7,7 +7,6 @@ using Deskling.Companion.Shell.App;
 using Deskling.Companion.Shell.Desktop;
 using Deskling.Companion.Shell.Signals;
 using Deskling.Companion.Shell.Speech;
-using Deskling.Core.Input;
 using Deskling.Core.Scheduling;
 using Deskling.Core.Store;
 using Deskling.Testing.Fixtures;
@@ -39,12 +38,10 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     public const string ShhHour = "SHH_HOUR";
 
     /// <summary>
-    /// The fixture's defaults, made for checking by hand: Ctrl+Alt+F says something (the fixture's own shortcut is a Mac
-    /// key code), and every hour of every day is active.
+    /// The fixture's defaults, made for checking by hand: every hour of every day is active.
     /// </summary>
     public static readonly CompanionDefaults Defaults = FixtureDefaults.Value with
     {
-        SayShortcut = new KeyShortcut(0x46, KeyShortcut.Control | KeyShortcut.Option, "F"),
         ActiveStartMinute = 0,
         ActiveEndMinute = 24 * 60,
         ActiveWeekdays = new HashSet<int> { 1, 2, 3, 4, 5, 6, 7 },

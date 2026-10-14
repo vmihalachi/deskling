@@ -46,7 +46,6 @@ internal static partial class NativeMethods
     public const uint WM_NULL = 0x0000;
     public const uint WM_CONTEXTMENU = 0x007B;
     public const uint WM_LBUTTONUP = 0x0202;
-    public const uint WM_HOTKEY = 0x0312;
     public const uint WM_WTSSESSION_CHANGE = 0x02B1;
     public const uint WM_APP = 0x8000;
 
@@ -110,32 +109,6 @@ internal static partial class NativeMethods
 
     [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
     public static partial nint GetModuleHandleW(string? moduleName);
-
-    // MARK: Hot keys
-
-    public const uint MOD_ALT = 0x0001;
-    public const uint MOD_CONTROL = 0x0002;
-    public const uint MOD_SHIFT = 0x0004;
-    public const uint MOD_WIN = 0x0008;
-    public const uint MOD_NOREPEAT = 0x4000;
-
-    [LibraryImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint virtualKey);
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool UnregisterHotKey(nint hwnd, int id);
-
-    // MARK: Key names
-
-    public const uint MAPVK_VK_TO_VSC = 0;
-
-    [LibraryImport("user32.dll")]
-    public static partial uint MapVirtualKeyW(uint code, uint mapType);
-
-    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
-    public static unsafe partial int GetKeyNameTextW(int lParam, char* buffer, int size);
 
     // MARK: Session lock
 

@@ -7,6 +7,9 @@
 > (`../sunnysays/plans/milestones/10-companion-shell.md`) and Pagliacci's M7 (`../pagliacci/plans/milestones/7-companion-shell.md`).
 > Start a sequence from its brief, not from this file, and read only the files the brief lists.
 
+> **Since 0.9** the global shortcut is gone: `KeyShortcut`, `GlobalHotKey`, `ShortcutCapture`, `ShortcutRecorder`,
+> the `sayShortcut` setting, `hotKeySignature` and (on Windows) `IHotKey`, `HotKey` and `ShortcutCopy`. Read past them below.
+
 ## Why
 
 0.5 moved the mechanism under the character into `DesklingCompanion`: the apps' pure cores are now content only (a
@@ -81,7 +84,6 @@ public struct WindowRoles<Window: WindowID>: Sendable { public init(home:onboard
 
 /// What the package can't know. No defaults for the words.
 public struct CompanionAppConfiguration: Sendable {
-    public var hotKeySignature: OSType              // "SNNY", "PGLC"
     public var statusItemTooltip: String            // "sunnysays Dev" in Debug; the app decides
     public var accessibilityLabel: String           // "Sunny", "Mister Pagliacci"
     public var paper: NSColor                       // the windows' background
@@ -104,13 +106,13 @@ open class CompanionAppModel<Window: WindowID> {
     @ObservationIgnored public private(set) var windows: WindowManager<Window>!
     public let performer: DeliveryPerformer
     // Read by views, as today: bubble, bubblePhraseID, justMuted, mood, statusLine, isSpeaking, isVoicing, isShushed,
-    // notificationPermission, shortcutUnavailable, isOnDesktop, desktopBubble, desktopCountdown, desktopHiddenUntil, desktopBackLine.
+    // notificationPermission, isOnDesktop, desktopBubble, desktopCountdown, desktopHiddenUntil, desktopBackLine.
     public init(settings:bank:roles:configuration:clock:idle:busy:calendar:speaker:chime:notifier: any CompanionNotifying,
                 signals:purchases:voices:seed:)
     // Actions, as today: launch(showHome:), reopen(), tick(), sayNow(), shush(_:), holdToShush(), wake(), muteBubbleLine(), undoMute(),
     // previewChannel(_:line:), preview(_:), canPreview, openHome/openSettings/openSupport/openOnboarding(), closeWindow(_:), quit(),
     // completeOnboarding(), setChannel(_:on:), requestNotificationPermission(), refreshNotificationPermission(), openNotificationSettings(),
-    // resetSettings(), registerHotKey(), suspendHotKey(), refreshStatus(snapshot:), refreshVoice(), stopSpeaking(),
+    // resetSettings(), refreshStatus(snapshot:), refreshVoice(), stopSpeaking(),
     // setShowOnDesktop(_:), hideDesktop(_:), showDesktopNow(), stepDesktopSize(_:), moveDesktop(to:), resetDesktopPosition(), dismissDesktopBubble().
     public func observe(_ read: @escaping @MainActor () -> Void, then react: @escaping @MainActor () -> Void)  // re-arming watcher, for the subclass's own keys
     // Open, for the app:
@@ -152,7 +154,6 @@ design: "Comment on the battery" is "Joke about the battery" there).
 ```swift
 public struct ActiveHoursEditor<Chip: ToggleStyle>: View { public init(settings: CompanionSettings, activeHours: Text, from: Text, to: Text, days: Text, chipStyle: Chip) }
 public struct QuietHoursEditor<Chip: ToggleStyle>: View { public init(settings: CompanionSettings, title: Text, chipStyle: (_ compact: Bool) -> Chip); public static func label(_ hour: Int) -> String }
-public struct ShortcutRecorder<Style: ButtonStyle>: View { public init(shortcut: Binding<KeyShortcut?>, pressKeys: Text, record: Text, clear: Text, hint: Text, buttonStyle: Style, onCaptureStarted: () -> Void, onCaptureEnded: () -> Void) }
 public struct LaunchAtLoginToggle: View { public init(label: Text, errorText: @escaping (String) -> String, errorColor: Color) }
 public struct LanguageRow<Style: ButtonStyle>: View { public init(label: Text, change: Text, buttonStyle: Style) }   // current language name + System Settings
 public struct NotificationPermissionNote<Style: ButtonStyle>: View { public init(permission: NotificationPermission, text: Text, open: Text, buttonStyle: Style, action: () -> Void) }
@@ -209,7 +210,7 @@ The Settings Support card stays in the app (its surface is the brand).
 - `CompanionVectors` (a protocol with static `bank`, `flavors`, `defaults`, `characters`, `settings: JSONValue`,
   `pickerCases`, `quietCases`) and `ConformanceSuite.companion(_ vectors: some CompanionVectors.Type, root: URL, regenerateHint: String)`,
   which builds today's `generate` and `replayers`. The app's `ConformanceTests` keeps its four test methods over it.
-- C# `CompanionReplay`: `Phrases(root, bank, flavors)`, `Settings(root, defaults, compareShortcut)`, `Picker(path, bank)`,
+- C# `CompanionReplay`: `Phrases(root, bank, flavors)`, `Settings(root, defaults)`, `Picker(path, bank)`,
   `Quiet(path, bank, defaults)`, `Character(path, characters)`, each returning the problems list; `Files(folder)` as
   `ConformanceRoot.Files`.
 

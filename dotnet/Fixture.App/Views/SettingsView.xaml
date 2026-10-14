@@ -30,15 +30,6 @@
                 <x:String>Light</x:String>
                 <x:String>Dark</x:String>
             </RadioButtons>
-            <StackPanel Spacing="8">
-                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Shortcut" />
-                <ds:ShortcutRecorder x:Name="Shortcut" />
-                <TextBlock
-                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                    Text="Another app holds this shortcut."
-                    TextWrapping="Wrap"
-                    Visibility="{x:Bind views:Show.When(Model.ShortcutUnavailable), Mode=OneWay}" />
-            </StackPanel>
             <StackPanel Spacing="12">
                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="General" />
                 <ds:LaunchAtStartupToggle x:Name="Startup" />

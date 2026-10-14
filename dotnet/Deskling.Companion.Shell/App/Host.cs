@@ -3,7 +3,6 @@ using Deskling.Companion.Rules;
 using Deskling.Companion.Settings;
 using Deskling.Companion.Shell.Desktop;
 using Deskling.Companion.Shell.Speech;
-using Deskling.Core.Input;
 
 namespace Deskling.Companion.Shell.App;
 
@@ -86,17 +85,6 @@ public interface IDesktopCompanion
 /// <summary>When the desktop bubble started running down and for how long.</summary>
 public readonly record struct BubbleCountdown(DateTimeOffset Start, double Seconds);
 
-/// <summary>The global "say something" shortcut (Swift's <c>GlobalHotKey</c>).</summary>
-public interface IHotKey
-{
-    Action? OnPress { get; set; }
-
-    /// <summary>Registers <paramref name="shortcut"/> in place of the last one; false when another app holds it.</summary>
-    bool Register(KeyShortcut shortcut);
-
-    void Unregister();
-}
-
 /// <summary>
 /// What the model needs from the app's notifications (usually a wrapper over the platform's with the app's title and
 /// buttons), so tests can count permission requests. Actions arrive as their raw ids.
@@ -126,8 +114,6 @@ public interface ICompanionHost<TWindow>
     where TWindow : notnull
 {
     IWindowHost<TWindow> Windows { get; }
-
-    IHotKey HotKey { get; }
 
     ITimers Timers { get; }
 

@@ -1,19 +1,17 @@
 using Deskling.Companion.Cadence;
 using Deskling.Companion.Phrases;
 using Deskling.Companion.Rules;
-using Deskling.Core.Input;
 
 namespace Deskling.Companion.Settings;
 
 /// <summary>
-/// Every generic preference's value on first launch. The package's numbers are the defaults; the three product
-/// choices (the default skin, the flavors on, the "Say something" shortcut) have none, so every app states them.
+/// Every generic preference's value on first launch. The package's numbers are the defaults; the two product
+/// choices (the default skin, the flavors on) have none, so every app states them.
 /// Adjust any other value with an object initializer or <c>with</c>. Pinned by the app's settings.json.
 /// </summary>
 /// <param name="Skin">The skin on first launch.</param>
 /// <param name="PhraseFlavors">The flavors on at first launch; empty would mean every flavor.</param>
-/// <param name="SayShortcut">"Say something"; null means none.</param>
-public sealed record CompanionDefaults(SkinId Skin, IReadOnlySet<FlavorId> PhraseFlavors, KeyShortcut? SayShortcut)
+public sealed record CompanionDefaults(SkinId Skin, IReadOnlySet<FlavorId> PhraseFlavors)
 {
     /// <summary>Speak out loud; no notification until the user turns that channel on, so first launch asks for nothing.</summary>
     public Channels Channels { get; init; } = Channels.Voice;

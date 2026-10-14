@@ -13,12 +13,6 @@ namespace Deskling.Windows.Companion.Settings;
 public sealed record ActiveHoursCopy(string ActiveHours, string From, string To, string Days);
 
 /// <summary>
-/// The shortcut recorder's words: <paramref name="PressKeys"/> while recording, <paramref name="Record"/> with no shortcut
-/// set, <paramref name="Clear"/> names the cross for Narrator and <paramref name="Hint"/> explains the button.
-/// </summary>
-public sealed record ShortcutCopy(string PressKeys, string Record, string Clear, string Hint);
-
-/// <summary>
 /// The language row's words: its label, the choice that follows Windows (first in the list), and the note and button
 /// shown once the language changed, as Windows applies it at the next start.
 /// </summary>

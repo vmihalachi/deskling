@@ -6,6 +6,9 @@
 > and a Windows machine to run; `4` (the views) needs `3`; `5` releases. Then sunnysays builds its app on it (M3.2), and
 > Pagliacci its own (M6). Start a sequence from its brief, not from this file, and read only the files the brief lists.
 
+> **Since 0.9** the global shortcut is gone: `KeyShortcut`, `GlobalHotKey`, `ShortcutCapture`, `ShortcutRecorder`,
+> the `sayShortcut` setting, `hotKeySignature` and (on Windows) `IHotKey`, `HotKey` and `ShortcutCopy`. Read past them below.
+
 ## Why
 
 0.7 moved the Mac companion shell into `DesklingCompanionUI` (about 4,400 lines: the app model, the delivery

@@ -24,15 +24,6 @@ public sealed partial class SettingsView : UserControl
         Hours.Settings = model.Settings;
         Hours.Copy = new ActiveHoursCopy("Active hours", "From", "To", "Days");
         Quiet.Settings = model.Settings;
-        Shortcut.Settings = model.Settings;
-        Shortcut.Copy = new ShortcutCopy(
-            "Press keys…",
-            "Record shortcut",
-            "Clear shortcut",
-            "Press a key combination with Ctrl, Alt or Windows. Esc cancels."
-        );
-        Shortcut.OnCaptureStarted = Model.SuspendHotKey;
-        Shortcut.OnCaptureEnded = Model.RegisterHotKey;
         // Unpackaged, the fixture has no startup task: the toggle shows off and can't be turned on.
         Startup.Copy = new LaunchAtStartupCopy("Open at sign-in", "Windows blocked this. Turn it on in Settings › Apps › Startup.");
         LanguageChoice.Copy = new LanguageCopy("Language", "Same as Windows", "Restart the fixture to use it.", "Restart");

@@ -10,7 +10,7 @@ namespace Deskling.Windows.Companion.Shell;
 
 /// <summary>
 /// The app's windows by id (<see cref="IWindowHost{TWindow}"/>, Swift's <c>WindowManager</c>), so they can be opened
-/// from anywhere (the tray, a notification, the hotkey). The app supplies each window's <see cref="WindowSpec"/> and
+/// from anywhere (the tray, a notification). The app supplies each window's <see cref="WindowSpec"/> and
 /// content. A window's content reaches under its title bar (the Mac's transparent title bar), so the content leaves
 /// room for the caption buttons; it is sized in DIPs on the display it opens on. The app has no taskbar button while
 /// idle; each open window has its own. UI thread only.

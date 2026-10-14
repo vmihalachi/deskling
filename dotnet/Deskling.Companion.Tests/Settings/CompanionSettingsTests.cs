@@ -2,7 +2,6 @@ using Deskling.Companion.Cadence;
 using Deskling.Companion.Phrases;
 using Deskling.Companion.Rules;
 using Deskling.Companion.Settings;
-using Deskling.Core.Input;
 using Deskling.Core.Settings;
 
 namespace Deskling.Companion.Tests;
@@ -26,7 +25,6 @@ public sealed class CompanionSettingsTests
         Assert.True(settings.GreetOnReturn);
         Assert.Null(settings.VoiceIdentifier);
         Assert.Equal(0.5, settings.SpeechRate);
-        Assert.Equal(Fixture.Defaults.SayShortcut, settings.SayShortcut);
         Assert.Equal(AppearanceSetting.System, settings.Appearance);
         Assert.Equal(FixtureIds.VectorSkin, settings.Skin);
         Assert.Null(settings.ShushedUntil);
@@ -47,7 +45,6 @@ public sealed class CompanionSettingsTests
         settings.QuietHours = new HashSet<int> { 13 };
         settings.VoiceIdentifier = "com.apple.voice.compact.en-US.Samantha";
         settings.ShushedUntil = until;
-        settings.SayShortcut = null;
         settings.HasCompletedOnboarding = true;
         Assert.Equal(["chime", "notification"], store.GetStrings(SettingsKeys.Channels)!);
         Assert.Equal("chatty", store.GetString(SettingsKeys.Frequency));
@@ -55,7 +52,6 @@ public sealed class CompanionSettingsTests
         Assert.Equal([13], store.GetIntegers(SettingsKeys.QuietHours)!);
         Assert.Equal("com.apple.voice.compact.en-US.Samantha", store.GetString(SettingsKeys.VoiceIdentifier));
         Assert.Equal(1_800_000_000, store.GetDouble(SettingsKeys.ShushedUntil));
-        Assert.Equal("", store.GetString(SettingsKeys.SayShortcut));
         Assert.True(store.GetBool(SettingsKeys.HasCompletedOnboarding));
 
         var reloaded = Make(store);
@@ -63,7 +59,6 @@ public sealed class CompanionSettingsTests
         Assert.Equal(Frequency.Chatty, reloaded.Frequency);
         Assert.Equal([1, 7], reloaded.ActiveWeekdays.Order());
         Assert.Equal(until, reloaded.ShushedUntil);
-        Assert.Null(reloaded.SayShortcut);
         Assert.True(reloaded.HasCompletedOnboarding);
     }
 
@@ -87,15 +82,14 @@ public sealed class CompanionSettingsTests
     }
 
     [Fact]
-    public void ShortcutRoundTripsInTheSwiftShape()
+    public void TheRetiredShortcutKeyIsIgnored()
     {
+        // 0.8 stored the global shortcut under "sayShortcut"; a value left from then reads as nothing and stays put.
         var store = new InMemorySettingsStore();
-        var shortcut = new KeyShortcut(96, KeyShortcut.Option, "F5");
-        Make(store).SayShortcut = shortcut;
-        Assert.Equal("""{"keyCode":96,"modifiers":2048,"key":"F5"}""", store.GetString(SettingsKeys.SayShortcut));
-        Assert.Equal(shortcut, Make(store).SayShortcut);
-        store.SetString(SettingsKeys.SayShortcut, "{not json");
-        Assert.Null(Make(store).SayShortcut);
+        store.SetString("sayShortcut", """{"keyCode":3,"modifiers":6400,"key":"F"}""");
+        var settings = Make(store);
+        Assert.DoesNotContain("sayShortcut", SettingsKeys.All);
+        Assert.Same(Fixture.Defaults, settings.Defaults);
     }
 
     [Fact]
@@ -130,7 +124,7 @@ public sealed class CompanionSettingsTests
     [Fact]
     public void DefaultsComeFromTheApp()
     {
-        var defaults = new CompanionDefaults("one", new HashSet<FlavorId> { "x" }, null)
+        var defaults = new CompanionDefaults("one", new HashSet<FlavorId> { "x" })
         {
             Frequency = Frequency.Chatty,
             Channels = Channels.Voice | Channels.Chime,
@@ -138,7 +132,6 @@ public sealed class CompanionSettingsTests
         var settings = new CompanionSettings(new InMemorySettingsStore(), defaults);
         Assert.Equal(new SkinId("one"), settings.Skin);
         Assert.Equal([new FlavorId("x")], settings.PhraseFlavors);
-        Assert.Null(settings.SayShortcut);
         Assert.Equal(Frequency.Chatty, settings.Frequency);
         Assert.Equal(Channels.Voice | Channels.Chime, settings.Channels);
         Assert.Same(defaults, settings.Defaults);
@@ -153,8 +146,8 @@ public sealed class CompanionSettingsTests
         settings.ResetToDefaults();
         Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.True(settings.HasCompletedOnboarding);
-        Assert.Equal(23, SettingsKeys.All.Count);
-        Assert.Equal(23, SettingsKeys.All.Distinct().Count());
+        Assert.Equal(22, SettingsKeys.All.Count);
+        Assert.Equal(22, SettingsKeys.All.Distinct().Count());
         Assert.Equal(SettingsKeys.All.Count - 1, SettingsKeys.Resettable.Count);
         Assert.DoesNotContain(SettingsKeys.HasCompletedOnboarding, SettingsKeys.Resettable);
     }

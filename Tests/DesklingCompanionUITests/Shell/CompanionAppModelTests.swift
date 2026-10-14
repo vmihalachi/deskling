@@ -54,7 +54,6 @@
         }
 
         static let configuration = CompanionAppConfiguration(
-            hotKeySignature: 0x4658_5452,  // "FXTR"
             statusItemTooltip: "Fixture", accessibilityLabel: "Fixture", paper: .white, palette: .system,
             displayFont: { .system(size: $0) },
             sounds: CompanionSounds(blip: "blip", shh: "shh", hello: "hello"),

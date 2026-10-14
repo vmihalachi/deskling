@@ -5,7 +5,7 @@ description: Add or change a user preference in a Deskling companion app (a Comp
 
 # Add a setting
 
-Generic preferences live in Deskling's `CompanionSettings` (23 keys in `SettingsKeys`); the app adds its own in its
+Generic preferences live in Deskling's `CompanionSettings` (22 keys in `SettingsKeys`); the app adds its own in its
 `CompanionSettings` subclass (Swift: `@Observable final class AppSettings: CompanionSettings`; C#:
 `AppSettings : CompanionSettings` with `SetProperty`/`SetOrRemove`). App specifics are in `.agents/notes/add-setting.md`.
 

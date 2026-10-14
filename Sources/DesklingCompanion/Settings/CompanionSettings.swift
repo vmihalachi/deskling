@@ -89,16 +89,6 @@ open class CompanionSettings {
     public var mutedPhraseIDs: Set<String> {
         didSet { store.set(strings: mutedPhraseIDs.sorted(), forKey: SettingsKeys.mutedPhraseIDs) }
     }
-    public var sayShortcut: KeyShortcut? {
-        didSet {
-            if let sayShortcut, let json = Self.encodeShortcut(sayShortcut) {
-                store.set(string: json, forKey: SettingsKeys.sayShortcut)
-            } else {
-                // nil is stored as an empty string: "the user cleared it" differs from "never set".
-                store.set(string: "", forKey: SettingsKeys.sayShortcut)
-            }
-        }
-    }
     public var appearance: AppearanceSetting {
         didSet { store.set(string: appearance.rawValue, forKey: SettingsKeys.appearance) }
     }
@@ -154,11 +144,6 @@ open class CompanionSettings {
             store.strings(forKey: SettingsKeys.phraseFlavors).map { Set($0.map(FlavorID.init(rawValue:))) }
             ?? defaults.phraseFlavors
         mutedPhraseIDs = store.strings(forKey: SettingsKeys.mutedPhraseIDs).map(Set.init) ?? defaults.mutedPhraseIDs
-        if let stored = store.string(forKey: SettingsKeys.sayShortcut) {
-            sayShortcut = Self.decodeShortcut(stored)
-        } else {
-            sayShortcut = defaults.sayShortcut
-        }
         appearance =
             store.string(forKey: SettingsKeys.appearance).flatMap(AppearanceSetting.init(rawValue:)) ?? defaults.appearance
         skin = store.string(forKey: SettingsKeys.skin).flatMap { $0.isEmpty ? nil : SkinID(rawValue: $0) } ?? defaults.skin
@@ -197,7 +182,6 @@ open class CompanionSettings {
         speechVolume = defaults.speechVolume
         phraseFlavors = defaults.phraseFlavors
         mutedPhraseIDs = defaults.mutedPhraseIDs
-        sayShortcut = defaults.sayShortcut
         appearance = defaults.appearance
         skin = defaults.skin
         shushedUntil = defaults.shushedUntil
@@ -206,18 +190,8 @@ open class CompanionSettings {
         desktopPosition = defaults.desktopPosition
     }
 
-    static func encodeShortcut(_ shortcut: KeyShortcut) -> String? {
-        guard let data = try? JSONEncoder().encode(shortcut) else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
-
     /// `[x, y]`; anything else is unreadable and falls back to the default spot.
     static func decodePosition(_ values: [Int]) -> DesktopPosition? {
         values.count == 2 ? DesktopPosition(x: values[0], y: values[1]) : nil
-    }
-
-    static func decodeShortcut(_ json: String) -> KeyShortcut? {
-        guard !json.isEmpty, let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(KeyShortcut.self, from: data)
     }
 }

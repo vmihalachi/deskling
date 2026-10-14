@@ -10,7 +10,7 @@
 
     /// The shell of a desk companion app around `CompanionCoordinator`: the 20 s tick, the channels through a
     /// `DeliveryPerformer` (voice, chime, notification), the menu bar item, the character on the desktop, the windows,
-    /// the hotkey, the store's start, the speech bubble with "don't say that again" and its Undo, previews and the status
+    /// the store's start, the speech bubble with "don't say that again" and its Undo, previews and the status
     /// pill's words. Views read `mood`, `bubble`, `statusLine` and the rest, and call the actions. Every side effect goes
     /// through an injected protocol or provider, so tests drive a whole day with a mock clock and fake channels. Asks
     /// for the notification permission only when the user turns that channel on; never touches the network.
@@ -64,8 +64,6 @@
         public var mouthLevel: Int? { performer.mouthLevel }
         public private(set) var isShushed = false
         public private(set) var notificationPermission: NotificationPermission = .notDetermined
-        /// The global shortcut couldn't be registered (another app owns it).
-        public private(set) var shortcutUnavailable = false
         /// The character stands on the desktop right now: the setting is on, it isn't hidden for a while, and no call
         /// or full-screen app holds it back.
         public private(set) var isOnDesktop = false
@@ -89,7 +87,6 @@
         @ObservationIgnored public private(set) var statusItem: StatusItemController?
         /// `launch(showHome:)` ran (never under tests).
         @ObservationIgnored public private(set) var isLaunched = false
-        @ObservationIgnored private let hotKey: GlobalHotKey
         @ObservationIgnored private var timer: Timer?
         @ObservationIgnored private var settingsDebounce: Timer?
         @ObservationIgnored private var presence = DesktopPresence()
@@ -97,8 +94,6 @@
         @ObservationIgnored private var bubbleTimer: Timer?
         @ObservationIgnored private var undoTimer: Timer?
         @ObservationIgnored private var desktopRecheck: Timer?
-
-        private var sayHotKeyID: UInt32 { 1 }
 
         /// `schedule` runs the silent parts' and beats' timers (tests pass their own clock).
         public init(
@@ -118,7 +113,6 @@
             self.notifier = notifier
             self.signals = signals
             self.purchases = purchases
-            hotKey = GlobalHotKey(signature: configuration.hotKeySignature)
             coordinator = CompanionCoordinator(
                 settings: settings, bank: bank, language: voices.languageCode, clock: clock, idle: idle, busy: busy,
                 calendar: calendar, seed: seed)
@@ -235,8 +229,6 @@
             willLaunch()
             notifier.configure()
             applyAppearance()
-            hotKey.onPress = { [weak self] _ in self?.sayNow() }
-            registerHotKey()
             let statusItem = StatusItemController(
                 panel: panelContent(), tooltip: configuration.statusItemTooltip, accessibilityLabel: configuration.accessibilityLabel,
                 image: { [unowned self] animating, frame in
@@ -323,7 +315,7 @@
 
         // MARK: Actions
 
-        /// Say something: the panel button, the shortcut, a click on the desktop character, the notification's button.
+        /// Say something: the panel button, a click on the desktop character, the notification's button.
         public func sayNow() {
             if let delivery = coordinator.poke(snapshot: signals.snapshot()) { perform(delivery) }
             refreshStatus()
@@ -483,23 +475,8 @@
             refreshStatus()
         }
 
-        /// Hands the shortcut to Carbon; `suspendHotKey()` while a new one is being recorded.
-        public func registerHotKey() {
-            guard isLaunched else { return }
-            if let shortcut = settings.sayShortcut {
-                shortcutUnavailable = !hotKey.register(shortcut, id: sayHotKeyID)
-            } else {
-                hotKey.unregister(id: sayHotKeyID)
-                shortcutUnavailable = false
-            }
-        }
-
-        public func suspendHotKey() {
-            hotKey.unregister(id: sayHotKeyID)
-        }
-
-        /// Watches the settings: timing changes reach the scheduler after 300 ms of quiet; appearance, the shortcut
-        /// and the desktop apply right away.
+        /// Watches the settings: timing changes reach the scheduler after 300 ms of quiet; appearance and the
+        /// desktop apply right away.
         private func observeSettings() {
             observe {
                 _ = self.settings.frequency
@@ -515,11 +492,6 @@
                 _ = self.settings.appearance
             } then: {
                 self.applyAppearance()
-            }
-            observe {
-                _ = self.settings.sayShortcut
-            } then: {
-                self.registerHotKey()
             }
             observe {
                 _ = self.settings.showOnDesktop

@@ -678,8 +678,7 @@ public sealed class CompanionAppModelTests
         Assert.Equal([FixtureWindow.Home], host.WindowHost.Open);
         Assert.Equal(AppearanceSetting.System, host.Appearance);
         Assert.Equal(1, timers.RepeatingCount);
-        Assert.Equal(settings.SayShortcut, host.FakeHotKey.Registered);
-        host.FakeHotKey.Press();
+        model.SayNow();
         Assert.Single(speaker.Spoken);
         Assert.True(host.StatusItem.Shown?.Talking);
     }
@@ -695,15 +694,6 @@ public sealed class CompanionAppModelTests
         Assert.Equal([FixtureWindow.Onboarding], host.WindowHost.Open);
         first.CompleteOnboarding();
         Assert.Equal([FixtureWindow.Home], host.WindowHost.Open);
-    }
-
-    [Fact]
-    public void ATakenShortcutIsReported()
-    {
-        var model = MakeModel();
-        host.FakeHotKey.Taken = true;
-        model.Launch(showHome: false);
-        Assert.True(model.ShortcutUnavailable);
     }
 
     [Fact]

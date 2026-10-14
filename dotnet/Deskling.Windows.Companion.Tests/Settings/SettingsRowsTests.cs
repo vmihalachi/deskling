@@ -1,6 +1,5 @@
 using System.Globalization;
 using Deskling.Companion.Settings;
-using Deskling.Core.Input;
 using Deskling.Core.Settings;
 using Deskling.Testing.Conformance;
 using Deskling.Testing.Fixtures;
@@ -63,17 +62,6 @@ public sealed class SettingsRowsTests
         Assert.StartsWith("Português", LanguageRow.NativeName("pt-BR"));
         Assert.StartsWith("Română", LanguageRow.NativeName("ro"));
         Assert.Equal("xx-nope", LanguageRow.NativeName("xx-nope"));
-    }
-
-    [Fact]
-    public void AShortcutReadsAsItsModifiersThenItsKey()
-    {
-        var text = ShortcutRecorder.Describe(new KeyShortcut(0x46, KeyShortcut.Control | KeyShortcut.Option, "F"));
-
-        var parts = text.Split('+');
-        Assert.Equal(3, parts.Length);
-        Assert.Equal("F", parts[^1]);
-        Assert.StartsWith("Win+", ShortcutRecorder.Describe(new KeyShortcut(0x46, KeyShortcut.Command, "F")));
     }
 
     [Fact]

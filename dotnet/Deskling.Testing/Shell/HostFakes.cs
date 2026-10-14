@@ -4,7 +4,6 @@ using Deskling.Companion.Settings;
 using Deskling.Companion.Shell.App;
 using Deskling.Companion.Shell.Desktop;
 using Deskling.Companion.Shell.Speech;
-using Deskling.Core.Input;
 
 namespace Deskling.Testing;
 
@@ -135,35 +134,11 @@ public sealed class FakeDesktopCompanion : IDesktopCompanion
     }
 }
 
-/// <summary>A shortcut that registers unless <see cref="Taken"/>.</summary>
-public sealed class FakeHotKey : IHotKey
-{
-    public Action? OnPress { get; set; }
-
-    public KeyShortcut? Registered { get; private set; }
-
-    /// <summary>Another app holds every shortcut.</summary>
-    public bool Taken { get; set; }
-
-    public bool Register(KeyShortcut shortcut)
-    {
-        Registered = Taken ? null : shortcut;
-        return !Taken;
-    }
-
-    public void Unregister() => Registered = null;
-
-    /// <summary>The user pressed the shortcut.</summary>
-    public void Press() => OnPress?.Invoke();
-}
-
 /// <summary>Everything native, faked: the companion model's host in tests.</summary>
 public sealed class FakeHost<TWindow>(ManualTimers timers) : ICompanionHost<TWindow>
     where TWindow : notnull
 {
     public FakeWindowHost<TWindow> WindowHost { get; } = new();
-
-    public FakeHotKey FakeHotKey { get; } = new();
 
     public ManualTimers ManualTimers { get; } = timers;
 
@@ -178,8 +153,6 @@ public sealed class FakeHost<TWindow>(ManualTimers timers) : ICompanionHost<TWin
     public int Quits { get; private set; }
 
     public IWindowHost<TWindow> Windows => WindowHost;
-
-    public IHotKey HotKey => FakeHotKey;
 
     public ITimers Timers => ManualTimers;
 

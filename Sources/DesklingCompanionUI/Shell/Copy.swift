@@ -156,8 +156,6 @@
 
     /// What `CompanionAppModel` can't know about the app. No defaults for the words.
     public struct CompanionAppConfiguration {
-        /// The global hotkey's signature, four characters unique to the app (`0x534E_4E59` is "SNNY").
-        public var hotKeySignature: OSType
         /// The menu bar item's tooltip (the app decides what its Debug build says).
         public var statusItemTooltip: String
         /// The character's name for VoiceOver, on the menu bar glyph.
@@ -179,12 +177,11 @@
         public var supporterProduct: String?
 
         public init(
-            hotKeySignature: OSType, statusItemTooltip: String, accessibilityLabel: String, paper: NSColor, palette: CompanionPalette,
+            statusItemTooltip: String, accessibilityLabel: String, paper: NSColor, palette: CompanionPalette,
             displayFont: @escaping @Sendable (CGFloat) -> Font, sounds: CompanionSounds, status: StatusCopy, desktop: DesktopCopy,
             tuneBubbleText: @escaping () -> String, supporterProduct: String?,
             localize: @escaping (_ catalogKey: String, _ source: String) -> String = { Phrase.localize($0, $1) }
         ) {
-            self.hotKeySignature = hotKeySignature
             self.statusItemTooltip = statusItemTooltip
             self.accessibilityLabel = accessibilityLabel
             self.paper = paper

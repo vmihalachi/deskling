@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- One version for every package, set by the release workflow from the tag (vX.Y.Z). -->
-    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.8.1</DesklingVersion>
+    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.9.0</DesklingVersion>
     <Version>$(DesklingVersion)</Version>
     <Authors>Vlad Mihalachi</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -13,6 +13,6 @@
     <RepositoryUrl>https://github.com/vmihalachi/deskling</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>tray;menubar;desktop;idle;busy;scheduler;hotkey;winui</PackageTags>
+    <PackageTags>tray;menubar;desktop;idle;busy;scheduler;winui</PackageTags>
   </PropertyGroup>
 </Project>

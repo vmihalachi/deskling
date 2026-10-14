@@ -19,11 +19,7 @@ namespace Deskling.Testing.Conformance;
 public static class SettingsReplay
 {
     /// <summary>The problems found, empty when the file agrees with the code.</summary>
-    /// <param name="compareShortcut">
-    /// False when the Windows port deliberately defaults to another "Say something" shortcut than the Mac (the file holds
-    /// the Mac's Carbon key code).
-    /// </param>
-    public static IReadOnlyList<string> Verify(Stream json, string file, CompanionDefaults defaults, bool compareShortcut = true)
+    public static IReadOnlyList<string> Verify(Stream json, string file, CompanionDefaults defaults)
     {
         var committed = JsonNode.Parse(json)!.AsObject();
         var current = Base(defaults);
@@ -31,8 +27,6 @@ public static class SettingsReplay
         var committedDefaults = committed["defaults"]?.AsObject();
         foreach (var (key, value) in current["defaults"]!.AsObject())
         {
-            if (key == SettingsKeys.SayShortcut && !compareShortcut)
-                continue;
             if (committedDefaults is null || !committedDefaults.ContainsKey(key) || !VectorSupport.Same(value, committedDefaults[key]))
                 problems.Add($"{file}: defaults.{key} differs from the code");
         }
@@ -64,14 +58,6 @@ public static class SettingsReplay
     public static JsonObject Base(CompanionDefaults defaults)
     {
         var s = new CompanionSettings(new InMemorySettingsStore(), defaults);
-        JsonNode? shortcut = s.SayShortcut is { } k
-            ? new JsonObject
-            {
-                ["keyCode"] = k.KeyCode,
-                ["modifiers"] = k.Modifiers,
-                ["key"] = k.Key,
-            }
-            : null;
         var values = new JsonObject
         {
             ["channels"] = VectorSupport.Array(s.Channels.Names),
@@ -89,7 +75,6 @@ public static class SettingsReplay
             ["speechVolume"] = s.SpeechVolume,
             ["phraseFlavors"] = VectorSupport.Array(s.PhraseFlavors.Select(f => f.RawValue).Order(StringComparer.Ordinal)),
             ["mutedPhraseIDs"] = VectorSupport.Array(s.MutedPhraseIDs.Order(StringComparer.Ordinal)),
-            ["sayShortcut"] = shortcut,
             ["appearance"] = s.Appearance.RawValue(),
             ["skin"] = s.Skin.RawValue,
             ["shushedUntil"] = s.ShushedUntil is { } until ? ConformanceSupport.Iso(until, TimeZoneInfo.Utc) : null,

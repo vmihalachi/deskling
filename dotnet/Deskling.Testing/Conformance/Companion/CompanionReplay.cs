@@ -15,12 +15,9 @@ public static class CompanionReplay
     public static IReadOnlyList<string> Phrases(string root, PhraseBank bank, IReadOnlyList<FlavorId> flavors) =>
         Open(Path.Combine(root, "phrases.json"), (s, f) => PhrasesReplay.Verify(s, f, bank, flavors));
 
-    /// <summary>
-    /// <c>settings.json</c> in <paramref name="root"/>: the generic keys and defaults. <paramref name="compareShortcut"/>
-    /// false where the platform's default shortcut differs from the Mac's.
-    /// </summary>
-    public static IReadOnlyList<string> Settings(string root, CompanionDefaults defaults, bool compareShortcut = true) =>
-        Open(Path.Combine(root, "settings.json"), (s, f) => SettingsReplay.Verify(s, f, defaults, compareShortcut));
+    /// <summary><c>settings.json</c> in <paramref name="root"/>: the generic keys and defaults.</summary>
+    public static IReadOnlyList<string> Settings(string root, CompanionDefaults defaults) =>
+        Open(Path.Combine(root, "settings.json"), (s, f) => SettingsReplay.Verify(s, f, defaults));
 
     /// <summary><c>desktop.json</c> in <paramref name="root"/>: the desktop presence, the bubble times, the part delays.</summary>
     public static IReadOnlyList<string> Desktop(string root) => Open(Path.Combine(root, "desktop.json"), DesktopReplay.Verify);
