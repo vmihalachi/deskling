@@ -78,5 +78,5 @@ and `Deskling.Testing` 0.7.7 depends on it. `Deskling.Windows.Companion` was not
   `@deskling/landing` 0.8.0 on npm for the owner's 2FA approval, and published the GitHub release
   (https://github.com/vmihalachi/deskling/releases/tag/v0.8.0) with the packages and the landing tarball.
 - 5.4 is the apps': sunnysays M3.2 and Pagliacci's M6 each start with their pin bump.
-- Left for later: the screenshot runner in `tools/` (with M3.2), the contrast-theme shots, the hand checks in 3.5 and
+- Left for later: the screenshot runner in `tools/` (done in 0.8.1, with Pagliacci's M6), the contrast-theme shots, the hand checks in 3.5 and
   4, and the desktop character's CPU (4.3).

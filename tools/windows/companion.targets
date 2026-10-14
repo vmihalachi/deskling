@@ -1,7 +1,7 @@
 <Project>
   <!--
-    What every companion app's WinUI project needs, shared instead of copied (tools/windows/README.md). Import it at the
-    end of the app's .csproj, after its own properties:
+    What every companion app's WinUI project needs, shared instead of copied (tools/README.md, *Windows apps*). Import
+    it at the end of the app's .csproj, after its own properties:
 
       <Import Project="..\..\deskling\tools\windows\companion.targets" />
 

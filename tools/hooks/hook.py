@@ -9,8 +9,8 @@
   hook.py post   PostToolUse: remember what this session edited and ran; format the Swift or C# file just edited;
                                regenerate the Xcode project when Swift files come or go or the XcodeGen spec changes.
   hook.py stop   Stop:        run the app's verify.sh --fast on this session's edits and remind about the slow checks
-                               (xcodebuild test, conformance, swift/dotnet test, the landing build, hooks.slow) not
-                               run since the last edit; remind once about porting Mac UI changes to Windows
+                               (xcodebuild test, conformance, swift/dotnet test, the Windows app's model tests, the
+                               landing build, hooks.slow) not run since the last edit; remind once about porting Mac UI changes to Windows
                                (hooks.macUI/windowsUI).
   hook.py cloud-stop  Copilot agentStop: inside GitHub Actions only (the cloud coding agent, which has no session
                                log), run the app's verify.sh on the branch's changes and ask for fixes.
@@ -93,6 +93,8 @@ def setup(root=None):
         ("conformance", NAMES["RE_PURE"], f"conformance vectors ({tools}/conformance.sh)"),
         ("swift-test", NAMES["RE_COREPKG"], f"core package tests (swift test --package-path {NAMES['MAC_CORE']})"),
         ("dotnet-test", NAMES["RE_WINDOWS_CORE"], "Windows Core tests"),
+        ("dotnet-app-test", NAMES["RE_WINDOWS_APP_TESTS"],
+         f"Windows app model tests (dotnet test {NAMES['WINDOWS_DIR']}/{NAMES['WINDOWS_APP_TESTS']})"),
         ("landing-build", NAMES["RE_LANDING"], f"landing build ({landing} build)"),
     ]
     RAN = []
@@ -282,13 +284,18 @@ def post_one(event):
             record(event, "ran", "conformance")
         if re.search(r"\bdotnet\s+test\b", command):
             record(event, "ran", "dotnet-test")
+            # A solution-wide run includes the app's model tests; a run of another test project doesn't.
+            app_tests = NAMES["WINDOWS_APP_TESTS"]
+            if (app_tests and app_tests in command) or not re.search(r"\.Tests\b", command):
+                record(event, "ran", "dotnet-app-test")
         if re.search(r"\bswift\s+test\b", command):
             record(event, "ran", "swift-test")
         for kind, pattern in RAN:
             if re.search(pattern, command):
                 record(event, "ran", kind)
         if re.search(r"verify\.sh(?!.*--fast)", command):
-            for ran in dict.fromkeys(("xcodebuild-test", "conformance", "swift-test", "dotnet-test", "landing-build",
+            for ran in dict.fromkeys(("xcodebuild-test", "conformance", "swift-test", "dotnet-test", "dotnet-app-test",
+                                      "landing-build",
                                       *(kind for kind, _, _ in SLOW))):
                 record(event, "ran", ran)
         tool_name = NAMES["LANDING_TOOL"]

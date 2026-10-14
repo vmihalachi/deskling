@@ -176,10 +176,27 @@ class StopAndParity(HookTestCase):
 
     def test_slow_checks_come_from_companion_json(self):
         kinds = {kind: pattern for kind, pattern, _ in self.hook.SLOW}
-        self.assertEqual(set(kinds), {"xcodebuild-test", "conformance", "swift-test", "dotnet-test"}, "no landing")
+        self.assertEqual(set(kinds), {"xcodebuild-test", "conformance", "swift-test", "dotnet-test", "dotnet-app-test"},
+                         "no landing")
         self.assertRegex("macos/FixtureCore/Sources/FixtureCore/A.swift", kinds["conformance"])
         self.assertRegex("windows/Fixture.Core/A.cs", kinds["dotnet-test"])
         self.assertNotRegex("windows/Fixture.App/A.cs", kinds["dotnet-test"])
+        self.assertRegex("windows/Fixture.App/App/AppModel.cs", kinds["dotnet-app-test"])
+        self.assertRegex("windows/Fixture.App.Tests/AppModelTests.cs", kinds["dotnet-app-test"])
+        self.assertNotRegex("windows/Fixture.Core/A.cs", kinds["dotnet-app-test"])
+
+    def test_app_model_tests_count_when_their_project_or_the_solution_ran(self):
+        edit = {"session_id": "app", "tool_name": "Edit",
+                "tool_input": {"file_path": str(self.root / "windows/Fixture.App/App/AppModel.cs")}}
+
+        def reminded_after(command):
+            self.run_hook("post", edit)
+            self.run_hook("post", {"session_id": "app", "tool_name": "Bash", "tool_input": {"command": command}})
+            return "Windows app model tests" in self.run_hook("stop", {"session_id": "app"}).stderr
+
+        self.assertTrue(reminded_after("dotnet test windows/Fixture.Core.Tests"), "another test project")
+        self.assertFalse(reminded_after("dotnet test windows/Fixture.App.Tests"))
+        self.assertFalse(reminded_after("cd windows && dotnet test"), "the solution")
 
     def test_app_slow_checks_replace_and_add(self):
         self.configure(slow=[
@@ -217,7 +234,8 @@ class StopAndParity(HookTestCase):
         done = self.run_hook("stop", {"session_id": "stop"})
         self.assertEqual(done.returncode, 2, done.stderr)
         self.assertIn("Not run since your last edit: conformance vectors", done.stderr)
-        self.assertIn("deskling/tools/verify.sh", done.stderr.replace(str(self.root) + "/", ""))
+        # Deskling's own (the fixture has no scripts/ wrapper), wherever this checkout of it is.
+        self.assertIn("tools/verify.sh -- macos/FixtureCore/", done.stderr)
         self.run_hook("post", {"session_id": "stop", "tool_name": "Bash", "tool_input": {"command": "scripts/verify.sh"}})
         self.assertEqual(self.run_hook("stop", {"session_id": "stop"}).returncode, 0)
 

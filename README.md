@@ -112,7 +112,8 @@ public partial class App : CompanionApp
 
     protected override ICompanionLaunching MakeCompanion()
     {
-        CompanionLook.Current = new CompanionLook(MyPalette.Value);  // first: every control paints from it
+        Loc.UseLanguage(Loc.Choose(["en", "it"]));  // the strings and the culture, before anything says a word
+        CompanionLook.Current = new CompanionLook(MyPalette.Value);  // then the look: every control paints from it
         var host = new WindowsCompanionHost<MyWindow>(
             new CompanionViews<MyWindow>(MyModel.Spec, id => MyViews.Window(model!, id), () => new MyPanel(model!))
             {
@@ -120,7 +121,7 @@ public partial class App : CompanionApp
             },
             TrayIconId,
             "My app");
-        var settings = new MySettings(new LocalSettingsStore(), MyDefaults.Value);
+        var settings = new MySettings(LocalSettingsStore.ForApp("MyApp"), MyDefaults.Value);  // packaged or not
         // The speaker, chime, notifier, signal hub and store, as dotnet/Fixture.App/App.xaml.cs makes them.
         return model = new MyModel(settings, MyBank.Load(), host /* , … */);  // a CompanionAppModel<MyWindow, MySettings>
     }
@@ -134,6 +135,15 @@ The app keeps its words (copy records, from its `.resw`), its look (a `Companion
 read the app's own theme dictionaries; buttons, cards, titles as `Style`s), Home, onboarding, the tray panel's layout,
 its own settings and windows, and the MSIX manifest (the startup task's id goes to `LaunchAtStartupToggle`). Image
 parts of a raster character ship as `Assets\Characters\<skin>.<part>.scale-200.png`.
+
+The project imports [`tools/windows/companion.targets`](tools/windows/companion.targets) from the app's `deskling/`
+submodule, last: x64 and ARM64, Debug unpackaged (`dotnet run`; `PackageIdentity.IsPackaged` is false, so the app
+picks a mock store, and `LocalSettingsStore.ForApp` keeps a JSON file) and every other configuration an MSIX with Native
+AOT, the voice clips, sounds and fonts linked from the folders the Mac app bundles.
+Beside it, `tools/windows/` has the screenshot runner, a package smoke test, a lint for the WinUI code that breaks only
+under Native AOT, and the MSIX images from the app icon ([`tools/README.md`](tools/README.md), *Windows apps*). Keep the
+model free of WinUI and its words behind `IStrings`, and its tests run on any OS (`Deskling.Testing`'s `ReswStrings`
+reads the app's English `.resw`).
 
 ## The two implementations stay identical
 

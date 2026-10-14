@@ -13,8 +13,9 @@ companion shell (`Deskling.Companion.Shell` and `Deskling.Windows.Companion`, be
 holds what's app-specific; its tests (`windows.coreTests`) replay the app's vectors. Platform differences and the
 folder map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
 
-- Core tests run anywhere with the .NET 10 SDK: `dotnet test <windows.dir>/<windows.coreTests>`. The WinUI app's
-  XAML compiler needs Windows: push and run the app's Windows workflow.
+- Core and model tests run anywhere with the .NET 10 SDK: `dotnet test <windows.dir>/<windows.coreTests>` and
+  `<windows.appTests>`. The WinUI app's XAML compiler needs Windows: build there (`verify.sh` does, on Windows), or
+  push and run the app's Windows workflow.
 - Formatting: `dotnet format whitespace <windows.dir> --folder` (the app's `.editorconfig`).
 - Swift → C#: the same type and member names, PascalCased; durations as `double` seconds with a `Seconds` suffix;
   string-backed ids (`FlavorId`, `SkinId`, `PaintRole`) as record structs; `PartContent.Vector` for Swift's `.shapes`.
@@ -50,6 +51,45 @@ whole companion on these packages.
 - A screenshot run: override `RunScreenshots`, build the model over a `SampleEnvironment` and run a
   `ScreenshotScript`; `Program` passes a null instance key while `ScreenshotCapture.IsEnabled`.
 
+## The app project and its tools (0.8.1)
+
+The `.csproj` imports `deskling/tools/windows/companion.targets` last (Deskling's `tools/README.md`, *Windows apps*):
+x64 and ARM64, Debug unpackaged and every other configuration an MSIX with Native AOT, the voices, sounds and fonts
+linked from the Mac's folders.
+
+- **Run**: `dotnet run --project <windows.dir>/<windows.app> -p:Platform=x64` (or ARM64): the Debug app, unpackaged,
+  over a mock store when `PackageIdentity.IsPackaged` is false; its settings in `LocalSettingsStore.ForApp`'s JSON file.
+- **Shoot**: `deskling/tools/windows/screenshots.ps1 [-Only home] [-Language it] [-Configuration Release]` (or the
+  app's `windows/scripts/` wrapper). Look at every shot you touched, light and dark; `-Configuration Release` shoots the
+  Native AOT build, which is where untyped XAML casts fail.
+- **Package**: `dotnet publish <app> -c Release -p:Platform=x64 -p:GenerateAppxPackageOnBuild=true
+  -p:AppxPackageSigningEnabled=false`, then `smoke-package.ps1 -Package <.msix> -CheckOnly` (native, no
+  `runtimeconfig.json`) and, with Developer Mode, without `-CheckOnly` (it installs, starts and removes it; `-Keep` for
+  the hand checks a package needs: the startup task, a notification click after the app quit).
+- **Lint**: `python3 deskling/tools/windows/check-winui.py [files]`; `verify.sh` runs it on the changed app files.
+- **Images**: `python3 deskling/tools/windows/assets.py` after the Mac icon changes; never edit `Assets/` by hand.
+- **The model's tests** (`windows.appTests`, `net10.0`): the model, its copy, the window list, the products and the
+  notification actions compile into the tests by `<Compile Include="..\App\…" Link="…" />`, so they use no WinUI type
+  and no `Loc`; their words come through `IStrings` (`LocStrings.Shared` in the app, `ReswStrings.Load(<en .resw>)` in
+  the tests). A file with a WinUI half keeps one file per Mac file and puts that half under `#if WINDOWS`. Port the
+  Mac's `AppModelTests` over `FakeHost`, `ManualTimers` and the fakes (`ManualTimers.RunNext()` fires the oldest
+  one-shot; `Advance(seconds)` for a joke's beat).
+
+Traps that cost a day each:
+
+- `App.xaml` next to the `.csproj`, never in a folder: elsewhere it isn't the application's XAML and the app stops at
+  launch with a message-less `XamlParseException` (0x802B000A). `check-winui.py` knows.
+- Never cast an untyped XAML object (`Resources[…]`, `GetTemplateChild`, `e.NewValue` holding a brush): `XamlCast.As<T>`.
+- Choose the language first (`Loc.UseLanguage(ScreenshotCapture.Language ?? Loc.Choose(languages))`), before the
+  speaker, the voice library or any copy is made; phrases go through `Localize(key, source)`, never `Get`.
+- `PurchaseStore.Changed` is an event, not `PropertyChanged`: raise what depends on it (the Supporter's skin) yourself.
+- Name clashes: alias `Microsoft.UI.Windowing.AppWindow` against the app's `AppWindow` enum and
+  `Microsoft.UI.Input.Pointer` against `Views.Pointer`; the app's namespace `X.App` clashes with the `App` class, so
+  write `Application.Current`.
+- In `{l:Loc Key='…'}` a key with an apostrophe is written with a backtick; every class over a XAML type is
+  `sealed partial`.
+- The tray GUIDs (Debug and Release apart) are tied to the executable's path: never change one.
+
 ## Conventions
 
 - User-facing text uses the Mac's catalog keys (`Loc.Get("…")`, `Loc.Plural(key, count, args)`, `{l:Loc Key='…'}` in
@@ -58,9 +98,9 @@ whole companion on these packages.
 - Colors come from the app's palette resources (`{ThemeResource}`) or its `CompanionPalette`, never hard-coded.
 - When Swift behavior covered by vectors changes, regenerate them (`conformance` skill); failing `dotnet test` cases
   tell you what to port.
-- **Voices**: link the shared voices folder into the package, keeping the tree the Mac bundles
-  (`<Content Include="..\..\<voice.dir>\Voice\**\*" Link="Voice\%(RecursiveDir)%(Filename)%(Extension)" …/>`), and read
-  it from `Path.Combine(AppContext.BaseDirectory, "Voice")`. Never write into it from Windows code or by hand.
+- **Voices**: link the shared voices folder into the package with `CompanionVoiceFolder` (companion.targets keeps the
+  tree the Mac bundles and keeps it out of the resource index), and read it from
+  `Path.Combine(AppContext.BaseDirectory, "Voice")`. Never write into it from Windows code or by hand.
 - Native AOT: no reflection-based `JsonSerializer` (source-generated contexts only), `x:Bind` over `{Binding}`;
   warnings are errors.
 - No third-party code beyond Deskling and CommunityToolkit.Mvvm. No `internetClient`, `webcam` or `microphone`

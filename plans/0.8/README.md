@@ -100,6 +100,22 @@ Swift (`Sources/`) → C#. `CS` = `dotnet/Deskling.Companion.Shell/`, `WC` = `do
 The words (`.resw`, through copy structs), the look (`Theme/*.xaml`, the window scene, buttons, cards), Home,
 Onboarding, the flyout's layout, the app's own settings and windows, `Program.cs`'s three lines, the MSIX manifest.
 
+## 0.8.1: the first app on it
+
+Pagliacci's M6 is the first app on the shell (sunnysays' M3.2 next). What it needed went into Deskling instead of
+the app:
+
+- **Launch-time services that only an app finds**: settings without package identity (`LocalSettingsStore.ForApp`,
+  `FileSettingsStore`, `PackageIdentity`), `Loc.Choose` and a `UseLanguage` that pins the strings too, `Loc.Localize`
+  for phrases, the tray icon by id when Windows refuses the GUID, palette reads through `XamlCast`.
+- **Pieces both apps' windows draw**: `SpeechBubble.Header` (a setup above the punchline), `GlyphWave` (the tray glyph
+  in Home's picture of the notification area), `HoldGesture` (hold to shush), `ScreenshotCapture.Language`.
+- **Model tests on any OS**: `IStrings` in `Deskling.Companion.Shell`, `LocStrings` over `Loc`, `ReswStrings` and
+  `FakeAudio` in `Deskling.Testing`.
+- **The app kit in `tools/windows/`**, from mybackhurts' proven scripts and the fixture's runner, every app name taken
+  out: `companion.targets`, `screenshots.ps1`, `smoke-package.ps1`, `check-winui.py`, `assets.py`; `verify.sh` builds
+  and lints the WinUI app on Windows. The fixture app builds on it.
+
 ## The 0.8.0 changelog, in advance
 
 - **Added** `Deskling.Companion.Shell`: the platform-free half of a companion app's shell (the app model, the delivery

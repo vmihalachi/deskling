@@ -21,7 +21,12 @@
     "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
     "derivedData": "macos/build/dd.noindex"
   },
-  "windows": { "dir": "windows", "core": "Fixture.Core", "app": "Fixture.App", "sln": "Fixture.sln", "strings": "windows/Fixture.App/Strings" },
+  "windows": {
+    "dir": "windows", "core": "Fixture.Core", "app": "Fixture.App", "sln": "Fixture.sln", "strings": "windows/Fixture.App/Strings",
+    "appTests": "Fixture.App.Tests",
+    "assets": { "source": "macos/Fixture/Resources/AppIcon.png", "devSource": "macos/Fixture/Resources/AppIcon-Dev.png", "out": "windows/Fixture.App/Assets" },
+    "screenshots": "screenshots/windows"
+  },
   "languages": { "source": "en", "all": ["en", "it", "de"] },
   "l10n": {
     "catalog": "macos/Fixture/Resources/Localizable.xcstrings",

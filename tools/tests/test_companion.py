@@ -124,6 +124,15 @@ class LookupTests(unittest.TestCase):
             self.assertNotRegex("macos/FixtureCore/Sources/A.swift", names["RE_SWIFT"])
             self.assertRegex("windows/Fixture.Core.Tests/A.cs", names["RE_WINDOWS_CORE"])
             self.assertNotRegex("windows/FixtureXCore/A.cs", names["RE_WINDOWS_CORE"], "the dot is literal")
+            self.assertEqual(names["WINDOWS_APP_TESTS"], "Fixture.App.Tests")
+            self.assertEqual(names["WINDOWS_ASSETS"], "windows/Fixture.App/Assets")
+            for path in ("windows/Fixture.App/App/AppModel.cs", "windows/Fixture.App.Tests/AppModelTests.cs"):
+                self.assertRegex(path, names["RE_WINDOWS_APP_TESTS"])
+            self.assertNotRegex("windows/Fixture.Core/A.cs", names["RE_WINDOWS_APP_TESTS"])
+            for path in ("macos/Fixture/Resources/AppIcon.png", "macos/Fixture/Resources/AppIcon-Dev.png",
+                         "windows/Fixture.App/Assets/StoreLogo.scale-100.png"):
+                self.assertRegex(path, names["RE_WINDOWS_ASSETS"])
+            self.assertNotRegex("macos/Fixture/Resources/AppIcon.png.bak", names["RE_WINDOWS_ASSETS"])
 
     def test_pins_agree_and_disagree(self):
         with fixture_app() as root:

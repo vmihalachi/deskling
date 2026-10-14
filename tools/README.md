@@ -22,6 +22,11 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies. |
 | `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits; App Store Connect (text, in-app purchases, screenshots, previews, review notes; `--status` reads only); a Partner Center import folder. |
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
+| `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
+| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports. |
+| `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
+| `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
+| `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
 | `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks, the Windows parity reminder. |
 | `skills/` | `localization`, `add-phrase`, `add-setting`, `conformance`, `voice`, `windows-port`, `release-mac`, `review-invariants`. |
 
@@ -98,3 +103,47 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 6. **The app's own files** the tools read: `l10n.rulesFile` (transcreation rules for this app), the voice config and
    direction (`voice.config`, `voice.direction`), the sounds recipes (`sounds.recipes`), the store captions, the
    character design folder (`characters.design`).
+
+## Windows apps
+
+A companion's WinUI 3 app (`windows.app`, on `Deskling.Windows.Companion`) takes its build from the submodule, so every
+app builds, packages and checks the same way. Its `.csproj` sets its own properties, then imports the targets last:
+
+```xml
+<PropertyGroup>
+  <AssemblyName>MyApp</AssemblyName>
+  <CompanionVoiceFolder>..\..\voices\Voice</CompanionVoiceFolder>           <!-- → Voice\<lang>\<voice>\<id>.m4a -->
+  <CompanionSoundsFolder>..\..\macos\MyApp\Resources\Sounds</CompanionSoundsFolder>  <!-- → Sounds\*.wav -->
+  <CompanionFontsFolder>..\..\macos\MyApp\Resources\Fonts</CompanionFontsFolder>      <!-- → Fonts\*.ttf -->
+</PropertyGroup>
+<Import Project="..\..\deskling\tools\windows\companion.targets" />
+```
+
+- **Debug is unpackaged** (`dotnet run --project windows/MyApp.App -p:Platform=x64`): no Developer Mode, no
+  registration, the screenshot runner as is. Without package identity `LocalSettingsStore.ForApp` keeps the settings
+  in a JSON file and the app takes `MockStoreBackend` (`PackageIdentity.IsPackaged`). **Every other configuration is an
+  MSIX with Native AOT**; `-p:WindowsPackageType=None` builds a Release exe that runs unpackaged, which is what
+  `screenshots.ps1 -Configuration Release` shoots.
+- **Native AOT breaks what a Debug run hides**: a cast of an untyped XAML object throws or quietly fails, so the app
+  goes through `XamlCast.As<T>`; `check-winui.py` fails on the patterns, and `verify.sh` runs it on the changed files.
+  The Release screenshots and `smoke-package.ps1` on the built package are the proof before an upload.
+- **The model tests run on any OS.** The app's model, its words and the window list use no WinUI type; what has a
+  WinUI half sits under `#if WINDOWS` (defined for `-windows` target frameworks only). A `net10.0` test project
+  (`windows.appTests`) compiles those files by link and reads the app's English `.resw` through `ReswStrings`, so its
+  assertions read the real words; `verify.sh` runs it when the app or it changes.
+- **The images** come from the Mac's app icon: `python3 deskling/tools/windows/assets.py` after the icon changes
+  (`windows.assets`), and `verify.sh` checks them.
+- **Wrappers**, as for the shell scripts: `windows/scripts/screenshots.ps1` and `smoke-package.ps1`, e.g.
+
+  ```powershell
+  & "$PSScriptRoot/../../deskling/tools/windows/screenshots.ps1" @args
+  exit $LASTEXITCODE
+  ```
+
+- **The traps** the kit and the lint know about: `App.xaml` sits next to the `.csproj` (elsewhere it isn't the
+  application's XAML, and the app stops at the first custom type with a message-less `XamlParseException`); no element
+  named `Language`; no `x:Bind` function call with a number argument (bind a static property); the voice folders are
+  named after languages, so the targets keep them out of the resource index; a tray icon's GUID belongs to the first
+  executable path that used it (`TrayIconHost` falls back to an id), so keep the Debug and Release GUIDs apart and never
+  change one; Native AOT links through the Visual Studio tools that `vswhere.exe` finds, which a plain shell may not
+  have on its `PATH` (`screenshots.ps1` adds the installer's).

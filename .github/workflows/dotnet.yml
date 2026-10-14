@@ -12,6 +12,7 @@ on:
       - "conformance/**"
       - "Tests/DesklingCompanionTests/Resources/**"
       - "Tests/DesklingShellTests/Resources/**"
+      - "tools/windows/**"
       - ".github/workflows/dotnet.yml"
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - "conformance/**"
       - "Tests/DesklingCompanionTests/Resources/**"
       - "Tests/DesklingShellTests/Resources/**"
+      - "tools/windows/**"
       - ".github/workflows/dotnet.yml"
   workflow_dispatch:
 
@@ -71,6 +73,10 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
+
+      # What builds and runs in Debug but breaks under Native AOT or in the XAML compiler (tools/windows/check-winui.py).
+      - name: WinUI traps
+        run: python tools/windows/check-winui.py dotnet/Fixture.App dotnet/Deskling.Windows.Companion
 
       - name: Build Deskling.Windows, Deskling.Windows.Companion and the fixture app
         run: |
