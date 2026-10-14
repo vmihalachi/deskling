@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.9.2 - 2026-10-14
+
+On a Mac, a companion app's WinUI side builds and gets looked at in a Parallels Windows VM from the working tree, so
+a Mac change and its Windows port are checked in the same session instead of in the app's Windows workflow. The
+packages are unchanged.
+
 - **Tools**: `tools/windows/vm.sh` builds and checks a companion app's WinUI side in a Parallels Windows VM on the
   Mac, from the working tree as it is (uncommitted changes and submodules too, copied incrementally through the Mac's
   shared folders; `bin` and `obj` stay between runs): `build` (Debug, x64 and ARM64), `test`, `screenshots <folder>`
@@ -15,6 +21,8 @@ package and the NuGet packages together.
   build`, `screenshots` or `smoke`, or a `dotnet build`/`publish` of the app, satisfies; `vm.sh test` counts as the
   dotnet tests. An app's own `hooks.slow` entry for the WinUI build takes the name `winui-build`, or it's reminded
   twice.
+- **Tools**: `bump-apps.sh` skips a linked git worktree next to the Deskling checkout (its main checkout is the
+  app); name it to move it.
 
 ## 0.9.1 - 2026-10-14
 
