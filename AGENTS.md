@@ -48,7 +48,8 @@ scripts/verify.sh                              # runs what applies to your chang
 
 In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
 read the failed job's log). Vectors need the Swift code to regenerate: without a Mac, dispatch `regenerate-vectors.yml`
-on your branch and pull the commit it pushes.
+on your branch and pull the commit it pushes. It refuses the default branch (its first step fails there), so a vector
+change reaches `master` only through a pull request.
 
 ## Planned work
 
