@@ -6,9 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed settings read never coerces another type, and a
-jittered interval never drops below a second. Three sharper contracts: `LocalizedKey.Argument.type` is an enum, a
-`Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own, and the
+## 0.10.0 - 2026-10-15
+
+`LocalizedKey.Argument.type` is an enum instead of a string, so a bank that builds or compares the type as a string
+changes; the JSON is the same. **Breaking.** Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed
+settings read never coerces another type, and a jittered interval never drops below a second. Two sharper contracts:
+a `Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own, and the
 companion apps' hook gets a `resume` mode that restores an agent's place after a compaction. Every file format
 and every vector is unchanged.
 
