@@ -14,8 +14,8 @@ namespace Deskling.Windows.Companion.Settings;
 /// Windows has no such page for every app, so this is a list in the app: Windows' language first, then each of the
 /// app's in its own words ("Deutsch", "Português (Brasil)"), through the Windows App SDK's
 /// <c>ApplicationLanguages.PrimaryLanguageOverride</c> (packaged or not). Windows applies a new language at the next
-/// start, so a note and a restart button show once it changed. The words are the app's; the button takes its
-/// <see cref="ButtonStyle"/>.
+/// start, so a note and a restart button show once it changed: Narrator hears the note as it appears, and again as the
+/// button's help text. The words are the app's; the button takes its <see cref="ButtonStyle"/>.
 /// </summary>
 public sealed partial class LanguageRow : UserControl
 {
@@ -73,6 +73,8 @@ public sealed partial class LanguageRow : UserControl
             AutomationProperties.SetName(choices, value?.Label ?? "");
             note.Text = value?.RestartNote ?? "";
             restart.Content = value?.Restart;
+            // The button says why it's there: the note beside it.
+            AutomationProperties.SetHelpText(restart, value?.RestartNote ?? "");
             Rebuild();
         }
     }
@@ -129,8 +131,13 @@ public sealed partial class LanguageRow : UserControl
         UpdateRestart();
     }
 
-    private void UpdateRestart() =>
+    private void UpdateRestart()
+    {
+        var before = restartRow.Visibility;
         restartRow.Visibility = string.Equals(SafeOverride(), StartLanguage, StringComparison.OrdinalIgnoreCase) ? Visibility.Collapsed : Visibility.Visible;
+        if (Announcer.Appears(before, restartRow.Visibility))
+            Announcer.Say(note, Copy?.RestartNote, Announcer.Note);
+    }
 
     private static string SafeOverride()
     {

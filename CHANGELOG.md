@@ -6,6 +6,24 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+On Windows, Narrator hears what appears on its own: a new line in the bubble, the status pill's new kind of status,
+Support's thanks (with focus on Done), the language restart note, the notification note and the startup line, each
+once, politely and in the app's own words. The bubble and the pill opt in; nothing else changes for an app that
+doesn't.
+
+- **Windows.Companion (`SpeechBubble`)**: `Announces` (off by default) raises a polite UI Automation notification
+  with each new line while the bubble is on screen, under one activity id for every bubble, so only the latest is
+  read. The "…" shown while there's no line is hidden from UI Automation.
+- **Windows.Companion (`StatusPill`)**: `Announces` and `Kind` announce the status when its kind (a key the app
+  chooses) changes, never as the minute countdown ticks down; without a `Kind` the pill stays quiet.
+- **Windows.Companion (`SupportWindow`)**: right after the supporter purchase or a tip, focus moves to Done and
+  Narrator hears the thanks (`WelcomeLine` and `WelcomeNote`, or `TipThanksLine`).
+- **Windows.Companion (`LanguageRow`, `NotificationPermissionNote`, `LaunchAtStartupToggle`)**: the restart note, the
+  notification note and the startup "blocked" line are announced when they appear, and the Restart button, the Open
+  settings button and the toggle carry the note as their help text.
+- **Fixture**: Home's bubble and pill announce (the pill's kind is the status line with the countdown at its last
+  minute).
+
 ## 0.10.1 - 2026-10-15
 
 iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in

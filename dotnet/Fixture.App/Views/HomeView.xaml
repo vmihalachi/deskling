@@ -16,7 +16,11 @@
                         Character="{x:Bind Model.GlyphCharacter}"
                         GlyphSize="24" />
                 </StackPanel>
-                <dv:StatusPill Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
+                <!-- Home's pill and bubble speak to Narrator; the panel's and the desktop's stay quiet, so nothing is said twice. -->
+                <dv:StatusPill
+                    Announces="True"
+                    Kind="{x:Bind Model.StatusKind, Mode=OneWay}"
+                    Text="{x:Bind Model.StatusLine, Mode=OneWay}" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -36,6 +40,7 @@
                     x:Name="Speech"
                     Grid.Column="1"
                     VerticalAlignment="Center"
+                    Announces="True"
                     RoomForDial="True"
                     Text="{x:Bind Model.Bubble, Mode=OneWay}" />
             </Grid>

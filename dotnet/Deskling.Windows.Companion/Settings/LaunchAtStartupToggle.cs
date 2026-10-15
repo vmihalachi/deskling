@@ -11,7 +11,8 @@ namespace Deskling.Windows.Companion.Settings;
 /// "Open at sign-in" (Swift's <c>LaunchAtLoginToggle</c>), through the package's startup task (<see cref="StartupService"/>),
 /// with a line under it when Windows refuses: the user or a policy blocked the task, and only they can turn it back on
 /// (Settings › Apps › Startup). Without package identity (an unpackaged build) the toggle is off and can't be turned
-/// on. The words are the app's; the line is in the look's accent text color.
+/// on. Narrator hears the line when it appears, and again as the toggle's help text while it shows. The words are the
+/// app's; the line is in the look's accent text color.
 /// </summary>
 public sealed partial class LaunchAtStartupToggle : UserControl
 {
@@ -88,12 +89,22 @@ public sealed partial class LaunchAtStartupToggle : UserControl
         {
             var enabled = await startup.SetEnabledAsync(on);
             Show(enabled, available: true);
-            blocked.Visibility = on && !enabled ? Visibility.Visible : Visibility.Collapsed;
+            ShowBlocked(on && !enabled);
         }
         catch (Exception e) when (e is InvalidOperationException or COMException or UnauthorizedAccessException)
         {
             Show(on: false, available: false);
         }
+    }
+
+    /// <summary>The line Windows' refusal brings: announced as it appears, and the toggle's help text while it shows.</summary>
+    private void ShowBlocked(bool show)
+    {
+        var before = blocked.Visibility;
+        blocked.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        AutomationProperties.SetHelpText(toggle, show ? blocked.Text : "");
+        if (Announcer.Appears(before, blocked.Visibility))
+            Announcer.Say(blocked, blocked.Text, Announcer.Note);
     }
 
     private void Show(bool on, bool available)
