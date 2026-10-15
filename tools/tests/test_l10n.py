@@ -425,6 +425,16 @@ class PhrasesTests(L10nTestCase):
     def test_the_fixture_is_in_step(self):
         self.assertEqual(quiet(phrases.cmd_check, self.config())[0], 0)
 
+    def test_check_reports_a_weight_under_1_by_id(self):
+        def change(bank):
+            next(p for p in bank if p["id"] == "hello")["weight"] = 0
+            next(p for p in bank if p["id"] == "joke")["weight"] = -1
+        self.rewrite_bank(change)
+        result, out = quiet(phrases.cmd_check, self.config())
+        self.assertEqual(result, 1)
+        self.assertIn("weight under 1 in the bank: 'hello' has weight 0", out)
+        self.assertIn("weight under 1 in the bank: 'joke' has weight -1", out)
+
     def test_sync_adds_parts_updates_text_and_retires_lines(self):
         def change(bank):
             bank[:] = [p for p in bank if p["id"] != "hello"]

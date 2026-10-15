@@ -71,5 +71,5 @@ jobs:
           swift build --product DesklingCompanion
           swift build --product DesklingTesting
 
-      - name: Test DesklingCoreTests, DesklingCompanionTests
-        run: swift test --filter 'DesklingCoreTests|DesklingCompanionTests'
+      - name: Test DesklingCoreTests, DesklingCompanionTests, DesklingTestingTests
+        run: swift test --filter 'DesklingCoreTests|DesklingCompanionTests|DesklingTestingTests'

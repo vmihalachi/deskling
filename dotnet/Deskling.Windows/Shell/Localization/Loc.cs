@@ -82,15 +82,16 @@ public static class Loc
     }
 
     /// <summary>
-    /// Text for a key pure code returned. "int" arguments are numbers (the first one also picks the plural variant
-    /// when the string has variants); "durationMinutes" arguments go through <see cref="Formats.DurationMinutes"/>.
+    /// Text for a key pure code returned. <see cref="LocalizedKey.ArgumentKind.Int"/> arguments are numbers (the first
+    /// one also picks the plural variant when the string has variants);
+    /// <see cref="LocalizedKey.ArgumentKind.DurationMinutes"/> arguments go through <see cref="Formats.DurationMinutes"/>.
     /// </summary>
     public static string Get(LocalizedKey key)
     {
         if (key.Args.Count == 0)
             return Get(key.Key);
         var args = key.Args.Select(FormatArg).ToArray();
-        var count = key.Args.FirstOrDefault(a => a.Type == "int")?.Value;
+        var count = key.Args.FirstOrDefault(a => a.Type == LocalizedKey.ArgumentKind.Int)?.Value;
         return count is { } n && IsPlural(key.Key) ? Plural(key.Key, n, args) : Format(key.Key, args);
     }
 
@@ -98,7 +99,12 @@ public static class Loc
     public static string Upper(string text) => text.ToUpper(Culture);
 
     private static object FormatArg(LocalizedKey.Argument arg) =>
-        arg.Type == "durationMinutes" ? Formats.DurationMinutes(arg.Value) : arg.Value;
+        arg.Type switch
+        {
+            LocalizedKey.ArgumentKind.Int => arg.Value,
+            LocalizedKey.ArgumentKind.DurationMinutes => Formats.DurationMinutes(arg.Value),
+            _ => throw new ArgumentOutOfRangeException(nameof(arg), arg.Type, "Unknown argument kind"),
+        };
 
     private static bool IsPlural(string key) => Lookup($"{ReswName.For(key)}__other") is not null;
 

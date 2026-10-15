@@ -164,8 +164,9 @@ open class CompanionSettings {
             commentOnAppearance: commentOnAppearance)
     }
 
-    /// Puts every resettable preference back to its default (onboarding stays done). A subclass overrides it to reset
-    /// its own preferences too, and calls `super`.
+    /// Puts every resettable preference back to its default (onboarding stays done) and removes their keys from the
+    /// store, so a user who reset follows the app's defaults when a later version changes them. A subclass overrides
+    /// it to reset its own preferences too, removing its own keys the same way, and calls `super`.
     open func resetToDefaults() {
         channels = defaults.channels
         frequency = defaults.frequency
@@ -188,6 +189,9 @@ open class CompanionSettings {
         showOnDesktop = defaults.showOnDesktop
         desktopSize = defaults.desktopSize
         desktopPosition = defaults.desktopPosition
+        for key in SettingsKeys.resettable {
+            store.remove(forKey: key)
+        }
     }
 
     /// `[x, y]`; anything else is unreadable and falls back to the default spot.

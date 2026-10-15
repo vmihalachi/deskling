@@ -12,6 +12,12 @@ final class PhraseTests: XCTestCase {
         XCTAssertFalse(line.isTune)
     }
 
+    // A weight under 1 is a precondition failure, which XCTest cannot catch; the C# twin asserts the throw.
+    func testWeightIsNormalByDefaultAndStartsAtOne() {
+        XCTAssertEqual(Phrase("hello", .line(source: "Hello"), tags: [.general]).weight, 3)
+        XCTAssertEqual(Phrase("rare", .line(source: "Rarely"), tags: [.general], weight: 1).weight, 1)
+    }
+
     func testASequenceHasAKeyAndAClipPerPart() {
         let joke = Phrase("joke", .sequence(source: ["Setup", "Middle", "Punchline"]), tags: [.general])
         XCTAssertEqual(joke.partCount, 3)

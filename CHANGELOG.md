@@ -7,7 +7,10 @@ package and the NuGet packages together.
 ## Unreleased
 
 Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed settings read never coerces another type, and a
-jittered interval never drops below a second. No format or API change.
+jittered interval never drops below a second. Three sharper contracts: `LocalizedKey.Argument.type` is an enum, a
+`Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own, and the
+companion apps' hook gets a `resume` mode that restores an agent's place after a compaction. Every file format
+and every vector is unchanged.
 
 - **Core**: `UserDefaultsSettingsStore`'s getters return nil for a key holding another type, as `SettingsStore`
   promises and `InMemorySettingsStore` does: a boolean reads only as a `Bool`, an integer only as an `Int`, a
@@ -21,6 +24,21 @@ jittered interval never drops below a second. No format or API change.
   interval is drawn, so a jittered interval is never shorter than a second: a jitter at or above the interval could
   draw a zero or negative one and schedule the next reminder in the past. The default (zero) is unchanged and every
   committed vector stays byte-identical; `jitter-clamped-to-interval` pins the clamp.
+- **Core**: `LocalizedKey.Argument.type` is an enum (`Kind` in Swift, `LocalizedKey.ArgumentKind` in C#) with the two
+  kinds, `int` and `durationMinutes`, instead of a string. The JSON is unchanged (the raw values are the strings
+  already written); C# reads and writes it through the source-generated `LocalizedKeyJson` context, and the Windows
+  shell's formatter switches on the kind, so a third kind fails to compile until it is handled.
+- **Companion**: `CompanionSettings.resetToDefaults()` (`ResetToDefaults()` in C#) also removes the base keys from the
+  store, so a user who pressed Reset follows the app's defaults when a later version changes them instead of staying
+  pinned to the old ones. A subclass's override removes its own keys the same way, as the doc comment's example does.
+- **Companion**: `Phrase` refuses a weight under 1 (a precondition in Swift, `ArgumentOutOfRangeException` in C#).
+  With every candidate at 0 the picker always drew the first line, and a negative weight hid the last candidates.
+- **Tools**: `phrases.py check` reports, by id, a phrase whose weight is under 1, before the app traps on it.
+- **Testing**: a `DesklingTestingTests` target and a `Deskling.Testing.Tests` project test the test kit itself: each
+  mock's contract, `MockStoreBackend`'s purchase, restore and failure paths, `JSONValue`'s round trip and key order,
+  `BankAudit`, the conformance suite and root, `ManualTimers` and the fixture loaders. `CompanionStateTests` has one
+  test per `Mood` plus the precedence between them; `PhraseTimingTests` covers the first part, a shown part followed
+  by a spoken one and a zero-length bubble.
 - **Tools**: `tools/hooks/hook.py` gets a `resume` mode for the SessionStart hook (`compact|resume`): after a
   compaction it prints the files the session edited, the slow checks it ran, the branch, `git status` and the
   recent commits, so the agent keeps its place. Nothing when the tree is clean and the session has no log.

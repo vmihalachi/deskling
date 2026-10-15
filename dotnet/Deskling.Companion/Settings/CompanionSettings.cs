@@ -271,8 +271,9 @@ public class CompanionSettings : INotifyPropertyChanged
     public Manners Manners => new(Channels, GreetOnReturn, CommentOnPower, CommentOnAppearance);
 
     /// <summary>
-    /// Puts every resettable preference back to its default (onboarding stays done). A subclass overrides it to reset
-    /// its own preferences too, and calls the base.
+    /// Puts every resettable preference back to its default (onboarding stays done) and removes their keys from the
+    /// store, so a user who reset follows the app's defaults when a later version changes them. A subclass overrides
+    /// it to reset its own preferences too, removing its own keys the same way, and calls the base.
     /// </summary>
     public virtual void ResetToDefaults()
     {
@@ -297,6 +298,8 @@ public class CompanionSettings : INotifyPropertyChanged
         ShowOnDesktop = Defaults.ShowOnDesktop;
         DesktopSize = Defaults.DesktopSize;
         DesktopPosition = Defaults.DesktopPosition;
+        foreach (var key in SettingsKeys.Resettable)
+            Store.Remove(key);
     }
 
     /// <summary>Sets <paramref name="field"/>, writes it through with <paramref name="write"/> and raises <see cref="PropertyChanged"/>.</summary>

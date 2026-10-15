@@ -42,6 +42,7 @@ public sealed class CompanionSettingsSubclassTests
         Assert.Null(settings.Voice);
         Assert.Equal(Frequency.Rarely, settings.Frequency);
         Assert.Null(store.GetString("voice"));
+        Assert.Empty(store.Keys);
     }
 
     [Fact]
