@@ -14,7 +14,6 @@
                 Height="64"
                 AccessibilityLabel="The fixture"
                 Character="{x:Bind Model.GlyphCharacter}"
-                Line="{x:Bind Model.Bubble, Mode=OneWay}"
                 Mood="{x:Bind Model.Mood, Mode=OneWay}"
                 Talking="{x:Bind Model.IsVoicing, Mode=OneWay}" />
             <dv:SpeechBubble
