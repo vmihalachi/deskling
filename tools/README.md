@@ -45,7 +45,7 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
    ```sh
    git submodule add https://github.com/vmihalachi/deskling deskling
-   git -C deskling checkout v0.5.0 && git add deskling
+   git -C deskling checkout vX.Y.Z && git add deskling
    ```
 
    The submodule is tools and skills only; the code still comes from the package registries. `scripts/verify.sh`

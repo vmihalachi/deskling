@@ -60,8 +60,8 @@ Something found along the way is a new issue, not a note in a file. The labels a
 
 ## Finding code
 
-The map in `docs/layout.md`: every Swift file has a C# twin at the same relative path, so `grep -rn` on a type
-name finds both sides.
+The map in `docs/layout.md`: every Swift file has a C# twin, at the same relative path unless the map says otherwise,
+so `grep -rn` on a type name finds both sides.
 
 ## Skills
 
@@ -87,10 +87,11 @@ The short form; the full rules with their examples are in `docs/conventions.md`.
   byte-identical, a unit test, a vector case and the C# port in the same change. `conformance/companion` pins
   mechanism over fixtures; each app pins its own content.
 - **Rasters never shear:** rotation, translation and uniform scale only; pose vectors pin affines, never pixels.
-- **C# mirrors Swift** folder for folder and file for file, except the companion shell, mirrored by role
-  (`plans/0.8/README.md` maps it). Source-generated JSON only: the apps publish with Native AOT.
+- **C# mirrors Swift** folder for folder and file for file; the deviations (the store under `Deskling.Core/Store/`,
+  `Deskling.Testing`'s own layout, the companion shell mirrored by role) are marked in `docs/layout.md`. Source-generated
+  JSON only: the apps publish with Native AOT.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides, a CHANGELOG line per user-visible change under
-  *Unreleased*, the version bumped in all four places in the same change (`scripts/verify.sh` checks they agree).
+  *Unreleased*, the version bumped in all five places in the same change (`scripts/verify.sh` checks they agree).
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.
 
 ## Sessions

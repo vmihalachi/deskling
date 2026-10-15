@@ -55,7 +55,7 @@ twice"). No logo exists yet.
 
 ## Evidence on Hand
 
-README, CHANGELOG (0.1.0 to 0.5.0), the 39 scheduler conformance vectors in `conformance/scheduler/` and the 55
+README, CHANGELOG (every release since 0.1.0), the scheduler conformance vectors in `conformance/scheduler/` and the
 companion vectors in `conformance/companion/`, mybackhurts.app, sunnysays.app, pagliacci.app.
 No testimonials, download counts, benchmarks or third-party adopters: never invent them.
 

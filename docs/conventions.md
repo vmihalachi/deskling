@@ -31,16 +31,19 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
 - **C# mirrors Swift** folder for folder and file for file (`Sources/DesklingCore/Scheduling/ReminderScheduler.swift` ↔
   `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Localization/`, `Settings/`; Companion folders:
   `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`. `DesklingSystem`
-  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. The exception is the companion shell
-  (`Deskling.Companion.Shell`, `Deskling.Windows.Companion`): the Swift files mix logic and AppKit, so the C# side splits
-  them and mirrors by role, with the same type and member names; `plans/0.8/README.md` maps every Swift file. Tests mirror the same folders, with
-  `Conformance/` in each Core and Companion test project.
+  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. Where the C# side deviates, the
+  row in `docs/layout.md` says so: the store lives under `dotnet/Deskling.Core/Store/`, `Deskling.Testing` has a layout
+  of its own, and the companion shell (`Deskling.Companion.Shell`, `Deskling.Windows.Companion`) is mirrored by role, not
+  file for file, because the Swift files mix logic and AppKit, so the C# side splits them, keeping the type and member
+  names (`plans/0.8/README.md` maps every Swift file). Tests mirror the same folders, with `Conformance/` in each Core
+  and Companion test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under
-  *Unreleased*. Bump the version in the same change as the tag, in all four places: `Deskling.version`
+  *Unreleased*. Bump the version in the same change as the tag, in all five places: `Deskling.version`
   (`Sources/DesklingCore/Deskling.swift`), `DesklingInfo.Version` (`dotnet/Deskling.Core/DesklingInfo.cs`),
-  the `DesklingVersion` default in `dotnet/Directory.Build.props`, and `site/index.html` (the `vX.Y.Z` label in the
-  header and both `exact:` install snippets). Move *Unreleased* to the new section. `scripts/verify.sh` fails when
-  these disagree, so run it before committing.
+  the `DesklingVersion` default in `dotnet/Directory.Build.props`, `site/index.html` (the `vX.Y.Z` label in the
+  header and both `exact:` install snippets) and `README.md` (the `exact:` install pin and the `git tag` example under
+  *Releases*). Move *Unreleased* to the new section. `scripts/verify.sh` fails when these disagree, so run it before
+  committing.
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.
