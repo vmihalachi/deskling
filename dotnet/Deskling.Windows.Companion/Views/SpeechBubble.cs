@@ -263,8 +263,7 @@ public sealed partial class SpeechBubble : UserControl
             ElementCompositionPreview.SetElementChildVisual(dialHost, shapes);
             Repaint();
         }
-        var left = Math.Max(0, c.Seconds - (DateTimeOffset.Now - c.Start).TotalSeconds);
-        var remaining = c.Seconds > 0 ? left / c.Seconds : 0;
+        var (left, remaining) = DialLeft(c.Seconds, DateTimeOffset.Now - c.Start);
         dialArcGeometry.StopAnimation(nameof(CompositionGeometry.TrimStart));
         dialArcGeometry.TrimStart = (float)(1 - remaining);
         if (left > 0)
@@ -275,6 +274,21 @@ public sealed partial class SpeechBubble : UserControl
             drain.Duration = TimeSpan.FromSeconds(left);
             dialArcGeometry.StartAnimation(nameof(CompositionGeometry.TrimStart), drain);
         }
+    }
+
+    /// <summary>
+    /// The seconds the dial has left and the share of the ring still drawn, <paramref name="elapsed"/> into a countdown of
+    /// <paramref name="seconds"/>. Both are clamped (0 to <paramref name="seconds"/>, and 0 to 1): the countdown is stamped
+    /// with the model's clock and measured here with the wall clock, so a clock that runs ahead (a test or fixture clock
+    /// that skips) or a time sync that moves the wall clock back gives a negative elapsed time, and the compositor refuses
+    /// a <c>TrimStart</c> outside 0 to 1 by throwing, which ends the app.
+    /// </summary>
+    internal static (double Left, double Remaining) DialLeft(double seconds, TimeSpan elapsed)
+    {
+        if (seconds <= 0)
+            return (0, 0);
+        var left = Math.Clamp(seconds - elapsed.TotalSeconds, 0, seconds);
+        return (left, left / seconds);
     }
 
     private void FadeIn()

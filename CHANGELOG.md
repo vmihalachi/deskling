@@ -6,6 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+The speech bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall clock
+disagree.
+
+- **Windows.Companion**: `SpeechBubble`'s countdown dial clamps the time left to the countdown and the ring's share to 0
+  to 1. The countdown is stamped with the model's clock and measured with the wall clock, so a clock running ahead (the
+  fixture's skip) or a time sync moving the wall clock back gave a `TrimStart` below 0, which the compositor refuses by
+  throwing: any line after the fixture's skip ended the app once the desktop character had been on.
+
 ## 0.10.1 - 2026-10-15
 
 iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in
