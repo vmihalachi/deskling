@@ -474,6 +474,15 @@ public sealed class ReminderSchedulerTests
     }
 
     [Fact]
+    public void TestJitterIsClampedSoTheIntervalNeverDropsBelowASecond()
+    {
+        var config = new SchedulerConfig { IntervalSeconds = 60, IntervalJitterSeconds = 10 * 60 };
+        // The ±10 minutes clamp to ±59 s: floor(−59 + 0.5) = −59 at the bottom, floor(58.99… + 0.5) = 59 at the top.
+        Assert.Equal(Monday(10).AddSeconds(1), MakeScheduler(Monday(10), config, new ScriptedRandom([0])).NextFireDate);
+        Assert.Equal(Monday(10).AddSeconds(119), MakeScheduler(Monday(10), config, new ScriptedRandom([0.999999])).NextFireDate);
+    }
+
+    [Fact]
     public void TestStatusFallbackUsesThePlainIntervalWithoutReadingTheSource()
     {
         var config = new SchedulerConfig { IntervalSeconds = 30 * 60, IntervalJitterSeconds = 10 * 60 };

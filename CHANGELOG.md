@@ -6,6 +6,22 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed settings read never coerces another type, and a
+jittered interval never drops below a second. No format or API change.
+
+- **Core**: `UserDefaultsSettingsStore`'s getters return nil for a key holding another type, as `SettingsStore`
+  promises and `InMemorySettingsStore` does: a boolean reads only as a `Bool`, an integer only as an `Int`, a
+  floating-point number only as a `Double`, a string only as a `String`, and a list only when every element has the
+  list's type. They went through `UserDefaults`' own getters, which read `true` under an integer key as 1, 1 under a
+  boolean key as `true`, 42 under a string key as `"42"` and `[true, false]` under an integers key as `[1, 0]`, so a
+  key written by another version of a setting took its value instead of the app's default. The C# stores
+  (`InMemorySettingsStore`, `LocalSettingsStore`, `FileSettingsStore`) were already strict; their tests now pin the
+  numbers too.
+- **Core**: `SchedulerConfig.intervalJitter` (`IntervalJitterSeconds`) is clamped to `interval − 1` when the next
+  interval is drawn, so a jittered interval is never shorter than a second: a jitter at or above the interval could
+  draw a zero or negative one and schedule the next reminder in the past. The default (zero) is unchanged and every
+  committed vector stays byte-identical; `jitter-clamped-to-interval` pins the clamp.
+
 ## 0.9.4 - 2026-10-15
 
 The Windows screenshot run of the Native AOT build can run twice in a row, as the apps' workflows do for two languages.

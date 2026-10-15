@@ -29,6 +29,15 @@ public sealed class LocalSettingsStoreTests
         Assert.Null(store.GetInteger("s"));
         Assert.Null(store.GetStrings("is"));
         Assert.Null(store.GetIntegers("ss"));
+        // The numbers too: a boolean is only a bool, 1 only an int and 0.25 only a double.
+        store.SetBool("b", true);
+        store.SetInteger("i", 1);
+        Assert.Null(store.GetInteger("b"));
+        Assert.Null(store.GetDouble("b"));
+        Assert.Null(store.GetBool("i"));
+        Assert.Null(store.GetDouble("i"));
+        Assert.Null(store.GetBool("d"));
+        Assert.Null(store.GetInteger("d"));
 
         store.Remove("ss");
         Assert.Null(store.GetStrings("ss"));

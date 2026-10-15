@@ -34,5 +34,16 @@ public sealed class SettingsStoreTests
         // Another type under the key reads as null.
         Assert.Null(store.GetInteger("s"));
         Assert.Null(store.GetStrings("is"));
+        // The numbers too: a boolean is only a bool, 1 only an int and 3.0 only a double.
+        store.SetBool("b", true);
+        store.SetInteger("i", 1);
+        store.SetDouble("d", 3);
+        Assert.Null(store.GetInteger("b"));
+        Assert.Null(store.GetDouble("b"));
+        Assert.Null(store.GetString("b"));
+        Assert.Null(store.GetBool("i"));
+        Assert.Null(store.GetDouble("i"));
+        Assert.Null(store.GetBool("d"));
+        Assert.Null(store.GetInteger("d"));
     }
 }

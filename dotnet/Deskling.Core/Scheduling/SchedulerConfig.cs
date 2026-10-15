@@ -36,7 +36,9 @@ public sealed record SchedulerConfig
     /// Each new interval is <see cref="IntervalSeconds"/> plus a random offset within ± this many seconds, rounded
     /// to whole seconds (<c>floor(x + 0.5)</c>), drawn from the scheduler's
     /// <see cref="Deskling.Core.Random.IRandomSource"/>. Zero (the default) keeps every interval exact and never
-    /// consults the random source. Keep it well below <see cref="IntervalSeconds"/>.
+    /// consults the random source. A jitter of <see cref="IntervalSeconds"/> − 1 or more is clamped to that, so a
+    /// jittered interval is never shorter than a second; keep it well below <see cref="IntervalSeconds"/> all the
+    /// same.
     /// </summary>
     public double IntervalJitterSeconds { get; init; }
 

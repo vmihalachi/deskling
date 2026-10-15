@@ -239,15 +239,17 @@ public sealed class ReminderScheduler
 
     /// <summary>
     /// The next interval: <see cref="SchedulerConfig.IntervalSeconds"/> plus a whole-second random offset within
-    /// ±<see cref="SchedulerConfig.IntervalJitterSeconds"/>. With zero jitter the random source is never consulted,
-    /// so the committed vectors stay exact.
+    /// ±<see cref="SchedulerConfig.IntervalJitterSeconds"/>, the jitter clamped to the interval less a second so the
+    /// next interval is never shorter than a second. With zero jitter the random source is never consulted, so the
+    /// committed vectors stay exact.
     /// </summary>
     private double NextInterval()
     {
         if (Config.IntervalJitterSeconds > 0)
         {
+            var jitter = Math.Min(Config.IntervalJitterSeconds, Math.Max(Config.IntervalSeconds - 1, 0));
             var unit = random.NextUnit();
-            return Config.IntervalSeconds + Math.Floor((unit * 2 - 1) * Config.IntervalJitterSeconds + 0.5);
+            return Config.IntervalSeconds + Math.Floor((unit * 2 - 1) * jitter + 0.5);
         }
         return Config.IntervalSeconds;
     }

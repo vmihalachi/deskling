@@ -149,12 +149,14 @@ public final class ReminderScheduler {
         hasUnansweredReminder = false
     }
 
-    /// The next interval: `config.interval` plus a whole-second random offset within ±`intervalJitter`.
-    /// With zero jitter the random source is never consulted, so the committed vectors stay exact.
+    /// The next interval: `config.interval` plus a whole-second random offset within ±`intervalJitter`, the jitter
+    /// clamped to `interval − 1` so the next interval is never shorter than a second. With zero jitter the random
+    /// source is never consulted, so the committed vectors stay exact.
     private func nextInterval() -> TimeInterval {
         guard config.intervalJitter > 0 else { return config.interval }
+        let jitter = min(config.intervalJitter, max(config.interval - 1, 0))
         let unit = random.nextUnit()
-        let offset = ((unit * 2 - 1) * config.intervalJitter + 0.5).rounded(.down)
+        let offset = ((unit * 2 - 1) * jitter + 0.5).rounded(.down)
         return config.interval + offset
     }
 

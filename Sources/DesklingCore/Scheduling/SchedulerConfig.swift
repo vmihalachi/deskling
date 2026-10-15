@@ -21,7 +21,8 @@ public struct SchedulerConfig: Equatable, Sendable {
     public var afterCallFallback: TimeInterval = 15 * 60
     /// Each new interval is `interval` plus a random offset within ±`intervalJitter`, rounded to whole seconds
     /// (`floor(x + 0.5)`), drawn from the scheduler's `RandomSource`. Zero (the default) keeps every interval
-    /// exact and never consults the random source. Keep it well below `interval`.
+    /// exact and never consults the random source. A jitter of `interval − 1` or more is clamped to that, so a
+    /// jittered interval is never shorter than a second; keep it well below `interval` all the same.
     public var intervalJitter: TimeInterval = 0
 
     public init(

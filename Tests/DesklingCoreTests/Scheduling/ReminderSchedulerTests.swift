@@ -437,4 +437,20 @@ final class ReminderSchedulerTests: XCTestCase {
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0.999_999]))
         XCTAssertEqual(high.nextFireDate, monday(10, 40))
     }
+
+    func testJitterIsClampedSoTheIntervalNeverDropsBelowASecond() {
+        var config = SchedulerConfig()
+        config.interval = 60
+        config.intervalJitter = 10 * 60
+        clock = MockClock(monday(10))
+        idle = MockIdle()
+        busy = MockBusy()
+        // The ±10 minutes clamp to ±59 s: floor(−59 + 0.5) = −59 at the bottom, floor(58.99… + 0.5) = 59 at the top.
+        let low = ReminderScheduler(
+            config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0]))
+        XCTAssertEqual(low.nextFireDate, monday(10).addingTimeInterval(1))
+        let high = ReminderScheduler(
+            config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0.999_999]))
+        XCTAssertEqual(high.nextFireDate, monday(10).addingTimeInterval(119))
+    }
 }

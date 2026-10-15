@@ -1,0 +1,125 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalJitterSeconds" : 600,
+    "intervalSeconds" : 60,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "A ±10 minute jitter on a 1 minute interval is clamped to ±59 s: no interval shorter than a second.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:01:29Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:01:29Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "jitter-clamped-to-interval",
+  "seed" : 42,
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 20,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 2
+          },
+          {
+            "decision" : "remind",
+            "tick" : 3
+          },
+          {
+            "decision" : "remind",
+            "tick" : 4
+          },
+          {
+            "decision" : "remind",
+            "tick" : 5
+          },
+          {
+            "decision" : "remind",
+            "tick" : 6
+          },
+          {
+            "decision" : "remind",
+            "tick" : 8
+          },
+          {
+            "decision" : "remind",
+            "tick" : 9
+          },
+          {
+            "decision" : "remind",
+            "tick" : 11
+          },
+          {
+            "decision" : "remind",
+            "tick" : 12
+          },
+          {
+            "decision" : "remind",
+            "tick" : 14
+          },
+          {
+            "decision" : "remind",
+            "tick" : 15
+          },
+          {
+            "decision" : "remind",
+            "tick" : 16
+          },
+          {
+            "decision" : "remind",
+            "tick" : 18
+          },
+          {
+            "decision" : "remind",
+            "tick" : 20
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:21:19Z",
+          "now" : "2026-09-28T10:20:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T10:21:19Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}

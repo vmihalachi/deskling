@@ -41,8 +41,9 @@ the code it was extracted from. The `jitter-*` vectors add the one new behavior.
   `activeWeekdays`, `quietHours` (local hours 0–23), `idleThresholdSeconds`, `postponeDuringCalls`,
   `postponeDuringFullScreen`, `busyGraceSeconds`, `afterCallFallbackSeconds`, and `intervalJitterSeconds`
   (optional, absent when zero). Each new interval is `intervalSeconds` plus `floor((2u − 1) × jitter + 0.5)`
-  seconds, where `u` is the next unit from SplitMix64 (top 53 bits over 2^53); with zero jitter the source is
-  never read.
+  seconds, where `u` is the next unit from SplitMix64 (top 53 bits over 2^53) and `jitter` is
+  `min(intervalJitterSeconds, max(intervalSeconds − 1, 0))`, so no interval is shorter than a second; with zero
+  jitter the source is never read.
 - `steps[].op`:
   - `ticks`: repeat `count` times: advance the clock by `everySeconds` (0 or missing: don't), then call `tick()`
     with `idleSeconds` since the last input and the `busy` reasons (`call`, `fullScreen`) active.
