@@ -31,6 +31,15 @@ public sealed class PhraseTests
         Assert.Throws<ArgumentException>(() => new Phrase("joke", Phrase.Sequence("Only a setup"), [Tag.General]));
 
     [Fact]
+    public void WeightIsNormalByDefaultAndStartsAtOne()
+    {
+        Assert.Equal(3, new Phrase("hello", Phrase.Line("Hello"), [Tag.General]).Weight);
+        Assert.Equal(1, new Phrase("rare", Phrase.Line("Rarely"), [Tag.General], weight: 1).Weight);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Phrase("never", Phrase.Line("Never"), [Tag.General], weight: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Phrase("never", Phrase.Line("Never"), [Tag.General], weight: -2));
+    }
+
+    [Fact]
     public void ATuneHasNothingToSay()
     {
         var tune = new Phrase("tune", Phrase.Tune("tune-1"), [Tag.General]);

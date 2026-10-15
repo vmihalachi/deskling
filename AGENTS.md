@@ -37,6 +37,7 @@ xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
 cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
 cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, the same anywhere
 cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, the same anywhere
+cd dotnet && dotnet test Deskling.Testing.Tests   # the mocks, the conformance helpers and the fixtures, the same anywhere
 cd dotnet && dotnet test Deskling.Windows.Companion.Tests   # Windows only: the speaker, the chime and the Windows shell's services
 dotnet run --project dotnet/Fixture.App        # Windows only: the fixture app, for the checks by hand
 scripts/fixture-screenshots.ps1 [-Only home]   # Windows only: the fixture's windows to PNGs, light and dark; fails on layout problems
@@ -48,7 +49,8 @@ scripts/verify.sh                              # runs what applies to your chang
 
 In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
 read the failed job's log). Vectors need the Swift code to regenerate: without a Mac, dispatch `regenerate-vectors.yml`
-on your branch and pull the commit it pushes.
+on your branch and pull the commit it pushes. It refuses the default branch (its first step fails there), so a vector
+change reaches `master` only through a pull request.
 
 ## Planned work
 

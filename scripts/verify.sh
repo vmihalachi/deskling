@@ -146,6 +146,7 @@ if [ "$fast" = 0 ]; then
       check "dotnet build + test (Core)" dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -v q --nologo
       check "dotnet build + test (Companion)" dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -v q --nologo
       check "dotnet build + test (Companion.Shell)" dotnet test dotnet/Deskling.Companion.Shell.Tests/Deskling.Companion.Shell.Tests.csproj -v q --nologo
+      check "dotnet build + test (Testing)" dotnet test dotnet/Deskling.Testing.Tests/Deskling.Testing.Tests.csproj -v q --nologo
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
 fi

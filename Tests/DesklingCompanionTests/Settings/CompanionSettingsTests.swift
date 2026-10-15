@@ -129,6 +129,30 @@ final class CompanionSettingsTests: XCTestCase {
         XCTAssertFalse(SettingsKeys.resettable.contains(SettingsKeys.hasCompletedOnboarding))
     }
 
+    func testResetRemovesTheStoredValuesSoLaterDefaultsApply() {
+        let store = InMemorySettingsStore()
+        let settings = CompanionSettings(store: store, defaults: .fixture)
+        settings.frequency = .every2Hours
+        settings.speechRate = 0.9
+        settings.activeWeekdays = [1, 7]
+        settings.hasCompletedOnboarding = true
+        settings.resetToDefaults()
+        for key in SettingsKeys.resettable {
+            XCTAssertFalse(store.keys.contains(key), key)
+        }
+        XCTAssertTrue(store.keys.contains(SettingsKeys.hasCompletedOnboarding))
+
+        var newDefaults = CompanionDefaults.fixture
+        newDefaults.frequency = .chatty
+        newDefaults.speechRate = 0.3
+        newDefaults.activeWeekdays = [2, 3]
+        let reloaded = CompanionSettings(store: store, defaults: newDefaults)
+        XCTAssertEqual(reloaded.frequency, .chatty)
+        XCTAssertEqual(reloaded.speechRate, 0.3)
+        XCTAssertEqual(reloaded.activeWeekdays, [2, 3])
+        XCTAssertTrue(reloaded.hasCompletedOnboarding)
+    }
+
     func testDesktopSettingsRoundTripAndReset() {
         let store = InMemorySettingsStore()
         let settings = CompanionSettings(store: store, defaults: .fixture)

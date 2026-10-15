@@ -160,6 +160,7 @@ scripts/conformance.sh                          # regenerate conformance/ from t
 cd dotnet && dotnet test Deskling.Core.Tests    # .NET: Core builds and tests anywhere; Deskling.Windows builds on Windows (its PRI tooling)
 cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, anywhere
 cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, anywhere
+cd dotnet && dotnet test Deskling.Testing.Tests     # the mocks, conformance helpers and fixtures, anywhere
 cd dotnet && dotnet test Deskling.Windows.Companion.Tests # Windows: the shell's Windows half
 dotnet run --project dotnet/Fixture.App         # Windows: the fixture app, a companion on the fixture bank
 scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark

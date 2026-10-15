@@ -47,7 +47,8 @@ public struct Phrase: Equatable, Sendable, Identifiable {
     public let id: String
     public let kind: Kind
     public let tags: Set<Tag>
-    /// 1 (rare) … 5 (a favorite); 3 is normal. Doubled when a daypart tag matches the moment.
+    /// 1 (rare) … 5 (a favorite); 3 is normal, and never under 1: the picker's weighted draw needs a positive total.
+    /// Doubled when a daypart tag matches the moment.
     public let weight: Int
     /// Lines and sequences have one; tunes have none.
     public let flavor: FlavorID?
@@ -57,7 +58,7 @@ public struct Phrase: Equatable, Sendable, Identifiable {
     /// in Italian is written in Italian and listed for `["it"]` only.
     public let languages: Set<String>
 
-    /// A `.sequence` needs at least two parts.
+    /// A `.sequence` needs at least two parts, and `weight` is 1 or more; either is a programmer error, so it traps.
     public init(
         _ id: String, _ kind: Kind, tags: Set<Tag>, weight: Int = 3, flavor: FlavorID? = nil, skins: Set<SkinID> = [],
         languages: Set<String> = []
@@ -65,6 +66,7 @@ public struct Phrase: Equatable, Sendable, Identifiable {
         if case .sequence(let parts) = kind {
             precondition(parts.count >= 2, "Phrase \(id): a sequence needs at least two parts")
         }
+        precondition(weight >= 1, "Phrase \(id): weight must be at least 1")
         self.id = id
         self.kind = kind
         self.tags = tags

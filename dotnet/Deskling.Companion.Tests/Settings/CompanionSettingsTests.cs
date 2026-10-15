@@ -153,6 +153,33 @@ public sealed class CompanionSettingsTests
     }
 
     [Fact]
+    public void ResetRemovesTheStoredValuesSoLaterDefaultsApply()
+    {
+        var store = new InMemorySettingsStore();
+        var settings = Make(store);
+        settings.Frequency = Frequency.Every2Hours;
+        settings.SpeechRate = 0.9;
+        settings.ActiveWeekdays = new HashSet<int> { 1, 7 };
+        settings.HasCompletedOnboarding = true;
+        settings.ResetToDefaults();
+        foreach (var key in SettingsKeys.Resettable)
+            Assert.DoesNotContain(key, store.Keys);
+        Assert.Contains(SettingsKeys.HasCompletedOnboarding, store.Keys);
+
+        var newDefaults = Fixture.Defaults with
+        {
+            Frequency = Frequency.Chatty,
+            SpeechRate = 0.3,
+            ActiveWeekdays = new HashSet<int> { 2, 3 },
+        };
+        var reloaded = new CompanionSettings(store, newDefaults);
+        Assert.Equal(Frequency.Chatty, reloaded.Frequency);
+        Assert.Equal(0.3, reloaded.SpeechRate);
+        Assert.Equal(new HashSet<int> { 2, 3 }, reloaded.ActiveWeekdays);
+        Assert.True(reloaded.HasCompletedOnboarding);
+    }
+
+    [Fact]
     public void DesktopSettingsRoundTripAndReset()
     {
         var store = new InMemorySettingsStore();

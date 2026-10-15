@@ -7,7 +7,7 @@ app looks these keys up by name and Xcode never extracts them, so they're `manua
 `l10n.py add`.
 
     python3 deskling/tools/phrases.py sync     # add missing keys, update changed text, drop retired lines
-    python3 deskling/tools/phrases.py check    # exit 1 when a key is missing, stale or orphaned
+    python3 deskling/tools/phrases.py check    # exit 1 when a key is missing, stale or orphaned, or a weight is under 1
 
 A line is one key, `phrase.<id>`; a joke told in beats is one key per part, `phrase.<id>.1`, `.2`, …, each with a
 comment saying which part it is. `sync` owns these entries: when a line's source text changed in the bank it updates
@@ -15,6 +15,9 @@ it and drops that key's translations (a rewrite is re-transcreated from scratch,
 entries of retired lines and parts. It keeps every key's translator comment in step with the phrase: the
 `l10n.phraseComment` template (`{character}`, `{tags}`, `{flavor}`, `{flavorNote}`, `{part}`), and for a phrase that
 exists in some languages only (`languages` in phrases.json), a note naming them; `l10n.py` skips its keys elsewhere.
+
+`check` also reports, by id, a phrase whose weight is under 1: the picker's weighted draw needs a positive total, and
+the app's `Phrase` traps on such a weight before the character says a word.
 """
 
 from __future__ import annotations
@@ -35,13 +38,23 @@ PREFIX = "phrase."
 DEFAULT_COMMENT = "{character} says this aloud ({tags}). Flavor {flavorNote}.{part}"
 
 
-def load_bank(config: companion.Config) -> dict[str, dict]:
-    """Catalog key → {"source": the key's text, "phrase": its phrase, "part": (n, count) or None}."""
+def read_bank(config: companion.Config) -> list[dict]:
+    """The phrases of the generated phrases.json, tunes included."""
     path = config.require_phrases_file()
     if not path.exists():
         sys.exit(f"{path.relative_to(config.root)} is missing: regenerate the vectors first (deskling/tools/conformance.sh)")
+    return json.loads(path.read_text("utf8"))["phrases"]
+
+
+def underweight(bank: list[dict]) -> list[dict]:
+    """The phrases whose weight is under 1, in bank order."""
+    return [phrase for phrase in bank if phrase["weight"] < 1]
+
+
+def load_bank(config: companion.Config) -> dict[str, dict]:
+    """Catalog key → {"source": the key's text, "phrase": its phrase, "part": (n, count) or None}."""
     out: dict[str, dict] = collections.OrderedDict()
-    for phrase in json.loads(path.read_text("utf8"))["phrases"]:
+    for phrase in read_bank(config):
         if phrase["kind"] == "line":
             out[phrase["key"]] = {"source": phrase["english"], "phrase": phrase, "part": None}
         elif phrase["kind"] == "sequence":
@@ -130,6 +143,9 @@ def cmd_sync(config: companion.Config) -> int:
 
 
 def cmd_check(config: companion.Config) -> int:
+    light = underweight(read_bank(config))
+    for phrase in light:
+        print(f"weight under 1 in the bank: {phrase['id']!r} has weight {phrase['weight']} (the picker needs 1 or more)")
     missing, stale, orphans = diff(config)
     for key in missing:
         print(f"missing in the catalog: {key!r} (run phrases.py sync)")
@@ -137,7 +153,7 @@ def cmd_check(config: companion.Config) -> int:
         print(f"source text changed in the bank: {key!r} (run phrases.py sync, then re-export the translations)")
     for key in orphans:
         print(f"in the catalog but not in the bank: {key!r} (retired? phrases.py sync removes it)")
-    return 1 if missing or stale or orphans else 0
+    return 1 if light or missing or stale or orphans else 0
 
 
 def main() -> int:

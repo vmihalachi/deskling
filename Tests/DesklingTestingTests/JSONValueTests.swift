@@ -32,4 +32,18 @@ final class JSONValueTests: XCTestCase {
         let tree: JSONValue = .object(["a": .array([.int(1), .double(1.5), .bool(false), .null, .string("s")])])
         XCTAssertEqual(try ConformanceSupport.decode(JSONValue.self, from: try ConformanceSupport.encode(tree)), tree)
     }
+
+    /// The vectors are diffed as text, so the keys come out sorted at every level whatever order they were built in.
+    func testEncodesKeysSortedAtEveryLevel() throws {
+        let tree: JSONValue = .object(["zeta": .int(1), "alpha": .object(["y": .bool(true), "x": .int(3)]), "mid": .null])
+        let text = String(decoding: try ConformanceSupport.encode(tree), as: UTF8.self)
+        let keys = ["\"alpha\"", "\"x\"", "\"y\"", "\"mid\"", "\"zeta\""]
+        let positions = try keys.map { try XCTUnwrap(text.range(of: $0)).lowerBound }
+        XCTAssertEqual(positions, positions.sorted(), text)
+    }
+
+    func testAWholeNumberDecodesAsAnIntAndAFractionAsADouble() throws {
+        let decoded = try ConformanceSupport.decode(JSONValue.self, from: Data(#"{"a": 2, "b": 2.5, "c": true, "d": null}"#.utf8))
+        XCTAssertEqual(decoded, .object(["a": .int(2), "b": .double(2.5), "c": .bool(true), "d": .null]))
+    }
 }

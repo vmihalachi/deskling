@@ -10,7 +10,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `companion.py` | Loads and validates `companion.json`; `get`, `path`, `root`, `validate`, `env` (paths and path patterns for shell), `pins` (the Deskling version everywhere it's pinned), `bump` (every pin to a release), `link`/`unlink` (build against a Deskling checkout): below, *Moving to a release, or trying one first*. |
 | `bump-apps.sh` | `companion.py bump` in every app checked out next to this Deskling checkout (or the ones named), then each one's `verify.sh --fast`; commits nothing. |
 | `l10n.py` | String Catalog gaps, work files for translators, apply with validation, `.resw`/`.po` exports; language-scoped phrases. |
-| `phrases.py` | Keeps the catalog's `phrase.<id>` (and `.n` for jokes) keys in step with `phrases.json`. |
+| `phrases.py` | Keeps the catalog's `phrase.<id>` (and `.n` for jokes) keys in step with `phrases.json`; `check` also reports a phrase whose weight is under 1. |
 | `voice.py`, `voice-review.html` | Records, reviews and publishes the character's voices with ElevenLabs; a clip per joke part. |
 | `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
