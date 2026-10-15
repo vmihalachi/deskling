@@ -21,6 +21,10 @@ jittered interval never drops below a second. No format or API change.
   interval is drawn, so a jittered interval is never shorter than a second: a jitter at or above the interval could
   draw a zero or negative one and schedule the next reminder in the past. The default (zero) is unchanged and every
   committed vector stays byte-identical; `jitter-clamped-to-interval` pins the clamp.
+- **Core**: `LocalizedKey.Argument.type` is an enum (`Kind` in Swift, `LocalizedKey.ArgumentKind` in C#) with the two
+  kinds, `int` and `durationMinutes`, instead of a string. The JSON is unchanged (the raw values are the strings
+  already written); C# reads and writes it through the source-generated `LocalizedKeyJson` context, and the Windows
+  shell's formatter switches on the kind, so a third kind fails to compile until it is handled.
 
 ## 0.9.4 - 2026-10-15
 
