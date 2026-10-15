@@ -49,14 +49,17 @@ internal sealed class LanguagePick(string startedIn, LanguageSetting? setting)
     /// still has it, becomes the override (so <c>Loc.Choose</c> picks it) and the process's preferred UI language (so
     /// WinUI's own words follow it: without a package they don't follow the override).
     /// </summary>
-    public static LanguagePick Start(LanguageSetting setting)
-    {
-        // Read before any set: "" in a new process without a package.
-        var startedIn = CurrentOverride();
-        if (setting.Stored is { } tag && Apply(tag))
-            startedIn = tag;
-        return new LanguagePick(startedIn, setting);
-    }
+    public static LanguagePick Start(LanguageSetting setting) => Start(setting, CurrentOverride(), Apply);
+
+    /// <summary>
+    /// <see cref="Start(LanguageSetting)"/>'s rule, with the override read before any set
+    /// (<paramref name="currentOverride"/>, <c>""</c> in a new process without a package) and the set itself
+    /// (<paramref name="apply"/>, true when Windows took the tag) passed in, so tests reach it without WinUI: the stored
+    /// tag becomes the language the process started in once applied, so the row shows it and no restart note; otherwise
+    /// the process started in <paramref name="currentOverride"/>. Never applies a tag the app no longer has.
+    /// </summary>
+    internal static LanguagePick Start(LanguageSetting setting, string currentOverride, Func<string, bool> apply) =>
+        new(setting.Stored is { } tag && apply(tag) ? tag : currentOverride, setting);
 
     /// <summary>The override in effect, <c>""</c> for none or when it can't be read.</summary>
     public static string CurrentOverride()

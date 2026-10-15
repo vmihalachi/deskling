@@ -73,11 +73,30 @@ public sealed class LanguageSettingTests : IDisposable
     [Fact]
     public void WithoutAPackageTheSettingAndTheAppsSettingsShareOneStore()
     {
-        // The test host has no package identity. Nothing is written, so the folder is never made.
-        var appFolder = "deskling-tests-" + Guid.NewGuid().ToString("N");
+        // The test host has no package identity, so both write %LOCALAPPDATA%\<appFolder>\settings.json.
         Assert.False(PackageIdentity.IsPackaged);
-        Assert.Same(LocalSettingsStore.ForApp(appFolder), LocalSettingsStore.ForApp(appFolder));
-        Assert.NotSame(LocalSettingsStore.ForApp(appFolder), LocalSettingsStore.ForApp(appFolder + "-other"));
-        Assert.NotNull(LanguageSetting.ForApp(appFolder, App));
+        var appFolder = "deskling-tests-" + Guid.NewGuid().ToString("N");
+        var appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appFolder);
+        try
+        {
+            Assert.Same(LocalSettingsStore.ForApp(appFolder), LocalSettingsStore.ForApp(appFolder));
+            Assert.NotSame(LocalSettingsStore.ForApp(appFolder), LocalSettingsStore.ForApp(appFolder + "-other"));
+
+            // As in an app: Main makes the setting, the app makes its settings, then the user picks a language and
+            // changes another setting. Neither write loses the other's key.
+            var language = LanguageSetting.ForApp(appFolder, App)!;
+            var appSettings = LocalSettingsStore.ForApp(appFolder);
+            language.Store("de");
+            appSettings.SetBool("appSetting", true);
+
+            var reopened = new FileSettingsStore(Path.Combine(appData, "settings.json"));
+            Assert.Equal("de", reopened.GetString(LanguageSetting.Key));
+            Assert.True(reopened.GetBool("appSetting"));
+        }
+        finally
+        {
+            if (Directory.Exists(appData))
+                Directory.Delete(appData, recursive: true);
+        }
     }
 }

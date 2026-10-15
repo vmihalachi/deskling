@@ -88,6 +88,58 @@ public sealed class LanguagePickTests
     }
 
     [Fact]
+    public void AStoredTagWindowsTakesIsTheStartLanguage()
+    {
+        var setting = new LanguageSetting(new InMemorySettingsStore(), App);
+        setting.Store("de");
+        var applied = new List<string>();
+
+        var pick = LanguagePick.Start(setting, "", tag =>
+        {
+            applied.Add(tag);
+            return true;
+        });
+
+        // After a restart into German the row reads German, with no note.
+        Assert.Equal(["de"], applied);
+        Assert.Equal("de", pick.StartedIn);
+        Assert.Equal(2, pick.Entry(App));
+        Assert.False(pick.ChangesAtRestart);
+        Assert.Same(setting, pick.Setting);
+    }
+
+    [Fact]
+    public void AStoredTagWindowsRefusesLeavesTheOverride()
+    {
+        var setting = new LanguageSetting(new InMemorySettingsStore(), App);
+        setting.Store("de");
+
+        var pick = LanguagePick.Start(setting, "", _ => false);
+
+        Assert.Equal("", pick.StartedIn);
+        Assert.Equal(0, pick.Entry(App));
+        Assert.False(pick.ChangesAtRestart);
+    }
+
+    [Fact]
+    public void NoTagOrOneTheAppNoLongerHasIsNeverApplied()
+    {
+        var store = new InMemorySettingsStore();
+        var setting = new LanguageSetting(store, App);
+        var applied = new List<string>();
+        bool Apply(string tag)
+        {
+            applied.Add(tag);
+            return true;
+        }
+
+        Assert.Equal("", LanguagePick.Start(setting, "", Apply).StartedIn);
+        store.SetString(LanguageSetting.Key, "it");
+        Assert.Equal("", LanguagePick.Start(setting, "", Apply).StartedIn);
+        Assert.Empty(applied);
+    }
+
+    [Fact]
     public void TheProcessTakesTheTagThenItsSpecificCulture()
     {
         Assert.Equal(["de", "de-DE"], LanguagePick.ProcessLanguages("de"));
