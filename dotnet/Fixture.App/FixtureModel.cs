@@ -80,7 +80,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     private readonly ITimers timers;
     private string clockLine = "";
     private IReadOnlyList<string> sayingParts = [];
-    private string? bubbleHeader;
+    private string bubbleHeader = "";
     private string statusKind = "";
 
     public FixtureModel(
@@ -119,10 +119,15 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         DesktopLayout = new DesktopLayout(art);
         GlyphCharacter = new RiggedCharacter(art);
         RasterCharacter = new RiggedCharacter(rasterArt);
+        StatusKind = KindOfStatus();
         PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(StatusLine))
                 StatusKind = KindOfStatus();
+            else if (e.PropertyName == nameof(JustMuted))
+                OnPropertyChanged(nameof(HasJustMuted));
+            else if (e.PropertyName == nameof(BubblePhraseId))
+                OnPropertyChanged(nameof(HasBubblePhrase));
         };
     }
 
@@ -174,8 +179,17 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     /// <summary>How far the fixture's clock runs ahead of the wall clock, once skipped.</summary>
     public string ClockLine { get => clockLine; private set => Set(ref clockLine, value); }
 
-    /// <summary>A joke's setup while its punchline is in the bubble (the bubbles' header); null otherwise.</summary>
-    public string? BubbleHeader { get => bubbleHeader; private set => Set(ref bubbleHeader, value); }
+    /// <summary>
+    /// A joke's setup while its punchline is in the bubble (the bubbles' header); empty otherwise. Never null: x:Bind
+    /// skips a function binding whose argument turns null, so a null would leave the last setup showing.
+    /// </summary>
+    public string BubbleHeader { get => bubbleHeader; private set => Set(ref bubbleHeader, value); }
+
+    /// <summary>A line was just muted, so Home offers Undo (x:Bind can't follow <see cref="CompanionAppModel.JustMuted"/> back to null).</summary>
+    public bool HasJustMuted => JustMuted is not null;
+
+    /// <summary>The bubble shows a phrase that can be muted (x:Bind can't follow <see cref="CompanionAppModel.BubblePhraseId"/> back to null).</summary>
+    public bool HasBubblePhrase => !string.IsNullOrEmpty(BubblePhraseId);
 
     /// <summary>
     /// The status pill's kind: the status line as it reads with the countdown at its last minute, so it changes with the
@@ -190,7 +204,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     public override void ShowBubble(string text)
     {
         var index = sayingParts.ToList().IndexOf(text);
-        BubbleHeader = index > 0 ? sayingParts[0] : null;
+        BubbleHeader = index > 0 ? sayingParts[0] : "";
         base.ShowBubble(text);
     }
 

@@ -49,11 +49,11 @@
                 <Button
                     Click="{x:Bind Model.MuteBubbleLine}"
                     Content="Don't say that again"
-                    IsEnabled="{x:Bind views:Show.Has(Model.BubblePhraseId), Mode=OneWay}" />
+                    IsEnabled="{x:Bind Model.HasBubblePhrase, Mode=OneWay}" />
                 <Button
                     Click="{x:Bind Model.UndoMute}"
                     Content="Undo"
-                    Visibility="{x:Bind views:Show.WhenSet(Model.JustMuted), Mode=OneWay}" />
+                    Visibility="{x:Bind views:Show.When(Model.HasJustMuted), Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Click="{x:Bind Model.SayNow}" Content="Say something" Style="{StaticResource AccentButtonStyle}" />
