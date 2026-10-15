@@ -28,6 +28,9 @@ in by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
   under Restart when Windows refuses `AppInstance.Restart` (the app isn't in front, a restart is pending).
 - **Windows**: `LocalSettingsStore.ForApp` gives one file store per folder for the whole process, so the language
   `CompanionApp.Start` reads and the settings the app makes share it instead of writing over each other's changes.
+- **Windows**: `FileSettingsStore`'s getters return null for a value that doesn't match the type stored with it, or
+  for a null entry (a settings file edited by hand), instead of throwing, as its contract says. The language is now
+  read in `Main`, where a throw would stop every launch.
 - **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
   pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
   `RestartRefused`.
