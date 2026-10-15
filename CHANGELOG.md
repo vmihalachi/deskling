@@ -7,7 +7,9 @@ package and the NuGet packages together.
 ## Unreleased
 
 Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed settings read never coerces another type, and a
-jittered interval never drops below a second. No format or API change.
+jittered interval never drops below a second. Three sharper contracts: `LocalizedKey.Argument.type` is an enum, a
+`Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own. Every file
+format and every vector is unchanged.
 
 - **Core**: `UserDefaultsSettingsStore`'s getters return nil for a key holding another type, as `SettingsStore`
   promises and `InMemorySettingsStore` does: a boolean reads only as a `Bool`, an integer only as an `Int`, a
