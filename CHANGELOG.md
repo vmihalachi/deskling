@@ -31,6 +31,11 @@ jittered interval never drops below a second. No format or API change.
 - **Companion**: `Phrase` refuses a weight under 1 (a precondition in Swift, `ArgumentOutOfRangeException` in C#).
   With every candidate at 0 the picker always drew the first line, and a negative weight hid the last candidates.
 - **Tools**: `phrases.py check` reports, by id, a phrase whose weight is under 1, before the app traps on it.
+- **Testing**: a `DesklingTestingTests` target and a `Deskling.Testing.Tests` project test the test kit itself: each
+  mock's contract, `MockStoreBackend`'s purchase, restore and failure paths, `JSONValue`'s round trip and key order,
+  `BankAudit`, the conformance suite and root, `ManualTimers` and the fixture loaders. `CompanionStateTests` has one
+  test per `Mood` plus the precedence between them; `PhraseTimingTests` covers the first part, a shown part followed
+  by a spoken one and a zero-length bubble.
 
 ## 0.9.4 - 2026-10-15
 
