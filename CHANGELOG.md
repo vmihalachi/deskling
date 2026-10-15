@@ -25,6 +25,9 @@ jittered interval never drops below a second. No format or API change.
   kinds, `int` and `durationMinutes`, instead of a string. The JSON is unchanged (the raw values are the strings
   already written); C# reads and writes it through the source-generated `LocalizedKeyJson` context, and the Windows
   shell's formatter switches on the kind, so a third kind fails to compile until it is handled.
+- **Companion**: `CompanionSettings.resetToDefaults()` (`ResetToDefaults()` in C#) also removes the base keys from the
+  store, so a user who pressed Reset follows the app's defaults when a later version changes them instead of staying
+  pinned to the old ones. A subclass's override removes its own keys the same way, as the doc comment's example does.
 
 ## 0.9.4 - 2026-10-15
 

@@ -41,6 +41,7 @@ final class CompanionSettingsSubclassTests: XCTestCase {
         XCTAssertNil(settings.voice)
         XCTAssertEqual(settings.frequency, .rarely)
         XCTAssertNil(store.string(forKey: "voice"))
+        XCTAssertTrue(store.keys.isEmpty)
     }
 
     func testBothTheBasesAndTheSubclasssPropertiesNotify() {
