@@ -3,19 +3,23 @@ import PackageDescription
 
 // Deskling: building blocks for little desktop apps that live in the menu bar.
 //
-//   DesklingCore     Foundation only. Interval scheduler with active hours, quiet hours, idle reset and
-//                    busy hold; the Clock / IdleTimeProvider / BusyStateProvider protocols; a seeded
-//                    random source; KeyShortcut; the typed SettingsStore. Builds and tests anywhere Swift runs.
-//   DesklingSystem   The macOS implementations of those providers (CoreAudio, AVFoundation,
-//                    CoreGraphics, IOKit), all without permission prompts.
-//   DesklingShell    Menu bar app plumbing: window manager with the activation-policy dance, login item,
-//                    launch context, notification poster, global hotkey, drawing helpers, the status item,
-//                    and speech (system voice or recorded clips, jokes in beats) and chimes.
+//   DesklingCore     Foundation only. Interval scheduler with active hours and weekdays, quiet hours, idle reset and
+//                    busy hold; the Clock / IdleTimeProvider / BusyStateProvider protocols; a seeded random source;
+//                    LocalizedKey; the typed SettingsStore. Builds and tests anywhere Swift runs.
+//   DesklingSystem   The macOS implementations of those providers and the other system signals (camera or microphone
+//                    in use, full screen, power source, output mute and route, screen lock, appearance), read from
+//                    device state through CoreAudio, CoreMediaIO, CoreGraphics and IOKit, all without permission prompts.
+//   DesklingShell    Menu bar app plumbing: window manager with the activation-policy dance, the floating desktop
+//                    window and its placement, login item, launch context, notification poster, font registration,
+//                    a layout check, drawing helpers, the status item, and speech (system voice or recorded clips,
+//                    jokes in beats) and chimes.
 //   DesklingCompanion  Foundation and Observation only. The pure core of a desk companion: the phrase bank and
-//                    picker, chatter cadence, quiet rules and mood. Builds and tests anywhere Swift runs.
+//                    picker, chatter cadence, quiet rules and mood, settings, the coordinator, desktop presence,
+//                    skins and the character rig. Builds and tests anywhere Swift runs.
 //   DesklingCompanionUI  macOS. The companion's views and shell: signals, the menu bar glyph, the character view
 //                    (vector and image parts), the desktop presence, delivery through speech, chime and notification,
-//                    the speech bubble and status pill over an app palette, screenshot capture.
+//                    the speech bubble and status pill over an app palette, screenshot capture, and the app shell an
+//                    app subclasses (app model, menus, Settings rows, the Support window).
 //   DesklingStore    StoreKit 2 purchase store for unlockables and tips, caching ownership in a SettingsStore.
 //   DesklingTesting  Fakes for every protocol, fixture data and conformance-vector helpers, for the apps' test targets.
 let package = Package(

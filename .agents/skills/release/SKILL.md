@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use when cutting a Deskling release (vX.Y.Z) or bumping the version. Lists the four places the version lives, the CHANGELOG move, the checks, and how the tag triggers release.yml.
+description: Use when cutting a Deskling release (vX.Y.Z) or bumping the version. Lists the five places the version lives, the CHANGELOG move, the checks, and how the tag triggers release.yml.
 ---
 
 # Release vX.Y.Z
@@ -16,6 +16,7 @@ One tag versions the Swift package and every NuGet package. Pick the number by S
 | `dotnet/Deskling.Core/DesklingInfo.cs` | `public const string Version = "X.Y.Z"` |
 | `dotnet/Directory.Build.props` | the `<DesklingVersion Condition=…>` default |
 | `site/index.html` | the `vX.Y.Z` label in the header and **both** `exact: "X.Y.Z"` install snippets |
+| `README.md` | the `exact: "X.Y.Z"` install pin and the `git tag vX.Y.Z` example under *Releases* |
 
 ## 2. CHANGELOG.md
 
@@ -25,7 +26,8 @@ above it. `release.yml` requires a `## X.Y.Z ` heading and uses that section as 
 ## 3. Check
 
 ```sh
-scripts/verify.sh --all   # fails if any of the six version strings disagree
+scripts/verify.sh --all             # fails if any of the eight version strings disagree
+scripts/verify.sh --version X.Y.Z   # release.yml's gate: the eight strings equal X.Y.Z and CHANGELOG.md has its section
 ```
 
 Commit as `X.Y.Z: <headline change>` (the history's style), then merge to `master`.
@@ -38,9 +40,13 @@ protected (they never move).
 - `git tag -a vX.Y.Z -m "Deskling X.Y.Z" && git push origin vX.Y.Z`, or
 - without tag-push rights: dispatch `release.yml` with `version: X.Y.Z`, which tags `master` itself.
 
-`release.yml` tests, packs the six NuGet packages, pushes them through Trusted Publishing, stages `@deskling/landing` on
-npm and drafts the GitHub release. Publishing the draft, and approving the staged npm version with 2FA (npmjs.com, or
-`npm stage approve <id>`), are the user's.
+`release.yml` first runs `scripts/verify.sh --version X.Y.Z` on the tagged commit and fails, before tagging or packing
+anything, when the eight version strings aren't `X.Y.Z` or `CHANGELOG.md` has no `## X.Y.Z` section (a mistyped tag
+would otherwise ship packages whose `Deskling.version` disagrees with the package version; a pushed tag that fails it is
+spent, since tags never move: fix the commit and release the next number). Then it tests, packs the six NuGet packages,
+pushes them through Trusted Publishing, stages `@deskling/landing` on npm and drafts the GitHub release.
+Publishing the draft, and approving the staged npm version with 2FA (npmjs.com, or `npm stage approve <id>`), are the
+user's.
 
 The NuGet packages ship at every tag, changed or not: an app pins one Deskling version everywhere (`companion.py
 pins`). `@deskling/landing` ships only when `tools/landing` changed since the version on npm (the run's summary says

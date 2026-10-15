@@ -22,6 +22,16 @@ jittered interval never drops below a second. No format or API change.
   draw a zero or negative one and schedule the next reminder in the past. The default (zero) is unchanged and every
   committed vector stays byte-identical; `jitter-clamped-to-interval` pins the clamp.
 
+## 0.9.4 - 2026-10-15
+
+The Windows screenshot run of the Native AOT build can run twice in a row, as the apps' workflows do for two languages.
+The packages are unchanged.
+
+- **Tools**: `windows/screenshots.ps1 -Configuration Release` tries again for up to a minute when it can't empty its
+  build folder. Right after a run Windows can hold one of the app's DLLs for a few seconds (seen the first time an x64
+  build ran from that folder on ARM64, with nothing having it loaded), so a second run straight after the first, as in
+  the apps' workflows that render two languages, stopped at once on "access denied".
+
 ## 0.9.3 - 2026-10-14
 
 The agent hook keeps big files out of an agent's context, and the Windows screenshot run of the Native AOT build works

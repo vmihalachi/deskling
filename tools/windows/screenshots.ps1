@@ -65,8 +65,13 @@ if ($Configuration -eq "Release") {
     # the project's obj\, emptied first. In the project's own obj\ and bin\, after a packaged publish
     # (GenerateAppxPackageOnBuild), the incremental build kept what it had made for the package and the app died at
     # start (a XAML parse failure, 0xC000027B); a publish folder kept between runs mixed in the other platform's files.
+    # Right after a run, Windows can hold one of the app's DLLs for a few seconds (the first time an x64 build runs from
+    # that folder on ARM64; nothing has it loaded), so the removal tries again for up to a minute.
     $artifacts = Join-Path (Split-Path $Project) "obj\screenshots\$Platform"
-    if (Test-Path $artifacts) { Remove-Item -LiteralPath $artifacts -Recurse -Force }
+    for ($try = 1; Test-Path $artifacts; $try++) {
+        try { Remove-Item -LiteralPath $artifacts -Recurse -Force -ErrorAction Stop }
+        catch { if ($try -ge 60) { throw }; Start-Sleep -Seconds 1 }
+    }
     $publish = Join-Path $artifacts "app"
     dotnet publish $Project -c Release -p:Platform=$Platform -p:WindowsPackageType=None -p:ScreenshotMode=true --artifacts-path $artifacts -o $publish -v quiet -nologo | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "The app didn't publish." }
