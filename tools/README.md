@@ -160,6 +160,8 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
 
 ```xml
 <PropertyGroup>
+  <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>  <!-- Windows 11, as the Deskling.Windows packages -->
+  <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>  <!-- the MSIX's MinVersion -->
   <AssemblyName>MyApp</AssemblyName>
   <CompanionVoiceFolder>..\..\voices\Voice</CompanionVoiceFolder>           <!-- → Voice\<lang>\<voice>\<id>.m4a -->
   <CompanionSoundsFolder>..\..\macos\MyApp\Resources\Sounds</CompanionSoundsFolder>  <!-- → Sounds\*.wav -->
