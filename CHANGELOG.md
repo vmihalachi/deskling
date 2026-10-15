@@ -6,6 +6,30 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+An unpackaged Windows app (a Debug build, the fixture) keeps the language picked in Settings across a restart: the
+pick goes into the app's settings and `CompanionApp.Start` sets it again before WinUI starts, WinUI's own words
+included. "Same as Windows" works there too, a refused restart can say so, and the fixture picks its language as the
+apps do. Packaged apps are unchanged; an app opts in by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
+
+- **Windows.Companion**: the language row works without package identity. There the override
+  (`ApplicationLanguages.PrimaryLanguageOverride`) lasts only for the process and refuses `""`, so the pick was lost
+  on restart and "Same as Windows" couldn't clear it (the note stayed, and Settings opened again showed the old
+  language). `LanguageRow` now stores the tag in the app's settings under `deskling.language`, through the new
+  `LanguageSetting` (`Deskling.Windows`), and the new optional `language` argument of `CompanionApp.Start` sets it
+  again before `Application.Start`: as the override, so `Loc.Choose` picks it, and as the process's preferred UI
+  language (`SetProcessPreferredUILanguages`), since WinUI's own words don't follow the override unpackaged. "Same as
+  Windows" removes the key; a stored tag the app no longer has is ignored; screenshot runs read none. The row keeps
+  its pick for the process instead of reading the override back, so the restart note shows only while the next start
+  would differ from this one, and a Settings window opened again shows the pick. With a package nothing changes:
+  `LanguageSetting.ForApp` gives null, Windows keeps the override and the row sets it as before.
+- **Windows.Companion**: `LanguageCopy.RestartRefused` (optional; null shows nothing, as before) is the line shown
+  under Restart when Windows refuses `AppInstance.Restart` (the app isn't in front, a restart is pending).
+- **Windows**: `LocalSettingsStore.ForApp` gives one file store per folder for the whole process, so the language
+  `CompanionApp.Start` reads and the settings the app makes share it instead of writing over each other's changes.
+- **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
+  pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
+  `RestartRefused`.
+
 ## 0.10.0 - 2026-10-15
 
 `LocalizedKey.Argument.type` is an enum instead of a string, so a bank that builds or compares the type as a string

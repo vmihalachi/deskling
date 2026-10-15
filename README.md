@@ -96,23 +96,30 @@ On `Deskling.Windows.Companion` (0.8) a WinUI 3 app is a model, its views and th
 
 ```csharp
 // Program.cs: the whole of Main (the csproj defines DISABLE_XAML_GENERATED_MAIN). One copy runs; a second launch
-// reopens it. A screenshot run claims no single instance.
+// reopens it. A screenshot run claims no single instance. Unpackaged, the language picked in Settings is kept in the
+// app's settings file and set again here (packaged, Windows keeps it and ForApp gives null).
 public static class Program
 {
     [STAThread]
-    private static void Main() => CompanionApp.Start(ScreenshotCapture.IsEnabled ? null : "example.myapp", () => new App());
+    private static void Main() =>
+        CompanionApp.Start(
+            ScreenshotCapture.IsEnabled ? null : "example.myapp",
+            () => new App(),
+            LanguageSetting.ForApp("MyApp", App.Languages));
 }
 
 // App.xaml is a <shell:CompanionApp> (xmlns:shell="using:Deskling.Windows.Companion.Shell") with XamlControlsResources.
 public partial class App : CompanionApp
 {
+    internal static readonly IReadOnlyList<string> Languages = ["en", "it"];  // its Strings folders, the default first
+
     private MyModel? model;
 
     public App() => InitializeComponent();
 
     protected override ICompanionLaunching MakeCompanion()
     {
-        Loc.UseLanguage(Loc.Choose(["en", "it"]));  // the strings and the culture, before anything says a word
+        Loc.UseLanguage(Loc.Choose(Languages));  // the strings and the culture, before anything says a word
         CompanionLook.Current = new CompanionLook(MyPalette.Value);  // then the look: every control paints from it
         var host = new WindowsCompanionHost<MyWindow>(
             new CompanionViews<MyWindow>(MyModel.Spec, id => MyViews.Window(model!, id), () => new MyPanel(model!))

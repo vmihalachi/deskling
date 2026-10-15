@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Deskling.Windows.Companion.Shell;
 using Deskling.Windows.Companion.Views;
+using Deskling.Windows.Shell.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -12,20 +14,22 @@ namespace Deskling.Windows.Companion.Settings;
 /// <summary>
 /// The language the app speaks (Swift's <c>LanguageRow</c>). The Mac sends the user to System Settings' per-app list;
 /// Windows has no such page for every app, so this is a list in the app: Windows' language first, then each of the
-/// app's in its own words ("Deutsch", "Português (Brasil)"), through the Windows App SDK's
-/// <c>ApplicationLanguages.PrimaryLanguageOverride</c> (packaged or not). Windows applies a new language at the next
-/// start, so a note and a restart button show once it changed. The words are the app's; the button takes its
-/// <see cref="ButtonStyle"/>.
+/// app's in its own words ("Deutsch", "Português (Brasil)"). A new language applies at the next start, so a note and a
+/// restart button show while the pick differs from the language this run started in, and a Settings window opened again
+/// shows the pick. With package identity the pick is the Windows App SDK's
+/// <c>ApplicationLanguages.PrimaryLanguageOverride</c>, which Windows keeps. Without one that override lasts only for the
+/// process, so the pick goes into the app's settings instead (the <see cref="LanguageSetting"/> the app passed to
+/// <see cref="CompanionApp.Start"/>, which sets it again at the next start); an app that passes none comes back in
+/// Windows' language after a restart. The words are the app's; the button takes its <see cref="ButtonStyle"/>.
 /// </summary>
 public sealed partial class LanguageRow : UserControl
 {
-    private static readonly string StartLanguage = SafeOverride();
-
     private readonly TextBlock label = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly ComboBox choices = new() { MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock note = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
     private readonly Button restart = new();
     private readonly Grid restartRow = new() { ColumnSpacing = Space.Item, Visibility = Visibility.Collapsed };
+    private readonly TextBlock refused = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
     private IReadOnlyList<string> tags = [];
     private bool updating;
 
@@ -46,10 +50,18 @@ public sealed partial class LanguageRow : UserControl
         var stack = new StackPanel { Spacing = Space.Snug };
         stack.Children.Add(row);
         stack.Children.Add(restartRow);
+        stack.Children.Add(refused);
         Content = stack;
         choices.SelectionChanged += (_, _) => Choose();
         restart.Click += (_, _) => (OnRestart ?? DefaultRestart)();
-        LookBinding.Keep(this, () => note.Foreground = LookBinding.Brush(this, p => p.InkSoft));
+        LookBinding.Keep(
+            this,
+            () =>
+            {
+                note.Foreground = LookBinding.Brush(this, p => p.InkSoft);
+                refused.Foreground = LookBinding.Brush(this, p => p.AccentText);
+            }
+        );
     }
 
     /// <summary>The languages the app has, as BCP-47 tags ("en", "de", "pt-BR"); the list follows this order after Windows' own.</summary>
@@ -73,6 +85,7 @@ public sealed partial class LanguageRow : UserControl
             AutomationProperties.SetName(choices, value?.Label ?? "");
             note.Text = value?.RestartNote ?? "";
             restart.Content = value?.Restart;
+            refused.Text = value?.RestartRefused ?? "";
             Rebuild();
         }
     }
@@ -83,7 +96,10 @@ public sealed partial class LanguageRow : UserControl
         set => restart.Style = value;
     }
 
-    /// <summary>Restarts the app in its new language; Windows App SDK's <c>AppInstance.Restart</c> when unset.</summary>
+    /// <summary>
+    /// Restarts the app in its new language. Unset, the Windows App SDK's <c>AppInstance.Restart</c>; when Windows refuses
+    /// (the app isn't in front, a restart is already pending), <see cref="LanguageCopy.RestartRefused"/> shows under it.
+    /// </summary>
     public Action? OnRestart { get; set; }
 
     /// <summary>A language's name in its own words, capitalized as a list item ("Deutsch", "Español"); the tag itself when unknown.</summary>
@@ -102,6 +118,9 @@ public sealed partial class LanguageRow : UserControl
         }
     }
 
+    /// <summary>The process's pick: <see cref="CompanionApp.Start"/>'s, else made at the first row from the override in effect.</summary>
+    private static LanguagePick Pick => LanguagePick.Process ??= new LanguagePick(LanguagePick.CurrentOverride(), null);
+
     private void Rebuild()
     {
         updating = true;
@@ -109,9 +128,7 @@ public sealed partial class LanguageRow : UserControl
         choices.Items.Add(Copy?.SystemLanguage ?? "");
         foreach (var tag in tags)
             choices.Items.Add(NativeName(tag));
-        var current = SafeOverride();
-        var index = tags.ToList().FindIndex(t => string.Equals(t, current, StringComparison.OrdinalIgnoreCase));
-        choices.SelectedIndex = index + 1;
+        choices.SelectedIndex = Pick.Entry(tags);
         updating = false;
         UpdateRestart();
     }
@@ -121,28 +138,30 @@ public sealed partial class LanguageRow : UserControl
         if (updating || choices.SelectedIndex < 0)
             return;
         var tag = choices.SelectedIndex == 0 ? "" : tags[choices.SelectedIndex - 1];
-        try
+        var pick = Pick;
+        pick.Pick(tag);
+        if (pick.Setting is null)
         {
-            ApplicationLanguages.PrimaryLanguageOverride = tag;
+            try
+            {
+                ApplicationLanguages.PrimaryLanguageOverride = tag;
+            }
+            // Without a package "" (Windows' language) is refused; the row shows the pick either way.
+            catch (COMException) { }
         }
-        catch (COMException) { }
         UpdateRestart();
     }
 
-    private void UpdateRestart() =>
-        restartRow.Visibility = string.Equals(SafeOverride(), StartLanguage, StringComparison.OrdinalIgnoreCase) ? Visibility.Collapsed : Visibility.Visible;
-
-    private static string SafeOverride()
+    private void UpdateRestart()
     {
-        try
-        {
-            return ApplicationLanguages.PrimaryLanguageOverride ?? "";
-        }
-        catch (COMException)
-        {
-            return "";
-        }
+        restartRow.Visibility = Pick.ChangesAtRestart ? Visibility.Visible : Visibility.Collapsed;
+        refused.Visibility = Visibility.Collapsed;
     }
 
-    private static void DefaultRestart() => AppInstance.Restart("");
+    private void DefaultRestart()
+    {
+        // Returns only when Windows refused: a restart ends this process.
+        _ = AppInstance.Restart("");
+        refused.Visibility = string.IsNullOrEmpty(Copy?.RestartRefused) ? Visibility.Collapsed : Visibility.Visible;
+    }
 }
