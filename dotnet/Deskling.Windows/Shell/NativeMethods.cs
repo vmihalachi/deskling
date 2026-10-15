@@ -107,6 +107,24 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool SetForegroundWindow(nint hwnd);
 
+    [LibraryImport("user32.dll")]
+    public static partial nint GetForegroundWindow();
+
+    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWindowTextW(nint hwnd, string text);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetCursorPos(out POINT point);
+
     [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
     public static partial nint GetModuleHandleW(string? moduleName);
 
@@ -132,6 +150,7 @@ internal static partial class NativeMethods
     public const uint NIM_ADD = 0;
     public const uint NIM_MODIFY = 1;
     public const uint NIM_DELETE = 2;
+    public const uint NIM_SETFOCUS = 3;
     public const uint NIM_SETVERSION = 4;
     public const uint NIF_MESSAGE = 0x01;
     public const uint NIF_ICON = 0x02;

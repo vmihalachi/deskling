@@ -2,14 +2,19 @@ using System.Globalization;
 using Deskling.Companion.Settings;
 using Deskling.Windows.Companion.Views;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 
 namespace Deskling.Windows.Companion.Settings;
 
 /// <summary>
 /// The 24 hours as chips in six columns (Swift's <c>QuietHoursEditor</c>); a chip that is on is an hour without a word.
-/// The title is the app's; the chips take its <see cref="ChipStyle"/>.
+/// The title is the app's; the chips take its <see cref="ChipStyle"/>. Narrator reads the editor as a group named by the
+/// title and each chip as its hour in full ("15:00", "3:00 PM"). The chips are one Tab stop, the arrow keys moving
+/// between them.
 /// </summary>
 public sealed partial class QuietHoursEditor : UserControl
 {
@@ -30,12 +35,18 @@ public sealed partial class QuietHoursEditor : UserControl
         {
             var h = hour;
             var chip = new ToggleButton { Content = Label(hour, CultureInfo.CurrentCulture), HorizontalAlignment = HorizontalAlignment.Stretch };
+            AutomationProperties.SetName(chip, HourName(hour, CultureInfo.CurrentCulture));
             chip.Click += (_, _) => SetHour(h, chip.IsChecked == true);
             Grid.SetColumn(chip, hour % 6);
             Grid.SetRow(chip, hour / 6);
             grid.Children.Add(chip);
             chips[hour] = chip;
         }
+        // One Tab stop for the 24 chips, the arrows moving between them.
+        grid.TabFocusNavigation = KeyboardNavigationMode.Once;
+        grid.XYFocusKeyboardNavigation = XYFocusKeyboardNavigationMode.Enabled;
+        // The group carries the title for Narrator.
+        AutomationProperties.SetAccessibilityView(title, AccessibilityView.Raw);
         var stack = new StackPanel { Spacing = Space.Snug };
         stack.Children.Add(title);
         stack.Children.Add(grid);
@@ -53,10 +64,15 @@ public sealed partial class QuietHoursEditor : UserControl
         }
     }
 
+    /// <summary>The editor's title, shown over the chips and read by Narrator as the group's name.</summary>
     public string Title
     {
         get => title.Text;
-        set => title.Text = value;
+        set
+        {
+            title.Text = value;
+            AutomationProperties.SetName(this, value);
+        }
     }
 
     /// <summary>The chips' style (a <c>ToggleButton</c> style); WinUI's toggle button when null.</summary>
@@ -89,6 +105,11 @@ public sealed partial class QuietHoursEditor : UserControl
         // Most cultures put the designator after the hour; a pattern starting with it (zh, ko, ja) puts it first.
         return pattern.TrimStart().StartsWith('t') ? $"{ampm} {text}".Trim() : $"{text} {ampm}".Trim();
     }
+
+    /// <summary>A chip's name for Narrator: the hour as <paramref name="culture"/> writes a time ("15:00", "3:00 PM").</summary>
+    public static string HourName(int hour, CultureInfo culture) => new DateTime(2000, 1, 1, hour, 0, 0).ToString("t", culture);
+
+    protected override AutomationPeer OnCreateAutomationPeer() => new GroupPeer(this, nameof(QuietHoursEditor));
 
     private void SetHour(int hour, bool on)
     {

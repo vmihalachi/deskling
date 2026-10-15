@@ -56,6 +56,16 @@ internal sealed class MessageWindow : IDisposable
             Instances[Handle] = this;
     }
 
+    /// <summary>
+    /// The window's name, which Narrator reads when the window holds the focus for a moment (as the tray icon's does
+    /// while its menu opens). Empty until set.
+    /// </summary>
+    public void SetName(string name)
+    {
+        if (Handle != 0)
+            NativeMethods.SetWindowTextW(Handle, name);
+    }
+
     public void Dispose()
     {
         if (Handle == 0)

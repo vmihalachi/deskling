@@ -43,6 +43,20 @@ public sealed class SettingsRowsTests
     }
 
     [Fact]
+    public void NarratorReadsEachQuietHourAsATimeInTheCulture()
+    {
+        var american = QuietHoursEditor.HourName(15, CultureInfo.GetCultureInfo("en-US"));
+        var german = QuietHoursEditor.HourName(15, CultureInfo.GetCultureInfo("de-DE"));
+        var british = QuietHoursEditor.HourName(9, CultureInfo.GetCultureInfo("en-GB"));
+
+        // ICU may put a narrow no-break space before PM.
+        Assert.True(american.StartsWith("3:00", StringComparison.Ordinal) && american.EndsWith("PM", StringComparison.Ordinal), american);
+        Assert.Equal("15:00", german);
+        Assert.Equal("09:00", british);
+        Assert.Equal("00:00", QuietHoursEditor.HourName(0, CultureInfo.GetCultureInfo("de-DE")));
+    }
+
+    [Fact]
     public void FlavorsAndTheMutedCountWriteAndReadThrough()
     {
         Assert.True(settings.IsOn(FixtureIds.FlavorB));

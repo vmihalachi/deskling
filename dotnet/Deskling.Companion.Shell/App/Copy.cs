@@ -24,7 +24,10 @@ public sealed record StatusCopy(
 /// <summary>The desktop character's words: its accessibility action and the panel row while it's away for a while.</summary>
 public sealed record DesktopCopy(Func<string> SayActionName, Func<string> BackTomorrow, Func<DateTimeOffset, string> BackAt);
 
-/// <summary>The menus' words (Swift's <c>MenuCopy</c>).</summary>
+/// <summary>
+/// The menus' words (Swift's <c>MenuCopy</c>). On Windows an "&amp;" in them marks an access key only when the host is
+/// told so (<c>WindowsCompanionHost.MenuAccessKeys</c>); otherwise it shows as written.
+/// </summary>
 public sealed record MenuCopy(
     string Say,
     string WakeUp,

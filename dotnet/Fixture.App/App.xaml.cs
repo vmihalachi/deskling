@@ -133,7 +133,10 @@ public partial class App : CompanionApp
             },
             TrayIconId,
             FixtureModel.Configuration.StatusItemTooltip
-        );
+        )
+        {
+            MenuAccessKeys = true,
+        };
     }
 
     private static Microsoft.UI.Xaml.UIElement Content(FixtureModel model, FixtureWindow id) =>

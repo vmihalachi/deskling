@@ -166,6 +166,13 @@ public sealed class DesktopWindow : IDisposable
 
     public nint Hwnd { get; }
 
+    /// <summary>The window's title, which Narrator reads for it; WinUI's until set. Never shown: the window has no title bar.</summary>
+    public string Title
+    {
+        get => window.Title;
+        set => window.Title = value;
+    }
+
     /// <summary>The content's root: the window's background, for the app's theme.</summary>
     public FrameworkElement Root => root;
 

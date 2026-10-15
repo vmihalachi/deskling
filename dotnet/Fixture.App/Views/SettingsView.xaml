@@ -7,9 +7,9 @@
     xmlns:views="using:FixtureApp.Views">
     <ScrollViewer>
         <StackPanel Margin="{x:Bind dv:WindowInset.Content}" Spacing="24">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
+            <TextBlock AutomationProperties.HeadingLevel="Level1" Style="{StaticResource TitleTextBlockStyle}" Text="Settings" />
             <StackPanel Spacing="4">
-                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Channels" />
+                <TextBlock AutomationProperties.HeadingLevel="Level2" Style="{StaticResource BodyStrongTextBlockStyle}" Text="Channels" />
                 <ToggleSwitch x:Name="VoiceSwitch" Header="Speak out loud" />
                 <ToggleSwitch x:Name="ChimeSwitch" Header="Chime" />
                 <ToggleSwitch x:Name="NotificationSwitch" Header="Notification" />
@@ -20,7 +20,7 @@
                     Text="{x:Bind views:Show.Permission(Model.NotificationPermission), Mode=OneWay}" />
             </StackPanel>
             <StackPanel Spacing="12">
-                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="When" />
+                <TextBlock AutomationProperties.HeadingLevel="Level2" Style="{StaticResource BodyStrongTextBlockStyle}" Text="When" />
                 <ds:ActiveHoursEditor x:Name="Hours" />
                 <ds:QuietHoursEditor x:Name="Quiet" Title="Quiet hours" />
                 <ds:SettingsFooter Text="The fixture says nothing outside its active hours, nor in a quiet hour." />
@@ -31,7 +31,7 @@
                 <x:String>Dark</x:String>
             </RadioButtons>
             <StackPanel Spacing="12">
-                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="General" />
+                <TextBlock AutomationProperties.HeadingLevel="Level2" Style="{StaticResource BodyStrongTextBlockStyle}" Text="General" />
                 <ds:LaunchAtStartupToggle x:Name="Startup" />
                 <ds:LanguageRow x:Name="LanguageChoice" />
             </StackPanel>

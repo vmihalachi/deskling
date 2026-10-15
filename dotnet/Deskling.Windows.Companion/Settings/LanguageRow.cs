@@ -36,6 +36,8 @@ public sealed partial class LanguageRow : UserControl
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.Children.Add(label);
+        // The control carries the label for Narrator, which would otherwise read it twice.
+        AutomationProperties.SetAccessibilityView(label, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
         Grid.SetColumn(choices, 1);
         row.Children.Add(choices);
         restartRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });

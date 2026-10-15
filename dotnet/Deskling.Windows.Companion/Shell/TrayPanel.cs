@@ -1,4 +1,5 @@
 using Deskling.Windows.Companion.Views;
+using Deskling.Windows.Shell;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -13,9 +14,12 @@ namespace Deskling.Windows.Companion.Shell;
 /// <summary>
 /// The tray icon's panel (the Mac's transient popover): a borderless, always-on-top window without a taskbar button,
 /// next to the icon and sized to its content, which closes when it loses focus or on Esc. Made the first time it
-/// opens and hidden, not closed, after that, so the content (and its bindings) lives as long as the app. UI thread only.
+/// opens and hidden, not closed, after that, so the content (and its bindings) lives as long as the app. Every open puts
+/// the focus on the content's first focusable element (its first row), so a quick Enter never runs the row used last
+/// (Quit, say), and the arrow keys move between the rows, as in Windows' own flyouts. Its window takes
+/// <paramref name="title"/> (the tray icon's tooltip), which Narrator says when it opens. UI thread only.
 /// </summary>
-internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> iconRect) : IDisposable
+internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> iconRect, string title) : IDisposable
 {
     /// <summary>
     /// A click on the icon while the panel is open first takes the focus from it (closing it), then arrives as a click
@@ -29,6 +33,7 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
     private ElementTheme theme = ElementTheme.Default;
     private long deactivatedAt = long.MinValue / 2;
     private PointInt32? lastAnchor;
+    private FocusState? focusOnOpen;
     private bool disposed;
 
     public bool IsOpen => window?.AppWindow.IsVisible == true;
@@ -44,21 +49,32 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
         }
     }
 
-    /// <summary>A click on the icon: opens the panel next to <paramref name="anchor"/>'s icon, or closes it.</summary>
-    public void Toggle(PointInt32 anchor)
+    /// <summary>
+    /// A click on the icon (or Enter on it, <paramref name="byKeyboard"/>): opens the panel next to
+    /// <paramref name="anchor"/>'s icon, or closes it.
+    /// </summary>
+    public void Toggle(PointInt32 anchor, bool byKeyboard = false)
     {
         if (IsOpen)
             Close();
         else if (Environment.TickCount64 - deactivatedAt > ReopenGuardMilliseconds)
-            Open(anchor);
+            Open(anchor, byKeyboard);
     }
 
-    public void Open(PointInt32? anchor = null)
+    /// <summary>
+    /// Opens the panel next to the icon with its first row focused: showing the keyboard's focus visual when
+    /// <paramref name="byKeyboard"/>, not for a click on the icon, and as WinUI decides when the app opens it.
+    /// </summary>
+    public void Open(PointInt32? anchor = null, bool byKeyboard = false)
     {
         if (disposed || IsOpen)
             return;
         var made = Make();
         Place(made, anchor);
+        focusOnOpen =
+            byKeyboard ? FocusState.Keyboard
+            : anchor is null ? FocusState.Programmatic
+            : FocusState.Pointer;
         made.Activate();
         // The click on the icon lets this process take the foreground.
         NativeMethods.SetForegroundWindow(Win32Interop.GetWindowFromWindowId(made.AppWindow.Id));
@@ -83,6 +99,10 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
         LookBinding.Keep(canvas, () => canvas.Background = LookBinding.Brush(canvas, p => p.Paper));
         root = canvas;
         root.Children.Add(content);
+        // Up and Down move between the rows, as Tab does.
+        root.XYFocusKeyboardNavigation = XYFocusKeyboardNavigationMode.Enabled;
+        // Esc is a convenience, not something to show as a tooltip floating above the panel.
+        root.KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         var accelerator = new KeyboardAccelerator { Key = VirtualKey.Escape };
         accelerator.Invoked += (_, args) =>
         {
@@ -95,8 +115,10 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
             if (IsOpen)
                 Resize();
         };
+        // The first open's content loads after the window activates.
+        content.Loaded += (_, _) => FocusFirst();
 
-        var made = new Window { Content = root };
+        var made = new Window { Content = root, Title = title };
         var presenter = OverlappedPresenter.Create();
         presenter.SetBorderAndTitleBar(hasBorder: true, hasTitleBar: false);
         presenter.IsResizable = presenter.IsMaximizable = presenter.IsMinimizable = false;
@@ -105,7 +127,12 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
         made.AppWindow.IsShownInSwitchers = false;
         made.Activated += (_, args) =>
         {
-            if (args.WindowActivationState != WindowActivationState.Deactivated || !IsOpen)
+            if (args.WindowActivationState != WindowActivationState.Deactivated)
+            {
+                FocusFirst();
+                return;
+            }
+            if (!IsOpen)
                 return;
             deactivatedAt = Environment.TickCount64;
             Close();
@@ -120,6 +147,26 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
         };
         window = made;
         return made;
+    }
+
+    /// <summary>
+    /// The open's focus on the content's first focusable element, once the content is loaded and the window active.
+    /// Queued, so it comes after WinUI puts back the element that had the focus when the panel last closed.
+    /// </summary>
+    private void FocusFirst()
+    {
+        if (focusOnOpen is null || content is not { IsLoaded: true } loaded)
+            return;
+        loaded.DispatcherQueue.TryEnqueue(
+            Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            () =>
+            {
+                if (focusOnOpen is not { } state || !IsOpen)
+                    return;
+                if (XamlCast.As<UIElement>(FocusManager.FindFirstFocusableElement(loaded)) is { } first && first.Focus(state))
+                    focusOnOpen = null;
+            }
+        );
     }
 
     /// <summary>Next to the icon (or the point clicked, when the icon can't be found) on the icon's display, at the content's size.</summary>
