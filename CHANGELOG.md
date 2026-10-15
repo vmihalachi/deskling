@@ -28,6 +28,9 @@ jittered interval never drops below a second. No format or API change.
 - **Companion**: `CompanionSettings.resetToDefaults()` (`ResetToDefaults()` in C#) also removes the base keys from the
   store, so a user who pressed Reset follows the app's defaults when a later version changes them instead of staying
   pinned to the old ones. A subclass's override removes its own keys the same way, as the doc comment's example does.
+- **Companion**: `Phrase` refuses a weight under 1 (a precondition in Swift, `ArgumentOutOfRangeException` in C#).
+  With every candidate at 0 the picker always drew the first line, and a negative weight hid the last candidates.
+- **Tools**: `phrases.py check` reports, by id, a phrase whose weight is under 1, before the app traps on it.
 
 ## 0.9.4 - 2026-10-15
 

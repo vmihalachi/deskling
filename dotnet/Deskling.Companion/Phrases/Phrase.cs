@@ -54,7 +54,10 @@ public abstract record PhraseKind
 /// </summary>
 public sealed record Phrase
 {
-    /// <summary>A <see cref="PhraseKind.Sequence"/> needs at least two parts.</summary>
+    /// <summary>
+    /// A <see cref="PhraseKind.Sequence"/> needs at least two parts, and <paramref name="weight"/> is 1 or more; either
+    /// is a programmer error, so it throws.
+    /// </summary>
     public Phrase(
         string id,
         PhraseKind kind,
@@ -67,6 +70,8 @@ public sealed record Phrase
     {
         if (kind is PhraseKind.Sequence { Source.Count: < 2 })
             throw new ArgumentException($"Phrase {id}: a sequence needs at least two parts", nameof(kind));
+        if (weight < 1)
+            throw new ArgumentOutOfRangeException(nameof(weight), weight, $"Phrase {id}: weight must be at least 1");
         Id = id;
         Kind = kind;
         Tags = new HashSet<Tag>(tags);
@@ -82,7 +87,10 @@ public sealed record Phrase
 
     public IReadOnlySet<Tag> Tags { get; }
 
-    /// <summary>1 (rare) … 5 (a favorite); 3 is normal. Doubled when a daypart tag matches the moment.</summary>
+    /// <summary>
+    /// 1 (rare) … 5 (a favorite); 3 is normal, and never under 1: the picker's weighted draw needs a positive total.
+    /// Doubled when a daypart tag matches the moment.
+    /// </summary>
     public int Weight { get; }
 
     /// <summary>Lines and sequences have one; tunes have none.</summary>
