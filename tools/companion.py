@@ -182,16 +182,18 @@ def derived(config: Config) -> dict[str, str]:
     }
     never = "^$a"  # matches no path: a section the app doesn't have
     values["RE_NEVER"] = never  # verify.sh --all skips a check whose patterns are all this one
-    swift_dirs = "|".join(ere(d) for d in (app, tests) if d)
+    swift_roots = (app, tests) if core else (mac, app, tests)
+    swift_dirs = "|".join(ere(d) for d in swift_roots if d)
     values["RE_SWIFT"] = (
         f"^({swift_dirs})/.*\\.swift$" + (f"|^{ere(values['MAC_SPEC'])}$" if values["MAC_SPEC"] else "")
         if swift_dirs else never
     )
     values["RE_COREPKG"] = f"^{ere(core)}/" if core else never
     values["RE_PURE"] = f"^{ere(core)}/Sources/|^{ere(core)}/Tests/[^/]+/Conformance/" if core else never
+    str_root = app if core else (mac or app)
     values["RE_STRINGS"] = "|".join(
         part for part in (
-            f"^{ere(app)}/.*\\.swift$" if app else "", "\\.xcstrings$", f"^{ere(landing_i18n)}/" if landing_i18n else ""
+            f"^{ere(str_root)}/.*\\.swift$" if str_root else "", "\\.xcstrings$", f"^{ere(landing_i18n)}/" if landing_i18n else ""
         ) if part
     )
     values["RE_CSHARP"] = f"^{ere(windows)}/.*\\.cs$" if windows else never

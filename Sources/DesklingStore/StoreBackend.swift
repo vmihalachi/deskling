@@ -1,4 +1,4 @@
-#if os(macOS)
+#if os(macOS) || os(iOS)
     import Foundation
 
     /// A product the App Store listed.

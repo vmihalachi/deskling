@@ -256,12 +256,16 @@ class ExportTests(L10nTestCase):
         super().setUp()
         self.resw = l10n.windows_files(self.root / "windows")
         self.po = l10n.linux_files(self.root / "linux")
+        self.android = l10n.android_files(self.root / "android")
         self.units = {lang: l10n.export_units(lang) for lang in l10n.export_languages()}
 
     def test_every_language_is_exported(self):
         self.assertEqual(l10n.export_languages(), ["en", "it", "de"])
         self.assertEqual(len(self.resw), 3)
         self.assertEqual(sorted(path.name for path in self.po), ["LINGUAS", "de.po", "en.po", "it.po"])
+        self.assertEqual(sorted(path.parent.name for path in self.android), ["values", "values-de", "values-it"])
+        self.assertEqual(l10n.android_values_dir("zh-Hans"), "values-zh-rCN")
+        self.assertEqual(l10n.android_values_dir("pt-BR"), "values-pt-rBR")
 
     def test_a_scoped_phrase_is_left_out_of_other_languages(self):
         keys = {lang: {unit["key"] for unit in units} for lang, units in self.units.items()}
@@ -293,6 +297,13 @@ class ExportTests(L10nTestCase):
         self.assertNotEqual(l10n.resw_name("To").lower(), l10n.resw_name("to").lower())
         long_key = "x" * 300
         self.assertLessEqual(len(l10n.resw_name(long_key)), l10n.RESW_NAME_MAX)
+
+    def test_android_xml_is_valid_and_names_are_unique(self):
+        for path, text in self.android.items():
+            names = [el.get("name") for el in ET.fromstring(text).iter("string")]
+            self.assertEqual(len(names), len(set(names)), path)
+            self.assertTrue(all(re.fullmatch(r"s_[a-z0-9_]+", name) for name in names), path)
+            self.assertIn("Localizable.xcstrings by deskling/tools/l10n.py export-android", text)
 
     def test_po_is_valid(self):
         for path, text in self.po.items():

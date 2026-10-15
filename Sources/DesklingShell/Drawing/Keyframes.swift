@@ -1,4 +1,4 @@
-#if os(macOS)
+#if os(macOS) || os(iOS)
     import Foundation
 
     /// Eased keyframes, matching CSS `ease-in-out` timelines closely enough for doodles. Pure arithmetic.

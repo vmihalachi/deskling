@@ -1,4 +1,4 @@
-#if os(macOS)
+#if os(macOS) || os(iOS)
     import Foundation
 
     /// The app's in-app purchases by product id, as set up in App Store Connect: non-consumable

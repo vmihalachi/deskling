@@ -24,7 +24,7 @@ import PackageDescription
 //   DesklingTesting  Fakes for every protocol, fixture data and conformance-vector helpers, for the apps' test targets.
 let package = Package(
     name: "Deskling",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v14), .iOS(.v17)],
     products: [
         .library(name: "DesklingCore", targets: ["DesklingCore"]),
         .library(name: "DesklingSystem", targets: ["DesklingSystem"]),

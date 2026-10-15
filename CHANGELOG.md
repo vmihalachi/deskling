@@ -6,6 +6,25 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.10.1 - 2026-10-15
+
+iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in
+`DesklingShell`. In `tools/`: shared `apple/{Shared,macOS,iOS,Tests}` XcodeGen layouts, `l10n.py export-android`, and
+Copilot `view_range` support in `hook.py`.
+
+- **Swift**: `Package.swift` declares `.iOS(.v17)` alongside `.macOS(.v14)`. `DesklingCore`, `DesklingStore`, and
+  `DesklingTesting` build on iOS; `DesklingShell`'s `Geometry`, `Keyframes`, `SVGPath`, `Wobble`, and
+  `FontRegistration` also build on iOS when imported or compiled there, while the AppKit status item and windows stay
+  macOS-only.
+- **Tools (`l10n.py`, `companion.schema.json`)**: `l10n.py export-android` (configured by `l10n.androidStrings` in
+  `companion.json`) exports `values*/strings.xml` for every language (`s_<resw_name.lower()>` resource names, with
+  `__<category>` plural keys matching `.resw`), and `l10n.py check` flags stale Android exports once the `android/`
+  folder exists.
+- **Tools (`companion.py`, `hook.py`, `verify.sh`)**: `xcode_project_stale()`, `swift_format()`, and `RE_SWIFT` /
+  `RE_STRINGS` recognize shared `apple/{Shared,macOS,iOS,Tests}` layouts alongside `macos/<App>`. `hook.py` blocks
+  direct reads and edits of generated `values*/strings.xml` files and accepts Copilot's `view_range` parameter for
+  bounded reads of large files.
+
 ## 0.10.0 - 2026-10-15
 
 `LocalizedKey.Argument.type` is an enum instead of a string, so a bank that builds or compares the type as a string

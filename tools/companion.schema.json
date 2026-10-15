@@ -102,6 +102,7 @@
         "rulesFile": { "type": ["string", "null"], "description": "Markdown with the app's transcreation rules, sent with every work file." },
         "pluralCategories": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
         "linuxPo": { "type": ["string", "null"], "description": "Where export-linux writes <lang>.po, or null for no Linux port." },
+        "androidStrings": { "type": ["string", "null"], "description": "Where export-android writes values*/strings.xml, or null for no Android port." },
         "stringsdataFilter": { "type": "string", "description": "A path fragment the app's .stringsdata files contain (default <mac.scheme>.build)." },
         "phraseComment": { "type": "string", "description": "The translator comment of a phrase key: {character}, {tags}, {flavor}, {flavorNote}, {part}." },
         "flavorNotes": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Flavor id → what it does for the listener." }
