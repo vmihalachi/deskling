@@ -6,6 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+The desktop character follows the app's appearance setting.
+
+- **Windows.Companion**: the desktop character's stand and its bubble take the app's appearance setting, as the other
+  windows do (`DesktopCompanion.Theme`, set by `WindowsCompanionHost` when it makes the character and on every change).
+  The bubble stayed dark with the app set to Light on a dark Windows.
+- **Fixture app**: the Appearance buttons ignore the -1 index `RadioButtons` reports between two choices, which crashed
+  the fixture on every click; the apps already guarded it.
+
 ## 0.10.1 - 2026-10-15
 
 iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in
