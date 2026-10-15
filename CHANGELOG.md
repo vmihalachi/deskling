@@ -9,7 +9,7 @@ package and the NuGet packages together.
 On Windows, Narrator hears what appears on its own: a new line in the bubble, the status pill's new kind of status,
 Support's thanks (with focus on Done), the language restart note, the notification note and the startup line, each
 once, politely and in the app's own words. The bubble and the pill opt in; nothing else changes for an app that
-doesn't.
+doesn't. The fixture's Undo hides again, its empty clock line is gone, and a joke shows its setup over the punchline.
 
 - **Windows.Companion (`SpeechBubble`)**: `Announces` (off by default) raises a polite UI Automation notification
   with each new line while the bubble is on screen, under one activity id for every bubble, so only the latest is
@@ -23,6 +23,9 @@ doesn't.
   settings button and the toggle carry the note as their help text.
 - **Fixture**: Home's bubble and pill announce (the pill's kind is the status line with the countdown at its last
   minute).
+- **Fixture**: Undo hides after 8 s and when pressed (`Show.WhenSet` and `Show.Has` treat x:Bind's empty string as
+  unset), the clock line collapses while it's empty, and Home and the panel show a joke's setup as the bubble's
+  header over its punchline.
 
 ## 0.10.1 - 2026-10-15
 

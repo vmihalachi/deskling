@@ -24,7 +24,8 @@
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind Model.ClockLine, Mode=OneWay}" />
+                    Text="{x:Bind Model.ClockLine, Mode=OneWay}"
+                    Visibility="{x:Bind views:Show.WhenSet(Model.ClockLine), Mode=OneWay}" />
             </StackPanel>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4">
                 <dv:CharacterCanvas
@@ -41,6 +42,7 @@
                     Grid.Column="1"
                     VerticalAlignment="Center"
                     Announces="True"
+                    Header="{x:Bind views:Show.Setup(Model.BubbleHeader), Mode=OneWay}"
                     RoomForDial="True"
                     Text="{x:Bind Model.Bubble, Mode=OneWay}" />
             </Grid>

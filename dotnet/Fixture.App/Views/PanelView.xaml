@@ -21,6 +21,7 @@
                 Grid.Column="1"
                 VerticalAlignment="Center"
                 FontSize="14"
+                Header="{x:Bind views:Show.Setup(Model.BubbleHeader), Mode=OneWay}"
                 Text="{x:Bind Model.Bubble, Mode=OneWay}" />
         </Grid>
         <StackPanel>

@@ -5,6 +5,7 @@ using Deskling.Companion.Phrases;
 using Deskling.Companion.Settings;
 using Deskling.Companion.Shell.App;
 using Deskling.Companion.Shell.Desktop;
+using Deskling.Companion.Shell.Performance;
 using Deskling.Companion.Shell.Signals;
 using Deskling.Companion.Shell.Speech;
 using Deskling.Core.Scheduling;
@@ -78,6 +79,8 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     private readonly IClock clock;
     private readonly ITimers timers;
     private string clockLine = "";
+    private IReadOnlyList<string> sayingParts = [];
+    private string? bubbleHeader;
     private string statusKind = "";
 
     public FixtureModel(
@@ -171,11 +174,25 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     /// <summary>How far the fixture's clock runs ahead of the wall clock, once skipped.</summary>
     public string ClockLine { get => clockLine; private set => Set(ref clockLine, value); }
 
+    /// <summary>A joke's setup while its punchline is in the bubble (the bubbles' header); null otherwise.</summary>
+    public string? BubbleHeader { get => bubbleHeader; private set => Set(ref bubbleHeader, value); }
+
     /// <summary>
     /// The status pill's kind: the status line as it reads with the countdown at its last minute, so it changes with the
     /// status (Shh, a call, off hours, back to the countdown) and not as the minutes count down.
     /// </summary>
     public string StatusKind { get => statusKind; private set => Set(ref statusKind, value); }
+
+    /// <summary>Keeps the phrase's parts, so the bubble can show a joke's setup over its punchline.</summary>
+    public override void WillSay(Phrase phrase) => sayingParts = phrase.LocalizedParts(base.Configuration.Localize);
+
+    /// <summary>The setup goes to the header while a later part shows; a line or a tune has none.</summary>
+    public override void ShowBubble(string text)
+    {
+        var index = sayingParts.ToList().IndexOf(text);
+        BubbleHeader = index > 0 ? sayingParts[0] : null;
+        base.ShowBubble(text);
+    }
 
     /// <summary>Each window's title and size.</summary>
     public static WindowSpec Spec(FixtureWindow id) =>
