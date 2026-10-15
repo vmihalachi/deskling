@@ -11,7 +11,7 @@
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
 #   tools/**, Tests/Fixtures/**         the tools' Python tests, fixture art current
 #   tools/landing/**                    @deskling/landing: types, lint, format, tests (Node 24)
-#   version sources, site/**            every version string agrees (always checked)
+#   version sources, site/**, README.md  every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -74,14 +74,17 @@ versions_agree() {
     sed -n 's/.*<DesklingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
     grep -oE 'class="version"><a [^>]*>v[0-9]+\.[0-9]+\.[0-9]+|exact: (<span class="s">)?"[0-9]+\.[0-9]+\.[0-9]+"' site/index.html |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+    grep -oE 'exact: "[0-9]+\.[0-9]+\.[0-9]+"|git tag v[0-9]+\.[0-9]+\.[0-9]+' README.md |
+      grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
   } )"
-  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, and the site's version label and two install snippets.
-  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 6 ]; then
-    echo "expected 6 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
+  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, the site's version label and two install snippets, and the
+  # README's install pin and release example.
+  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 8 ]; then
+    echo "expected 8 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
   fi
   distinct="$(printf '%s\n' "$found" | sort -u)"
   if [ "$(printf '%s\n' "$distinct" | wc -l)" -ne 1 ]; then
-    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, site/index.html):"
+    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, site/index.html, README.md):"
     printf '%s\n' "$found" | sort | uniq -c | sed 's/^/  /'; return 1
   fi
 }

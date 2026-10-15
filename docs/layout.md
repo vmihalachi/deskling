@@ -1,7 +1,7 @@
 # Layout
 
-Where things live, folder by folder (moved from `AGENTS.md`). Every Swift file has a C# twin at the
-same relative path, so `grep -rn` on a type name finds both sides.
+Where things live, folder by folder (moved from `AGENTS.md`). Every Swift file has a C# twin, at the same relative
+path unless its row below says otherwise, so `grep -rn` on a type name finds both sides.
 
 | Path | Contents |
 |---|---|
