@@ -39,11 +39,18 @@ public sealed class FileSettingsStoreTests : IDisposable
     public void AnotherTypeUnderTheKeyReadsAsNullAndAWholeNumberStaysADouble()
     {
         var store = new FileSettingsStore(File);
+        store.SetBool("b", true);
+        store.SetInteger("i", 1);
         store.SetDouble("d", 2);
         store.SetIntegers("is", [1]);
         var reopened = new FileSettingsStore(File);
         Assert.Equal(2, reopened.GetDouble("d"));
         Assert.Null(reopened.GetInteger("d"));
+        Assert.Null(reopened.GetBool("d"));
+        Assert.Null(reopened.GetInteger("b"));
+        Assert.Null(reopened.GetDouble("b"));
+        Assert.Null(reopened.GetBool("i"));
+        Assert.Null(reopened.GetDouble("i"));
         Assert.Null(reopened.GetStrings("is"));
     }
 

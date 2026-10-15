@@ -638,6 +638,14 @@ enum SchedulerVectors {
             }, seed: 42, start: { $0.monday(10) }
         ) { s in s.run(minutes: 150) },
         Case(
+            name: "jitter-clamped-to-interval",
+            description: "A ±10 minute jitter on a 1 minute interval is clamped to ±59 s: no interval shorter than a second.",
+            config: config {
+                $0.interval = 60
+                $0.intervalJitter = 10 * 60
+            }, seed: 42, start: { $0.monday(10) }
+        ) { s in s.run(minutes: 20) },
+        Case(
             name: "jitter-zero-is-exact",
             description: "With no jitter the interval is exact and the random source is never consulted, whatever the seed.",
             config: config { $0.interval = 30 * 60 }, seed: 7, start: { $0.monday(10) }
