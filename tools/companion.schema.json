@@ -255,6 +255,12 @@
             "previews": { "type": "string", "description": "preview-<lang>.mp4; apple/previews by default." },
             "screenshotType": { "type": "string", "description": "APP_DESKTOP by default." },
             "previewType": { "type": "string", "description": "DESKTOP by default." },
+            "ios": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {},
+              "description": "A universal app's iPhone and iPad version page: the listing then has ios.promo, ios.keywords, ios.description and an optional ios.whatsnew (check.py; push.py fills the Mac's page only)."
+            },
             "iaps": {
               "type": "object",
               "description": "The in-app purchases by product id; a missing one is created.",

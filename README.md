@@ -32,7 +32,7 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.2")
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.3")
 ```
 
 **.NET** (10), from NuGet.org:
@@ -174,7 +174,7 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.10.2 && git push --tags` (or Actions → Release → Run workflow with the version, which
+One tag versions both sides. `git tag v0.10.3 && git push --tags` (or Actions → Release → Run workflow with the version, which
 creates the tag on master) runs `release.yml`: it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org

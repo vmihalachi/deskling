@@ -139,6 +139,26 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("de: 2 problem(s)", result.stdout)
 
+    def test_the_ios_page_is_checked_only_when_configured(self):
+        self.assertNotIn("ios.promo", self.listing.limits)
+        path = self.root / "companion.json"
+        config = json.loads(path.read_text("utf8"))
+        config["store"]["apple"]["ios"] = {}
+        path.write_text(json.dumps(config), "utf8")
+        self.listing = listing_module.load(self.root)
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertEqual(problems, ["missing field ios.promo", "missing field ios.keywords", "missing field ios.description"],
+                         "What's New stays optional")
+        en = self.root / "store-listing" / "en.md"
+        en.write_text(en.read_text("utf8") + "\n".join([
+            "### iOS promotional text `ios.promo`", "", "```text", "It says things, on the phone too.", "```", "",
+            "### iOS keywords `ios.keywords`", "", "```text", "companion,friend,pocket", "```", "",
+            "### iOS description `ios.description`", "", "```text", "Fixture says a line now and then.", "",
+            "Nothing leaves your iPhone.", "```", ""]), "utf8")
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertEqual(problems, ["ios.keywords: 'friend' is already in the name or subtitle"])
+        self.assertNotIn("ios.description", self.listing.single_line)
+
     # MARK: push.py
 
     def test_token_is_a_valid_es256_jwt(self):
