@@ -11,13 +11,14 @@ The Windows packages require Windows 11, so a Windows app moves to `net10.0-wind
 - **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
   from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
   `net10.0-windows10.0.22000.0`, since the SDK refuses a minimum above the version built against. The companion shell
-  has only ever run on Windows 11, and Windows 10's consumer extended security updates ended on 2026-10-13.
-  **Breaking** for a Windows app's build: it targets `net10.0-windows10.0.22000.0` or later (below that, restore fails
-  with NU1202), and sets `TargetPlatformMinVersion` and `SupportedOSPlatformVersion` to 10.0.22000.0, because the MSIX
-  tooling writes the package's `MinVersion` from `TargetPlatformMinVersion` (and `MaxVersionTested` from the target
-  framework's version) over what `Package.appxmanifest` says. sunnysays and Pagliacci have all three at 10.0.19041.0,
-  so their packages declare 10.0.19041.0 although their manifests say 10.0.22000.0; `net10.0-windows10.0.26100.0`
-  would keep the 10.0.26100.0 `MaxVersionTested` their manifests name.
+  has only ever run on Windows 11, and Windows 10's consumer extended security updates ended on 2026-10-13. A
+  `PackageTests` in each Windows test project pins the supported OS the SDK writes into the assembly. **Breaking** for a
+  Windows app's build: it targets `net10.0-windows10.0.22000.0` or later (below that, restore fails with NU1202), and
+  sets `TargetPlatformMinVersion` and `SupportedOSPlatformVersion` to 10.0.22000.0, because the MSIX tooling writes the
+  package's `MinVersion` from `TargetPlatformMinVersion` (and `MaxVersionTested` from the target framework's version)
+  over what `Package.appxmanifest` says. sunnysays and Pagliacci have all three at 10.0.19041.0, so their packages
+  declare 10.0.19041.0 although their manifests say 10.0.22000.0; `net10.0-windows10.0.26100.0` would keep the
+  10.0.26100.0 `MaxVersionTested` their manifests name.
 
 ## 0.10.0 - 2026-10-15
 
