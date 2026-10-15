@@ -45,6 +45,7 @@ python3 tools/windows/check-winui.py dotnet/Fixture.App dotnet/Deskling.Windows.
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 python3 tools/tests/run.py                     # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
+# a Stop hook runs scripts/verify.sh --fast on the files you edited; fix what it reports before ending
 ```
 
 In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
@@ -67,7 +68,7 @@ so `grep -rn` on a type name finds both sides.
 
 ## Skills
 
-Step-by-step procedures for the multi-step changes live in `.agents/skills/` (symlinked as `.claude/skills/`, `.junie/skills/` and `.github/skills/`). Read the matching `SKILL.md` before starting:
+Step-by-step procedures for the multi-step changes live in `.agents/skills/` (linked per skill from `.claude/skills/`, as a folder from `.junie/skills/` and `.github/skills/`). Read the matching `SKILL.md` before starting:
 
 - `add-scheduler-behavior`: new or changed `ReminderScheduler` behavior, from config field to C# port.
 - `port-to-csharp`: mirroring any Swift change in `dotnet/`.

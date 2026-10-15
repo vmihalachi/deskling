@@ -8,8 +8,9 @@ package and the NuGet packages together.
 
 Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed settings read never coerces another type, and a
 jittered interval never drops below a second. Three sharper contracts: `LocalizedKey.Argument.type` is an enum, a
-`Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own. Every file
-format and every vector is unchanged.
+`Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own, and the
+companion apps' hook gets a `resume` mode that restores an agent's place after a compaction. Every file format
+and every vector is unchanged.
 
 - **Core**: `UserDefaultsSettingsStore`'s getters return nil for a key holding another type, as `SettingsStore`
   promises and `InMemorySettingsStore` does: a boolean reads only as a `Bool`, an integer only as an `Int`, a
@@ -38,6 +39,9 @@ format and every vector is unchanged.
   `BankAudit`, the conformance suite and root, `ManualTimers` and the fixture loaders. `CompanionStateTests` has one
   test per `Mood` plus the precedence between them; `PhraseTimingTests` covers the first part, a shown part followed
   by a spoken one and a zero-length bubble.
+- **Tools**: `tools/hooks/hook.py` gets a `resume` mode for the SessionStart hook (`compact|resume`): after a
+  compaction it prints the files the session edited, the slow checks it ran, the branch, `git status` and the
+  recent commits, so the agent keeps its place. Nothing when the tree is clean and the session has no log.
 
 ## 0.9.4 - 2026-10-15
 

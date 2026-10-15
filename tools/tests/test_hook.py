@@ -303,5 +303,42 @@ class StopAndParity(HookTestCase):
         self.assertEqual(self.run_hook("stop", {"session_id": "stop"}).returncode, 0)
 
 
+class Resume(HookTestCase):
+    """`hook.py resume`: the session's edits and checks from its log, then the repository's state."""
+
+    def setUp(self):
+        super().setUp()
+        os.environ["TMPDIR"] = self.tmp
+        self.hook = load_hook()
+        self.hook.setup(self.root)
+        git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
+        for args in (["init", "-q"], ["add", "."], ["commit", "-qm", "fixture app", "--no-verify"]):
+            subprocess.run([*git, *args], cwd=self.root, check=True, capture_output=True)
+
+    def test_names_each_edited_file_once_and_the_checks_run(self):
+        event = {"session_id": "resume"}
+        self.hook.state_file(event).write_text("1\tedit\tmacos/Fixture/Views/HomeView.swift\n"
+                                              "2\tran\tconformance\n"
+                                              "3\tedit\twindows/Fixture.Core/Config.cs\n"
+                                              "4\tedit\tmacos/Fixture/Views/HomeView.swift\n")
+        done = self.run_hook("resume", event)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(done.stdout.count("macos/Fixture/Views/HomeView.swift"), 1, done.stdout)
+        self.assertLess(done.stdout.index("HomeView.swift"), done.stdout.index("windows/Fixture.Core/Config.cs"))
+        self.assertIn("Slow checks this session ran: conformance", done.stdout)
+        self.assertIn("(branch ", done.stdout)
+        self.assertIn("fixture app", done.stdout)  # the recent commits
+        self.assertNotIn("git status --short", done.stdout)  # a clean tree has no status block
+
+    def test_a_clean_tree_without_a_log_prints_nothing(self):
+        done = self.run_hook("resume", {"session_id": "fresh"})
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        with (self.root / "macos/scripts/sounds.py").open("a") as f:  # a dirty tree alone is worth a report
+            f.write("# changed\n")
+        done = self.run_hook("resume", {"session_id": "fresh"})
+        self.assertIn("git status --short:\n   M macos/scripts/sounds.py", done.stdout)
+        self.assertNotIn("Files this session edited", done.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
