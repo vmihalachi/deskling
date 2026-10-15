@@ -1,0 +1,16 @@
+{
+  "patterns": [
+    "\\.(cs|razor|cshtml|resx|csproj|props|targets)$",
+    "\\.swift$",
+    "^(Sources|Tests|dotnet|tools)/.*\\.(py|json)$"
+  ],
+  "exclude": [
+    "/(bin|obj)/"
+  ],
+  "checks": [
+    [
+      "scripts/verify.sh",
+      "--fast"
+    ]
+  ]
+}

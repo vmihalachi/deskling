@@ -13,6 +13,9 @@
                                (xcodebuild test, conformance, swift/dotnet test, the Windows app's model tests, the
                                WinUI app build, the landing build, hooks.slow) not run since the last edit; remind once about porting Mac UI changes to Windows
                                (hooks.macUI/windowsUI).
+  hook.py resume SessionStart (compact|resume): print where this session was, as the agent's context after a
+                               compaction: the files it edited, the slow checks it ran, the branch, git status and
+                               the recent commits; nothing when the tree is clean and the session has no log.
   hook.py cloud-stop  Copilot agentStop: inside GitHub Actions only (the cloud coding agent, which has no session
                                log), run the app's verify.sh on the branch's changes and ask for fixes.
 
@@ -419,6 +422,56 @@ def stop(event):
         sys.exit(2)
 
 
+def git_lines(*args):
+    """A git command's stdout lines in the app's repository; none when it fails (no repository, no commit yet)."""
+    try:
+        done = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    return done.stdout.splitlines() if done.returncode == 0 else []
+
+
+def resume(event):
+    """SessionStart after a compaction or a resume: where this session was, printed as the agent's context. The files it
+    edited (each once, as first edited, at most 20), the slow checks it ran, then the branch, `git status --short` (at
+    most 30 lines) and the last five commits. Nothing at all when the tree is clean and the session has no log."""
+    edited, ran = [], []
+    try:
+        lines = state_file(event).read_text().splitlines()
+    except OSError:
+        lines = []
+    for line in lines:
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
+            continue
+        _, kind, value = parts
+        bucket = edited if kind == "edit" else ran if kind == "ran" else None
+        if bucket is not None and value not in bucket:
+            bucket.append(value)
+    ran = [kind for kind in ran if kind != "parity-reminded"]  # a reminder's marker, not a check
+    status = git_lines("status", "--short")
+    if not edited and not ran and not status:
+        return
+    branch = git_lines("rev-parse", "--abbrev-ref", "HEAD")
+    out = [f"Where this session was in {ROOT.name}" + (f" (branch {branch[0]})" if branch else "") + ":"]
+    if edited:
+        out.append("Files this session edited (the Stop hook checks them):")
+        out += [f"  {path}" for path in edited[:20]]
+        if len(edited) > 20:
+            out.append(f"  ... and {len(edited) - 20} more")
+    if ran:
+        out.append("Slow checks this session ran: " + ", ".join(ran))
+    if status:
+        out.append("git status --short:")
+        out += [f"  {line}" for line in status[:30]]
+        if len(status) > 30:
+            out.append(f"  ... and {len(status) - 30} more")
+    if log := git_lines("log", "--oneline", "-5"):
+        out.append("Recent commits:")
+        out += [f"  {entry}" for entry in log]
+    print("\n".join(out))
+
+
 def default_branch():
     """origin's default branch (origin/HEAD), else origin/main or origin/master, else None."""
     head = subprocess.run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=ROOT, capture_output=True,
@@ -457,7 +510,7 @@ if __name__ == "__main__":
         mode = sys.argv[1]
         payload = json.load(sys.stdin)
         setup()
-        {"pre": pre, "post": post, "stop": stop, "cloud-stop": cloud_stop}[mode](payload)
+        {"pre": pre, "post": post, "stop": stop, "resume": resume, "cloud-stop": cloud_stop}[mode](payload)
     except SystemExit as stop_code:
         # Only a deliberate block (2) passes through; companion.load's exits on a bad file fail open.
         if stop_code.code == 2:

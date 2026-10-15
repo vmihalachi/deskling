@@ -21,6 +21,9 @@ jittered interval never drops below a second. No format or API change.
   interval is drawn, so a jittered interval is never shorter than a second: a jitter at or above the interval could
   draw a zero or negative one and schedule the next reminder in the past. The default (zero) is unchanged and every
   committed vector stays byte-identical; `jitter-clamped-to-interval` pins the clamp.
+- **Tools**: `tools/hooks/hook.py` gets a `resume` mode for the SessionStart hook (`compact|resume`): after a
+  compaction it prints the files the session edited, the slow checks it ran, the branch, `git status` and the
+  recent commits, so the agent keeps its place. Nothing when the tree is clean and the session has no log.
 
 ## 0.9.4 - 2026-10-15
 
