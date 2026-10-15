@@ -10,8 +10,9 @@ An unpackaged Windows app (a Debug build, the fixture) keeps the language picked
 pick goes into the app's settings and `CompanionApp.Start` sets it again before WinUI starts, WinUI's own words
 included. "Same as Windows" works there too, a refused restart can say so, and the fixture picks its language as the
 apps do. Without a package, `LocalSettingsStore.ForApp` now gives every caller in the process the same store for a
-folder, so the pick and the app's own settings never write over each other. Packaged apps are unchanged; an app opts
-in by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
+folder, so the pick and the app's own settings never write over each other, and a settings file edited by hand reads
+as missing values instead of stopping the launch. Packaged apps are unchanged; an app opts in by passing
+`LanguageSetting.ForApp` to `CompanionApp.Start`.
 
 - **Windows.Companion**: the language row works without package identity. There the override
   (`ApplicationLanguages.PrimaryLanguageOverride`) lasts only for the process and refuses `""`, so the pick was lost
