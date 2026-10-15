@@ -6,6 +6,24 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.10.2 - 2026-10-15
+
+- **Swift, .NET (`ReminderScheduler`)**: `restore(nextFireDate:)` / `Restore(date)` picks up the next reminder an
+  earlier run scheduled, for an app the system ends between reminders (iOS, where pre-scheduled notifications fire
+  instead), so a relaunch doesn't push the reminder out by a fresh interval. It's ignored while paused, outside the
+  active hours and for a date not after now. New vectors `scheduler/restore-next-fire-date.json` and
+  `scheduler/restore-ignored.json` (op `restore`). Swift tests now cover `upcomingReminders(from:until:limit:)`.
+- **Swift, .NET (`ReminderScheduler`)**: `reminderDelivered()` / `ReminderDelivered()` marks a reminder the system
+  delivered on its own as unanswered, so `snooze` reminds again in its minutes as after one `tick()` fired. New vector
+  `scheduler/reminder-delivered-snooze.json` (op `reminderDelivered`).
+- **Swift (`DesklingShell`)**: `NotificationPoster` builds on iOS too (`openSystemSettings` opens the app's page in
+  Settings there). `replacePending(prefix:with:)` schedules `ScheduledNotification`s ahead on a calendar trigger at
+  their local wall-clock time, removing the stale ones and adding only new or changed ones; `pending(prefix:)` lists
+  them. `onAnswer` reports a `NotificationAnswer` (request id, category, action, `userInfo`) next to `onAction`, and
+  `onPresent` reports a notification shown while the app is frontmost.
+- **Tools (`l10n.py sync`)**: an app with an iPhone and iPad target sets `mac.iosScheme` in `companion.json`, and
+  `sync` builds it too (for the iOS Simulator), so strings only the iOS app shows aren't marked stale.
+
 ## 0.10.1 - 2026-10-15
 
 iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in

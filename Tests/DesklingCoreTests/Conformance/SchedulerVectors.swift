@@ -99,7 +99,8 @@ enum SchedulerVectors {
     ///   `idleSeconds` since the last input and `busy` reasons ("call", "fullScreen").
     /// - "setTime": set the clock to `time`.
     /// - "snooze" (`minutes`), "snoozeUntilAfterCall", "pauseFor" (`seconds`), "pauseUntil" (`time`),
-    ///   "pauseUntilEndOfToday", "resume", "sessionCompleted", "updateConfig" (`config`).
+    ///   "pauseUntilEndOfToday", "resume", "sessionCompleted", "updateConfig" (`config`),
+    ///   "restore" (`time`, the next fire date an earlier run scheduled), "reminderDelivered".
     /// - "isWithinActiveHours": query `time`; `expect.result` is the answer.
     struct Step: Codable, Equatable {
         var op: String
@@ -218,6 +219,10 @@ enum SchedulerVectors {
                 scheduler.sessionCompleted()
             case "updateConfig":
                 scheduler.update(config: try required(step.config, "config", step.op).scheduler)
+            case "restore":
+                scheduler.restore(nextFireDate: try ConformanceSupport.date(try required(step.time, "time", step.op)))
+            case "reminderDelivered":
+                scheduler.reminderDelivered()
             case "isWithinActiveHours":
                 expect.result = scheduler.isWithinActiveHours(try ConformanceSupport.date(try required(step.time, "time", step.op)))
             default:
@@ -268,6 +273,8 @@ enum SchedulerVectors {
         mutating func resume() { steps.append(Step(op: "resume")) }
         mutating func sessionCompleted() { steps.append(Step(op: "sessionCompleted")) }
         mutating func update(_ config: SchedulerConfig) { steps.append(Step(op: "updateConfig", config: Config(config))) }
+        mutating func reminderDelivered() { steps.append(Step(op: "reminderDelivered")) }
+        mutating func restore(_ date: Date) { steps.append(Step(op: "restore", time: iso(date))) }
         mutating func isWithinActiveHours(_ date: Date) { steps.append(Step(op: "isWithinActiveHours", time: iso(date))) }
     }
 
@@ -650,6 +657,39 @@ enum SchedulerVectors {
             description: "With no jitter the interval is exact and the random source is never consulted, whatever the seed.",
             config: config { $0.interval = 30 * 60 }, seed: 7, start: { $0.monday(10) }
         ) { s in s.run(minutes: 61) },
+        Case(
+            name: "restore-next-fire-date",
+            description: "A relaunch restores the reminder the earlier run scheduled; the interval after it is the usual one.",
+            start: { $0.monday(10) }
+        ) { s in
+            s.restore(s.monday(10, 20))
+            s.run(minutes: 70)
+        },
+        Case(
+            name: "restore-ignored",
+            description: "Restoring is ignored for a date not after now, while paused and outside the active hours.",
+            start: { $0.monday(10) }
+        ) { s in
+            s.restore(s.monday(10))
+            s.restore(s.monday(9, 50))
+            s.pause(seconds: 3600)
+            s.restore(s.monday(10, 30))
+            s.resume()
+            s.setTime(s.monday(18, 30))
+            s.tickNow()
+            s.restore(s.monday(18, 45))
+        },
+        Case(
+            name: "reminder-delivered-snooze",
+            description: "A reminder the system delivered on its own is unanswered: snoozing it reminds again in 10 minutes.",
+            start: { $0.monday(10) }
+        ) { s in
+            s.run(minutes: 20)
+            s.snooze(minutes: 10)
+            s.reminderDelivered()
+            s.snooze(minutes: 10)
+            s.run(minutes: 15)
+        },
     ]
 
     static func vector(for c: Case) throws -> Vector {

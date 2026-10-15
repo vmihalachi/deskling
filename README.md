@@ -32,7 +32,7 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.1")
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.2")
 ```
 
 **.NET** (10), from NuGet.org:
@@ -58,8 +58,9 @@ The package ships no strings, product ids or window lists: the app passes them i
   `SystemPowerSource`, `SystemAudioOutput`, `AppearanceWatcher` and `ScreenLockWatcher` expose a current value and an
   `onChange` callback.
 - **Shell (macOS).** `WindowManager<MyWindow>` takes an enum conforming to `WindowID` (title, size, placement, exclusivity)
-  and a content provider; `NotificationPoster(categories:)` takes action ids with already localized titles and reports
-  `onAction(categoryID, actionID)`; `LoginItem` and
+  and a content provider; `NotificationPoster(categories:)` (also on iOS) takes action ids with already localized
+  titles and reports `onAction(categoryID, actionID)`, or `onAnswer` with the request and its `userInfo`; for an app the
+  system ends between reminders, `replacePending(prefix:with:)` schedules `ScheduledNotification`s ahead; `LoginItem` and
   `LaunchContext.launchedAsLoginItem()` cover start-at-login. `FloatingWindow(content:size:anchor:)` floats SwiftUI
   content above other windows on every Space (not full-screen ones) without activating the app: click, drag, right-click
   menu and pinch callbacks, fades, a window riding along beside it (a speech bubble), and `FloatingPlacement` for the
@@ -173,7 +174,7 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.10.1 && git push --tags` (or Actions → Release → Run workflow with the version, which
+One tag versions both sides. `git tag v0.10.2 && git push --tags` (or Actions → Release → Run workflow with the version, which
 creates the tag on master) runs `release.yml`: it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
