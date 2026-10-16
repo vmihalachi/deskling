@@ -11,7 +11,9 @@ namespace Deskling.Windows.Companion.Shell;
 /// over <see cref="AppNotifier{TAction}"/>, with the app's buttons: each action id travels in the notification and
 /// comes back through <see cref="OnAction"/> on the UI thread, also when Windows started the app for the click. One tag, so a new line replaces the last instead of piling
 /// up in Notification Center. Posted silently. A click on the banner itself does nothing but bring Windows' focus (as on
-/// the Mac). Windows never asks for permission: it is on unless the user turned the app's notifications off.
+/// the Mac). Windows never asks for permission: it is on unless the user turned the app's notifications off. It registers
+/// with Windows as it's made, unlike the Mac's at <see cref="Configure"/>: Windows hands the click it started the app for
+/// to the registered process, so the app makes it before reading its activation (<see cref="CompanionApp"/> does).
 /// </summary>
 public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
 {
@@ -46,19 +48,6 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
         keys[BannerAction] = BannerAction;
         notifier = new AppNotifier<string>(keys, BannerAction, tag, group: tag);
         notifier.Invoked += action => this.ui.Post(_ => Raise(action), null);
-    }
-
-    public Action<string>? OnAction { get; set; }
-
-    /// <summary>
-    /// Registers with Windows and takes the clicks: those while the app runs, and the one Windows started the app for
-    /// (raised once the launch is done). A process Windows won't register (no identity it accepts) posts nothing.
-    /// </summary>
-    public void Configure()
-    {
-        if (configured)
-            return;
-        configured = true;
         try
         {
             notifier.Register();
@@ -67,9 +56,32 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
         {
             available = false;
         }
+    }
+
+    public Action<string>? OnAction { get; set; }
+
+    /// <summary>
+    /// Takes the clicks: those while the app runs, those another copy hands over, and the one Windows started the app for
+    /// (raised once the launch is done). A process Windows wouldn't register (no identity it accepts) takes none and posts
+    /// nothing.
+    /// </summary>
+    public void Configure()
+    {
+        if (configured)
+            return;
+        configured = true;
         var instance = AppInstance.GetCurrent();
         instance.Activated += Redirected;
-        Clicked(instance.GetActivatedEventArgs());
+        if (!available)
+            return;
+        try
+        {
+            Clicked(instance.GetActivatedEventArgs());
+        }
+        catch (Exception e) when (e is TimeoutException or COMException)
+        {
+            // Started for a click that didn't arrive in Windows App SDK's wait (2 s).
+        }
     }
 
     public void RequestAuthorization(Action<bool> completion) => completion(IsAllowed);
@@ -93,7 +105,10 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
 
     private bool IsAllowed => available && !notifier.IsDenied;
 
-    /// <summary>A click that started another copy, which handed it here (rare: Windows gives a registered app its clicks).</summary>
+    /// <summary>
+    /// A click that started another copy, which handed it here (rare: Windows gives a registered app its clicks). Read
+    /// before returning: the click's arguments live in that copy, which exits once the handlers return.
+    /// </summary>
     private void Redirected(object? sender, AppActivationArguments activation) => Clicked(activation);
 
     /// <summary>Posted: the launch finishes first, and a redirected click (on a background thread) reaches the UI thread.</summary>
