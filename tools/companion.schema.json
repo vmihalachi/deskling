@@ -231,7 +231,6 @@
       "properties": {
         "$comment": { "type": "string" },
         "out": { "type": "string", "description": "Captures, sheets and baselines (build/screens); keep it git-ignored." },
-        "screenEnv": { "type": "string", "description": "ios: the variable a Debug build reads to open one screen at launch." },
         "platforms": {
           "type": "object",
           "description": "Platform name (its folder under out) → how it's captured, in sheet order.",
@@ -245,10 +244,8 @@
               "script": { "type": "string", "description": "mac: the screenshot script, relative to the root, with screenshots.sh's options (Deskling's)." },
               "vm": { "enum": ["check-layout", "screenshots"], "description": "windows: vm.sh check-layout, every language side by side (the default), or vm.sh screenshots once per language, for a script without -Only." },
               "device": { "type": "string", "description": "ios: the simulator's device type, by name or identifier." },
-              "display": { "type": "string", "description": "ios: the screen to shoot on a device with several (simctl io screenshot --display), like \"1\" for a closed iPhone Duo's outer one." },
               "orientation": { "enum": ["landscape", "portrait"], "description": "The sheet's row: landscape on top (mac, windows), portrait below (ios)." },
-              "crop": { "type": "boolean", "description": "Crop each shot to its window: the transparent or flat margin around it goes." },
-              "settle": { "type": "number", "description": "ios: seconds from a launch to the screenshot (5)." }
+              "crop": { "type": "boolean", "description": "Crop each shot to its window: the transparent or flat margin around it goes." }
             }
           }
         },

@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **CompanionUI (`ScreenshotCapture`)**: on iOS, `DESKLING_SCREENSHOT_HOLD` names a Darwin notification: after
+  drawing each shot, the run prints `hold <file name>` and waits for it (`xcrun simctl spawn <device> notifyutil -p
+  <name>`, at most `holdTimeout`, 2 minutes), so a script can take the Simulator's own screenshot of the settled screen,
+  status bar included, in the same launch: App Store screenshots without one launch per screen.
+- **tools (`screens.py`)**: **Breaking.** iOS captures through the screenshot run, as `check-layout-ios.py` does:
+  each language is one launch of the app (`mac.screenshotEnv` names the shots), a shot with an `env` of its own a
+  launch of its own, with accessibility on for the fit checks, whose problems join `problems.txt`. Shot names are the
+  run's (`<shot>-<theme>.png`), drawn without the status bar. `screens.screenEnv` and the iOS platforms' `display`
+  and `settle` are gone; a launch may take 10 minutes.
+
 ## 0.11.11 - 2026-10-16
 
 - **CompanionUI (`ScreenshotCapture`), Shell (`LayoutCheck`)**: the screenshot run works on iOS. The wanted shots, the

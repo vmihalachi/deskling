@@ -55,7 +55,6 @@
   "fonts": null,
   "screenshots": { "out": "screenshots/macos", "shots": ["panel", "home"], "store": null },
   "screens": {
-    "screenEnv": "FIXTURE_SCREEN",
     "platforms": {
       "mac": { "capture": "mac", "label": "macOS" },
       "windows": { "capture": "windows", "label": "Windows", "crop": true },

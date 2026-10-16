@@ -87,6 +87,34 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "supports iPad Pro"):
                 screens.simulator("app screens ipad", "iPad Pro")
 
+    def test_ios_takes_each_language_in_one_launch_and_a_shot_with_its_own_env_in_another(self):
+        capture = screens.Capture(self.screens, [self.phone], ["en"], ["home", "settings"], ["light"], 1, False)
+        drawn = self.root / "container"
+        launches = []
+
+        def run(command, env=None, **_):
+            mode = env["SIMCTL_CHILD_DESKLING_SCREENSHOT_MODE"]
+            launches.append((mode, env.get("SIMCTL_CHILD_FIXTURE_TWO"), command[-4:]))
+            folder = drawn / str(len(launches))
+            folder.mkdir(parents=True)
+            for theme in ("light", "dark"):
+                (folder / f"{mode}-{theme}.png").write_bytes(b"png")
+            if mode == "settings":
+                (folder / "problems.txt").write_text("settings-light.png: a label ends in …\n", "utf8")
+            return subprocess.CompletedProcess(command, 0, f"app.fixture: 42\r\nReady\r\n{folder}\r\n", "")
+
+        with mock.patch.object(screens, "simulator", return_value="UDID"), \
+                mock.patch.object(capture, "sh", return_value=0), \
+                mock.patch.object(screens.subprocess, "run", run), redirect_stdout(io.StringIO()):
+            capture.device(self.phone, self.root / "Fixture.app", "app.fixture")
+        self.assertEqual(launches, [("today", None, ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]),
+                                    ("settings", "1", ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])])
+        folder = self.screens.out / "phone" / "en"
+        self.assertEqual(sorted(p.name for p in folder.iterdir()), ["home-light.png", "settings-light.png"])
+        self.assertEqual(capture.problems, [(2, "en", "settings-light.png: a label ends in …")])
+        self.assertEqual(capture.ran, {"phone"})
+        self.assertFalse((drawn / "1").exists(), "moved out of the app's container")
+
     def test_a_platform_that_didnt_run_reports_its_problems_in_one_list(self):
         capture = screens.Capture(self.screens, [self.mac], ["en"], ["panel", "home"], ["light"], 1, False)
         raw = self.root / "raw"
