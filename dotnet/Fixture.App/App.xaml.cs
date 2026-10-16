@@ -10,6 +10,7 @@ using Deskling.Windows.Companion.Shell;
 using Deskling.Windows.Companion.Signals;
 using Deskling.Windows.Companion.Speech;
 using Deskling.Windows.Companion.Views;
+using Deskling.Windows.Shell.Localization;
 using Deskling.Windows.System;
 using FixtureApp.Views;
 using Shot = Deskling.Windows.Companion.Screenshots.ScreenshotScript<FixtureApp.FixtureWindow, Deskling.Companion.Settings.CompanionSettings>.Shot;
@@ -18,11 +19,18 @@ namespace FixtureApp;
 
 /// <summary>
 /// The fixture app's <c>App.xaml</c>: Deskling's <see cref="CompanionApp"/> makes one copy run and launches the model.
-/// Settings live in memory, so every launch starts fresh: onboarding done, unless <c>--first-run</c>. With
+/// Settings live in memory, so every launch starts fresh: onboarding done, unless <c>--first-run</c>. Only the language
+/// picked in Settings outlives a launch, in a file as an unpackaged app keeps it (<see cref="Program"/>). With
 /// <c>DESKLING_SCREENSHOT_MODE</c> set (<c>scripts/fixture-screenshots.ps1</c>), it shoots its windows instead.
 /// </summary>
 public partial class App : CompanionApp
 {
+    /// <summary>
+    /// The languages Settings offers, the default first. The fixture's own words are English in each (it has no
+    /// strings); WinUI's words, the dates and the language row follow the pick.
+    /// </summary>
+    internal static readonly IReadOnlyList<string> Languages = ["en", "de", "ro"];
+
     /// <summary>The tray icon's identity: Windows keeps its place in the notification area by it.</summary>
     private static readonly Guid TrayIconId = new("5b0f6c1e-3d2a-4f87-9e4b-7a1c2d3e4f50");
 
@@ -39,7 +47,7 @@ public partial class App : CompanionApp
 
     protected override ICompanionLaunching MakeCompanion()
     {
-        CompanionLook.Current = new CompanionLook(FixtureModel.Palette);
+        Prepare();
         var host = MakeHost();
         var notifier = new CompanionNotifier("Fixture", [(FixtureModel.SayMore, "Say more"), (FixtureModel.ShhHour, "Shh for an hour")]);
         host.OnQuit = notifier.Dispose;
@@ -85,7 +93,7 @@ public partial class App : CompanionApp
     {
         if (!ScreenshotCapture.IsEnabled)
             return false;
-        CompanionLook.Current = new CompanionLook(FixtureModel.Palette);
+        Prepare();
         var host = MakeHost();
         var sample = new SampleEnvironment(new Dictionary<string, string> { [FixtureModel.Supporter] = "€4.99", [FixtureSupport.Tip] = "€1.99" }, host.Timers);
         var settings = new CompanionSettings(sample.Store, FixtureModel.Defaults) { HasCompletedOnboarding = true };
@@ -121,6 +129,13 @@ public partial class App : CompanionApp
             ]
         );
         return true;
+    }
+
+    /// <summary>The language, as the apps choose it, then the look every control paints from.</summary>
+    private static void Prepare()
+    {
+        Loc.UseLanguage(ScreenshotCapture.Language ?? Loc.Choose(Languages));
+        CompanionLook.Current = new CompanionLook(FixtureModel.Palette);
     }
 
     private WindowsCompanionHost<FixtureWindow> MakeHost()

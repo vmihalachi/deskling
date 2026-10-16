@@ -108,7 +108,11 @@
         /// lets the app `prepare` (a line in the bubble), takes `shots` in both appearances and quits
         /// (`ScreenshotCapture.finish()`).
         public func run(prepare: @escaping @MainActor () async -> Void, shots: [Shot]) {
-            model.windows.staysRegular = true  // so the app keeps activation from one shot to the next
+            if ScreenshotCapture.isHidden {
+                model.windows.opensHidden = true
+            } else {
+                model.windows.staysRegular = true  // so the app keeps activation from one shot to the next
+            }
             Task {
                 ScreenshotCapture.prepareOutputDirectory()
                 // launch() is skipped in a screenshot run, so load the sample prices before Support shows them.

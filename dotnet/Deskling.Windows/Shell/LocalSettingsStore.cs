@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Deskling.Core.Settings;
@@ -15,6 +16,9 @@ public sealed class LocalSettingsStore : ISettingsStore
     private const string TypeField = "type";
     private const string JsonField = "json";
 
+    /// <summary><see cref="ForApp"/>'s file stores, one per file: each holds the whole file and writes all of it.</summary>
+    private static readonly ConcurrentDictionary<string, FileSettingsStore> Files = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly IDictionary<string, object> values;
 
     /// <summary>The app's local settings container (throws without package identity).</summary>
@@ -25,12 +29,17 @@ public sealed class LocalSettingsStore : ISettingsStore
     /// The app's settings wherever it runs: the package's local settings when it has package identity, else a
     /// <see cref="FileSettingsStore"/> at <c>%LOCALAPPDATA%\<paramref name="appFolder"/>\settings.json</c> (an
     /// unpackaged Debug build, which has no package data). Name the folder after the build ("My App Dev") so a Debug
-    /// run never reads a Release install's settings.
+    /// run never reads a Release install's settings. The same folder gives the same file store for the whole process,
+    /// so two parts of the app that ask for it (the language <c>CompanionApp.Start</c> reads, the settings the app makes)
+    /// never write over each other's changes.
     /// </summary>
     public static ISettingsStore ForApp(string appFolder) =>
         PackageIdentity.IsPackaged
             ? new LocalSettingsStore()
-            : new FileSettingsStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appFolder, "settings.json"));
+            : Files.GetOrAdd(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appFolder, "settings.json"),
+                path => new FileSettingsStore(path)
+            );
 
     /// <summary>A container of your choice, such as a sub-container for one feature.</summary>
     public LocalSettingsStore(ApplicationDataContainer container)

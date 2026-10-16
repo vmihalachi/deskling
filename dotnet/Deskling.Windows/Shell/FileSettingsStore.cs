@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Deskling.Core.Settings;
 
 namespace Deskling.Windows.Shell;
@@ -8,7 +9,8 @@ namespace Deskling.Windows.Shell;
 /// <summary>
 /// Settings in one JSON file, for an app that runs without package identity (an unpackaged Debug build), where
 /// <see cref="LocalSettingsStore"/>'s <c>ApplicationData</c> doesn't exist. Every value keeps its type, as in the
-/// packaged store, so a getter returns null when the key is missing or holds another type. Each change writes the
+/// packaged store, so a getter returns null when the key is missing or holds another type, also when the file was edited
+/// by hand and a value doesn't match the type stored with it. Each change writes the
 /// file at once (settings change a few times a day); a file that can't be read starts empty rather than failing the
 /// launch. <see cref="LocalSettingsStore.ForApp"/> picks between the two.
 /// </summary>
@@ -25,19 +27,21 @@ public sealed class FileSettingsStore : ISettingsStore
     /// <summary>The settings file.</summary>
     public string Path { get; }
 
-    public bool? GetBool(string key) => Read(key, "bool") is { } value ? value.GetBoolean() : null;
+    public bool? GetBool(string key) =>
+        Read(key, "bool") is { ValueKind: JsonValueKind.True or JsonValueKind.False } value ? value.GetBoolean() : null;
 
-    public int? GetInteger(string key) => Read(key, "int") is { } value ? value.GetInt32() : null;
+    public int? GetInteger(string key) =>
+        Read(key, "int") is { ValueKind: JsonValueKind.Number } value && value.TryGetInt32(out var number) ? number : null;
 
-    public double? GetDouble(string key) => Read(key, "double") is { } value ? value.GetDouble() : null;
+    public double? GetDouble(string key) =>
+        Read(key, "double") is { ValueKind: JsonValueKind.Number } value && value.TryGetDouble(out var number) ? number : null;
 
-    public string? GetString(string key) => Read(key, "string") is { } value ? value.GetString() : null;
+    public string? GetString(string key) => Read(key, "string") is { ValueKind: JsonValueKind.String } value ? value.GetString() : null;
 
     public IReadOnlyList<string>? GetStrings(string key) =>
-        Read(key, "string[]") is { } value ? value.Deserialize(FileSettingsJson.Default.StringArray) : null;
+        ReadArray(key, "string[]", FileSettingsJson.Default.StringArray) is { } strings && !strings.Contains(null) ? strings : null;
 
-    public IReadOnlyList<int>? GetIntegers(string key) =>
-        Read(key, "int[]") is { } value ? value.Deserialize(FileSettingsJson.Default.Int32Array) : null;
+    public IReadOnlyList<int>? GetIntegers(string key) => ReadArray(key, "int[]", FileSettingsJson.Default.Int32Array);
 
     public void SetBool(string key, bool value) => Write(key, "bool", JsonSerializer.SerializeToElement(value, FileSettingsJson.Default.Boolean));
 
@@ -59,7 +63,27 @@ public sealed class FileSettingsStore : ISettingsStore
             Save();
     }
 
-    private JsonElement? Read(string key, string type) => values.TryGetValue(key, out var stored) && stored.Type == type ? stored.Value : null;
+    /// <summary>
+    /// The value under <paramref name="key"/> when it was stored as <paramref name="type"/>. A null entry (a file edited by
+    /// hand) reads as missing; the getters also check the value's JSON kind, so a value that doesn't match its type reads
+    /// as null instead of throwing (<see cref="Localization.LanguageSetting"/> is read in <c>Main</c>, before any window).
+    /// </summary>
+    private JsonElement? Read(string key, string type) => values.TryGetValue(key, out var stored) && stored?.Type == type ? stored.Value : null;
+
+    private T? ReadArray<T>(string key, string type, JsonTypeInfo<T> info)
+        where T : class
+    {
+        if (Read(key, type) is not { ValueKind: JsonValueKind.Array } value)
+            return null;
+        try
+        {
+            return value.Deserialize(info);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private void Write(string key, string type, JsonElement value)
     {

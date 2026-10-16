@@ -23,6 +23,6 @@ for lang in $LANGS; do
   fi
   shots=$(python3 -c "import json, sys; print(','.join(dict.fromkeys(c['shot'] for c in json.load(open(sys.argv[1]))[sys.argv[2]])))" "$CAPTIONS" "$lang")
   captures="$ROOT/build/store-captures/apple/$lang"
-  "$TOOLS/screenshots.sh" --only "$shots" "$captures" "$lang"
+  "$TOOLS/screenshots.sh" --only "$shots" --front "$captures" "$lang"
   python3 "$TOOLS/store-screenshots.py" "$captures" "$OUT/$lang" "$lang"
 done

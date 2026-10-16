@@ -4,7 +4,9 @@ mybackhurts' test_push.py), import.py's Partner Center folder."""
 from __future__ import annotations
 
 import base64
+import contextlib
 import csv
+import io
 import json
 import os
 import subprocess
@@ -42,22 +44,32 @@ class FakeApi:
         return [o for (k, _), o in self.objects.items() if k == kind and o["parent"] == parent_id]
 
     def get_all(self, path):
-        path = path.split("?")[0]
+        path, _, query = path.partition("?")
+        filters = dict(x.split("=", 1) for x in query.split("&") if x.startswith("filter["))
+
+        def matching(objects, names):
+            return [o for o in objects if all(o["attributes"].get(attr, "MAC_OS" if attr == "platform" else None)
+                                              == filters[key] for key, attr in names.items() if key in filters)]
         if path.endswith("/appStoreVersions"):
-            return list(self.children("appStoreVersions", self.app_id))
+            return matching(self.children("appStoreVersions", self.app_id),
+                            {"filter[platform]": "platform", "filter[versionString]": "versionString"})
         if path.endswith("/appInfos"):
             return self.children("appInfos", self.app_id)
         if path.endswith("/inAppPurchasesV2"):
             return self.children("inAppPurchases", self.app_id)
         if path == "/v1/builds":
-            return self.children("builds", self.app_id)
+            return matching(self.children("builds", self.app_id),
+                            {"filter[version]": "version", "filter[preReleaseVersion.platform]": "platform"})
         kind = path.rsplit("/", 1)[1]
         parent_id = path.rsplit("/", 2)[1]
         return self.children(kind, parent_id)
 
     def request(self, method, path, body=None):
         self.calls.append((method, path))
-        if method == "GET" and path.endswith("/build"):
+        if method == "GET" and path.endswith("/appStoreReviewDetail"):
+            details = self.children("appStoreReviewDetails", path.rsplit("/", 2)[1])
+            return {"data": details[0] if details else None}
+        if method == "GET":
             return {"data": None}
         return None
 
@@ -139,6 +151,33 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("de: 2 problem(s)", result.stdout)
 
+    def enable_ios(self):
+        path = self.root / "companion.json"
+        config = json.loads(path.read_text("utf8"))
+        config["store"]["apple"]["ios"] = {}
+        path.write_text(json.dumps(config), "utf8")
+        self.listing = listing_module.load(self.root)
+
+    def write_ios_page(self, keywords="companion,friend,pocket", whatsnew=None):
+        en = self.root / "store-listing" / "en.md"
+        en.write_text(en.read_text("utf8") + "\n".join([
+            "### iOS promotional text `ios.promo`", "", "```text", "It says things, on the phone too.", "```", "",
+            "### iOS keywords `ios.keywords`", "", "```text", keywords, "```", "",
+            "### iOS description `ios.description`", "", "```text", "Fixture says a line now and then.", "",
+            "Nothing leaves your iPhone.", "```", ""]
+            + (["### iOS What's New `ios.whatsnew`", "", "```text", whatsnew, "```", ""] if whatsnew else [])), "utf8")
+
+    def test_the_ios_page_is_checked_only_when_configured(self):
+        self.assertNotIn("ios.promo", self.listing.limits)
+        self.enable_ios()
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertEqual(problems, ["missing field ios.promo", "missing field ios.keywords", "missing field ios.description"],
+                         "What's New stays optional")
+        self.write_ios_page()
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertEqual(problems, ["ios.keywords: 'friend' is already in the name or subtitle"])
+        self.assertNotIn("ios.description", self.listing.single_line)
+
     # MARK: push.py
 
     def test_token_is_a_valid_es256_jwt(self):
@@ -172,9 +211,13 @@ class StoreTests(unittest.TestCase):
         der = bytes([0x30, 4 + len(r) + len(s), 2, len(r)]) + r + bytes([2, len(s)]) + s
         self.assertEqual(push.der_to_raw(der), b"\x80" + b"\x01" * 31 + b"\0" * 31 + b"\x05")
 
-    def setup_app(self):
+    def setup_app(self, earlier=True):
         api = FakeApi(self.listing.app_id)
-        version = api.add("appStoreVersions", {"versionString": "1.0.2", "appVersionState": "PREPARE_FOR_SUBMISSION",
+        if earlier:
+            api.add("appStoreVersions", {"platform": "MAC_OS", "versionString": "1.0.1", "appVersionState": "READY_FOR_SALE"},
+                    self.listing.app_id)
+        version = api.add("appStoreVersions", {"platform": "MAC_OS", "versionString": "1.0.2",
+                                               "appVersionState": "PREPARE_FOR_SUBMISSION",
                                                "copyright": self.listing.copyright, "releaseType": "MANUAL"},
                           self.listing.app_id)
         info = api.add("appInfos", {"state": "PREPARE_FOR_SUBMISSION"}, self.listing.app_id)
@@ -201,6 +244,61 @@ class StoreTests(unittest.TestCase):
         api.calls.clear()
         sync.text(["en", "de"], version, extra=False, write=True)
         self.assertEqual([c for c in api.calls if c[0] != "GET"], [], "a second run changes nothing")
+
+    def test_whats_new_is_left_out_on_a_first_version(self):
+        api, version = self.setup_app(earlier=False)
+        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync.text(["de"], version, extra=False, write=True)
+        de = next(x for x in api.children("appStoreVersionLocalizations", version["id"]) if x["attributes"]["locale"] == "de-DE")
+        self.assertNotIn("whatsNew", de["attributes"])
+        self.assertEqual(de["attributes"]["description"], self.listing.fields("de")["apple.description"])
+
+    def test_the_ios_page_is_found_or_created_filled_and_given_its_screenshots(self):
+        self.enable_ios()
+        self.write_ios_page(whatsnew="Now on iPhone.")
+        for folder, shots in ((self.listing.iphone_screenshots, ("1-phone.png",)),
+                              (self.listing.ipad_screenshots, ("1-pad.png", "2-pad.png"))):
+            (folder / "en").mkdir(parents=True)
+            for name in shots:
+                (folder / "en" / name).write_bytes(PNG + name.encode())
+        api, mac = self.setup_app()
+        api.add("builds", {"version": "4", "platform": "MAC_OS", "processingState": "VALID"}, self.listing.app_id)
+        api.add("builds", {"version": "4", "platform": "IOS", "processingState": "VALID"}, self.listing.app_id)
+        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        with self.assertRaises(SystemExit, msg="no iOS version without --create"):
+            sync.version("1.0.2", False, None, sync.ios)
+        version = sync.version("1.0.2", True, "4", sync.ios)
+        self.assertEqual(version["attributes"]["platform"], "IOS")
+        self.assertNotEqual(version["id"], mac["id"])
+        self.assertIn(("PATCH", f"/v1/appStoreVersions/{version['id']}/relationships/build"), api.calls)
+        self.assertNotIn(("PATCH", f"/v1/appStoreVersions/{mac['id']}/relationships/build"), api.calls)
+
+        localizations = sync.text(["en"], version, extra=False, write=True, page=sync.ios)
+        sync.screenshots(localizations, sync.ios)
+        self.assertEqual(sync.problems, [])
+        en = localizations["en-US"][1]["attributes"]
+        fields = self.listing.fields("en")
+        self.assertEqual(en["description"], fields["ios.description"])
+        self.assertEqual(en["keywords"], fields["ios.keywords"])
+        self.assertEqual(en["promotionalText"], fields["ios.promo"])
+        self.assertNotIn("whatsNew", en, "the platform's first version")
+        sets = {s["attributes"]["screenshotDisplayType"]: s for s in api.children("appScreenshotSets", localizations["en-US"][1]["id"])}
+        self.assertEqual(set(sets), {"APP_IPHONE_67", "APP_IPAD_PRO_3GEN_129"})
+        self.assertEqual([x["attributes"]["fileName"] for x in api.children("appScreenshots", sets["APP_IPAD_PRO_3GEN_129"]["id"])],
+                         ["1-pad.png", "2-pad.png"])
+        self.assertEqual(api.children("appStoreVersionLocalizations", mac["id"])[0]["attributes"]["description"],
+                         fields["apple.description"], "the Mac's page keeps its own text")
+
+        api.calls.clear()
+        sync.version("1.0.2", True, None, sync.ios)
+        sync.screenshots(sync.text(["en"], version, extra=False, write=True, page=sync.ios), sync.ios)
+        self.assertEqual([c for c in api.calls if c[0] != "GET"], [], "a second run changes nothing")
+
+    def test_the_ios_parts_need_the_ios_config(self):
+        result = subprocess.run([sys.executable, str(TOOLS / "store" / "push.py"), "--version", "1.0", "--only", "ios-text"],
+                                capture_output=True, text=True, env={**os.environ, "COMPANION_ROOT": str(self.root)})
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("need store.apple.ios", result.stderr)
 
     def test_dry_run_writes_nothing(self):
         api, _ = self.setup_app()
@@ -263,6 +361,63 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(sync.problems, [])
         self.assertNotIn("PATCH", [c[0] for c in api.calls], "no review note set")
         self.assertFalse([c for c in api.calls if "appStoreReviewScreenshot" in str(c) or "ReviewDetail" in str(c)])
+
+    def add_ios_version(self, api):
+        return api.add("appStoreVersions", {"platform": "IOS", "versionString": "1.0.2",
+                                            "appVersionState": "PREPARE_FOR_SUBMISSION"}, self.listing.app_id)
+
+    def test_the_review_notes_go_on_the_ios_version_too(self):
+        self.enable_ios()
+        api, mac = self.setup_app()
+        ios = self.add_ios_version(api)
+        api.add("appStoreReviewDetails", {"notes": "old"}, ios["id"])
+        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        with contextlib.redirect_stdout(io.StringIO()):
+            sync.review(mac)
+            sync.review(ios, sync.ios)
+        self.assertEqual(sync.problems, [])
+        notes = push.review_notes(self.listing)
+        for version in (mac, ios):
+            self.assertEqual([d["attributes"]["notes"] for d in api.children("appStoreReviewDetails", version["id"])],
+                             [notes])
+        self.assertIn(("POST", "appStoreReviewDetails", None), api.calls, "the Mac's is created")
+        self.assertIn(("PATCH", "appStoreReviewDetails", ("notes",)), api.calls, "the iOS one is updated")
+
+        api.calls.clear()
+        with contextlib.redirect_stdout(io.StringIO()):
+            sync.review(ios, sync.ios)
+        self.assertEqual([c for c in api.calls if c[0] != "GET"], [], "a second run changes nothing")
+
+    def status(self, api):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            push.status(self.listing, api, "1.0.2")
+        return out.getvalue()
+
+    def test_status_reports_the_ios_version_per_display_type(self):
+        api, mac = self.setup_app()
+        self.assertNotIn("iOS", self.status(api), "only with store.apple.ios")
+        self.enable_ios()
+        self.assertIn("Still needed: ", self.status(api))
+        self.assertIn("the iOS version 1.0.2", self.status(api))
+
+        ios = self.add_ios_version(api)
+        api.add("appStoreReviewDetails", {"notes": "x", "contactFirstName": "A", "contactLastName": "B",
+                                          "contactPhone": "1", "contactEmail": "a@b"}, ios["id"])
+        en = api.add("appStoreVersionLocalizations", {"locale": "en-US", "description": "d", "keywords": "k"}, ios["id"])
+        phone = api.add("appScreenshotSets", {"screenshotDisplayType": push.IPHONE_SCREENSHOTS}, en["id"])
+        api.add("appScreenshots", {"fileName": "1.png"}, phone["id"])
+        out = self.status(api)
+        self.assertIn("iOS Version 1.0.2: PREPARE_FOR_SUBMISSION", out)
+        self.assertIn('iOS en-US: 1 iPhone 6.9" screenshots, 0 iPad 13" screenshots, empty: supportUrl', out)
+        needed = out.split("Still needed: ")[1]
+        self.assertIn("a build on the iOS version page", needed)
+        self.assertIn('iOS en-US iPad 13" screenshots', needed)
+        self.assertIn("iOS en-US supportUrl", needed)
+        self.assertNotIn('iOS en-US iPhone 6.9" screenshots', needed)
+        self.assertNotIn("iOS App Review contact", needed)
+        self.assertIn("the App Review contact", needed, "the Mac's has no details")
+        self.assertIn("en-US: 0 screenshots", out, "the Mac's lines read as before")
 
     # MARK: import.py
 
