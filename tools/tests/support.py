@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -15,21 +16,11 @@ REPO = TOOLS.parent
 FIXTURE_APP = HERE / "fixture-app"
 WINDOWS = os.name == "nt"
 
-
-def _git_bash() -> str | None:
-    """Git for Windows' bash: on PATH when the tests run from Git Bash, else beside git.exe (Git\\cmd\\git.exe and
-    Git\\bin\\bash.exe). Never System32's bash.exe, which runs the script in WSL's Linux instead."""
-    found = shutil.which("bash")
-    if found and "system32" not in found.lower():
-        return found
-    git = shutil.which("git")
-    for folder in Path(git).resolve().parents if git else []:
-        if (folder / "bin" / "bash.exe").is_file():
-            return str(folder / "bin" / "bash.exe")
-    return None
+sys.path.insert(0, str(TOOLS))
+import companion  # noqa: E402
 
 
-BASH = _git_bash() if WINDOWS else "bash"
+BASH = companion.git_bash() if WINDOWS else "bash"
 """The bash that runs the shell scripts; None on a Windows without Git for Windows."""
 
 NO_SHELL = "Windows starts no shell script itself and has no Git for Windows bash here"
@@ -41,7 +32,7 @@ NO_SHEBANG = "Windows can't start a `#!/bin/sh` file as a program, as this test'
 
 def shell(script: Path) -> list[str]:
     """The command that runs `script`: the script itself on macOS and Linux, through `BASH` on Windows."""
-    return [BASH, str(script)] if WINDOWS else [str(script)]
+    return companion.shell_command(script) or [str(script)]
 
 
 def search_path(*folders: Path) -> str:
