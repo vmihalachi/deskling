@@ -36,6 +36,14 @@ public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
 
     public Action<TWindow>? OnClose { get; set; }
 
+    /// <summary>
+    /// Screenshot checks: windows open cloaked (drawn, but never on screen), out of the taskbar and Alt+Tab, behind the
+    /// others and without taking the focus, so a run doesn't take the PC from whoever is using it. They lay out and are
+    /// captured as usual, but inactive (grey caption buttons), so for layout checks and quick looks, not for the
+    /// committed shots.
+    /// </summary>
+    public bool OpensHidden { get; set; }
+
     /// <summary>Light, dark or Windows' app mode (<see cref="ElementTheme.Default"/>), for every open window and new ones.</summary>
     public ElementTheme Theme
     {
@@ -195,8 +203,13 @@ public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
                 entry.Window.Close();
     }
 
-    private static void BringToFront(Entry entry)
+    private void BringToFront(Entry entry)
     {
+        if (OpensHidden)
+        {
+            NativeMethods.ShowHidden(entry.Window.AppWindow);
+            return;
+        }
         if (entry.Presenter.State == OverlappedPresenterState.Minimized)
             entry.Presenter.Restore();
         entry.Window.Activate();

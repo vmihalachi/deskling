@@ -6,6 +6,22 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.10.5 - 2026-10-16
+
+- **C# (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs, as the Mac's. `WindowManager.OpensHidden` opens
+  windows cloaked (the compositor draws them, so `PrintWindow` still captures them, but never on screen), out of the
+  taskbar and Alt+Tab, behind the others and without taking the focus, and `ScreenshotCapture.IsHidden`
+  (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it, also for the windows `CaptureWindow` and `CaptureFitting` make. A hidden
+  run shoots each window once its content has loaded, its images have decoded and no layout pass has run for 0.15 s
+  (5 s at most) instead of after the fixed 1.2 s, so the fixture's 16 shots take 10 s instead of 27; a run in front
+  waits as before. `ScreenshotCapture.OutputDirectory` defaults to a folder per process (`screenshots-<pid>`).
+- **Tools (`windows/screenshots.ps1`, `windows/check-layout.ps1`)**: `screenshots.ps1 -Only` runs hidden (`-Front` for
+  active windows), plus `-Hidden`, `-NoBuild` and `-BuildOnly`; each run renders into a folder of its own, removed
+  after copying, and `-Only home,settings` works unquoted. The new `check-layout.ps1` is `check-layout.sh` for the
+  WinUI app: it builds once, then runs the languages side by side (`-Jobs`, `LAYOUT_JOBS`, default 4), hidden, into
+  `<windows.dir>\build\layout-check\<language>`, and prints each failing language's problems.
+  `scripts/fixture-screenshots.ps1` takes `-Hidden`, `-Front` and `-NoBuild`.
+
 ## 0.10.4 - 2026-10-16
 
 - **Swift (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs. `WindowManager.opensHidden` opens windows

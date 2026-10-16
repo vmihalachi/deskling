@@ -40,7 +40,7 @@ cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell'
 cd dotnet && dotnet test Deskling.Testing.Tests   # the mocks, the conformance helpers and the fixtures, the same anywhere
 cd dotnet && dotnet test Deskling.Windows.Companion.Tests   # Windows only: the speaker, the chime and the Windows shell's services
 dotnet run --project dotnet/Fixture.App        # Windows only: the fixture app, for the checks by hand
-scripts/fixture-screenshots.ps1 [-Only home]   # Windows only: the fixture's windows to PNGs, light and dark; fails on layout problems
+scripts/fixture-screenshots.ps1 [-Only home]   # Windows only: the fixture's windows to PNGs, light and dark; fails on layout problems (-Only runs hidden; -NoBuild to repeat)
 python3 tools/windows/check-winui.py dotnet/Fixture.App dotnet/Deskling.Windows.Companion   # the WinUI traps under Native AOT
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 python3 tools/tests/run.py                     # the tools' tests
