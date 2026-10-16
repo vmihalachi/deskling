@@ -31,7 +31,8 @@ public static class AppNotifier
     /// <summary>
     /// The click this process was started for, in a copy that hands it to the copy already running: registers with no
     /// handler, so Windows gives this process that one click and starts a new one for any later, reads it, and
-    /// unregisters. Null when Windows won't register the process or the click never comes. Never throws.
+    /// unregisters. Null when Windows won't register the process, the click never comes, or the activation isn't a click
+    /// (<see cref="IsClick"/>). Never throws.
     /// </summary>
     public static AppActivationArguments? TakeClick()
     {
@@ -46,7 +47,8 @@ public static class AppNotifier
         }
         try
         {
-            return AppInstance.GetCurrent().GetActivatedEventArgs();
+            var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
+            return activation is not null && IsClick(activation.Kind) ? activation : null;
         }
         catch (Exception e) when (e is TimeoutException or COMException)
         {
@@ -65,6 +67,13 @@ public static class AppNotifier
             }
         }
     }
+
+    /// <summary>
+    /// The activation <see cref="TakeClick"/> hands over: a click only. Windows App SDK can report a click launch as a
+    /// plain <see cref="ExtendedActivationKind.Launch"/> (a package's own activation, read before the command line), which
+    /// the running copy would take as the user opening the app, and show Home for; dropping it loses the click instead.
+    /// </summary>
+    internal static bool IsClick(ExtendedActivationKind kind) => kind == ExtendedActivationKind.AppNotification;
 }
 
 /// <summary>

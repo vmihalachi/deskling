@@ -9,9 +9,9 @@ package and the NuGet packages together.
 - **Windows (`AppNotifier`, `SingleInstance`), Windows.Companion (`CompanionNotifier`, `CompanionApp`)**: a launch for a
   notification click follows Windows App SDK's order. The notifier registers with Windows as it's made, before the app
   reads its activation, where Windows App SDK waits for the click (read first, it threw and the click was lost); a copy
-  started for a click while another runs registers before handing it over (`AppNotifier.TakeClick`); and a launch
-  carrying `----AppNotificationActivated:` (`AppNotifier.IsClickLaunch`) never opens Home, also when Windows reports it
-  as a plain launch.
+  started for a click while another runs registers before handing it over, and hands over only a click
+  (`AppNotifier.TakeClick`); and a launch carrying `----AppNotificationActivated:` (`AppNotifier.IsClickLaunch`) never
+  opens Home, also when Windows reports it as a plain launch.
 
 ## 0.11.5 - 2026-10-16
 
