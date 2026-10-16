@@ -9,8 +9,9 @@ Usage: deskling/tools/windows/check-layout.ps1 [-Only name,name] [-Jobs n] [-Pla
        (default: every language in companion.json's languages.all)
 Shots go to <windows.dir>\build\layout-check\<language> (with -Project, <name>-layout-check\<language> in the temporary
 folder; with -Out, <folder>\<language>), with the language's problems.txt when it has problems, to look at what
-failed. It builds once, then runs the languages side by side (-Jobs at a time: $env:LAYOUT_JOBS, default 4) with the
-windows hidden (screenshots.ps1 -Hidden): you can keep working meanwhile, and the shots show the windows inactive.
+failed. It builds once, then runs the languages side by side (-Jobs at a time: $env:LAYOUT_JOBS, default 4; a packaged
+app's one at a time, since it runs one copy) with the windows hidden (screenshots.ps1 -Hidden): you can keep working
+meanwhile, and the shots show the windows inactive.
 #>
 [CmdletBinding(PositionalBinding = $false)]
 param(
@@ -54,6 +55,13 @@ $Out = [IO.Path]::GetFullPath($Out)
 
 & $screenshots -BuildOnly -Project $Project -Platform $Platform
 if ($LASTEXITCODE) { exit 1 }
+# A packaged app (WindowsPackageType MSIX) runs from its one development registration, one copy at a time: a second
+# language's run would find the first one's copy running, or close it by registering the package again.
+$packageType = (dotnet msbuild $Project -p:Platform=$Platform -p:Configuration=Debug -getProperty:WindowsPackageType | Out-String).Trim()
+if ($Jobs -gt 1 -and $Languages.Count -gt 1 -and $packageType -and $packageType -ne "None") {
+    "The app is packaged: one language at a time."
+    $Jobs = 1
+}
 
 # Each language in a PowerShell of its own (the run's settings travel in environment variables), the same one this runs
 # in. Its output is read in the console's encoding, which is the one it writes in.
