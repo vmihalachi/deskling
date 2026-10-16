@@ -1,6 +1,7 @@
 #if os(iOS)
     import DesklingShell
     import UIKit
+    import notify
 
     extension ScreenshotCapture {
         // MARK: Capture
@@ -27,6 +28,15 @@
         /// A width in points: the window narrows to it before the first shot (`prepareWindow()`), as in a Split View or
         /// Stage Manager slot, the screen's full height, compact below 678 pt (an iPad Pro 13"'s half screen).
         public static let widthVariable = "DESKLING_SCREENSHOT_WIDTH"
+
+        /// A Darwin notification name: after drawing each shot, the run prints `hold <file name>` and waits for that
+        /// notification (`xcrun simctl spawn <device> notifyutil -p <name>`), so a script can take the Simulator's own
+        /// screenshot of the settled screen (`xcrun simctl io <device> screenshot`), status bar included, which the
+        /// drawing leaves out. Without it for `holdTimeout`, the run reports that and goes on.
+        public static let holdVariable = "DESKLING_SCREENSHOT_HOLD"
+
+        /// How long a held shot waits for its notification.
+        public static let holdTimeout = Duration.seconds(120)
 
         /// Turns and narrows the key window as `DESKLING_SCREENSHOT_ORIENTATION` and `DESKLING_SCREENSHOT_WIDTH` ask,
         /// then waits for it to settle; reports what the system refused. Call it once the window is up, before the
@@ -94,7 +104,46 @@
                 report("\(shot): not written (\(error.localizedDescription))")
             }
             for problem in LayoutCheck.problems(in: window) { report("\(shot): \(problem)") }
+            if let name = ProcessInfo.processInfo.environment[holdVariable], !name.isEmpty {
+                await hold(shot, until: name)
+            }
             return settled
+        }
+
+        /// Prints `hold <shot>` once it listens for the notification `name`, then waits for it (`holdVariable`).
+        private static func hold(_ shot: String, until name: String) async {
+            let released = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+                let once = Once(continuation)
+                var token: Int32 = 0
+                guard notify_register_dispatch(name, &token, .main, { _ in once.resume(true) }) == NOTIFY_STATUS_OK else {
+                    return once.resume(false)
+                }
+                once.token = token
+                print("hold \(shot)")
+                fflush(stdout)
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Int(holdTimeout.components.seconds))) {
+                    once.resume(false)
+                }
+            }
+            if !released { report("\(shot): nothing released the hold (\(name)) in \(holdTimeout)") }
+        }
+
+        /// The first of the notification and the timeout resumes the hold and stops listening; the other does nothing,
+        /// so a later hold's registration (which may reuse the token) is left alone. Used on the main queue only.
+        private final class Once: @unchecked Sendable {
+            private var continuation: CheckedContinuation<Bool, Never>?
+            var token: Int32?
+
+            init(_ continuation: CheckedContinuation<Bool, Never>) {
+                self.continuation = continuation
+            }
+
+            func resume(_ released: Bool) {
+                guard let continuation else { return }
+                self.continuation = nil
+                if let token { notify_cancel(token) }
+                continuation.resume(returning: released)
+            }
         }
 
         /// Waits until `window` has stopped changing: a presentation finished sliding in, an image loaded, text laid

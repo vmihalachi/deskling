@@ -23,9 +23,10 @@ name or its capture kind (mac, windows, ios), null where it has none. Everything
 `capture` builds each platform once and runs them side by side: the Mac through `screens.platforms.<p>.script` (or
 Deskling's screenshots.sh), hidden, the languages `--jobs` at a time (LAYOUT_JOBS, 3); Windows in the Parallels VM
 through `windows/vm.sh check-layout` (or `vm.sh screenshots` once per language with `"vm": "screenshots"`); iOS on
-simulators of its own, one per device, each screen opened at launch by `screens.screenEnv` and shot with `simctl io`
-after `settle` seconds, the status bar at 9:41. The Mac and Windows runs check that text fits (their problems.txt);
-every platform reports a screen it didn't capture. Exits 1 when there are problems, 3 when no platform could run.
+simulators of its own, one per device, side by side, each language one launch of the app in screenshot mode
+(`mac.screenshotEnv`, as check-layout-ios.py runs it), which draws its window without the status bar; shots with an
+`env` of their own get a launch of their own. Every platform checks that text fits (its problems.txt) and reports a
+screen it didn't capture. Exits 1 when there are problems, 3 when no platform could run.
 
 `--only` takes canonical screen names; `--platforms` platform names or capture kinds. A sheet leaves out platforms
 without the screen and the ones not captured in that language. `diff` keeps a 256-bit difference hash per image, so a
@@ -58,7 +59,7 @@ THEMES = ("light", "dark")
 KINDS = ("mac", "windows", "ios")
 VM_UNAVAILABLE = 3
 DEFAULT_BASELINE = "accepted"
-LAUNCH_TIMEOUT = 180  # seconds; a simulator under load can hang a launch for good
+LAUNCH_TIMEOUT = 600  # seconds for one iOS run; a simulator under load can hang a launch for good
 # Row heights on a sheet, in pixels: desktop windows on top, devices below.
 TOP_HEIGHT, BOTTOM_HEIGHT = 760, 960
 # The language to give the simulator's region; others get <lang>_<LANG> or the region they name.
@@ -113,7 +114,6 @@ class Screens:
         self.config = config
         self.root = config.root
         self.out = config.path("screens.out") or config.root / "build" / "screens"
-        self.screen_env = section.get("screenEnv")
         self.platforms = [Platform(name, value["capture"], value) for name, value in section["platforms"].items()]
         self.list: dict[str, dict] = section["list"]
 
@@ -216,12 +216,14 @@ class Capture:
     def wanted(self, platform: Platform) -> list[tuple[str, Shot]]:
         return [(screen, shot) for screen in self.names if (shot := self.screens.shot(screen, platform))]
 
-    def collect(self, platform: Platform, language: str, raw: Path) -> int:
-        """Copies a run's shots (`<shot>-<theme>.png` in `raw`) to the canonical names; reports the missing ones."""
+    def collect(self, platform: Platform, language: str, raw: Path,
+                wanted: list[tuple[str, Shot]] | None = None) -> int:
+        """Copies a run's shots (`<shot>-<theme>.png` in `raw`) to the canonical names; reports the missing ones. Only
+        `wanted`'s when given (the shots of one iOS launch)."""
         folder = self.screens.folder(platform, language)
         folder.mkdir(parents=True, exist_ok=True)
         count = 0
-        for screen, shot in self.wanted(platform):
+        for screen, shot in self.wanted(platform) if wanted is None else wanted:
             for theme in self.themes:
                 source, target = raw / f"{shot.name}-{theme}.png", folder / f"{screen}-{theme}.png"
                 target.unlink(missing_ok=True)
@@ -373,11 +375,6 @@ class Capture:
     # iOS: one build, then a simulator of its own per device, side by side.
 
     def ios(self, platforms: list[Platform]) -> None:
-        if not self.screens.screen_env:
-            for platform in platforms:
-                for language in self.languages:
-                    self.problem(platform, language, "screens.screenEnv names no variable to open a screen with")
-            return
         log = self.log("ios")
         log.write_text("", "utf8")
         config = self.screens.config
@@ -421,54 +418,64 @@ class Capture:
         self.say(f"{platform.name}: booting {platform.settings.get('device')}")
         simctl("boot", udid)
         simctl("bootstatus", udid, "-b")
-        # Full-screen apps on an iPad: no Stage Manager windows, no Split View.
+        # The fit checks read fonts from the accessibility tree, which apps build only with accessibility on; an iPad's
+        # apps full screen, with no Stage Manager windows or Split View. Both take effect on the next boot.
+        for key in ("ApplicationAccessibilityEnabled", "AccessibilityEnabled"):
+            simctl("spawn", udid, "defaults", "write", "com.apple.Accessibility", key, "-bool", "true")
         simctl("spawn", udid, "defaults", "write", "com.apple.springboard", "SBChamoisWindowingEnabled", "-bool", "false")
         simctl("spawn", udid, "defaults", "write", "com.apple.springboard", "SBMedusaMultitaskingEnabled", "-bool", "false")
-        # The system in the run's first language, not the Mac's (which a new simulator takes): an iPad's status bar date.
-        simctl("spawn", udid, "defaults", "write", "-g", "AppleLanguages", "-array", self.languages[0])
-        simctl("spawn", udid, "defaults", "write", "-g", "AppleLocale", region(self.languages[0]))
         simctl("shutdown", udid)
         simctl("boot", udid)
         simctl("bootstatus", udid, "-b")
-        simctl("status_bar", udid, "override", "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active",
-               "--wifiBars", "3", "--cellularMode", "active", "--cellularBars", "4", "--batteryState", "discharging",
-               "--batteryLevel", "100")
         if simctl("install", udid, app):
             for language in self.languages:
                 self.problem(platform, language, f"couldn't install {app.name}; see {log}")
             return
-        settle = float(platform.settings.get("settle", 5))
-        wanted = self.wanted(platform)
-        first = True
+        # One launch draws every shot asked for; a shot with an env of its own needs a launch with it.
+        launches: dict[tuple, list[tuple[str, Shot]]] = {}
+        for screen, shot in self.wanted(platform):
+            launches.setdefault(shot.env, []).append((screen, shot))
         for language in self.languages:
-            folder = self.screens.folder(platform, language)
-            folder.mkdir(parents=True, exist_ok=True)
-            arguments = ["-AppleLanguages", f"({language})", "-AppleLocale", region(language)]
             count = 0
-            for theme in self.themes:
-                simctl("ui", udid, "appearance", theme)
-                for screen, shot in wanted:
-                    env = {f"SIMCTL_CHILD_{self.screens.screen_env}": shot.name,
-                           **{f"SIMCTL_CHILD_{k}": v for k, v in shot.env}}
-                    target = folder / f"{screen}-{theme}.png"
-                    target.unlink(missing_ok=True)
-                    launch = ["xcrun", "simctl", "launch", "--terminate-running-process", udid, bundle, *arguments]
-                    if first:  # a first launch after an install is slow
-                        self.sh(launch, log, env, timeout=LAUNCH_TIMEOUT)
-                        time.sleep(settle + 3)
-                        first = False
-                    if self.sh(launch, log, env, timeout=LAUNCH_TIMEOUT):
-                        self.problem(platform, language, f"couldn't launch {shot.name} ({screen}, {theme})")
-                        continue
-                    time.sleep(settle)
-                    if steady_screenshot(udid, target, log, platform.settings.get("display")):
-                        count += 1
-                    else:
-                        self.problem(platform, language, f"no screenshot of {shot.name} ({screen}, {theme})")
+            for number, (env, wanted) in enumerate(launches.items(), 1):
+                raw = self.screens.out / "raw" / platform.name / language / str(number)
+                if self.run_ios(platform, language, udid, bundle, wanted, dict(env), raw, log):
+                    count += self.collect(platform, language, raw, wanted)
             self.ran.add(platform.name)
             self.say(f"{platform.name} {language}: {count} shots")
-        simctl("status_bar", udid, "clear")
         simctl("shutdown", udid)
+
+    def run_ios(self, platform: Platform, language: str, udid: str, bundle: str, wanted: list[tuple[str, Shot]],
+                env: dict[str, str], raw: Path, log: Path) -> bool:
+        """One launch in screenshot mode: moves the shots it drew and its problems.txt to `raw` and reports those
+        problems; False when it drew nothing."""
+        shutil.rmtree(raw, ignore_errors=True)
+        mode = self.screens.config.get("mac.screenshotEnv") or "DESKLING_SCREENSHOT_MODE"
+        child = {f"SIMCTL_CHILD_{mode}": ",".join(dict.fromkeys(shot.name for _, shot in wanted)),
+                 **{f"SIMCTL_CHILD_{name}": value for name, value in env.items()}}
+        command = ["xcrun", "simctl", "launch", "--console-pty", "--terminate-running-process", udid, bundle,
+                   "-AppleLanguages", f"({language})", "-AppleLocale", region(language)]
+        with log.open("a", encoding="utf8") as out:
+            out.write(f"$ {' '.join(f'{k}={v}' for k, v in child.items())} {' '.join(command)}\n")
+        try:
+            done = subprocess.run(command, capture_output=True, text=True, env={**os.environ, **child},
+                                  timeout=LAUNCH_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            self.sh(["xcrun", "simctl", "terminate", udid, bundle], log, timeout=60)
+            self.problem(platform, language, f"the run didn't finish in {LAUNCH_TIMEOUT} s; see {log}")
+            return False
+        lines = [line.strip() for line in done.stdout.replace("\r", "").splitlines()]
+        with log.open("a", encoding="utf8") as out:
+            out.write("\n".join([*lines, done.stderr.strip()]).strip() + "\n")
+        # The app draws into its container's temp folder and prints that path last.
+        folders = [Path(line) for line in lines if line.startswith("/") and Path(line).is_dir()]
+        if not folders:
+            self.problem(platform, language, f"no shots were drawn (exit {done.returncode}); see {log}")
+            return False
+        raw.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(folders[-1]), raw)
+        self.problems_from(platform, language, raw, 0, log)
+        return True
 
 
 def region(language: str) -> str:
@@ -502,27 +509,6 @@ def simulator(name: str, device: str | None) -> str:
     if made.returncode:
         raise RuntimeError(f"couldn't make a {device} simulator: {made.stderr.strip()}")
     return made.stdout.strip()
-
-
-def steady_screenshot(udid: str, target: Path, log: Path, display: str | None = None, tries: int = 4) -> bool:
-    """A screenshot once two taken a second apart agree (a screen still fading in or launching gets more time)."""
-    from PIL import Image
-
-    previous = None
-    which = [f"--display={display}"] if display else []
-    for _ in range(tries):
-        with log.open("a", encoding="utf8") as out:
-            done = subprocess.run(["xcrun", "simctl", "io", udid, "screenshot", *which, str(target)], stdout=out,
-                                  stderr=subprocess.STDOUT)
-        if done.returncode or not target.is_file():
-            return False
-        with Image.open(target) as image:
-            current = dhash(image)
-        if previous is not None and distance(previous, current) <= 2:
-            return True
-        previous = current
-        time.sleep(1)
-    return target.is_file()
 
 
 def store(source: Path, target: Path, crop: bool) -> None:
