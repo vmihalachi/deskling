@@ -12,6 +12,10 @@ package and the NuGet packages together.
   `store.apple.ios.iphoneScreenshots` and `ipadScreenshots` (`apple/iphone`, `apple/ipad` by default), replaced only
   when their MD5s differ. `--only` takes `ios-text` and `ios-screenshots`, on by default with `store.apple.ios`. What's
   New is left out on a platform's first version, the Mac's too.
+- **Tools (`store/push.py`)**: with `store.apple.ios`, the `review` part sets the App Review notes on the iOS version
+  too, and `--status` reports the iOS version after the Mac's (state, build, App Review, each language's screenshots per
+  display type, empty fields) and adds what it lacks to *Still needed*. The Mac's screenshot count is now of its own
+  display type only.
 
 ## 0.10.3 - 2026-10-16
 
