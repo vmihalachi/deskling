@@ -3,7 +3,8 @@
 
 Usage (from the app's root): python3 deskling/tools/store/check.py [lang ...]
 Exits 1 on any problem. Each field is a `### Heading `field.id`` followed by a ```text block. The fields are the App
-Store's, each in-app purchase's (`store.apple.iaps`) and, when the app has `store.microsoft`, the Microsoft Store's.
+Store's, each in-app purchase's (`store.apple.iaps`), the iPhone and iPad version page's when the app has
+`store.apple.ios`, and the Microsoft Store's when it has `store.microsoft`.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from listing import MAX_LINES, OPTIONAL, Listing, load, parse  # noqa: E402
+from listing import KEYWORDS, MAX_LINES, OPTIONAL, Listing, load, parse  # noqa: E402
 
 
 def words(text):
@@ -40,7 +41,7 @@ def check(listing: Listing, fields: dict[str, str], reference: dict[str, str]) -
             for line in lines:
                 if len(line) > limit:
                     problems.append(f"{key}: {len(line)} > {limit} characters: {line}")
-        elif key == "apple.keywords":
+        elif key in KEYWORDS:
             size = len(value.encode("utf-8"))
             if size > limit:
                 problems.append(f"{key}: {size} > {limit} bytes")
@@ -68,6 +69,11 @@ def check(listing: Listing, fields: dict[str, str], reference: dict[str, str]) -
     return problems
 
 
+def sizes(fields: dict[str, str], prefix: str, label: str) -> str:
+    keywords, promo = fields.get(f"{prefix}.keywords", ""), fields.get(f"{prefix}.promo", "")
+    return f"{label}keywords {len(keywords.encode('utf-8'))}/100 bytes, {label}promo {len(promo)}/170"
+
+
 def run(listing: Listing, langs: list[str]) -> bool:
     """Prints a line per language (and its problems); True when every one is fine."""
     reference = parse(listing.dir / f"{listing.source}.md")
@@ -80,8 +86,9 @@ def run(listing: Listing, langs: list[str]) -> bool:
             continue
         fields = parse(path)
         problems = check(listing, fields, reference)
-        keywords = fields.get("apple.keywords", "")
-        summary = f"keywords {len(keywords.encode('utf-8'))}/100 bytes, promo {len(fields.get('apple.promo', ''))}/170"
+        summary = sizes(fields, "apple", "")
+        if listing.ios is not None:
+            summary += ", " + sizes(fields, "ios", "iOS ")
         if problems:
             ok = False
             print(f"{lang}: {len(problems)} problem(s) ({summary})")

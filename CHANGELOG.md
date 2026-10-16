@@ -6,12 +6,78 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-Keyboard and Narrator fixes in the Windows companion's windows (#31): the tray panel focuses its first row on every
-open and takes the arrow keys, Support opens on its ask, a tray menu cancelled from the keyboard gives the focus back to
-the notification area, WinUI's stray "Esc" tooltip is gone, and the panel, the desktop character's windows, the
-character before its first line, the quiet and active hours and their hour chips are named in the app's words. Apps can
-mark their own tray menu access keys. Additive: no API is removed, and every file format and vector is unchanged.
+The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
+(**Breaking** for its build). A Windows app with the desktop character on no longer crashes when Windows switches theme
+or contrast. The speech bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall
+clock disagree. The desktop character follows the app's appearance setting. An unpackaged Windows app (a Debug build,
+the fixture) keeps the language picked in Settings across a restart, WinUI's own words included, and a settings file
+edited by hand reads as missing values instead of stopping the launch; packaged apps are unchanged, and an app opts in
+by passing `LanguageSetting.ForApp` to `CompanionApp.Start`. Narrator hears what appears on its own (a new line in the
+bubble, the status pill's new kind of status, Support's thanks, the restart, notification and startup notes), each once
+and in the app's own words, once the bubble and the pill opt in. The companion's windows get keyboard and Narrator
+fixes: the tray panel focuses its first row on every open and takes the arrow keys, Support opens on its ask, a tray
+menu cancelled from the keyboard gives the focus back, and the windows, the character and the hours editors are named in
+the app's words; apps can mark their own tray menu access keys.
 
+- **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
+  from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
+  `net10.0-windows10.0.22000.0`, since the SDK refuses a minimum above the version built against. The companion shell
+  has only ever run on Windows 11, and Windows 10's consumer extended security updates ended on 2026-10-13. A
+  `PackageTests` in each Windows test project pins the supported OS the SDK writes into the assembly. **Breaking** for a
+  Windows app's build: it targets `net10.0-windows10.0.22000.0` or later (below that, restore fails with NU1202), and
+  sets `TargetPlatformMinVersion` and `SupportedOSPlatformVersion` to 10.0.22000.0, because the MSIX tooling writes the
+  package's `MinVersion` from `TargetPlatformMinVersion` (and `MaxVersionTested` from the target framework's version)
+  over what `Package.appxmanifest` says. sunnysays and Pagliacci have all three at 10.0.19041.0, so their packages
+  declare 10.0.19041.0 although their manifests say 10.0.22000.0; `net10.0-windows10.0.26100.0` would keep the
+  10.0.26100.0 `MaxVersionTested` their manifests name.
+- **Windows.Companion**: the desktop character's transparent backdrop ignores WinUI's backdrop configuration change,
+  which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
+  handler threw E_INVALIDARG for it, and the app ended (0xc000027b) as soon as the desktop window existed.
+- **Windows.Companion**: `SpeechBubble`'s countdown dial clamps the time left to the countdown and the ring's share to 0
+  to 1. The countdown is stamped with the model's clock and measured with the wall clock, so a clock running ahead (the
+  fixture's skip) or a time sync moving the wall clock back gave a `TrimStart` below 0, which the compositor refuses by
+  throwing: any line after the fixture's skip ended the app once the desktop character had been on.
+- **Windows.Companion**: the desktop character's stand and its bubble take the app's appearance setting, as the other
+  windows do (`DesktopCompanion.Theme`, set by `WindowsCompanionHost` when it makes the character and on every change).
+  The bubble stayed dark with the app set to Light on a dark Windows.
+- **Fixture app**: the Appearance buttons ignore the -1 index `RadioButtons` reports between two choices, which crashed
+  the fixture on every click; the apps already guarded it.
+- **Windows.Companion**: the language row works without package identity. There the override
+  (`ApplicationLanguages.PrimaryLanguageOverride`) lasts only for the process and refuses `""`, so the pick was lost
+  on restart and "Same as Windows" couldn't clear it (the note stayed, and Settings opened again showed the old
+  language). `LanguageRow` now stores the tag in the app's settings under `deskling.language`, through the new
+  `LanguageSetting` (`Deskling.Windows`), and the new optional `language` argument of `CompanionApp.Start` sets it
+  again before `Application.Start`: as the override, so `Loc.Choose` picks it, and as the process's preferred UI
+  language (`SetProcessPreferredUILanguages`), since WinUI's own words don't follow the override unpackaged. "Same as
+  Windows" removes the key; a stored tag the app no longer has is ignored; screenshot runs read none. The row keeps
+  its pick for the process instead of reading the override back, so the restart note shows only while the next start
+  would differ from this one, and a Settings window opened again shows the pick. With a package nothing changes:
+  `LanguageSetting.ForApp` gives null, Windows keeps the override and the row sets it as before.
+- **Windows.Companion**: `LanguageCopy.RestartRefused` (optional; null shows nothing, as before) is the line shown
+  under Restart when Windows refuses `AppInstance.Restart` (the app isn't in front, a restart is pending).
+- **Windows**: `LocalSettingsStore.ForApp` gives one file store per folder for the whole process, so the language
+  `CompanionApp.Start` reads and the settings the app makes share it instead of writing over each other's changes.
+- **Windows**: `FileSettingsStore`'s getters return null for a value that doesn't match the type stored with it, or
+  for a null entry (a settings file edited by hand), instead of throwing, as its contract says. The language is now
+  read in `Main`, where a throw would stop every launch.
+- **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
+  pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
+  `RestartRefused`.
+- **Windows.Companion (`SpeechBubble`)**: `Announces` (off by default) raises a polite UI Automation notification
+  with each new line while the bubble is on screen, under one activity id for every bubble, so only the latest is
+  read. The "…" shown while there's no line is hidden from UI Automation.
+- **Windows.Companion (`StatusPill`)**: `Announces` and `Kind` announce the status when its kind (a key the app
+  chooses) changes, never as the minute countdown ticks down; without a `Kind` the pill stays quiet.
+- **Windows.Companion (`SupportWindow`)**: right after the supporter purchase or a tip, focus moves to Done and
+  Narrator hears the thanks (`WelcomeLine` and `WelcomeNote`, or `TipThanksLine`).
+- **Windows.Companion (`LanguageRow`, `NotificationPermissionNote`, `LaunchAtStartupToggle`)**: the restart note, the
+  notification note and the startup "blocked" line are announced when they appear, and the Restart button, the Open
+  settings button and the toggle carry the note as their help text.
+- **Fixture**: Home's bubble and pill announce (the pill's kind is the status line with the countdown at its last
+  minute).
+- **Fixture**: Undo hides after 8 s and when pressed (`Show.WhenSet` and `Show.Has` treat x:Bind's empty string as
+  unset), the clock line collapses while it's empty, and Home and the panel show a joke's setup as the bubble's
+  header over its punchline.
 - **Windows**: `TrayIconHost` gives the focus back to the notification area (`NIM_SETFOCUS`) when a menu opened from
   the keyboard is cancelled, names its hidden window with the tooltip, and tells a click from the keyboard
   (`ByKeyboard`). `AccessKeys` (off by default) lets the menu's words carry their own access keys, a single "&" marking
@@ -31,6 +97,69 @@ mark their own tray menu access keys. Additive: no API is removed, and every fil
   from Narrator.
 - **Fixture app**: section titles are headings, the tray menu marks its access keys, and the desktop character is named
   by its label while its bubble shows the line.
+
+## 0.10.5 - 2026-10-16
+
+- **C# (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs, as the Mac's. `WindowManager.OpensHidden` opens
+  windows cloaked (the compositor draws them, so `PrintWindow` still captures them, but never on screen), out of the
+  taskbar and Alt+Tab, behind the others and without taking the focus, and `ScreenshotCapture.IsHidden`
+  (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it, also for the windows `CaptureWindow` and `CaptureFitting` make. A hidden
+  run shoots each window once its content has loaded, its images have decoded and no layout pass has run for 0.15 s
+  (5 s at most) instead of after the fixed 1.2 s, so the fixture's 16 shots take 10 s instead of 27; a run in front
+  waits as before. `ScreenshotCapture.OutputDirectory` defaults to a folder per process (`screenshots-<pid>`).
+- **Tools (`windows/screenshots.ps1`, `windows/check-layout.ps1`)**: `screenshots.ps1 -Only` runs hidden (`-Front` for
+  active windows), plus `-Hidden`, `-NoBuild` and `-BuildOnly`; each run renders into a folder of its own, removed
+  after copying, and `-Only home,settings` works unquoted. The new `check-layout.ps1` is `check-layout.sh` for the
+  WinUI app: it builds once, then runs the languages side by side (`-Jobs`, `LAYOUT_JOBS`, default 4), hidden, into
+  `<windows.dir>\build\layout-check\<language>`, and prints each failing language's problems.
+  `scripts/fixture-screenshots.ps1` takes `-Hidden`, `-Front` and `-NoBuild`.
+
+## 0.10.4 - 2026-10-16
+
+- **Swift (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs. `WindowManager.opensHidden` opens windows
+  transparent, click-through and behind the others without activating the app or turning it regular, and
+  `ScreenshotCapture.isHidden` (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it and skips the wait for a key window, so a run
+  leaves the Mac to whoever is using it; the shots show the windows inactive. `ScreenshotCapture.outputDirectory`
+  defaults to a folder per process (`screenshots-<pid>`), so several runs can go at once.
+- **Tools (`screenshots.sh`, `check-layout.sh`)**: `screenshots.sh --only` runs hidden (`--front` for key windows, as
+  `store-screenshots.sh` now passes), plus `--hidden`, `--no-build` and `--build-only`; it removes the app's run
+  folder after copying. `check-layout.sh` builds once, then runs the languages side by side (`LAYOUT_JOBS`, default
+  4), hidden, and prints each failing language's problems.
+- **Tools (`store/push.py`)**: with `store.apple.ios`, it fills a universal app's iPhone and iPad version page too: it
+  finds or creates (`--create`) the iOS version for `--version`, attaches `--build`, pushes the `ios.*` fields to its
+  languages (adding missing ones) and uploads the iPhone 6.9" and iPad 13" screenshot sets from
+  `store.apple.ios.iphoneScreenshots` and `ipadScreenshots` (`apple/iphone`, `apple/ipad` by default), replaced only
+  when their MD5s differ. `--only` takes `ios-text` and `ios-screenshots`, on by default with `store.apple.ios`. What's
+  New is left out on a platform's first version, the Mac's too.
+- **Tools (`store/push.py`)**: with `store.apple.ios`, the `review` part sets the App Review notes on the iOS version
+  too, and `--status` reports the iOS version after the Mac's (state, build, App Review, each language's screenshots per
+  display type, empty fields) and adds what it lacks to *Still needed*. The Mac's screenshot count is now of its own
+  display type only.
+
+## 0.10.3 - 2026-10-16
+
+- **Tools (`store/check.py`)**: a universal app sets `store.apple.ios` in `companion.json`, and its listing gets the
+  iPhone and iPad version page: `ios.promo`, `ios.keywords`, `ios.description` and an optional `ios.whatsnew`, checked
+  against the same limits as the Mac's (the keywords against the shared name and subtitle). `push.py` still fills the
+  Mac's page only.
+
+## 0.10.2 - 2026-10-15
+
+- **Swift, .NET (`ReminderScheduler`)**: `restore(nextFireDate:)` / `Restore(date)` picks up the next reminder an
+  earlier run scheduled, for an app the system ends between reminders (iOS, where pre-scheduled notifications fire
+  instead), so a relaunch doesn't push the reminder out by a fresh interval. It's ignored while paused, outside the
+  active hours and for a date not after now. New vectors `scheduler/restore-next-fire-date.json` and
+  `scheduler/restore-ignored.json` (op `restore`). Swift tests now cover `upcomingReminders(from:until:limit:)`.
+- **Swift, .NET (`ReminderScheduler`)**: `reminderDelivered()` / `ReminderDelivered()` marks a reminder the system
+  delivered on its own as unanswered, so `snooze` reminds again in its minutes as after one `tick()` fired. New vector
+  `scheduler/reminder-delivered-snooze.json` (op `reminderDelivered`).
+- **Swift (`DesklingShell`)**: `NotificationPoster` builds on iOS too (`openSystemSettings` opens the app's page in
+  Settings there). `replacePending(prefix:with:)` schedules `ScheduledNotification`s ahead on a calendar trigger at
+  their local wall-clock time, removing the stale ones and adding only new or changed ones; `pending(prefix:)` lists
+  them. `onAnswer` reports a `NotificationAnswer` (request id, category, action, `userInfo`) next to `onAction`, and
+  `onPresent` reports a notification shown while the app is frontmost.
+- **Tools (`l10n.py sync`)**: an app with an iPhone and iPad target sets `mac.iosScheme` in `companion.json`, and
+  `sync` builds it too (for the iOS Simulator), so strings only the iOS app shows aren't marked stale.
 
 ## 0.10.1 - 2026-10-15
 

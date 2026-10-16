@@ -115,7 +115,7 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     public IDesktopCompanion MakeDesktop(DesktopLayout layout, DesktopSize size, DesktopPosition? position, string sayActionName)
     {
         Desktop = views.DesktopCharacter is { } character
-            ? new Desktop.DesktopCompanion(character(), layout, size, position, sayActionName, trayToolTip) { MenuAccessKeys = MenuAccessKeys }
+            ? new Desktop.DesktopCompanion(character(), layout, size, position, sayActionName, trayToolTip) { MenuAccessKeys = MenuAccessKeys, Theme = theme }
             : new AbsentDesktop();
         return Desktop;
     }
@@ -126,6 +126,8 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
         Windows.Theme = theme;
         if (StatusItem is not null)
             StatusItem.Theme = theme;
+        if (Desktop is Desktop.DesktopCompanion desktop)
+            desktop.Theme = theme;
     }
 
     /// <summary>Settings › System › Notifications, where the app's switch is.</summary>

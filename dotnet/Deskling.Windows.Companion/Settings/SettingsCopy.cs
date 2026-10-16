@@ -13,10 +13,11 @@ namespace Deskling.Windows.Companion.Settings;
 public sealed record ActiveHoursCopy(string ActiveHours, string From, string To, string Days);
 
 /// <summary>
-/// The language row's words: its label, the choice that follows Windows (first in the list), and the note and button
-/// shown once the language changed, as Windows applies it at the next start.
+/// The language row's words: its label, the choice that follows Windows (first in the list), the note and button shown
+/// once the language changed, as it applies at the next start, and the line shown when Windows refuses the restart
+/// (<see cref="RestartRefused"/>: null shows nothing).
 /// </summary>
-public sealed record LanguageCopy(string Label, string SystemLanguage, string RestartNote, string Restart);
+public sealed record LanguageCopy(string Label, string SystemLanguage, string RestartNote, string Restart, string? RestartRefused = null);
 
 /// <summary>The startup toggle's label, and the line shown when Windows (the user, or a policy) blocks it.</summary>
 public sealed record LaunchAtStartupCopy(string Label, string Blocked);

@@ -9,7 +9,8 @@ namespace Deskling.Windows.Companion.Settings;
 
 /// <summary>
 /// "Notifications are off for the app in Windows' settings" with a button to them (Swift's
-/// <c>NotificationPermissionNote</c>), shown only while the permission is denied. In the look's accent text color; the
+/// <c>NotificationPermissionNote</c>), shown only while the permission is denied: Narrator hears the note when it
+/// appears on screen, and again as the button's help text. In the look's accent text color; the
 /// words are the app's and the button takes its <see cref="ButtonStyle"/>. <see cref="OnOpen"/> is the model's
 /// <c>OpenNotificationSettings</c>.
 /// </summary>
@@ -53,7 +54,10 @@ public sealed partial class NotificationPermissionNote : UserControl
         set
         {
             field = value;
+            var before = Visibility;
             Visibility = value == NotificationPermission.Denied ? Visibility.Visible : Visibility.Collapsed;
+            if (Announcer.Appears(before, Visibility))
+                Announcer.Say(text, Copy?.Text, Announcer.Note);
         }
     }
 
@@ -65,6 +69,8 @@ public sealed partial class NotificationPermissionNote : UserControl
             field = value;
             text.Text = value?.Text ?? "";
             open.Content = value?.Open;
+            // The button says why it's there: the note beside it.
+            AutomationProperties.SetHelpText(open, value?.Text ?? "");
         }
     }
 

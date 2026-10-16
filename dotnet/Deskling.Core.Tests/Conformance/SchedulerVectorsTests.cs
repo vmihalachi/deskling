@@ -157,6 +157,12 @@ public sealed class SchedulerVectorsTests
                 case "updateConfig":
                     scheduler.Update(ReadConfig(step.GetProperty("config")));
                     break;
+                case "reminderDelivered":
+                    scheduler.ReminderDelivered();
+                    break;
+                case "restore":
+                    scheduler.Restore(ConformanceSupport.Date(step.GetProperty("time").GetString()!));
+                    break;
                 case "isWithinActiveHours":
                     var asked = ConformanceSupport.Date(step.GetProperty("time").GetString()!);
                     Assert.Equal(expect.GetProperty("result").GetBoolean(), scheduler.IsWithinActiveHours(asked));

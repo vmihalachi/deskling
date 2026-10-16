@@ -32,17 +32,19 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.1")
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.5")
 ```
 
-**.NET** (10), from NuGet.org:
+**.NET** (10), from NuGet.org. `Deskling.Windows` and `Deskling.Windows.Companion` need **Windows 11**: they target
+`net10.0-windows10.0.22000.0` with `TargetPlatformMinVersion` 10.0.22000.0, so an app targets that or later (the rest
+are `net10.0` and run anywhere):
 
 ```sh
 dotnet add package Deskling.Core
 dotnet add package Deskling.Companion  # the desk companion layer
-dotnet add package Deskling.Windows   # net10.0-windows; the tray, idle and busy services
+dotnet add package Deskling.Windows   # Windows 11; the tray, idle and busy services
 dotnet add package Deskling.Companion.Shell    # a companion app's shell, platform-free (0.8)
-dotnet add package Deskling.Windows.Companion  # net10.0-windows, WinUI 3: that shell on Windows (0.8)
+dotnet add package Deskling.Windows.Companion  # Windows 11, WinUI 3: that shell on Windows (0.8)
 dotnet add package Deskling.Testing   # in test projects: fakes, fixtures, vector replays
 ```
 
@@ -58,8 +60,9 @@ The package ships no strings, product ids or window lists: the app passes them i
   `SystemPowerSource`, `SystemAudioOutput`, `AppearanceWatcher` and `ScreenLockWatcher` expose a current value and an
   `onChange` callback.
 - **Shell (macOS).** `WindowManager<MyWindow>` takes an enum conforming to `WindowID` (title, size, placement, exclusivity)
-  and a content provider; `NotificationPoster(categories:)` takes action ids with already localized titles and reports
-  `onAction(categoryID, actionID)`; `LoginItem` and
+  and a content provider; `NotificationPoster(categories:)` (also on iOS) takes action ids with already localized
+  titles and reports `onAction(categoryID, actionID)`, or `onAnswer` with the request and its `userInfo`; for an app the
+  system ends between reminders, `replacePending(prefix:with:)` schedules `ScheduledNotification`s ahead; `LoginItem` and
   `LaunchContext.launchedAsLoginItem()` cover start-at-login. `FloatingWindow(content:size:anchor:)` floats SwiftUI
   content above other windows on every Space (not full-screen ones) without activating the app: click, drag, right-click
   menu and pinch callbacks, fades, a window riding along beside it (a speech bubble), and `FloatingPlacement` for the
@@ -96,23 +99,30 @@ On `Deskling.Windows.Companion` (0.8) a WinUI 3 app is a model, its views and th
 
 ```csharp
 // Program.cs: the whole of Main (the csproj defines DISABLE_XAML_GENERATED_MAIN). One copy runs; a second launch
-// reopens it. A screenshot run claims no single instance.
+// reopens it. A screenshot run claims no single instance. Unpackaged, the language picked in Settings is kept in the
+// app's settings file and set again here (packaged, Windows keeps it and ForApp gives null).
 public static class Program
 {
     [STAThread]
-    private static void Main() => CompanionApp.Start(ScreenshotCapture.IsEnabled ? null : "example.myapp", () => new App());
+    private static void Main() =>
+        CompanionApp.Start(
+            ScreenshotCapture.IsEnabled ? null : "example.myapp",
+            () => new App(),
+            LanguageSetting.ForApp("MyApp", App.Languages));
 }
 
 // App.xaml is a <shell:CompanionApp> (xmlns:shell="using:Deskling.Windows.Companion.Shell") with XamlControlsResources.
 public partial class App : CompanionApp
 {
+    internal static readonly IReadOnlyList<string> Languages = ["en", "it"];  // its Strings folders, the default first
+
     private MyModel? model;
 
     public App() => InitializeComponent();
 
     protected override ICompanionLaunching MakeCompanion()
     {
-        Loc.UseLanguage(Loc.Choose(["en", "it"]));  // the strings and the culture, before anything says a word
+        Loc.UseLanguage(Loc.Choose(Languages));  // the strings and the culture, before anything says a word
         CompanionLook.Current = new CompanionLook(MyPalette.Value);  // then the look: every control paints from it
         var host = new WindowsCompanionHost<MyWindow>(
             new CompanionViews<MyWindow>(MyModel.Spec, id => MyViews.Window(model!, id), () => new MyPanel(model!))
@@ -163,7 +173,7 @@ cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell'
 cd dotnet && dotnet test Deskling.Testing.Tests     # the mocks, conformance helpers and fixtures, anywhere
 cd dotnet && dotnet test Deskling.Windows.Companion.Tests # Windows: the shell's Windows half
 dotnet run --project dotnet/Fixture.App         # Windows: the fixture app, a companion on the fixture bank
-scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark
+scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark (-Only home: hidden, a few seconds)
 python3 tools/tests/run.py                      # the tools' tests
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
@@ -173,8 +183,10 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.10.1 && git push --tags` (or Actions → Release → Run workflow with the version, which
-creates the tag on master) runs `release.yml`: it packs the NuGet packages, pushes them to NuGet.org through
+One tag versions both sides, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
+`release.yml`, which gives the entries under *Unreleased* the next version (`scripts/release.sh`), commits the bump and tags
+it. By hand, `git tag v0.10.5 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
+on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
 username; without them it says so and attaches the packages to the release instead) and drafts a GitHub release from

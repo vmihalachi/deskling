@@ -221,9 +221,10 @@ Differences from the brief, and what was found:
   designator goes first where the pattern puts it first.
 - **The language row is a list in the app,** as in mybackhurts: Windows has no per-app language page for every app,
   where the Mac has one. The list has Windows' language first, then each of the app's in its own words, through the
-  Windows App SDK's `ApplicationLanguages.PrimaryLanguageOverride` (packaged or not). A restart note and button show
-  once it changes; `OnRestart` is `AppInstance.Restart` unless the app sets it. An unknown tag shows as itself
-  (`predefinedOnly`).
+  Windows App SDK's `ApplicationLanguages.PrimaryLanguageOverride` (packaged or not; unpackaged, the override lasts
+  only for the process, so since #28 the pick is kept in the app's settings and set again at start). A restart note
+  and button show once it changes; `OnRestart` is `AppInstance.Restart` unless the app sets it. An unknown tag shows
+  as itself (`predefinedOnly`).
 - **Startup** is the package's startup task (`StartupService`). Without package identity (the fixture) the toggle reads
   off and can't be turned on. When Windows refuses, a line in the accent text says where to turn it back on.
 - **The shortcut recorder** is mybackhurts' over `SayShortcut`, with Swift's `OnCaptureStarted` and `OnCaptureEnded`
