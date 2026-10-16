@@ -270,8 +270,10 @@ def _rel(config: Config, path: Path) -> str:
 
 
 def _git(folder: Path, *args: str) -> subprocess.CompletedProcess:
-    """git in `folder`'s repository, whichever repository a hook exported (`git_env`)."""
-    return subprocess.run(["git", "-C", str(folder), *args], capture_output=True, text=True, env=git_env())
+    """git in `folder`'s repository, whichever repository a hook exported (`git_env`). Its output is UTF-8 whatever the
+    locale (cp1252 on a Western Windows)."""
+    return subprocess.run(["git", "-C", str(folder), *args], capture_output=True, text=True, encoding="utf8",
+                          env=git_env())
 
 
 def _tail(result: subprocess.CompletedProcess, lines: int = 15) -> str:
@@ -492,11 +494,13 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     changed = [f"{pin.label}: {pin.version} → {target}"]
     tool = config.get("landing.tool")
     where = _rel(config, folder)
-    if not tool or not shutil.which(tool):
+    found = shutil.which(tool) if tool else None
+    if not found:
         return changed, [f"update the lockfile: `{tool or 'npm'} install` in {where}"]
     if dirty:
         return changed, [f"{where} has uncommitted dependency changes, so the lockfile is yours: `{tool} install` there"]
-    result = subprocess.run([tool, "install"], cwd=folder, capture_output=True, text=True)
+    # The path `which` found: on Windows the tool is a .cmd (pnpm.cmd, npm.cmd), which the bare name doesn't start.
+    result = subprocess.run([found, "install"], cwd=folder, capture_output=True, text=True)
     if result.returncode:
         for file, data in originals.items():
             file.write_bytes(data)
@@ -678,8 +682,9 @@ def link(config: Config, checkout: Path | None = None) -> int:
     edits: list[_LinkEdit] = []
     spec = config.path("mac.projectSpec", "mac.dir")
     if spec and spec.is_file():
-        match = re.search(r"^(?P<indent>[ \t]+)url:[ \t]*\S*(?i:deskling)\S*[ \t]*\n(?P=indent)"
-                          r"(?:exactVersion|exact|version|from|minorVersion|majorVersion):[ \t]*\S+[ \t]*$",
+        # \r?: a checkout with CRLF line endings (Windows, core.autocrlf); the version line keeps its \r.
+        match = re.search(r"^(?P<indent>[ \t]+)url:[ \t]*\S*(?i:deskling)\S*[ \t]*\r?\n(?P=indent)"
+                          r"(?:exactVersion|exact|version|from|minorVersion|majorVersion):[ \t]*\S+[ \t]*(?=\r?$)",
                           read_text(spec), re.M)
         if not match:
             raise PinError(f"{_rel(config, spec)}: no Deskling package with a url and a version to switch")

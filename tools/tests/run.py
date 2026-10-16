@@ -22,9 +22,18 @@ def main(argv: list[str]) -> int:
     for path in sorted(HERE.glob("test_*.py")):
         if argv and not any(word in path.stem for word in argv):
             continue
-        suite.addTests(loader.loadTestsFromName(path.stem))
+        try:
+            suite.addTests(loader.loadTestsFromName(path.stem))
+        except unittest.SkipTest as skip:  # a file that can't run on this OS (test_vm on Windows)
+            suite.addTest(skipped(path.stem, str(skip)))
     result = unittest.TextTestRunner(verbosity=1).run(suite)
     return 0 if result.wasSuccessful() else 1
+
+
+def skipped(module: str, reason: str) -> unittest.TestCase:
+    """One skipped test standing for a test file that skipped itself as it loaded, so the run reports it and why."""
+    case = type(module, (unittest.TestCase,), {"test_file": lambda self: self.skipTest(reason)})
+    return case("test_file")
 
 
 if __name__ == "__main__":

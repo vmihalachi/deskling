@@ -929,6 +929,14 @@ def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _same(path: Path, current: bytes, data: bytes) -> bool:
+    """Whether the file on disk holds `data`: a text output also when the checkout turned its LFs into CRLFs (Windows,
+    core.autocrlf), which git takes back out on commit. The PNGs compare byte for byte."""
+    if path.suffix != ".png":
+        current = current.replace(b"\r\n", b"\n")
+    return _digest(current) == _digest(data)
+
+
 # MARK: Review sheet
 
 PAPER, NIGHT, BAR_LIGHT, BAR_DARK = "#FFF8E7", "#1F1A14", "#ECECEC", "#2A2A2A"
@@ -1179,16 +1187,16 @@ def write(args) -> int:
     stale = []
     for path, data in files.items():
         current = path.read_bytes() if path.exists() else None
-        if current is not None and _digest(current) == _digest(data):
+        if current is not None and _same(path, current, data):
             continue
         if args.check:
             stale.append(path)
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-            print(f"wrote {path}")
+            print(f"wrote {path.as_posix()}")
     for path in stale:
-        print(f"{path} is stale: run tools/character.py and commit the result", file=sys.stderr)
+        print(f"{path.as_posix()} is stale: run tools/character.py and commit the result", file=sys.stderr)
     return 1 if stale else 0
 
 

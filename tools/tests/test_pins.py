@@ -17,7 +17,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
-from support import TOOLS, fixture_app  # noqa: E402
+from support import NO_SHEBANG, TOOLS, WINDOWS, fixture_app  # noqa: E402
 
 RESOLVED = "macos/FixtureCore/Package.resolved"
 PROJECT_RESOLVED = "macos/Fixture.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
@@ -190,6 +190,7 @@ class BumpTests(PinsTestCase):
         code, out = self.cli("bump", "0.6.0")
         self.assertIn("@deskling/landing stays at 0.5.1", out)
 
+    @unittest.skipIf(WINDOWS, NO_SHEBANG)
     def test_the_landing_tool_updates_the_lockfile_or_everything_goes_back(self):
         tool = self.root.parent / "fake-vp"
         landing = self.landing(str(tool))
