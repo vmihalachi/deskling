@@ -11,7 +11,8 @@ package and the NuGet packages together.
   that needs package identity): it registers the build output as a development package (removing the app's other
   development registrations, never a Store install), starts the app in it and passes the run's settings as
   `DESKLING_SCREENSHOT_…=value` arguments, since a start in a package carries no environment. It finds `companion.json`
-  above its own folder too, so an app's wrapper runs from anywhere, and gives a run 10 minutes instead of 5.
+  above its own folder too, so an app's wrapper runs from anywhere, gives a run 10 minutes instead of 5, and shows
+  the build's errors when it fails instead of only saying so.
 - **Windows.Companion (`ScreenshotCapture`)**: a run's settings come from the environment or, for a packaged app, from
   `NAME=value` arguments (`Setting`).
 - **Windows (`Formats`)**: `MonthDayYear` ("Oct 5, 2026") and `WeekdayMonthDayYear` ("Mon, Oct 5, 2026"), ordered for

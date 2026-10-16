@@ -99,16 +99,17 @@ if ($Configuration -eq "Release") {
             try { Remove-Item -LiteralPath $artifacts -Recurse -Force -ErrorAction Stop }
             catch { if ($try -ge 60) { throw }; Start-Sleep -Seconds 1 }
         }
-        dotnet publish $Project -c Release -p:Platform=$Platform -p:WindowsPackageType=None -p:ScreenshotMode=true --artifacts-path $artifacts -o $publish -v quiet -nologo | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "The app didn't publish." }
+        # The output only shows when it failed: the compiler's errors, not just that it did.
+        $log = dotnet publish $Project -c Release -p:Platform=$Platform -p:WindowsPackageType=None -p:ScreenshotMode=true --artifacts-path $artifacts -o $publish -v quiet -nologo
+        if ($LASTEXITCODE -ne 0) { $log | Write-Host; throw "The app didn't publish." }
     }
     $folder = $publish
     $assembly = (dotnet msbuild $Project -getProperty:AssemblyName).Trim()
 }
 else {
     if (-not $NoBuild) {
-        dotnet build $Project -p:Platform=$Platform -c Debug -v quiet -nologo | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "The app didn't build." }
+        $log = dotnet build $Project -p:Platform=$Platform -c Debug -v quiet -nologo
+        if ($LASTEXITCODE -ne 0) { $log | Write-Host; throw "The app didn't build." }
     }
     # One evaluation for all three (each costs about a second).
     $properties = (dotnet msbuild $Project -p:Platform=$Platform -p:Configuration=Debug -getProperty:TargetDir -getProperty:AssemblyName -getProperty:WindowsPackageType | Out-String | ConvertFrom-Json).Properties
