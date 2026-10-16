@@ -32,7 +32,7 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.3")
+.package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.5")
 ```
 
 **.NET** (10), from NuGet.org:
@@ -164,7 +164,7 @@ cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell'
 cd dotnet && dotnet test Deskling.Testing.Tests     # the mocks, conformance helpers and fixtures, anywhere
 cd dotnet && dotnet test Deskling.Windows.Companion.Tests # Windows: the shell's Windows half
 dotnet run --project dotnet/Fixture.App         # Windows: the fixture app, a companion on the fixture bank
-scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark
+scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark (-Only home: hidden, a few seconds)
 python3 tools/tests/run.py                      # the tools' tests
 scripts/verify.sh                               # the checks that apply to what you changed
 ```
@@ -174,8 +174,10 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides. `git tag v0.10.3 && git push --tags` (or Actions → Release → Run workflow with the version, which
-creates the tag on master) runs `release.yml`: it packs the NuGet packages, pushes them to NuGet.org through
+One tag versions both sides, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
+`release.yml`, which gives the entries under *Unreleased* the next version (`scripts/release.sh`), commits the bump and tags
+it. By hand, `git tag v0.10.5 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
+on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
 username; without them it says so and attaches the packages to the release instead) and drafts a GitHub release from

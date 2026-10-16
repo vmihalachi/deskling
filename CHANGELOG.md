@@ -12,12 +12,43 @@ A Windows app with the desktop character on no longer crashes when Windows switc
   which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
   handler threw E_INVALIDARG for it, and the app ended (0xc000027b) as soon as the desktop window existed.
 
+## 0.10.5 - 2026-10-16
+
+- **C# (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs, as the Mac's. `WindowManager.OpensHidden` opens
+  windows cloaked (the compositor draws them, so `PrintWindow` still captures them, but never on screen), out of the
+  taskbar and Alt+Tab, behind the others and without taking the focus, and `ScreenshotCapture.IsHidden`
+  (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it, also for the windows `CaptureWindow` and `CaptureFitting` make. A hidden
+  run shoots each window once its content has loaded, its images have decoded and no layout pass has run for 0.15 s
+  (5 s at most) instead of after the fixed 1.2 s, so the fixture's 16 shots take 10 s instead of 27; a run in front
+  waits as before. `ScreenshotCapture.OutputDirectory` defaults to a folder per process (`screenshots-<pid>`).
+- **Tools (`windows/screenshots.ps1`, `windows/check-layout.ps1`)**: `screenshots.ps1 -Only` runs hidden (`-Front` for
+  active windows), plus `-Hidden`, `-NoBuild` and `-BuildOnly`; each run renders into a folder of its own, removed
+  after copying, and `-Only home,settings` works unquoted. The new `check-layout.ps1` is `check-layout.sh` for the
+  WinUI app: it builds once, then runs the languages side by side (`-Jobs`, `LAYOUT_JOBS`, default 4), hidden, into
+  `<windows.dir>\build\layout-check\<language>`, and prints each failing language's problems.
+  `scripts/fixture-screenshots.ps1` takes `-Hidden`, `-Front` and `-NoBuild`.
+
+## 0.10.4 - 2026-10-16
+
+- **Swift (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs. `WindowManager.opensHidden` opens windows
+  transparent, click-through and behind the others without activating the app or turning it regular, and
+  `ScreenshotCapture.isHidden` (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it and skips the wait for a key window, so a run
+  leaves the Mac to whoever is using it; the shots show the windows inactive. `ScreenshotCapture.outputDirectory`
+  defaults to a folder per process (`screenshots-<pid>`), so several runs can go at once.
+- **Tools (`screenshots.sh`, `check-layout.sh`)**: `screenshots.sh --only` runs hidden (`--front` for key windows, as
+  `store-screenshots.sh` now passes), plus `--hidden`, `--no-build` and `--build-only`; it removes the app's run
+  folder after copying. `check-layout.sh` builds once, then runs the languages side by side (`LAYOUT_JOBS`, default
+  4), hidden, and prints each failing language's problems.
 - **Tools (`store/push.py`)**: with `store.apple.ios`, it fills a universal app's iPhone and iPad version page too: it
   finds or creates (`--create`) the iOS version for `--version`, attaches `--build`, pushes the `ios.*` fields to its
   languages (adding missing ones) and uploads the iPhone 6.9" and iPad 13" screenshot sets from
   `store.apple.ios.iphoneScreenshots` and `ipadScreenshots` (`apple/iphone`, `apple/ipad` by default), replaced only
   when their MD5s differ. `--only` takes `ios-text` and `ios-screenshots`, on by default with `store.apple.ios`. What's
   New is left out on a platform's first version, the Mac's too.
+- **Tools (`store/push.py`)**: with `store.apple.ios`, the `review` part sets the App Review notes on the iOS version
+  too, and `--status` reports the iOS version after the Mac's (state, build, App Review, each language's screenshots per
+  display type, empty fields) and adds what it lacks to *Still needed*. The Mac's screenshot count is now of its own
+  display type only.
 
 ## 0.10.3 - 2026-10-16
 

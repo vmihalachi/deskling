@@ -21,7 +21,8 @@ With `store.apple.ios` (a universal app), the iPhone and iPad version page too (
   ios-text         the iOS version's page from the listing's `ios.*` fields (App Information is shared with the Mac)
   ios-screenshots  the iPhone 6.9" and iPad 13" sets, from `store.apple.ios.iphoneScreenshots`/<lang>/*.png and
                    `ios.ipadScreenshots`/<lang>/*.png
-The iOS version for --version is found or created (--create) like the Mac's, and --build is attached to it too.
+The iOS version for --version is found or created (--create) like the Mac's, and --build is attached to it too; the
+`review` part sets its App Review notes as well, and --status reports it (screenshots per display type) after the Mac's.
 A field the listing doesn't have is left alone, and What's New is left out on a platform's first version (App Store
 Connect refuses it there). Languages missing from App Store Connect
 are added (App Information first: App Store Connect then adds them to the version, which is filled in rather than added
@@ -55,6 +56,7 @@ EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADAT
 PARTS = ("text", "iap", "screenshots", "review", "previews", "ios-text", "ios-screenshots")
 IPHONE_SCREENSHOTS = "APP_IPHONE_67"  # the 6.9" display (App Store Connect's name predates it)
 IPAD_SCREENSHOTS = "APP_IPAD_PRO_3GEN_129"  # the 13" display
+SCREENSHOT_NAMES = {IPHONE_SCREENSHOTS: 'iPhone 6.9"', IPAD_SCREENSHOTS: 'iPad 13"'}
 
 
 class Page(NamedTuple):
@@ -472,8 +474,8 @@ class Sync:
                 self.api.update(item_kind, item["id"], {"uploaded": True, "sourceFileChecksum": md5(f)})
             self.step(f"{locale}: upload {f.name}", upload)
 
-    def review(self, version):
-        print("App Review")
+    def review(self, version, page=None):
+        print(("" if page is None or page == self.mac else f"{page.name} ") + "App Review")
         if not self.listing.review_notes.exists():
             self.log(f"  no {self.listing.review_notes.name} in {self.listing.dir.name}/: the notes are left alone")
             return
@@ -511,44 +513,14 @@ class Sync:
 
 
 def status(listing: Listing, api, version_string):
-    """Prints what App Store Connect has for the version and what a submission still needs. Reads only."""
+    """Prints what App Store Connect has for the version (the Mac's, and the iOS one with `store.apple.ios`) and what a
+    submission still needs. Reads only."""
     missing = []
-    found = api.get_all(f"/v1/apps/{listing.app_id}/appStoreVersions?filter[platform]={listing.platform}"
-                        f"&filter[versionString]={version_string}")
-    if not found:
+    if not status_version(listing, api, version_string, mac_page(listing), missing):
         sys.exit(f"No macOS version {version_string} in App Store Connect.")
-    version = found[0]
-    attrs = version["attributes"]
-    print(f"Version {version_string}: {attrs.get('appVersionState') or attrs.get('appStoreState')}, "
-          f"release {attrs.get('releaseType')}, copyright {attrs.get('copyright')!r}")
-    build = api.request("GET", f"/v1/appStoreVersions/{version['id']}/build").get("data")
-    print(f"  build: {build['attributes']['version'] if build else 'none attached'}")
-    if not build:
-        missing.append("a build on the version page")
-    builds = api.get_all(f"/v1/builds?filter[app]={listing.app_id}&filter[preReleaseVersion.platform]={listing.platform}"
-                         "&sort=-uploadedDate")
-    print("  builds: " + ", ".join(f"{b['attributes']['version']} {b['attributes'].get('processingState')}"
-                                   for b in builds[:6]))
-    review = api.request("GET", f"/v1/appStoreVersions/{version['id']}/appStoreReviewDetail").get("data")
-    if review:
-        r = review["attributes"]
-        contact = all(r.get(k) for k in ("contactFirstName", "contactLastName", "contactPhone", "contactEmail"))
-        print(f"  App Review: contact {'complete' if contact else 'incomplete'}, notes "
-              f"{len(r.get('notes') or '')} characters, sign-in {'required' if r.get('demoAccountRequired') else 'not required'}")
-        if not contact:
-            missing.append("the App Review contact (name, phone, email)")
-    else:
-        print("  App Review: no details yet")
-        missing.append("the App Review contact (name, phone, email)")
-    for loc in api.get_all(f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations"):
-        sets = api.get_all(f"/v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets")
-        shots = sum(len(api.get_all(f"/v1/appScreenshotSets/{s['id']}/appScreenshots")) for s in sets)
-        a = loc["attributes"]
-        empty = [k for k in ("description", "keywords", "supportUrl") if not a.get(k)]
-        print(f"  {a['locale']}: {shots} screenshots" + (f", empty: {', '.join(empty)}" if empty else ""))
-        if not shots:
-            missing.append(f"{a['locale']} screenshots")
-        missing += [f"{a['locale']} {k}" for k in empty]
+    if listing.ios is not None and not status_version(listing, api, version_string, ios_page(listing), missing):
+        print(f"No iOS version {version_string} yet (push.py --create adds it)")
+        missing.append(f"the iOS version {version_string}")
     products = {p["attributes"]["productId"]: p for p in api.get_all(f"/v1/apps/{listing.app_id}/inAppPurchasesV2")}
     for product_id in listing.iaps:
         product = products.get(product_id)
@@ -565,6 +537,52 @@ def status(listing: Listing, api, version_string):
         if shot_state in ("none", "FAILED"):
             missing.append(f"{product_id} review screenshot")
     print("\nStill needed: " + ("; ".join(missing) if missing else "nothing found missing"))
+
+
+def status_version(listing: Listing, api, version_string, page, missing):
+    """Prints one platform's version: its state, build, App Review details and, per language, its screenshots per
+    display type and empty fields; adds what's missing to `missing`. False when App Store Connect has no such version."""
+    found = api.get_all(f"/v1/apps/{listing.app_id}/appStoreVersions?filter[platform]={page.platform}"
+                        f"&filter[versionString]={version_string}")
+    if not found:
+        return False
+    version = found[0]
+    attrs = version["attributes"]
+    tag = "" if page == mac_page(listing) else f"{page.name} "  # the Mac's lines read as before
+    print(f"{tag}Version {version_string}: {attrs.get('appVersionState') or attrs.get('appStoreState')}, "
+          f"release {attrs.get('releaseType')}, copyright {attrs.get('copyright')!r}")
+    build = api.request("GET", f"/v1/appStoreVersions/{version['id']}/build").get("data")
+    print(f"  build: {build['attributes']['version'] if build else 'none attached'}")
+    if not build:
+        missing.append(f"a build on the {tag}version page")
+    builds = api.get_all(f"/v1/builds?filter[app]={listing.app_id}&filter[preReleaseVersion.platform]={page.platform}"
+                         "&sort=-uploadedDate")
+    print("  builds: " + ", ".join(f"{b['attributes']['version']} {b['attributes'].get('processingState')}"
+                                   for b in builds[:6]))
+    review = api.request("GET", f"/v1/appStoreVersions/{version['id']}/appStoreReviewDetail").get("data")
+    if review:
+        r = review["attributes"]
+        contact = all(r.get(k) for k in ("contactFirstName", "contactLastName", "contactPhone", "contactEmail"))
+        print(f"  App Review: contact {'complete' if contact else 'incomplete'}, notes "
+              f"{len(r.get('notes') or '')} characters, sign-in {'required' if r.get('demoAccountRequired') else 'not required'}")
+        if not contact:
+            missing.append(f"the {tag}App Review contact (name, phone, email)")
+    else:
+        print("  App Review: no details yet")
+        missing.append(f"the {tag}App Review contact (name, phone, email)")
+    for loc in api.get_all(f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations"):
+        shots = {}
+        for s in api.get_all(f"/v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets"):
+            kind = s["attributes"].get("screenshotDisplayType")
+            shots[kind] = shots.get(kind, 0) + len(api.get_all(f"/v1/appScreenshotSets/{s['id']}/appScreenshots"))
+        a = loc["attributes"]
+        empty = [k for k in ("description", "keywords", "supportUrl") if not a.get(k)]
+        counts = [(SCREENSHOT_NAMES.get(t, ""), shots.get(t, 0)) for _, t in page.screenshots]
+        print(f"  {tag}{a['locale']}: " + ", ".join(f"{n} {name + ' ' if name else ''}screenshots" for name, n in counts)
+              + (f", empty: {', '.join(empty)}" if empty else ""))
+        missing += [f"{tag}{a['locale']} {name + ' ' if name else ''}screenshots" for name, n in counts if not n]
+        missing += [f"{tag}{a['locale']} {k}" for k in empty]
+    return True
 
 
 def main():
@@ -616,11 +634,14 @@ def main():
     if "previews" in parts:
         print("Previews")
         sync.previews(localizations)
-    if parts & {"ios-text", "ios-screenshots"}:
+    if sync.ios is not None and parts & {"ios-text", "ios-screenshots", "review"}:
         print("iOS")
         ios_version = sync.version(args.version, args.create, args.build, sync.ios)
         if ios_version is None:
             sys.exit("\n".join(sync.problems))
+        if "review" in parts:
+            sync.review(ios_version, sync.ios)
+    if parts & {"ios-text", "ios-screenshots"}:
         print("iOS text")
         ios_localizations = sync.text(args.langs, ios_version, args.extra_locales, write="ios-text" in parts,
                                       page=sync.ios)

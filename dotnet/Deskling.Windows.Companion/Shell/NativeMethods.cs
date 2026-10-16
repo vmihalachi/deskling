@@ -68,4 +68,30 @@ internal static partial class NativeMethods
 
     /// <summary>The pointer's position in screen pixels, or the origin when it can't be read.</summary>
     public static (int X, int Y) Cursor() => GetCursorPos(out var point) ? (point.X, point.Y) : (0, 0);
+
+    private const uint DWMWA_CLOAK = 13;
+    private static readonly nint HWND_BOTTOM = 1;
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOACTIVATE = 0x0010;
+
+    [LibraryImport("dwmapi.dll")]
+    private static partial int DwmSetWindowAttribute(nint hwnd, uint attribute, in int value, uint size);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetWindowPos(nint hwnd, nint after, int x, int y, int width, int height, uint flags);
+
+    /// <summary>
+    /// Shows the window where nobody sees it: cloaked (the compositor still draws it, so <c>PrintWindow</c> captures it,
+    /// but never puts it on screen), out of the taskbar and Alt+Tab, behind every other window and without taking the focus.
+    /// </summary>
+    public static void ShowHidden(AppWindow window)
+    {
+        var hwnd = Microsoft.UI.Win32Interop.GetWindowFromWindowId(window.Id);
+        DwmSetWindowAttribute(hwnd, DWMWA_CLOAK, 1, sizeof(int));
+        window.IsShownInSwitchers = false;
+        window.Show(activateWindow: false);
+        SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+    }
 }

@@ -4,7 +4,9 @@ mybackhurts' test_push.py), import.py's Partner Center folder."""
 from __future__ import annotations
 
 import base64
+import contextlib
 import csv
+import io
 import json
 import os
 import subprocess
@@ -64,7 +66,10 @@ class FakeApi:
 
     def request(self, method, path, body=None):
         self.calls.append((method, path))
-        if method == "GET" and path.endswith("/build"):
+        if method == "GET" and path.endswith("/appStoreReviewDetail"):
+            details = self.children("appStoreReviewDetails", path.rsplit("/", 2)[1])
+            return {"data": details[0] if details else None}
+        if method == "GET":
             return {"data": None}
         return None
 
@@ -356,6 +361,63 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(sync.problems, [])
         self.assertNotIn("PATCH", [c[0] for c in api.calls], "no review note set")
         self.assertFalse([c for c in api.calls if "appStoreReviewScreenshot" in str(c) or "ReviewDetail" in str(c)])
+
+    def add_ios_version(self, api):
+        return api.add("appStoreVersions", {"platform": "IOS", "versionString": "1.0.2",
+                                            "appVersionState": "PREPARE_FOR_SUBMISSION"}, self.listing.app_id)
+
+    def test_the_review_notes_go_on_the_ios_version_too(self):
+        self.enable_ios()
+        api, mac = self.setup_app()
+        ios = self.add_ios_version(api)
+        api.add("appStoreReviewDetails", {"notes": "old"}, ios["id"])
+        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        with contextlib.redirect_stdout(io.StringIO()):
+            sync.review(mac)
+            sync.review(ios, sync.ios)
+        self.assertEqual(sync.problems, [])
+        notes = push.review_notes(self.listing)
+        for version in (mac, ios):
+            self.assertEqual([d["attributes"]["notes"] for d in api.children("appStoreReviewDetails", version["id"])],
+                             [notes])
+        self.assertIn(("POST", "appStoreReviewDetails", None), api.calls, "the Mac's is created")
+        self.assertIn(("PATCH", "appStoreReviewDetails", ("notes",)), api.calls, "the iOS one is updated")
+
+        api.calls.clear()
+        with contextlib.redirect_stdout(io.StringIO()):
+            sync.review(ios, sync.ios)
+        self.assertEqual([c for c in api.calls if c[0] != "GET"], [], "a second run changes nothing")
+
+    def status(self, api):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            push.status(self.listing, api, "1.0.2")
+        return out.getvalue()
+
+    def test_status_reports_the_ios_version_per_display_type(self):
+        api, mac = self.setup_app()
+        self.assertNotIn("iOS", self.status(api), "only with store.apple.ios")
+        self.enable_ios()
+        self.assertIn("Still needed: ", self.status(api))
+        self.assertIn("the iOS version 1.0.2", self.status(api))
+
+        ios = self.add_ios_version(api)
+        api.add("appStoreReviewDetails", {"notes": "x", "contactFirstName": "A", "contactLastName": "B",
+                                          "contactPhone": "1", "contactEmail": "a@b"}, ios["id"])
+        en = api.add("appStoreVersionLocalizations", {"locale": "en-US", "description": "d", "keywords": "k"}, ios["id"])
+        phone = api.add("appScreenshotSets", {"screenshotDisplayType": push.IPHONE_SCREENSHOTS}, en["id"])
+        api.add("appScreenshots", {"fileName": "1.png"}, phone["id"])
+        out = self.status(api)
+        self.assertIn("iOS Version 1.0.2: PREPARE_FOR_SUBMISSION", out)
+        self.assertIn('iOS en-US: 1 iPhone 6.9" screenshots, 0 iPad 13" screenshots, empty: supportUrl', out)
+        needed = out.split("Still needed: ")[1]
+        self.assertIn("a build on the iOS version page", needed)
+        self.assertIn('iOS en-US iPad 13" screenshots', needed)
+        self.assertIn("iOS en-US supportUrl", needed)
+        self.assertNotIn('iOS en-US iPhone 6.9" screenshots', needed)
+        self.assertNotIn("iOS App Review contact", needed)
+        self.assertIn("the App Review contact", needed, "the Mac's has no details")
+        self.assertIn("en-US: 0 screenshots", out, "the Mac's lines read as before")
 
     # MARK: import.py
 
