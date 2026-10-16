@@ -6,12 +6,15 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-- **Windows.Companion (`DesktopWindow`)**: touch works on the desktop character and its bubble with the mouse pointer
-  elsewhere. A tap fell through to the window behind, since the click-through followed the mouse pointer, which a
-  finger doesn't move; now the window takes input while the mouse pointer is off it (a touch on its undrawn corners
-  lands on it too, and mouse clicks still pass through around the character). A press goes by its own pointer, so a
-  one-finger drag moves the character instead of saying a line, and a pinch or a second finger is never a click: a
-  pinch steps the size without a line.
+- **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: touch works on the desktop character and its bubble with
+  the mouse pointer elsewhere. A tap fell through to the window behind, since the click-through followed the mouse
+  pointer, which a finger doesn't move. Now, while the mouse pointer is off it, the window takes input within a window
+  region: what is drawn (`DrawnBounds`: the character's parts and its shadow, from `CharacterCanvas.DrawnBounds`) grown
+  by 8 DIPs and held 3 s, so a finger lands on the character and next to it, and around it still passes through. A
+  region clips the drawing too, so a pose that moves past it between two updates (100 ms) is cut until the next; a
+  window without `DrawnBounds` (the bubble) takes touch over its whole frame. Mouse clicks pass through around the
+  character as before. A press goes by its own pointer, so a one-finger drag moves the character instead of saying a
+  line, and a pinch or a second finger is never a click: a pinch steps the size without a line.
 
 ## 0.11.4 - 2026-10-16
 

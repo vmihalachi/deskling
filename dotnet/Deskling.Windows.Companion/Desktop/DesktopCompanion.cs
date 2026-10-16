@@ -94,7 +94,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         this.position = position;
         stand = new DesktopStand(characterView, layout, sayActionName, () => OnSay?.Invoke());
         var windowSize = layout.WindowSize(size);
-        character = new DesktopWindow(stand, windowSize, Anchor(position, windowSize)) { HitTest = stand.IsDrawnAt };
+        character = new DesktopWindow(stand, windowSize, Anchor(position, windowSize)) { HitTest = stand.IsDrawnAt, DrawnBounds = stand.DrawnBounds };
         bubbleRoot = new Grid
         {
             Padding = new Thickness(layout.BubbleMargin),
@@ -362,6 +362,28 @@ internal sealed partial class DesktopStand : Grid
         if (canvases.Length > 0)
             return canvases.Any(c => c.IsDrawnAt(point));
         return XamlRoot is not null && VisualTreeHelper.FindElementsInHostCoordinates(point, characterView).Any();
+    }
+
+    /// <summary>
+    /// Boxes (the window's content, DIPs) that hold everything the stand draws: the canvases' parts, or the whole view when
+    /// it has no canvas, and the contact shadow.
+    /// </summary>
+    public IReadOnlyList<FigureRect> DrawnBounds()
+    {
+        if (XamlRoot is null)
+            return [];
+        var canvases = Canvases(characterView).ToArray();
+        List<FigureRect> boxes = canvases.Length > 0 ? [.. canvases.SelectMany(c => c.DrawnBounds())] : [Box(characterView)];
+        boxes.Add(Box(shadow));
+        return boxes;
+    }
+
+    private static FigureRect Box(UIElement element)
+    {
+        var box = element
+            .TransformToVisual(null)
+            .TransformBounds(new global::Windows.Foundation.Rect(0, 0, element.ActualSize.X, element.ActualSize.Y));
+        return new FigureRect(box.X, box.Y, box.Width, box.Height);
     }
 
     /// <summary>The character's name, as its canvas tells Narrator (its line, or the app's label).</summary>
