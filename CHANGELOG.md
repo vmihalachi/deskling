@@ -6,11 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-A Windows app with the desktop character on no longer crashes when Windows switches theme or contrast.
+A Windows app with the desktop character on no longer crashes when Windows switches theme or contrast. The speech
+bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall clock disagree.
 
 - **Windows.Companion**: the desktop character's transparent backdrop ignores WinUI's backdrop configuration change,
   which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
   handler threw E_INVALIDARG for it, and the app ended (0xc000027b) as soon as the desktop window existed.
+- **Windows.Companion**: `SpeechBubble`'s countdown dial clamps the time left to the countdown and the ring's share to 0
+  to 1. The countdown is stamped with the model's clock and measured with the wall clock, so a clock running ahead (the
+  fixture's skip) or a time sync moving the wall clock back gave a `TrimStart` below 0, which the compositor refuses by
+  throwing: any line after the fixture's skip ended the app once the desktop character had been on.
 
 ## 0.10.5 - 2026-10-16
 
