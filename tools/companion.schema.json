@@ -258,8 +258,11 @@
             "ios": {
               "type": "object",
               "additionalProperties": false,
-              "properties": {},
-              "description": "A universal app's iPhone and iPad version page: the listing then has ios.promo, ios.keywords, ios.description and an optional ios.whatsnew (check.py; push.py fills the Mac's page only)."
+              "properties": {
+                "iphoneScreenshots": { "type": "string", "description": "<lang>/*.png per language, the iPhone 6.9\" set; apple/iphone by default." },
+                "ipadScreenshots": { "type": "string", "description": "<lang>/*.png per language, the iPad 13\" set; apple/ipad by default." }
+              },
+              "description": "A universal app's iPhone and iPad version page: the listing then has ios.promo, ios.keywords, ios.description and an optional ios.whatsnew (check.py), and push.py fills the iOS version too (--only ios-text,ios-screenshots)."
             },
             "iaps": {
               "type": "object",

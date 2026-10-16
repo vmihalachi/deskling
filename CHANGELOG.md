@@ -4,6 +4,15 @@ All notable changes to Deskling. The format follows [Keep a Changelog](https://k
 and the project uses [Semantic Versioning](https://semver.org/). One tag (`vX.Y.Z`) versions the Swift
 package and the NuGet packages together.
 
+## Unreleased
+
+- **Tools (`store/push.py`)**: with `store.apple.ios`, it fills a universal app's iPhone and iPad version page too: it
+  finds or creates (`--create`) the iOS version for `--version`, attaches `--build`, pushes the `ios.*` fields to its
+  languages (adding missing ones) and uploads the iPhone 6.9" and iPad 13" screenshot sets from
+  `store.apple.ios.iphoneScreenshots` and `ipadScreenshots` (`apple/iphone`, `apple/ipad` by default), replaced only
+  when their MD5s differ. `--only` takes `ios-text` and `ios-screenshots`, on by default with `store.apple.ios`. What's
+  New is left out on a platform's first version, the Mac's too.
+
 ## 0.10.3 - 2026-10-16
 
 - **Tools (`store/check.py`)**: a universal app sets `store.apple.ios` in `companion.json`, and its listing gets the

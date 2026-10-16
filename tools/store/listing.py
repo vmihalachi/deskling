@@ -104,6 +104,9 @@ class Listing:
             for product, spec in apple.get("iaps", {}).items()
         }
         self.ios = apple.get("ios")
+        ios = self.ios or {}
+        self.iphone_screenshots = self.dir / ios.get("iphoneScreenshots", "apple/iphone")
+        self.ipad_screenshots = self.dir / ios.get("ipadScreenshots", "apple/ipad")
         self.microsoft = config.get("store.microsoft")
 
     def site(self, lang: str) -> str:

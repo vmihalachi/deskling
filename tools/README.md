@@ -21,7 +21,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
 | `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies. |
-| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too); App Store Connect (text, in-app purchases, screenshots, previews, review notes; `--status` reads only); a Partner Center import folder. |
+| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too); App Store Connect (text, in-app purchases, screenshots, previews, review notes, and a universal app's iOS page and iPhone and iPad screenshots; `--status` reads only); a Partner Center import folder. |
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
 | `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. |
