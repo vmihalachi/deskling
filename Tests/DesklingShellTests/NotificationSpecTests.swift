@@ -24,6 +24,14 @@
             XCTAssertTrue(category.intentIdentifiers.isEmpty)
         }
 
+        func testCategoryOptionsCarryThrough() {
+            XCTAssertEqual(reminder.makeCategory().options, [])
+            var dismissable = reminder
+            dismissable.options = [.customDismissAction]
+            XCTAssertEqual(dismissable.makeCategory().options, [.customDismissAction])
+            XCTAssertEqual(NotificationAnswer.dismissActionID, UNNotificationDismissActionIdentifier)
+        }
+
         func testActionMapsAlone() {
             let action = NotificationActionSpec(id: "A", title: "Go").makeAction()
             XCTAssertEqual(action.identifier, "A")
