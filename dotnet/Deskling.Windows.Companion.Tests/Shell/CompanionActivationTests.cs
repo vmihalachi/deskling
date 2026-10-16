@@ -1,4 +1,5 @@
 using Deskling.Windows.Companion.Shell;
+using Deskling.Windows.Shell;
 using Microsoft.Windows.AppLifecycle;
 
 namespace Deskling.Windows.Companion.Tests.Shell;
@@ -17,4 +18,28 @@ public sealed class CompanionActivationTests
     [Fact]
     public void ANotificationClickIsTheNotifiers() =>
         Assert.False(CompanionActivation.IsOpening(ExtendedActivationKind.AppNotification));
+
+    [Theory]
+    [InlineData(ExtendedActivationKind.Launch)]
+    [InlineData(ExtendedActivationKind.AppNotification)]
+    public void AClickLaunchIsKnownByItsArgument(ExtendedActivationKind kind) =>
+        Assert.False(CompanionActivation.IsOpening([App, AppNotifier.ClickArgument], () => kind));
+
+    [Fact]
+    public void AClickLaunchNeverReadsTheActivation() =>
+        Assert.False(
+            CompanionActivation.IsOpening([App, AppNotifier.ClickArgument], () => throw new InvalidOperationException("read"))
+        );
+
+    [Theory]
+    [InlineData(ExtendedActivationKind.Launch, true)]
+    [InlineData(ExtendedActivationKind.StartupTask, false)]
+    [InlineData(ExtendedActivationKind.AppNotification, false)]
+    public void AnyOtherLaunchGoesByItsKind(ExtendedActivationKind kind, bool opening)
+    {
+        Assert.Equal(opening, CompanionActivation.IsOpening([App], () => kind));
+        Assert.Equal(opening, CompanionActivation.IsOpening([App, "--first-run"], () => kind));
+    }
+
+    private const string App = @"C:\Program Files\Example\Example.exe";
 }

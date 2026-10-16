@@ -1,8 +1,80 @@
 using System.Runtime.InteropServices;
+using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
 namespace Deskling.Windows.Shell;
+
+/// <summary>
+/// For a process Windows started for a notification click. The click goes to the process that registers for it, and
+/// <c>AppInstance.GetActivatedEventArgs</c> waits for it there (it throws when nothing registered), so such a process
+/// registers before reading its activation: through <see cref="AppNotifier{TAction}.Register"/>, or
+/// <see cref="TakeClick"/> in a copy that only hands the click on.
+/// </summary>
+public static class AppNotifier
+{
+    /// <summary>
+    /// What Windows puts on the command line when it starts the app for a click: the notification server's arguments,
+    /// which <c>AppNotificationManager.Register</c> writes for an unpackaged app and a package's manifest declares
+    /// (<c>com:ExeServer Arguments</c>).
+    /// </summary>
+    public const string ClickArgument = "----AppNotificationActivated:";
+
+    /// <summary>
+    /// Windows started this process for a click: <paramref name="arguments"/> (<c>Environment.GetCommandLineArgs()</c>)
+    /// carry <see cref="ClickArgument"/>. Known before anything is registered, also when Windows reports the launch as a
+    /// plain <see cref="ExtendedActivationKind.Launch"/>.
+    /// </summary>
+    public static bool IsClickLaunch(IEnumerable<string> arguments) =>
+        arguments.Any(argument => argument.Contains(ClickArgument, StringComparison.Ordinal));
+
+    /// <summary>
+    /// The click this process was started for, in a copy that hands it to the copy already running: registers with no
+    /// handler, so Windows gives this process that one click and starts a new one for any later, reads it, and
+    /// unregisters. Null when Windows won't register the process, the click never comes, or the activation isn't a click
+    /// (<see cref="IsClick"/>). Never throws.
+    /// </summary>
+    public static AppActivationArguments? TakeClick()
+    {
+        var manager = AppNotificationManager.Default;
+        try
+        {
+            manager.Register();
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+        try
+        {
+            var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
+            return activation is not null && IsClick(activation.Kind) ? activation : null;
+        }
+        catch (Exception e) when (e is TimeoutException or COMException)
+        {
+            // The click didn't arrive in Windows App SDK's wait (2 s): it went to a copy registered before this one.
+            return null;
+        }
+        finally
+        {
+            try
+            {
+                manager.Unregister();
+            }
+            catch (COMException)
+            {
+                // Windows already dropped the registration.
+            }
+        }
+    }
+
+    /// <summary>
+    /// The activation <see cref="TakeClick"/> hands over: a click only. Windows App SDK can report a click launch as a
+    /// plain <see cref="ExtendedActivationKind.Launch"/> (a package's own activation, read before the command line), which
+    /// the running copy would take as the user opening the app, and show Home for; dropping it loses the click instead.
+    /// </summary>
+    internal static bool IsClick(ExtendedActivationKind kind) => kind == ExtendedActivationKind.AppNotification;
+}
 
 /// <summary>
 /// Windows app notifications with buttons that route back as <typeparamref name="TAction"/>, also when Windows

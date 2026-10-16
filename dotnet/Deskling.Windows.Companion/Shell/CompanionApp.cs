@@ -85,7 +85,10 @@ public abstract class CompanionApp : Application
         });
     }
 
-    /// <summary><i>Required.</i> The app's model, with its host and notifier: made once, at launch, on the UI thread.</summary>
+    /// <summary>
+    /// <i>Required.</i> The app's model, with its host and notifier: made once, at launch, on the UI thread, before the
+    /// launch's activation is read (the <see cref="CompanionNotifier"/> registers with Windows as it's made).
+    /// </summary>
     protected abstract ICompanionLaunching MakeCompanion();
 
     /// <summary>Runs a screenshot session instead of launching, when the app is in one; true when it took over.</summary>
@@ -95,19 +98,26 @@ public abstract class CompanionApp : Application
     {
         if (RunScreenshots())
             return;
-        var instance = AppInstance.GetCurrent();
-        var launch = instance.GetActivatedEventArgs();
+        // Made before the activation is read: its notifier registers as it's made, and a launch for a notification click
+        // reads the click from that registration.
         var made = MakeCompanion();
         companion = made;
-        // A second launch, redirected here by Start (raised on a background thread).
+        var instance = AppInstance.GetCurrent();
+        // A second launch, redirected here by Start (raised on a background thread). Its kind is read here: a redirected
+        // click lives in the copy that handed it over, which exits once this returns.
         var queue = DispatcherQueue.GetForCurrentThread();
-        instance.Activated += (_, again) => queue.TryEnqueue(() => Reactivated(again));
-        made.Launch(showHome: CompanionActivation.IsOpening(launch.Kind));
+        instance.Activated += (_, again) =>
+        {
+            var kind = again.Kind;
+            queue.TryEnqueue(() => Reactivated(kind));
+        };
+        var arguments = Environment.GetCommandLineArgs();
+        made.Launch(showHome: CompanionActivation.IsOpening(arguments, () => instance.GetActivatedEventArgs().Kind));
     }
 
-    private void Reactivated(AppActivationArguments activation)
+    private void Reactivated(ExtendedActivationKind kind)
     {
-        if (CompanionActivation.IsOpening(activation.Kind))
+        if (CompanionActivation.IsOpening(kind))
             companion?.Reopen();
     }
 }
@@ -122,4 +132,14 @@ internal static class CompanionActivation
     /// </summary>
     public static bool IsOpening(ExtendedActivationKind kind) =>
         kind is not (ExtendedActivationKind.StartupTask or ExtendedActivationKind.AppNotification);
+
+    /// <summary>
+    /// <see cref="IsOpening(ExtendedActivationKind)"/> for the launch: not when <paramref name="arguments"/> (the command
+    /// line's) say Windows started the app for a notification click (<see cref="AppNotifier.IsClickLaunch"/>), which it
+    /// can report as a plain <see cref="ExtendedActivationKind.Launch"/>. <paramref name="kind"/> is read only for any
+    /// other launch: for a click, reading the activation waits for the click to arrive, and throws when the notifier
+    /// couldn't register.
+    /// </summary>
+    public static bool IsOpening(IEnumerable<string> arguments, Func<ExtendedActivationKind> kind) =>
+        !AppNotifier.IsClickLaunch(arguments) && IsOpening(kind());
 }

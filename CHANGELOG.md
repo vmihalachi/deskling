@@ -14,6 +14,12 @@ package and the NuGet packages together.
   now drags only past those 10 DIPs (the mouse still past 3), so a resting finger doesn't nudge the character. The menu
   opens at the finger or the mouse pointer (the new `DesktopWindow.OnMenuAt`), not always at the mouse pointer; with
   no menu to show, a hold is a click.
+- **Windows (`AppNotifier`, `SingleInstance`), Windows.Companion (`CompanionNotifier`, `CompanionApp`)**: a launch for a
+  notification click follows Windows App SDK's order. The notifier registers with Windows as it's made, before the app
+  reads its activation, where Windows App SDK waits for the click (read first, it threw and the click was lost); a copy
+  started for a click while another runs registers before handing it over, and hands over only a click
+  (`AppNotifier.TakeClick`); and a launch carrying `----AppNotificationActivated:` (`AppNotifier.IsClickLaunch`) never
+  opens Home, also when Windows reports it as a plain launch.
 
 ## 0.11.5 - 2026-10-16
 
