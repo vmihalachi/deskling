@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.11 - 2026-10-16
+
 - **CompanionUI (`ScreenshotCapture`), Shell (`LayoutCheck`)**: the screenshot run works on iOS. The wanted shots, the
   output folder, `problems.txt`, the throwaway defaults, `sampleNow` and the silent fakes are shared; the Mac's capture
   moves to `ScreenshotCapture+macOS.swift`. On iOS, `capture(_:to:timeout:)` draws the key window (sheets and covers
