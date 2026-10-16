@@ -354,7 +354,7 @@ class Capture:
         for language in self.languages:
             raw = self.screens.out / "raw" / platform.name / language
             shutil.rmtree(raw, ignore_errors=True)
-            code = self.sh([vm, "screenshots", raw, "--", "-Language", language], log)
+            code = self.sh([vm, "screenshots", raw, "--", "-Language", language, "-Only", only], log)
             if code == VM_UNAVAILABLE:
                 self.unavailable(platform, log)
                 return
