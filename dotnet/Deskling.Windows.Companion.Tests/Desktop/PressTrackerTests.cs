@@ -2,7 +2,7 @@ using Deskling.Windows.Companion.Desktop;
 
 namespace Deskling.Windows.Companion.Tests.Desktop;
 
-/// <summary>How the desktop window tells a click, a drag and a pinch apart, from each pointer's own positions.</summary>
+/// <summary>How the desktop window tells a click, a drag, a hold and a pinch apart, from each pointer's own positions.</summary>
 public sealed class PressTrackerTests
 {
     private const double Threshold = 6;
@@ -92,6 +92,71 @@ public sealed class PressTrackerTests
         press.Down(7, 100, 100);
         Assert.Null(press.Move(3, 300, 300, Threshold));
         Assert.Equal(PressTracker.End.Click, press.Up(7));
+    }
+
+    [Fact]
+    public void AHeldPressIsAHoldNotAClick()
+    {
+        var press = new PressTracker();
+        press.Down(7, 100, 100);
+        Assert.Null(press.Move(7, 102, 101, Threshold));
+        press.Hold();
+        Assert.Null(press.Move(7, 101, 102, Threshold));
+        Assert.Equal(PressTracker.End.Hold, press.Up(7));
+        Assert.False(press.IsPressed);
+    }
+
+    [Fact]
+    public void ADragBeatsAHoldBeforeOrAfterIt()
+    {
+        var press = new PressTracker();
+        press.Down(7, 100, 100);
+        press.Move(7, 120, 100, Threshold);
+        press.Hold();
+        Assert.Equal(PressTracker.End.Drag, press.Up(7));
+
+        press.Down(7, 100, 100);
+        press.Hold();
+        Assert.Equal((0, 20), press.Move(7, 100, 120, Threshold));
+        Assert.Equal(PressTracker.End.Drag, press.Up(7));
+    }
+
+    [Fact]
+    public void APinchBeatsAHoldBeforeOrAfterIt()
+    {
+        var press = new PressTracker();
+        press.Down(7, 100, 100);
+        press.Down(8, 130, 100);
+        press.Hold();
+        Assert.Equal(PressTracker.End.None, press.Up(8));
+        Assert.Equal(PressTracker.End.None, press.Up(7));
+
+        press.Down(7, 100, 100);
+        press.Hold();
+        press.Pinch();
+        Assert.Equal(PressTracker.End.None, press.Up(7));
+    }
+
+    [Fact]
+    public void ALostCaptureAfterAHoldIsNothing()
+    {
+        var press = new PressTracker();
+        press.Down(7, 100, 100);
+        press.Hold();
+        Assert.Equal(PressTracker.End.None, press.Lost(7));
+        Assert.False(press.IsPressed);
+    }
+
+    [Fact]
+    public void AHoldIsForgottenByTheNextPressAndIgnoredWithNoPress()
+    {
+        var press = new PressTracker();
+        press.Down(7, 100, 100);
+        press.Hold();
+        press.Up(7);
+        press.Hold();
+        Assert.Equal(PressTracker.Start.Press, press.Down(9, 50, 50));
+        Assert.Equal(PressTracker.End.Click, press.Up(9));
     }
 
     [Fact]

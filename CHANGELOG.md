@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: a touch or pen press-and-hold (0.6 s, still) on the desktop character opens its menu, as a right click does, instead of saying a line; a tap still says one, and a drag or a pinch wins over a hold. The menu opens at the finger or the mouse pointer (the new `DesktopWindow.OnMenuAt`), not always at the mouse pointer.
+
 ## 0.11.5 - 2026-10-16
 
 - **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: touch works on the desktop character and its bubble with
