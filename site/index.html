@@ -313,10 +313,10 @@
         <p class="req">.NET 10; every package an app ships is Native AOT compatible</p>
 <pre tabindex="0"><code>dotnet add package Deskling.Core
 dotnet add package Deskling.Companion <span class="c"># a desk companion</span>
-dotnet add package Deskling.Windows   <span class="c"># net10.0-windows</span>
+dotnet add package Deskling.Windows   <span class="c"># Windows 11</span>
 dotnet add package Deskling.Windows.Companion <span class="c"># WinUI 3</span>
 dotnet add package Deskling.Testing   <span class="c"># test projects</span></code></pre>
-        <p><code>Deskling.Core</code>, <code>Deskling.Companion</code> and <code>Deskling.Companion.Shell</code> build anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, idle and busy services, and <code>Deskling.Windows.Companion</code> a companion app's whole shell on WinUI 3, with <code>Deskling.Companion.Shell</code> under it.</p>
+        <p><code>Deskling.Core</code>, <code>Deskling.Companion</code> and <code>Deskling.Companion.Shell</code> build anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, idle and busy services, and <code>Deskling.Windows.Companion</code> a companion app's whole shell on WinUI 3, with <code>Deskling.Companion.Shell</code> under it. Those two need Windows 11 (<code>net10.0-windows10.0.22000.0</code>).</p>
       </div>
     </div>
   </div>

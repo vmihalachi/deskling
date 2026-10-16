@@ -35,14 +35,16 @@ Everything in `DesklingSystem` reads state and never prompts. None of it talks t
 .package(url: "https://github.com/vmihalachi/deskling", exact: "0.10.5")
 ```
 
-**.NET** (10), from NuGet.org:
+**.NET** (10), from NuGet.org. `Deskling.Windows` and `Deskling.Windows.Companion` need **Windows 11**: they target
+`net10.0-windows10.0.22000.0` with `TargetPlatformMinVersion` 10.0.22000.0, so an app targets that or later (the rest
+are `net10.0` and run anywhere):
 
 ```sh
 dotnet add package Deskling.Core
 dotnet add package Deskling.Companion  # the desk companion layer
-dotnet add package Deskling.Windows   # net10.0-windows; the tray, idle and busy services
+dotnet add package Deskling.Windows   # Windows 11; the tray, idle and busy services
 dotnet add package Deskling.Companion.Shell    # a companion app's shell, platform-free (0.8)
-dotnet add package Deskling.Windows.Companion  # net10.0-windows, WinUI 3: that shell on Windows (0.8)
+dotnet add package Deskling.Windows.Companion  # Windows 11, WinUI 3: that shell on Windows (0.8)
 dotnet add package Deskling.Testing   # in test projects: fakes, fixtures, vector replays
 ```
 
