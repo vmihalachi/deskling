@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.7 - 2026-10-16
+
 - **Tools (`screens.py`)**: the same screens on every platform and in every language, side by side. A `screens`
   manifest in `companion.json` maps each canonical screen to each platform's shot (by platform name or capture kind,
   `null` where it has none, with launch variables for an iOS variant). `capture [--platforms] [--langs en,fr|all]
