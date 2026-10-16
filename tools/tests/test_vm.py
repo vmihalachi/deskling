@@ -7,6 +7,7 @@ Sync-Tree runs over a folder: what it unpacks, deletes, keeps and asks for."""
 from __future__ import annotations
 
 import base64
+import io
 import os
 import shutil
 import subprocess
@@ -14,7 +15,9 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "windows"))
 from support import TOOLS, WINDOWS, fixture_app  # noqa: E402
@@ -181,6 +184,106 @@ class BodyTests(unittest.TestCase):
         self.assertIn(f". {vm.ps(vm.guest_path(vm.GUEST_SCRIPT))}", script)
         self.assertIn(f"Resolve-GuestFolder '%USERPROFILE%\\deskling-vm\\{self.ctx.key}'", script)
         self.assertIn("catch", script)
+
+
+class LinkedTests(unittest.TestCase):
+    """The fixture app linked (`companion.py link`) to a Deskling checkout: what else vm.sh mirrors, and where to."""
+
+    def setUp(self):
+        import companion
+
+        self.companion = companion
+        self.app = fixture_app()
+        self.root = self.app.__enter__()
+        self.addCleanup(self.app.__exit__, None, None, None)
+        self.ctx = vm.Context(self.root, companion.load(self.root), "Windows 11", vm.checkout_key(self.root),
+                              self.root.parent / "caches" / vm.checkout_key(self.root))
+
+    def checkout(self, name: str = "deskling") -> Path:
+        """A Deskling checkout beside the app: a git repository with a .NET project, a README and test resources."""
+        folder = self.root.parent / name
+        project = "<Project><PropertyGroup><IsPackable>true</IsPackable></PropertyGroup></Project>\n"
+        for path, text in (("Package.swift", 'let package = Package(name: "Deskling")\n'),
+                           ("dotnet/Deskling.Core/Deskling.Core.csproj", project),
+                           ("README.md", "# Deskling\n"), ("Tests/CoreTests/Resources/vectors.json", "[]\n"),
+                           (".gitignore", "bin/\nobj/\n")):
+            (folder / path).parent.mkdir(parents=True, exist_ok=True)
+            (folder / path).write_text(text, "utf8")
+        git(folder, "init", "-q")
+        git(folder, "add", ".")
+        git(folder, "commit", "-qm", "deskling")
+        (folder / "dotnet/Deskling.Core/obj/project.assets.json").parent.mkdir(parents=True)
+        (folder / "dotnet/Deskling.Core/obj/project.assets.json").write_text("{}", "utf8")  # ignored
+        (folder / "dotnet/Deskling.Core/Draft.cs").write_text("class D {}", "utf8")  # untracked
+        return folder
+
+    def link(self, checkout: Path) -> None:
+        with mock.patch.object(self.companion, "regenerate_project", return_value=None), \
+                redirect_stdout(io.StringIO()):
+            self.assertEqual(self.companion.link(self.ctx.config, checkout), 0)
+
+    def write_targets(self, dotnet: str) -> None:
+        (self.root / "windows/Directory.Build.targets").write_text(
+            f"<Project>\n  <!-- deskling link -->\n  <PropertyGroup>\n    <DesklingLinkedDotnet>{dotnet}"
+            "</DesklingLinkedDotnet>\n  </PropertyGroup>\n</Project>\n", "utf8")
+
+    def test_unlinked_mirrors_the_app_alone(self):
+        self.assertIsNone(vm.linked_checkout(self.ctx))
+
+    def test_a_checkout_beside_the_app_goes_where_its_reference_resolves(self):
+        checkout = self.checkout()
+        self.link(checkout)
+        linked = vm.linked_checkout(self.ctx)
+        self.assertEqual(linked.checkout, checkout)
+        self.assertEqual(linked.guest, r"%USERPROFILE%\deskling-vm\deskling", r"windows\..\..\deskling from the copy")
+        self.assertEqual(linked.stage, self.ctx.stage.parent / "linked-deskling", "shared by every app linked there")
+        self.assertEqual([name for name, _, _ in vm.list_files(linked.checkout)], [
+            ".gitignore", "Package.swift", "README.md", "Tests/CoreTests/Resources/vectors.json",
+            "dotnet/Deskling.Core/Deskling.Core.csproj", "dotnet/Deskling.Core/Draft.cs"])
+        os.environ["DESKLING_VM_DIR"] = "D:\\vm\\"
+        try:
+            self.assertEqual(vm.linked_checkout(self.ctx).guest, r"D:\vm\deskling")
+        finally:
+            del os.environ["DESKLING_VM_DIR"]
+
+        with mock.patch.object(self.companion, "regenerate_project", return_value=None), \
+                redirect_stdout(io.StringIO()):
+            self.companion.unlink(self.ctx.config)
+        self.assertIsNone(vm.linked_checkout(self.ctx))
+
+    def test_another_folder_name_keeps_its_name(self):
+        self.link(self.checkout("deskling-wip"))
+        self.assertEqual(vm.linked_checkout(self.ctx).guest, r"%USERPROFILE%\deskling-vm\deskling-wip")
+
+    def test_sync_mirrors_the_app_then_the_linked_checkout(self):
+        checkout = self.checkout()
+        self.link(checkout)
+        self.ctx.linked = vm.linked_checkout(self.ctx)
+        with mock.patch.object(vm, "mirror", side_effect=lambda ctx, *where: (calls.append(where), "done")[1]), \
+                redirect_stdout(io.StringIO()) as out:
+            calls = []
+            vm.sync(self.ctx)
+        self.assertEqual(calls, [(self.root, self.ctx.guest_root, self.ctx.stage),
+                                 (checkout, r"%USERPROFILE%\deskling-vm\deskling", self.ctx.linked.stage)])
+        self.assertIn(f"the linked Deskling {checkout}", out.getvalue())
+
+    def test_a_checkout_inside_the_app_comes_with_it(self):
+        self.write_targets("$(MSBuildThisFileDirectory)../deskling/dotnet/")
+        (self.root / "deskling/dotnet").mkdir(parents=True)
+        self.assertIsNone(vm.linked_checkout(self.ctx), "the app's own copy holds its submodule")
+
+    def test_a_link_the_vm_cant_follow_is_refused(self):
+        self.checkout()
+        for dotnet, words in (("/Users/someone/deskling/dotnet/", "a Mac path the VM doesn't have"),
+                              ("$(MSBuildThisFileDirectory)../../../deskling/dotnet/", "lands outside"),
+                              ("$(MSBuildThisFileDirectory)../../dotnet/", "lands outside"),
+                              ("$(MSBuildThisFileDirectory)../../elsewhere/dotnet/", "isn't there")):
+            with self.subTest(dotnet=dotnet):
+                self.write_targets(dotnet)
+                with self.assertRaises(vm.Usage) as caught:
+                    vm.linked_checkout(self.ctx)
+                self.assertIn(words, str(caught.exception))
+                self.assertIn("beside the app", str(caught.exception))
 
 
 class UnavailableTests(unittest.TestCase):

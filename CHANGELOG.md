@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools (`vm.sh`)**: `vm.sh` builds an app linked with `companion.py link`. The link's Directory.Build.targets points
+  the Windows projects at `../../deskling/dotnet/`, which the VM's copy of the app lacked, so `vm.sh build` stopped
+  with CS0246 errors; now every command also mirrors the linked checkout (what git sees there, the README and test
+  resources too) to the VM folder that path resolves to, `%USERPROFILE%\deskling-vm\deskling` beside the app's copy, in
+  the same incremental way. A link the VM can't follow (an absolute path, or one that leaves `DESKLING_VM_DIR`) stops
+  with what to do. `companion.linked_dotnet` reads the link's reference.
+
 ## 0.11.3 - 2026-10-16
 
 - **Shell (`NotificationPoster`, `AppNotifier`)**: an app can hold back a reminder while the last one is still waiting.
