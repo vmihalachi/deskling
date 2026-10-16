@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.1 - 2026-10-16
+
 - **Tools (`hooks/hook.py stop`)**: tells the user, once per compaction cycle, when Claude's context is past
   `hooks.longSessionTokens` (130000 by default, 0 disables), read from the session's transcript, so the next task goes
   to a fresh session. When the context is too long and the Stop hook is also blocking, the agent is asked to pass the
