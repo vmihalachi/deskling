@@ -94,7 +94,7 @@ public enum SkipReason
     Away,
     Locked,
 
-    /// <summary>A line is being spoken; two never overlap.</summary>
+    /// <summary>A line is being spoken; two never overlap (a button press is delivered, and the shell cuts the line).</summary>
     Speaking,
 
     /// <summary>The user turned this kind of comment off.</summary>
@@ -134,12 +134,14 @@ public sealed record Manners(Channels Channels, bool GreetOnReturn = true, bool 
 /// <summary>
 /// Decides whether a line may be delivered right now and how. Pure; <c>conformance/companion/quiet</c> pins it.
 /// <para>
-/// In order: a comment the user turned off is skipped; nothing starts while a line is being spoken; nothing is said
-/// to a locked screen; nothing is said to an empty room (idle past the threshold) except the welcome back itself; a
-/// call or full-screen app holds everything except a button press, which still shows in the panel but neither
-/// speaks nor chimes. Then the channels: voice and chime only when the output isn't muted; a notification when that
-/// channel is on, or as the fallback when voice or chime would have played but the output is muted and
-/// notifications are allowed. A button press never notifies.
+/// In order: a comment the user turned off is skipped; nothing starts while a line is being spoken, except a button
+/// press: the user asking now (Say something, a click on the character, a notification's Say more, which comes while its
+/// line is still heard) is delivered, and the shell cuts the line being said first, as Shh does, so two still never
+/// overlap and nothing waits in a queue; nothing is said to a locked screen; nothing is said to an empty room (idle
+/// past the threshold) except the welcome back itself; a call or full-screen app holds everything except a button
+/// press, which still shows in the panel but neither speaks nor chimes. Then the channels: voice and chime only when the
+/// output isn't muted; a notification when that channel is on, or as the fallback when voice or chime would have played
+/// but the output is muted and notifications are allowed. A button press never notifies.
 /// </para>
 /// </summary>
 public static class QuietRules
@@ -164,11 +166,11 @@ public static class QuietRules
                     return new Outcome.Skip(SkipReason.Disabled);
                 break;
         }
-        if (snapshot.IsSpeaking)
+        var isButton = trigger == Trigger.ButtonPress;
+        if (snapshot.IsSpeaking && !isButton)
             return new Outcome.Skip(SkipReason.Speaking);
         if (snapshot.IsScreenLocked)
             return new Outcome.Skip(SkipReason.Locked);
-        var isButton = trigger == Trigger.ButtonPress;
         if (snapshot.IdleSeconds >= AwayThresholdSeconds && trigger != Trigger.WelcomeBack && !isButton)
             return new Outcome.Skip(SkipReason.Away);
         var busy = snapshot.Busy.Count > 0;

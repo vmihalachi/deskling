@@ -364,6 +364,23 @@ public sealed class CompanionAppModelTests
     }
 
     [Fact]
+    public void SayMoreMidLineCutsTheLineAndSaysAnother()
+    {
+        var model = MakeModel();
+        model.SayNow();
+        Assert.True(model.IsSpeaking);
+        // A notification's Say more, pressed while its line is still heard.
+        notifier.OnAction?.Invoke("SAY_MORE");
+        Assert.Equal(1, speaker.Stops); // the line being said is cut
+        Assert.Equal(2, speaker.Spoken.Count); // and the press is answered at once, not dropped
+        Assert.Equal(2, model.Said.Count);
+        Assert.Equal(speaker.Spoken[^1], model.Bubble);
+        Assert.True(model.IsSpeaking);
+        speaker.Finish();
+        Assert.False(model.IsSpeaking);
+    }
+
+    [Fact]
     public void ResetSettingsEndsShhWithoutALine()
     {
         var model = MakeModel(configure: s => s.Frequency = Frequency.Chatty);

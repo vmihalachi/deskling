@@ -385,11 +385,18 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
 
     // Actions
 
-    /// <summary>Say something: the panel button, a click on the desktop character, the notification's button.</summary>
+    /// <summary>
+    /// Say something: the panel button, a click on the desktop character, the notification's button. Mid-line (a
+    /// notification's Say more comes while its line is still heard) it cuts that line, as Shh does, and says the new one.
+    /// </summary>
     public void SayNow()
     {
         if (Coordinator.Poke(Signals.Snapshot()) is { } delivery)
+        {
+            if (Performer.IsSpeaking)
+                StopSpeaking();
             Perform(delivery);
+        }
         RefreshStatus();
     }
 

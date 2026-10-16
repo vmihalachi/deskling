@@ -13,8 +13,8 @@ namespace Deskling.Companion.Shell.Performance;
 /// language has a recorded voice (a line without a current recording stays unsaid unless the library falls back to the
 /// system voice), else with the system voice. Without speech the parts follow each other after
 /// <see cref="PhraseTiming.PartDelaySeconds"/>. <see cref="IsSpeaking"/> holds from the first part until the last
-/// finished, beats included, so the app's <c>Snapshot.IsSpeaking</c> keeps other lines out; a call or Shh cuts the whole
-/// joke with <see cref="Stop"/>. The app supplies the words (<see cref="Localize"/>, from its strings) and the tune's
+/// finished, beats included, so the app's <c>Snapshot.IsSpeaking</c> keeps other lines out; a call, Shh or a button press
+/// mid-line cuts the whole joke with <see cref="Stop"/>. The app supplies the words (<see cref="Localize"/>, from its strings) and the tune's
 /// bubble text; the package ships none. UI thread only; never touches the network.
 /// </summary>
 public sealed class DeliveryPerformer

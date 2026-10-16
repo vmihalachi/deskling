@@ -276,6 +276,21 @@
             XCTAssertEqual(model.mood, .shushed)
         }
 
+        func testSayMoreMidLineCutsTheLineAndSaysAnother() {
+            let model = makeModel()
+            model.sayNow()
+            XCTAssertTrue(model.isSpeaking)
+            // A notification's Say more, pressed while its line is still heard.
+            notifier.onAction?("SAY_MORE")
+            XCTAssertEqual(speaker.stops, 1, "the line being said is cut")
+            XCTAssertEqual(speaker.spoken.count, 2, "and the press is answered at once, not dropped")
+            XCTAssertEqual(model.said.count, 2)
+            XCTAssertEqual(model.bubble, speaker.spoken.last)
+            XCTAssertTrue(model.isSpeaking)
+            speaker.finish()
+            XCTAssertFalse(model.isSpeaking)
+        }
+
         func testResetSettingsEndsShhWithoutALine() {
             let model = makeModel { $0.frequency = .chatty }
             model.shush(.untilISay)

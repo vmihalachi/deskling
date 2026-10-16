@@ -139,8 +139,9 @@ enum CompanionCases: CompanionVectors {
         return QuietTimeline.standardCases(base: base, dst: ("evening-bucharest-dst-end", "Europe/Bucharest")) + quietExtras
     }
 
-    /// The fixture's own timelines: a two-part joke delivered by the button, keyed on its id like any line, and the
-    /// Italian lines in an Italian afternoon.
+    /// The fixture's own timelines: a two-part joke delivered by the button, keyed on its id like any line, the
+    /// Italian lines in an Italian afternoon, and a notified line's Say more pressed while the line is still heard
+    /// (answered at once; an event at the same moment still waits for the speech to end).
     static let quietExtras: [QuietTimeline.Case] = [
         .init(
             name: "sequence-delivered", start: (2026, 9, 30, 16, 0), seed: 3,
@@ -161,5 +162,19 @@ enum CompanionCases: CompanionVectors {
                 return s
             }(),
             steps: [QuietTimeline.Input(advance: QuietTimeline.minute, action: "tick", repeat: 180)]),
+        .init(
+            name: "say-more-while-speaking", start: (2026, 9, 28, 10, 0), seed: 3,
+            settings: {
+                var s = QuietTimeline.Settings(defaults)
+                s.frequency = "sometimes"
+                s.channels = ["voice", "notification"]
+                return s
+            }(),
+            steps: [
+                QuietTimeline.Input(advance: QuietTimeline.minute, action: "tick", repeat: 35),
+                QuietTimeline.Input(advance: 0, action: "poke", snapshot: Snapshot(isSpeaking: true)),
+                QuietTimeline.Input(advance: 0, action: "event", argument: "wentDark", snapshot: Snapshot(isSpeaking: true)),
+                QuietTimeline.Input(advance: QuietTimeline.minute, action: "tick", repeat: 5),
+            ]),
     ]
 }
