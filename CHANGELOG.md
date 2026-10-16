@@ -7,7 +7,8 @@ package and the NuGet packages together.
 ## Unreleased
 
 A Windows app with the desktop character on no longer crashes when Windows switches theme or contrast. The speech
-bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall clock disagree.
+bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall clock disagree. The
+desktop character follows the app's appearance setting.
 
 - **Windows.Companion**: the desktop character's transparent backdrop ignores WinUI's backdrop configuration change,
   which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
@@ -16,6 +17,11 @@ bubble's countdown dial no longer crashes a Windows app when the countdown's sta
   to 1. The countdown is stamped with the model's clock and measured with the wall clock, so a clock running ahead (the
   fixture's skip) or a time sync moving the wall clock back gave a `TrimStart` below 0, which the compositor refuses by
   throwing: any line after the fixture's skip ended the app once the desktop character had been on.
+- **Windows.Companion**: the desktop character's stand and its bubble take the app's appearance setting, as the other
+  windows do (`DesktopCompanion.Theme`, set by `WindowsCompanionHost` when it makes the character and on every change).
+  The bubble stayed dark with the app set to Light on a dark Windows.
+- **Fixture app**: the Appearance buttons ignore the -1 index `RadioButtons` reports between two choices, which crashed
+  the fixture on every click; the apps already guarded it.
 
 ## 0.10.5 - 2026-10-16
 

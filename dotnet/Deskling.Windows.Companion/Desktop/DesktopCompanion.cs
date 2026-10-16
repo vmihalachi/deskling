@@ -38,6 +38,16 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
     /// <summary>The default spot: this far (DIPs) in from the bottom right of the primary display's work area.</summary>
     public const double CornerInset = 24;
 
+    /// <summary>
+    /// The theme the character's stand and its bubble draw in: the app's appearance setting, as the host applies it to its
+    /// other windows. <see cref="ElementTheme.Default"/> follows Windows' app mode.
+    /// </summary>
+    public ElementTheme Theme
+    {
+        get => stand.RequestedTheme;
+        set => (stand.RequestedTheme, bubbleRoot.RequestedTheme) = (value, value);
+    }
+
     /// <summary>The desktop bubble's text size.</summary>
     public const double BubbleTextSize = 15;
 
@@ -46,6 +56,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
     private readonly DesktopWindow bubble;
     private readonly SpeechBubble bubbleView = new() { FillsWidth = false, RoomForDial = true, FontSize = BubbleTextSize };
     private readonly Grid bubbleRoot;
+    private readonly DesktopStand stand;
     private readonly TrayIconHost menuHost;
     private readonly DispatcherQueue queue;
     private DesktopSize size;
@@ -62,7 +73,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         this.layout = layout;
         this.size = size;
         this.position = position;
-        var stand = new DesktopStand(characterView, layout, sayActionName, () => OnSay?.Invoke());
+        stand = new DesktopStand(characterView, layout, sayActionName, () => OnSay?.Invoke());
         var windowSize = layout.WindowSize(size);
         character = new DesktopWindow(stand, windowSize, Anchor(position, windowSize)) { HitTest = stand.IsDrawnAt };
         bubbleRoot = new Grid
