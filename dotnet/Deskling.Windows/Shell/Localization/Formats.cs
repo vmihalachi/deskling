@@ -42,14 +42,15 @@ public static class Formats
     /// <summary>"Oct 5, 2026", ordered for the language (Swift's <c>.formatted(date: .abbreviated, time: .omitted)</c>).</summary>
     public static string MonthDayYear(DateTimeOffset date)
     {
-        monthDayYear ??= Formatter("month.abbreviated day year", Loc.Language);
+        // "year.full": with a bare "year" Windows matches the language's short pattern "dd-MMM-yy" ("30-Sep-26" in English).
+        monthDayYear ??= Formatter("month.abbreviated day year.full", Loc.Language);
         return monthDayYear.Format(date.ToLocalTime());
     }
 
     /// <summary>"Mon, Oct 5, 2026", ordered for the language.</summary>
     public static string WeekdayMonthDayYear(DateTimeOffset date)
     {
-        weekdayMonthDayYear ??= Formatter("dayofweek.abbreviated month.abbreviated day year", Loc.Language);
+        weekdayMonthDayYear ??= Formatter("dayofweek.abbreviated month.abbreviated day year.full", Loc.Language);
         return weekdayMonthDayYear.Format(date.ToLocalTime());
     }
 
