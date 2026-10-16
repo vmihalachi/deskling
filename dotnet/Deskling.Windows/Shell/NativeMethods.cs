@@ -237,6 +237,34 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     public static partial int GetSystemMetrics(int index);
 
+    /// <summary>uxtheme's <c>PreferredAppMode</c>: <c>Default</c> leaves the process's menus light.</summary>
+    public const int AppModeDefault = 0;
+
+    /// <summary>uxtheme's <c>PreferredAppMode</c>: <c>ForceDark</c> draws the process's menus dark.</summary>
+    public const int AppModeForceDark = 2;
+
+    /// <summary>
+    /// Sets the process's preferred app mode, which Win32 menus are drawn in, through uxtheme's undocumented
+    /// <c>SetPreferredAppMode</c> (ordinal 135) and <c>FlushMenuThemes</c> (ordinal 136), both there since Windows 10
+    /// 1903. False, doing nothing, when uxtheme doesn't have them.
+    /// </summary>
+    public static unsafe bool SetPreferredAppMode(int mode)
+    {
+        if (!NativeLibrary.TryLoad("uxtheme.dll", out var uxtheme))
+            return false;
+        var setMode = GetProcAddress(uxtheme, 135);
+        var flush = GetProcAddress(uxtheme, 136);
+        if (setMode == 0 || flush == 0)
+            return false;
+        ((delegate* unmanaged<int, int>)setMode)(mode);
+        ((delegate* unmanaged<void>)flush)();
+        return true;
+    }
+
+    /// <summary><c>GetProcAddress</c> by ordinal: the low word of <paramref name="ordinal"/>, the high word zero.</summary>
+    [LibraryImport("kernel32.dll")]
+    private static partial nint GetProcAddress(nint module, nint ordinal);
+
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool DestroyIcon(nint icon);
