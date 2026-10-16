@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+A Windows app with the desktop character on no longer crashes when Windows switches theme or contrast.
+
+- **Windows.Companion**: the desktop character's transparent backdrop ignores WinUI's backdrop configuration change,
+  which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
+  handler threw E_INVALIDARG for it, and the app ended (0xc000027b) as soon as the desktop window existed.
+
 - **Tools (`store/push.py`)**: with `store.apple.ios`, it fills a universal app's iPhone and iPad version page too: it
   finds or creates (`--create`) the iOS version for `--version`, attaches `--build`, pushes the `ios.*` fields to its
   languages (adding missing ones) and uploads the iPhone 6.9" and iPad 13" screenshot sets from
