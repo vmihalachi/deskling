@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.0 - 2026-10-16
+
 - **CompanionUI (`ScreenshotCapture`)**: on iOS, `DESKLING_SCREENSHOT_HOLD` names a Darwin notification: after
   drawing each shot, the run prints `hold <file name>` and waits for it (`xcrun simctl spawn <device> notifyutil -p
   <name>`, at most `holdTimeout`, 2 minutes), so a script can take the Simulator's own screenshot of the settled screen,
