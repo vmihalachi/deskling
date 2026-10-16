@@ -6,6 +6,16 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Shell (`LayoutCheck`)**: on iOS, `offScreen(in:)` no longer reports a lazy stack's rows that report frames past
+  the content's end before it has laid them out (a long Library grid on iPad listed about 50): an element inside a
+  scroll view counts as scrolled to anywhere along the way that view scrolls (`ScrollArea`), while one pushed past the
+  side of a view that only scrolls up and down is still reported.
+- **Shell (`LayoutCheck`)**: on iOS, `truncatedText(in:)` no longer measures a label that isn't what the element
+  draws: an element whose input labels (`accessibilityInputLabels`) leave its label out, such as a short tag that
+  VoiceOver reads as a whole sentence, is skipped. SwiftUI says only what an element is read as, so such a tag needs
+  the concise input label, which also gives Voice Control users the words they see. The measurement is
+  `isCut(_:inputLabels:font:in:)`, tested on the Mac.
+
 ## 0.12.0 - 2026-10-16
 
 - **CompanionUI (`ScreenshotCapture`)**: on iOS, `DESKLING_SCREENSHOT_HOLD` names a Darwin notification: after
