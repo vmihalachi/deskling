@@ -7,7 +7,7 @@ namespace Deskling.Windows.Shell;
 /// <summary>
 /// Windows app notifications with buttons that route back as <typeparamref name="TAction"/>, also when Windows
 /// launched the app to handle the click. One notification at a time: posting replaces the one still in
-/// Notification Center. Titles and bodies arrive already localized. One per process, since it owns
+/// Notification Center, and <see cref="IsShowingAsync"/> tells whether it is. Titles and bodies arrive already localized. One per process, since it owns
 /// <c>AppNotificationManager.Default</c>.
 /// </summary>
 /// <typeparam name="TAction">The app's notion of what a click means (an enum, say).</typeparam>
@@ -74,9 +74,16 @@ public sealed class AppNotifier<TAction> : IDisposable
 
     /// <summary>
     /// Posts the notification, replacing the previous one. Up to five <paramref name="buttons"/>, each carrying one of
-    /// the action keys; <paramref name="sound"/> false posts it silently.
+    /// the action keys; <paramref name="sound"/> false posts it silently. Windows takes it down itself at
+    /// <paramref name="expiration"/>, if given.
     /// </summary>
-    public async Task PostAsync(string title, string body, IReadOnlyList<NotificationButton> buttons, bool sound = true)
+    public async Task PostAsync(
+        string title,
+        string body,
+        IReadOnlyList<NotificationButton> buttons,
+        bool sound = true,
+        DateTimeOffset? expiration = null
+    )
     {
         var builder = new AppNotificationBuilder()
             .AddArgument(ActionKey, defaultAction)
@@ -90,8 +97,28 @@ public sealed class AppNotifier<TAction> : IDisposable
         if (!sound)
             builder.MuteAudio();
 
+        var notification = builder.BuildNotification();
+        if (expiration is { } expires)
+            notification.Expiration = expires;
         await RemoveAsync();
-        manager.Show(builder.BuildNotification());
+        manager.Show(notification);
+    }
+
+    /// <summary>
+    /// The posted notification is still in Notification Center: the user hasn't clicked or cleared it, and it hasn't
+    /// expired. False when Windows can't tell.
+    /// </summary>
+    public async Task<bool> IsShowingAsync()
+    {
+        try
+        {
+            var shown = await manager.GetAllAsync();
+            return shown.Any(n => n.Tag == tag && n.Group == group);
+        }
+        catch (COMException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Takes the posted notification out of Notification Center, if it is still there.</summary>

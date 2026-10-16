@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Shell (`NotificationPoster`, `AppNotifier`)**: an app can hold back a reminder while the last one is still waiting.
+  `NotificationPoster.delivered(prefix:)` lists the notifications still in Notification Center and
+  `removeDelivered(ids:)` takes some down; `NotificationCategorySpec.options` sets the category's options, and a
+  category with `.customDismissAction` reports dismissals to `onAction` and `onAnswer` as
+  `NotificationAnswer.dismissActionID` (other categories still don't). On Windows, `AppNotifier.IsShowingAsync()` tells
+  whether the posted notification is still there, and `PostAsync` takes an `expiration` after which Windows removes it.
+
 ## 0.11.2 - 2026-10-16
 
 - **Tools (Windows)**: the tools work in a Windows checkout, where `core.autocrlf` gives text files CRLF line endings.

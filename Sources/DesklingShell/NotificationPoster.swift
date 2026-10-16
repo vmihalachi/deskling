@@ -24,21 +24,27 @@
         }
     }
 
-    /// A notification category: its buttons, and which action id a tap on the banner itself reports
-    /// (`nil` ignores taps).
+    /// A notification category: its buttons, which action id a tap on the banner itself reports (`nil` ignores taps),
+    /// and its options (`.customDismissAction` reports dismissals as `NotificationAnswer.dismissActionID`).
     public struct NotificationCategorySpec: Equatable, Sendable {
         public var id: String
         public var actions: [NotificationActionSpec]
         public var defaultActionID: String?
+        public var options: UNNotificationCategoryOptions
 
-        public init(id: String, actions: [NotificationActionSpec], defaultActionID: String? = nil) {
+        public init(
+            id: String, actions: [NotificationActionSpec], defaultActionID: String? = nil,
+            options: UNNotificationCategoryOptions = []
+        ) {
             self.id = id
             self.actions = actions
             self.defaultActionID = defaultActionID
+            self.options = options
         }
 
         public func makeCategory() -> UNNotificationCategory {
-            UNNotificationCategory(identifier: id, actions: actions.map { $0.makeAction() }, intentIdentifiers: [])
+            UNNotificationCategory(
+                identifier: id, actions: actions.map { $0.makeAction() }, intentIdentifiers: [], options: options)
         }
     }
 
@@ -82,8 +88,11 @@
     }
 
     /// The user's answer to a notification: which one (`requestID` and its `userInfo`), and the action id (the
-    /// category's `defaultActionID` for a tap on the banner).
+    /// category's `defaultActionID` for a tap on the banner, `dismissActionID` for a dismissal).
     public struct NotificationAnswer: Equatable, Sendable {
+        /// The action id of a dismissal, reported only for a category with `.customDismissAction`.
+        public static let dismissActionID = UNNotificationDismissActionIdentifier
+
         public var requestID: String
         public var categoryID: String
         public var actionID: String
@@ -97,12 +106,24 @@
         }
     }
 
+    /// A notification still in Notification Center: its request id and when it was delivered.
+    public struct DeliveredNotification: Equatable, Sendable {
+        public var id: String
+        public var date: Date
+
+        public init(id: String, date: Date) {
+            self.id = id
+            self.date = date
+        }
+    }
+
     /// Posts local notifications with action buttons and routes the user's answer back to the app.
     ///
     /// Needs the app's categories up front and `configure()` once at launch (it becomes the notification
     /// center's delegate). Posting needs notification authorization, which `requestAuthorization` asks for
-    /// explicitly: nothing here prompts on its own. Dismissals are ignored; a tap on the banner reports the
-    /// category's `defaultActionID`. `onAction`, `onAnswer` and `onPresent` run on the main actor.
+    /// explicitly: nothing here prompts on its own. Dismissals are reported only for categories with
+    /// `.customDismissAction`; a tap on the banner reports the category's `defaultActionID`. `onAction`, `onAnswer` and
+    /// `onPresent` run on the main actor.
     @MainActor
     public final class NotificationPoster: NSObject, UNUserNotificationCenterDelegate {
         /// The user pressed a button (or the banner): the category id and the action id.
@@ -153,6 +174,21 @@
         public func remove(id: String) {
             center.removePendingNotificationRequests(withIdentifiers: [id])
             center.removeDeliveredNotifications(withIdentifiers: [id])
+        }
+
+        /// The notifications still in Notification Center whose id starts with `prefix`, oldest first: the user hasn't
+        /// answered or cleared them.
+        public func delivered(prefix: String) async -> [DeliveredNotification] {
+            await center.deliveredNotifications()
+                .filter { $0.request.identifier.hasPrefix(prefix) }
+                .map { DeliveredNotification(id: $0.request.identifier, date: $0.date) }
+                .sorted { $0.date < $1.date }
+        }
+
+        /// Takes these delivered notifications out of Notification Center, leaving the pending ones.
+        public func removeDelivered(ids: [String]) {
+            guard !ids.isEmpty else { return }
+            center.removeDeliveredNotifications(withIdentifiers: ids)
         }
 
         /// Makes `notifications` the pending ones among those whose id starts with `prefix`: the rest are removed, and
@@ -240,8 +276,6 @@
         private func deliver(_ answer: NotificationAnswer) {
             var answer = answer
             switch answer.actionID {
-            case UNNotificationDismissActionIdentifier:
-                return
             case UNNotificationDefaultActionIdentifier:
                 guard let defaultID = categories.first(where: { $0.id == answer.categoryID })?.defaultActionID else {
                     return
