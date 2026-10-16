@@ -22,7 +22,7 @@ package and the NuGet packages together.
   template simulator per job, and runs every language (or the ones named) on iPhone SE, the largest iPhone, iPad Pro
   13" upright, turned and in a 375 pt Split View third, and the iPhone Duo closed, one launch per language with no
   reboot; shots and problems in `<mac.dir>/build/layout-check/ios-<device>/<language>`. `--devices`, `--only`,
-  `--jobs` (`LAYOUT_JOBS`, default 6), `--text-size` (Dynamic Type), `--app`, `--keep`.
+  `--jobs` (`LAYOUT_JOBS`, default 4), `--text-size` (Dynamic Type), `--app`, `--keep`.
 
 ## 0.11.10 - 2026-10-16
 

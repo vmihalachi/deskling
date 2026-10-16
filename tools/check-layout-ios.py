@@ -6,12 +6,13 @@ be drawn (ScreenshotCapture's checks, `LayoutCheck+iOS.swift`). The iOS twin of 
     python3 deskling/tools/check-layout-ios.py [--devices se,promax,...] [--only name,name] [--jobs N]
         [--text-size SIZE] [--app PATH] [--out DIR] [--keep] [language ...]
 
-Defaults: every device below, every language in languages.all, LAYOUT_JOBS (else 6) simulators at a time. Shots and
-problems go to <mac.dir>/build/layout-check/ios-<device>/<language>. It builds the Debug app for the Simulator once
-(`mac.iosScheme`; --app runs one already built), then clones a simulator per job from a template it keeps ("<name>
-layout: <device type>", made once with accessibility on, which the text checks read), boots the clones, and runs the
-languages on them side by side, each one launch of the app in screenshot mode (`mac.screenshotEnv`) with
--AppleLanguages and -AppleLocale: no reboot between languages. The clones are deleted at the end (--keep leaves them).
+Defaults: every device below, every language in languages.all, LAYOUT_JOBS (else 4; at least one per device type)
+simulators at a time. Shots and problems go to <mac.dir>/build/layout-check/ios-<device>/<language>. It builds the Debug
+app for the Simulator once (`mac.iosScheme`; --app runs one already built), then clones a simulator per job from a
+template it keeps ("<name> layout: <device type>", made once with accessibility on, which the text checks read), boots
+the clones, and runs the languages on them side by side, each one launch of the app in screenshot mode
+(`mac.screenshotEnv`) with -AppleLanguages and -AppleLocale: no reboot between languages. The clones are deleted at the
+end (--keep leaves them).
 
 Devices: se (iPhone SE 3rd generation, the smallest), promax (the largest iPhone), ipad (iPad Pro 13" upright),
 ipad-landscape (the same turned, drawn at the turned screen's size: iPadOS won't turn a windowed app), ipad-split (a
@@ -157,7 +158,10 @@ def run_language(udid: str, bundle: str, device: str, language: str, only: str, 
     try:
         result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=LAUNCH_TIMEOUT)
     except subprocess.TimeoutExpired:
-        simctl("terminate", udid, bundle, check=False)
+        try:  # a simulator too busy to launch may be too busy to answer this
+            simctl("terminate", udid, bundle, timeout=60, check=False)
+        except subprocess.TimeoutExpired:
+            pass
         return [f"the run didn't finish in {LAUNCH_TIMEOUT} s"]
     # The app renders into its container's temp folder and prints that path last.
     lines = [line.strip() for line in result.stdout.replace("\r", "").splitlines()]
@@ -187,7 +191,7 @@ def main() -> int:
     parser.add_argument("languages", nargs="*", help="default: languages.all")
     parser.add_argument("--devices", default=",".join(DEVICES), help=f"comma-separated, of: {', '.join(DEVICES)}")
     parser.add_argument("--only", default="", help="just the shots whose names start with one of these (comma-separated)")
-    parser.add_argument("--jobs", type=int, default=int(os.environ.get("LAYOUT_JOBS", "6")), help="simulators at a time")
+    parser.add_argument("--jobs", type=int, default=int(os.environ.get("LAYOUT_JOBS", "4")), help="simulators at a time")
     parser.add_argument("--text-size", help="Dynamic Type on every simulator, as `simctl ui content_size` names it")
     parser.add_argument("--app", type=Path, help="a Debug Simulator build of the app to run instead of building one")
     parser.add_argument("--out", type=Path, help="default: <mac.dir>/build/layout-check")
@@ -247,7 +251,7 @@ def main() -> int:
                 simctl("ui", udid, "content_size", args.text_size)
             simctl("install", udid, str(app), timeout=600)
         except Exception as error:  # noqa: BLE001 - the runs it would have made report it
-            log(f"check-layout-ios: a {short} simulator didn't start ({error})")
+            log(f"check-layout-ios: the {short} simulator #{number} didn't start ({error})")
             while True:
                 try:
                     device, language = entry["tasks"].get_nowait()
