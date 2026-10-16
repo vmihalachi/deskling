@@ -19,7 +19,8 @@ namespace Deskling.Windows.Companion.Screenshots;
 /// Renders an app's windows and views to PNGs in its own process (Swift's <c>ScreenshotCapture</c>), for documentation
 /// and store screenshots: the generic half of a screenshot mode. The app's run script sets <see cref="ModeVariable"/> (a
 /// comma-separated list of shot name prefixes, or <c>all</c>) and optionally <see cref="DirectoryVariable"/> (else a
-/// folder in the temporary directory); <see cref="Finish"/> prints the folder last. The app builds its model over a
+/// folder in the temporary directory), in the environment or, for a packaged app started in its package (which passes no
+/// environment), as <c>NAME=value</c> arguments (<see cref="Setting"/>); <see cref="Finish"/> prints the folder last. The app builds its model over a
 /// <c>SampleEnvironment</c> (in-memory settings, a fixed clock, silent channels, fixed prices), so the user's settings,
 /// speakers and the store are never touched, then shoots what it wants (<see cref="ScreenshotScript{TWindow, TSettings}"/>).
 /// While a run goes, the character holds its still pose and nothing animates.
@@ -66,22 +67,35 @@ public static partial class ScreenshotCapture
     /// </summary>
     public const string HiddenVariable = "DESKLING_SCREENSHOT_HIDDEN";
 
-    public static bool IsEnabled => Environment.GetEnvironmentVariable(ModeVariable) is not null;
+    public static bool IsEnabled => Setting(ModeVariable) is not null;
 
-    public static bool IsHidden => Environment.GetEnvironmentVariable(HiddenVariable) == "1";
+    /// <summary>
+    /// A run setting: the environment variable <paramref name="name"/>, else a <c>name=value</c> command-line argument,
+    /// which is how screenshots.ps1 passes them to a packaged app (<c>Invoke-CommandInDesktopPackage</c> passes no
+    /// environment).
+    /// </summary>
+    public static string? Setting(string name)
+    {
+        if (Environment.GetEnvironmentVariable(name) is { } value)
+            return value;
+        var prefix = name + "=";
+        return Environment.GetCommandLineArgs().Skip(1).FirstOrDefault(a => a.StartsWith(prefix, StringComparison.Ordinal))?[prefix.Length..];
+    }
+
+    public static bool IsHidden => Setting(HiddenVariable) == "1";
 
     /// <summary>
     /// The language asked for (<see cref="LanguageVariable"/>), else null. An app passes it to <c>Loc.UseLanguage</c>
     /// instead of <c>Loc.Choose</c>'s pick, so one machine shoots every language without changing its own.
     /// </summary>
     public static string? Language =>
-        IsEnabled && Environment.GetEnvironmentVariable(LanguageVariable) is { Length: > 0 } language ? language : null;
+        IsEnabled && Setting(LanguageVariable) is { Length: > 0 } language ? language : null;
 
     /// <summary>The shot name prefixes asked for; empty means all.</summary>
-    public static IReadOnlyList<string> Wanted => WantedIn(Environment.GetEnvironmentVariable(ModeVariable));
+    public static IReadOnlyList<string> Wanted => WantedIn(Setting(ModeVariable));
 
     /// <summary>Whether <paramref name="shot"/> was asked for (by a prefix of its name).</summary>
-    public static bool Wants(string shot) => Wants(shot, Environment.GetEnvironmentVariable(ModeVariable));
+    public static bool Wants(string shot) => Wants(shot, Setting(ModeVariable));
 
     /// <summary>Whether <paramref name="mode"/> (the variable's value: prefixes, or <c>all</c>) asks for <paramref name="shot"/>.</summary>
     public static bool Wants(string shot, string? mode) =>
@@ -95,7 +109,7 @@ public static partial class ScreenshotCapture
     /// so runs in several languages at once (the layout check) don't share it.
     /// </summary>
     public static string OutputDirectory =>
-        Environment.GetEnvironmentVariable(DirectoryVariable) is { Length: > 0 } dir
+        Setting(DirectoryVariable) is { Length: > 0 } dir
             ? dir
             : Path.Combine(Path.GetTempPath(), $"screenshots-{Environment.ProcessId}");
 
