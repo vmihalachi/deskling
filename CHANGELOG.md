@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.0 - 2026-10-16
+
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
 (**Breaking** for its build). A Windows app with the desktop character on no longer crashes when Windows switches theme
 or contrast. The speech bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall
