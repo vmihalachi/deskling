@@ -62,6 +62,29 @@ public static class CharacterScene
     }
 
     /// <summary>
+    /// A box around each of <paramref name="layers"/> as placed (view-box units) that holds all it draws: its shapes with
+    /// half their widest stroke, or its image's frame, under the rig's transform. Never smaller than the drawing, a
+    /// little bigger for a turned part; a layer with nothing in it gives none. The desktop window shapes where a finger
+    /// reaches from these.
+    /// </summary>
+    public static IReadOnlyList<Rect> DrawnBounds(IReadOnlyList<PlacedPart> layers)
+    {
+        var boxes = new List<Rect>(layers.Count);
+        foreach (var layer in layers)
+        {
+            if (layer.Content is PartContent.Vector { Shapes.Count: 0 })
+                continue;
+            var bounds = Bounds(layer.Content);
+            var pad = layer.Content is PartContent.Vector vector ? vector.Shapes.Max(s => s.Stroke is null ? 0 : s.StrokeWidth / 2) : 0;
+            var padded = new Rect(bounds.Origin.X - pad, bounds.Origin.Y - pad, bounds.Size.Width + 2 * pad, bounds.Size.Height + 2 * pad);
+            var corners = padded.Corners.Select(layer.Transform.Apply).ToArray();
+            var (minX, minY) = (corners.Min(p => p.X), corners.Min(p => p.Y));
+            boxes.Add(new Rect(minX, minY, corners.Max(p => p.X) - minX, corners.Max(p => p.Y) - minY));
+        }
+        return boxes;
+    }
+
+    /// <summary>
     /// How far, in view-box units, any point of <paramref name="bounds"/> moves from <paramref name="from"/> to
     /// <paramref name="to"/>: the farthest corner, as the difference of two affines is affine.
     /// </summary>

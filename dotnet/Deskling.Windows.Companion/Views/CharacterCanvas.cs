@@ -213,6 +213,25 @@ public sealed partial class CharacterCanvas : UserControl
         return CharacterScene.IsDrawnAt(layers, new FigurePoint(at.X, at.Y), Mask, slop);
     }
 
+    /// <summary>
+    /// Boxes that hold everything the character draws in the pose on screen, one per part, in the window's content
+    /// coordinates (DIPs): never smaller than the drawing (<see cref="CharacterScene.DrawnBounds"/>). The desktop window
+    /// shapes where a finger reaches from these. UI thread only.
+    /// </summary>
+    public IReadOnlyList<Rect> DrawnBounds()
+    {
+        if (XamlRoot is null || layers.Count == 0)
+            return [];
+        var toWindow = stage.TransformToVisual(null);
+        return
+        [
+            .. CharacterScene
+                .DrawnBounds(layers)
+                .Select(b => toWindow.TransformBounds(new global::Windows.Foundation.Rect(b.Origin.X, b.Origin.Y, b.Size.Width, b.Size.Height)))
+                .Select(b => new Rect(b.X, b.Y, b.Width, b.Height)),
+        ];
+    }
+
     protected override AutomationPeer OnCreateAutomationPeer() => new CharacterCanvasPeer(this);
 
     private bool IsStill => !animated || ReduceMotion.IsOn || ScreenshotCapture.IsEnabled;

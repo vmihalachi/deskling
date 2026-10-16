@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Deskling.Companion.Shell.Desktop;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
@@ -20,19 +21,24 @@ namespace Deskling.Windows.Companion.Desktop;
 /// <summary>
 /// A small window floating above other apps' windows, for a desk character and its speech bubble (Swift's
 /// <c>FloatingWindow</c>), as 3.1's spike found it: a WinUI window with a fully transparent backdrop, layered, topmost,
-/// never activated, in neither the taskbar nor Alt+Tab, so the app in front keeps the keyboard. Clicks pass through
-/// everywhere but where something is drawn (<see cref="HitTest"/>): a poll off the UI thread watches the pointer and
-/// turns the window's click-through off only while the pointer is over a drawn pixel.
+/// never activated, in neither the taskbar nor Alt+Tab, so the app in front keeps the keyboard. Mouse clicks pass
+/// through everywhere but where something is drawn (<see cref="HitTest"/>): a poll off the UI thread watches the mouse
+/// pointer and, while it is on the window, turns the window's click-through off only over a drawn pixel. While the mouse
+/// pointer is off the window, the window takes input, for a finger or a pen: Windows routes a touch before the app sees
+/// it, so a click-through window never gets one. Then a window region keeps it to what is drawn (<see cref="DrawnBounds"/>,
+/// grown and held by <see cref="TouchArea"/>), or the whole window without them. A region also clips the drawing: a pose
+/// that moves past it between two updates (100 ms apart) is cut until the next.
 /// </summary>
 /// <remarks>
 /// It stands on its <see cref="Anchor"/>, the middle of its bottom edge in screen pixels (y down), so
 /// <see cref="SetSize"/> grows it upward in place; its size is in DIPs, at the scale of the display it stands on. It stays
 /// wholly on a display's work area (<see cref="FloatingPlacement.Clamped"/>): a drag ends inside one, and when displays
-/// change it moves onto one, returning to the anchor once that fits again. A click (under 3 DIPs of movement) calls
-/// <see cref="OnClick"/>; a drag moves it and reports the new anchor; a right click calls <see cref="OnMenu"/>;
-/// Ctrl+wheel (which a precision touchpad's pinch sends) and a touch pinch report one step per gesture. A second window
-/// can ride along (<see cref="AttachTo"/>, for the bubble): Windows keeps it above its owner, and the app places it with
-/// <see cref="SetFrame"/>. UI thread only.
+/// change it moves onto one, returning to the anchor once that fits again. A press goes by its own pointer's positions,
+/// the mouse's or a finger's (<see cref="PressTracker"/>): a click (under 3 DIPs of movement) calls <see cref="OnClick"/>;
+/// a one-finger or mouse drag moves it and reports the new anchor; a right click calls <see cref="OnMenu"/>; Ctrl+wheel
+/// (which a precision touchpad's pinch sends) and a touch pinch report one step per gesture, and a pinch is never a click
+/// or a drag. A second window can ride along (<see cref="AttachTo"/>, for the bubble): Windows keeps it above its owner,
+/// and the app places it with <see cref="SetFrame"/>. UI thread only.
 /// </remarks>
 public sealed class DesktopWindow : IDisposable
 {
@@ -74,9 +80,13 @@ public sealed class DesktopWindow : IDisposable
     private volatile bool clickThrough;
     private volatile bool hitPending;
 
-    private DesktopNative.POINT pressStart;
+    private readonly PressTracker press = new();
     private RectInt32 frameAtPress;
-    private bool dragging;
+
+    /// <summary>Where a finger reaches while the mouse pointer is off the window, and the region set from it (none: empty).</summary>
+    private readonly TouchArea touchArea = new();
+    private readonly Stopwatch clock = Stopwatch.StartNew();
+    private IReadOnlyList<RectInt32> region = [];
     private int wheel;
     private bool wheelStepped;
     private DispatcherQueueTimer? wheelEnd;
@@ -114,7 +124,8 @@ public sealed class DesktopWindow : IDisposable
         root.PointerPressed += OnPressed;
         root.PointerMoved += OnMoved;
         root.PointerReleased += OnReleased;
-        root.PointerCaptureLost += (_, _) => EndPress();
+        root.PointerCaptureLost += (_, e) => EndPress(e.Pointer.PointerId);
+        root.PointerCanceled += (_, e) => EndPress(e.Pointer.PointerId);
         root.RightTapped += (_, e) =>
         {
             e.Handled = true;
@@ -159,6 +170,13 @@ public sealed class DesktopWindow : IDisposable
     /// any element XAML finds there.
     /// </summary>
     public Func<XamlPoint, bool>? HitTest { get; set; }
+
+    /// <summary>
+    /// Boxes in the content (DIPs) that hold everything drawn, a shadow included: while the mouse pointer is off the
+    /// window, a finger or a pen reaches it only there (grown and held a few seconds, <see cref="TouchArea"/>). Null: the
+    /// whole window, as for a bubble.
+    /// </summary>
+    public Func<IReadOnlyList<FigureRect>>? DrawnBounds { get; set; }
 
     public bool IsMovable { get; set; }
 
@@ -227,6 +245,9 @@ public sealed class DesktopWindow : IDisposable
     public void SetSize(FigureSize size)
     {
         this.size = size;
+        // The content scales with the window: the held boxes no longer hold it.
+        touchArea.Clear();
+        Unshape();
         Place();
     }
 
@@ -281,6 +302,7 @@ public sealed class DesktopWindow : IDisposable
         polling = false;
         poll.Change(Timeout.Infinite, Timeout.Infinite);
         SetClickThrough(true);
+        Unshape();
         var visual = ElementCompositionPreview.GetElementVisual(root);
         if (!animated || !window.AppWindow.IsVisible)
         {
@@ -349,10 +371,13 @@ public sealed class DesktopWindow : IDisposable
         // One-shot, re-armed each time: never two polls at once, and none after a hide.
         if (polling)
             poll.Change(near || pressed ? PollNearMilliseconds : PollFarMilliseconds, Timeout.Infinite);
-        if (!inside && !pressed)
+        // Away from the window the mouse can't click it, so it stays hit-testable there for a finger or a pen: Windows
+        // routes a touch before the app sees it, and a click-through window never gets one. A shaped window wakes the
+        // UI thread to follow the drawing with its region.
+        if (!inside && !pressed && DrawnBounds is null)
         {
-            if (!clickThrough)
-                queue.TryEnqueue(() => SetClickThrough(true));
+            if (clickThrough)
+                queue.TryEnqueue(() => SetClickThrough(false));
             return;
         }
         if (hitPending)
@@ -374,7 +399,49 @@ public sealed class DesktopWindow : IDisposable
         var inside = point.X >= rect.Left && point.X < rect.Right && point.Y >= rect.Top && point.Y < rect.Bottom;
         var scale = Scale;
         var local = new XamlPoint((point.X - rect.Left) / scale, (point.Y - rect.Top) / scale);
-        SetClickThrough(!(pressed || (inside && IsDrawn(local))));
+        if (inside)
+            Unshape();
+        else
+            Shape();
+        SetClickThrough(inside && !pressed && !IsDrawn(local));
+    }
+
+    /// <summary>Keeps the window to <see cref="DrawnBounds"/>, grown and held, as its region; unchanged boxes set nothing.</summary>
+    private void Shape()
+    {
+        if (DrawnBounds is not { } drawn)
+            return;
+        var frame = Frame;
+        var boxes = touchArea.Update(clock.Elapsed.TotalSeconds, drawn(), Scale, frame.Width, frame.Height);
+        if (boxes.Count == 0)
+        {
+            Unshape();
+            return;
+        }
+        if (boxes.SequenceEqual(region))
+            return;
+        var shape = DesktopNative.CreateRectRgn(0, 0, 0, 0);
+        foreach (var box in boxes)
+        {
+            var part = DesktopNative.CreateRectRgn(box.X, box.Y, box.X + box.Width, box.Y + box.Height);
+            DesktopNative.CombineRgn(shape, shape, part, DesktopNative.RGN_OR);
+            DesktopNative.DeleteObject(part);
+        }
+        if (DesktopNative.SetWindowRgn(Hwnd, shape, true) == 0)
+        {
+            DesktopNative.DeleteObject(shape);
+            return;
+        }
+        region = boxes;
+    }
+
+    /// <summary>The whole window again: the mouse pointer is on it, or the drawing changed size.</summary>
+    private void Unshape()
+    {
+        if (region.Count == 0)
+            return;
+        DesktopNative.SetWindowRgn(Hwnd, 0, true);
+        region = [];
     }
 
     private bool IsDrawn(XamlPoint point)
@@ -405,47 +472,62 @@ public sealed class DesktopWindow : IDisposable
         var point = e.GetCurrentPoint(root);
         if (point.Properties.IsRightButtonPressed || (e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse && !point.Properties.IsLeftButtonPressed))
             return;
-        DesktopNative.GetCursorPos(out pressStart);
-        frameAtPress = Frame;
-        pressed = true;
-        dragging = false;
         root.CapturePointer(e.Pointer);
+        var at = OnScreen(point.Position);
+        switch (press.Down(e.Pointer.PointerId, at.X, at.Y))
+        {
+            case PressTracker.Start.Press:
+                frameAtPress = Frame;
+                break;
+            case PressTracker.Start.EndsDrag:
+                DragEnded();
+                break;
+        }
+        pressed = press.IsPressed;
     }
 
     private void OnMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (!pressed || !IsMovable)
+        if (!IsMovable || !press.IsPressed)
             return;
-        DesktopNative.GetCursorPos(out var now);
-        var (dx, dy) = (now.X - pressStart.X, now.Y - pressStart.Y);
-        if (!dragging && Math.Sqrt(dx * dx + dy * dy) < DragThreshold * Scale)
+        var at = OnScreen(e.GetCurrentPoint(root).Position);
+        if (press.Move(e.Pointer.PointerId, at.X, at.Y, DragThreshold * Scale) is not var (dx, dy))
             return;
-        dragging = true;
         window.AppWindow.Move(new PointInt32(frameAtPress.X + dx, frameAtPress.Y + dy));
         OnDragging?.Invoke();
     }
 
     private void OnReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (!pressed)
-            return;
         // Read first: releasing the capture raises PointerCaptureLost at once, which ends the press.
-        var wasDragging = dragging;
-        pressed = dragging = false;
+        var end = press.Up(e.Pointer.PointerId);
+        pressed = press.IsPressed;
         root.ReleasePointerCapture(e.Pointer);
-        if (wasDragging)
-            DragEnded();
-        else
-            OnClick?.Invoke();
+        Ended(end);
     }
 
     /// <summary>The capture went elsewhere mid-press: a drag ends where it is, a click doesn't happen.</summary>
-    private void EndPress()
+    private void EndPress(uint pointer)
     {
-        var wasDragging = dragging;
-        pressed = dragging = false;
-        if (wasDragging)
+        var end = press.Lost(pointer);
+        pressed = press.IsPressed;
+        Ended(end);
+    }
+
+    private void Ended(PressTracker.End end)
+    {
+        if (end == PressTracker.End.Drag)
             DragEnded();
+        else if (end == PressTracker.End.Click)
+            OnClick?.Invoke();
+    }
+
+    /// <summary>A point in the content (DIPs) on screen (pixels), from where the window is now.</summary>
+    private XamlPoint OnScreen(XamlPoint local)
+    {
+        var frame = Frame;
+        var scale = Scale;
+        return new XamlPoint(frame.X + local.X * scale, frame.Y + local.Y * scale);
     }
 
     private void DragEnded()
@@ -488,6 +570,8 @@ public sealed class DesktopWindow : IDisposable
     private void OnPinchDelta(object sender, ManipulationDeltaRoutedEventArgs e)
     {
         var scale = e.Cumulative.Scale;
+        if (scale != 1 && press.Pinch() == PressTracker.End.Drag)
+            DragEnded();
         if (pinched || Math.Abs(scale - 1) < PinchStep)
             return;
         pinched = true;
@@ -511,6 +595,174 @@ public sealed class DesktopWindow : IDisposable
 
     private static RectInt32 Int(FigureRect r) =>
         new((int)Math.Round(r.Origin.X), (int)Math.Round(r.Origin.Y), (int)Math.Round(r.Size.Width), (int)Math.Round(r.Size.Height));
+}
+
+/// <summary>
+/// Where a finger reaches a desktop window while the mouse pointer is off it, in the window's pixels: each drawn box
+/// (content DIPs, one per part, by index) grown by <see cref="Margin"/> DIPs and held for <see cref="HoldSeconds"/>, so a
+/// pose that sways or talks stays inside between updates. Boxes are cut to the window. UI thread only.
+/// </summary>
+internal sealed class TouchArea
+{
+    /// <summary>How far past the drawing a finger still lands, in DIPs.</summary>
+    public const double Margin = 8;
+
+    /// <summary>How long a box the drawing has filled stays in.</summary>
+    public const double HoldSeconds = 3;
+
+    private readonly List<Queue<(double At, FigureRect Box)>> held = [];
+
+    /// <summary>Forgets the held boxes: the drawing changed size.</summary>
+    public void Clear() => held.Clear();
+
+    /// <summary>
+    /// The region's boxes (pixels, from the window's top left) at <paramref name="now"/> (seconds) with
+    /// <paramref name="drawn"/> the boxes drawn now, at <paramref name="scale"/> pixels per DIP in a window
+    /// <paramref name="width"/> × <paramref name="height"/> pixels. A different number of boxes starts over.
+    /// </summary>
+    public IReadOnlyList<RectInt32> Update(double now, IReadOnlyList<FigureRect> drawn, double scale, int width, int height)
+    {
+        if (drawn.Count != held.Count)
+        {
+            held.Clear();
+            for (var i = 0; i < drawn.Count; i++)
+                held.Add(new Queue<(double, FigureRect)>());
+        }
+        var boxes = new List<RectInt32>(drawn.Count);
+        for (var i = 0; i < drawn.Count; i++)
+        {
+            var times = held[i];
+            times.Enqueue((now, drawn[i]));
+            while (times.Peek().At < now - HoldSeconds)
+                times.Dequeue();
+            var (left, top, right, bottom) = (double.MaxValue, double.MaxValue, double.MinValue, double.MinValue);
+            foreach (var (_, box) in times)
+            {
+                left = Math.Min(left, box.Origin.X);
+                top = Math.Min(top, box.Origin.Y);
+                right = Math.Max(right, box.Origin.X + box.Size.Width);
+                bottom = Math.Max(bottom, box.Origin.Y + box.Size.Height);
+            }
+            var x0 = Math.Max(0, (int)Math.Floor((left - Margin) * scale));
+            var y0 = Math.Max(0, (int)Math.Floor((top - Margin) * scale));
+            var x1 = Math.Min(width, (int)Math.Ceiling((right + Margin) * scale));
+            var y1 = Math.Min(height, (int)Math.Ceiling((bottom + Margin) * scale));
+            if (x1 > x0 && y1 > y0)
+                boxes.Add(new RectInt32(x0, y0, x1 - x0, y1 - y0));
+        }
+        return boxes;
+    }
+}
+
+/// <summary>
+/// How the pointers down on a desktop window add up: a click, a drag, or a pinch, which is neither. It goes by each
+/// pointer's own positions (screen pixels), since a finger doesn't move the mouse cursor. The first pointer down starts
+/// the press and only it drags; a second one down, or a pinch's scale, makes the press a pinch, which ends a drag where it
+/// is and never clicks. The press is over once every pointer is up. UI thread only.
+/// </summary>
+internal sealed class PressTracker
+{
+    private readonly HashSet<uint> contacts = [];
+    private uint pointer;
+    private double startX;
+    private double startY;
+    private bool dragging;
+    private bool pinch;
+
+    /// <summary>What a pointer going down did.</summary>
+    public enum Start
+    {
+        /// <summary>It started a press: the window's frame now is where a drag moves from.</summary>
+        Press,
+
+        /// <summary>It joined a press, which is now a pinch.</summary>
+        Joined,
+
+        /// <summary>It joined a press that was dragging: the pinch ends the drag where it is.</summary>
+        EndsDrag,
+    }
+
+    /// <summary>What a press came to when one of its pointers came up or was lost.</summary>
+    public enum End
+    {
+        None,
+        Click,
+        Drag,
+    }
+
+    /// <summary>Whether a pointer is down.</summary>
+    public bool IsPressed => contacts.Count > 0;
+
+    public Start Down(uint id, double x, double y)
+    {
+        if (contacts.Count > 0)
+        {
+            contacts.Add(id);
+            return Pinch() == End.Drag ? Start.EndsDrag : Start.Joined;
+        }
+        contacts.Add(id);
+        (pointer, startX, startY, dragging, pinch) = (id, x, y, false, false);
+        return Start.Press;
+    }
+
+    /// <summary>
+    /// A pointer moved to (x, y): how far the window moves from its frame at the press, once the press's own pointer has
+    /// gone <paramref name="threshold"/> pixels; null while it hasn't, for another pointer, and in a pinch.
+    /// </summary>
+    public (int Dx, int Dy)? Move(uint id, double x, double y, double threshold)
+    {
+        if (pinch || id != pointer || !contacts.Contains(id))
+            return null;
+        var (dx, dy) = (x - startX, y - startY);
+        if (!dragging && Math.Sqrt(dx * dx + dy * dy) < threshold)
+            return null;
+        dragging = true;
+        return ((int)Math.Round(dx), (int)Math.Round(dy));
+    }
+
+    /// <summary>A pointer came up: a click when the press's only pointer comes up without having dragged or pinched.</summary>
+    public End Up(uint id)
+    {
+        if (!contacts.Contains(id))
+            return End.None;
+        var end =
+            id != pointer ? End.None
+            : dragging ? End.Drag
+            : !pinch && contacts.Count == 1 ? End.Click
+            : End.None;
+        Lift(id);
+        return end;
+    }
+
+    /// <summary>A pointer's capture went elsewhere: a drag ends where it is, and the press won't click.</summary>
+    public End Lost(uint id)
+    {
+        if (!contacts.Contains(id))
+            return End.None;
+        var end = id == pointer && dragging ? End.Drag : End.None;
+        pinch = true;
+        Lift(id);
+        return end;
+    }
+
+    /// <summary>The press is a pinch from now on: no click, and a drag under way ends (<see cref="End.Drag"/>).</summary>
+    public End Pinch()
+    {
+        if (!IsPressed)
+            return End.None;
+        pinch = true;
+        if (!dragging)
+            return End.None;
+        dragging = false;
+        return End.Drag;
+    }
+
+    private void Lift(uint id)
+    {
+        contacts.Remove(id);
+        if (id == pointer)
+            dragging = false;
+    }
 }
 
 /// <summary>

@@ -41,6 +41,22 @@ internal static partial class DesktopNative
         public int apartmentType;
     }
 
+    public const int RGN_OR = 2;
+
+    [LibraryImport("gdi32.dll")]
+    public static partial nint CreateRectRgn(int left, int top, int right, int bottom);
+
+    [LibraryImport("gdi32.dll")]
+    public static partial int CombineRgn(nint destination, nint source1, nint source2, int mode);
+
+    [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DeleteObject(nint handle);
+
+    /// <summary>Windows owns <paramref name="region"/> once this succeeds; 0 takes the region away.</summary>
+    [LibraryImport("user32.dll")]
+    public static partial int SetWindowRgn(nint hwnd, nint region, [MarshalAs(UnmanagedType.Bool)] bool redraw);
+
     [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     public static partial nint GetWindowLongPtr(nint hwnd, int index);
 

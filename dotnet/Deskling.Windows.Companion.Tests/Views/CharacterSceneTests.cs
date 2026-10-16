@@ -183,6 +183,41 @@ public sealed class CharacterSceneTests
         Assert.False(CharacterScene.IsDrawnAt(layers, new Point(5, 5), Masks));
     }
 
+    [Theory]
+    [InlineData("fixture-vector")]
+    [InlineData("fixture-raster")]
+    public void TheDrawnBoxesHoldEveryDrawnPointInEveryPose(string skin)
+    {
+        var character = Character(skin);
+        // Every image fully drawn: the boxes must hold the whole frame.
+        var solid = new AlphaMask(1, 1, [255]);
+        AlphaMask? Masks(string asset) => solid;
+        foreach (var mood in Enum.GetValues<Mood>())
+            foreach (var time in new[] { 0, 0.37, 1.2, 2.9, 4.4 })
+            {
+                var layers = character.Layers(character.Pose(mood, time));
+                var boxes = CharacterScene.DrawnBounds(layers);
+                for (var x = 0.0; x <= 100; x += 1)
+                    for (var y = 0.0; y <= 100; y += 1)
+                        if (CharacterScene.IsDrawnAt(layers, new Point(x, y), Masks))
+                            Assert.True(
+                                boxes.Any(b => x >= b.Origin.X && x <= b.Origin.X + b.Size.Width && y >= b.Origin.Y && y <= b.Origin.Y + b.Size.Height),
+                                $"{skin} {mood} at {time}: ({x}, {y}) drawn outside every box"
+                            );
+            }
+    }
+
+    [Fact]
+    public void ATurnedPartsBoxHoldsItsTurnedCorners()
+    {
+        var head = Character("fixture-vector").Art.Parts["head"];
+        var turned = new PlacedPart("head", Transform.Rotation(45, new Point(50, 40)), head);
+        var box = Assert.Single(CharacterScene.DrawnBounds([turned]));
+        // A 52-wide square turned 45° spans its diagonal, 52√2, plus the stroke turned with it.
+        Assert.InRange(box.Size.Width, 52 * Math.Sqrt(2), 52 * Math.Sqrt(2) + 6);
+        Assert.Equal(50, box.Origin.X + box.Size.Width / 2, 6);
+    }
+
     [Fact]
     public void AShiftIsTheFarthestCornersMove()
     {
