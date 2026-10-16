@@ -6,6 +6,17 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.10.4 - 2026-10-16
+
+- **Swift (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs. `WindowManager.opensHidden` opens windows
+  transparent, click-through and behind the others without activating the app or turning it regular, and
+  `ScreenshotCapture.isHidden` (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it and skips the wait for a key window, so a run
+  leaves the Mac to whoever is using it; the shots show the windows inactive. `ScreenshotCapture.outputDirectory`
+  defaults to a folder per process (`screenshots-<pid>`), so several runs can go at once.
+- **Tools (`screenshots.sh`, `check-layout.sh`)**: `screenshots.sh --only` runs hidden (`--front` for key windows, as
+  `store-screenshots.sh` now passes), plus `--hidden`, `--no-build` and `--build-only`; it removes the app's run
+  folder after copying. `check-layout.sh` builds once, then runs the languages side by side (`LAYOUT_JOBS`, default
+  4), hidden, and prints each failing language's problems.
 - **Tools (`store/push.py`)**: with `store.apple.ios`, it fills a universal app's iPhone and iPad version page too: it
   finds or creates (`--create`) the iOS version for `--version`, attaches `--build`, pushes the `ios.*` fields to its
   languages (adding missing ones) and uploads the iPhone 6.9" and iPad 13" screenshot sets from

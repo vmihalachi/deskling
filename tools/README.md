@@ -15,8 +15,8 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
 | `fonts.py` | Builds the display faces from pinned variable fonts (`fonts`, plus `fonts.faces` for an upright beside an italic; needs fontTools). |
-| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written); App Store images (needs Pillow). |
-| `check-layout.sh` | `screenshots.sh` in every language (or the ones named), naming the languages whose windows don't fit. |
+| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images (needs Pillow). |
+| `check-layout.sh` | `screenshots.sh` in every language (or the ones named), side by side and hidden, naming the languages whose windows don't fit. |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
