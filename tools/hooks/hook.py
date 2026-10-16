@@ -12,7 +12,8 @@
   hook.py stop   Stop:        run the app's verify.sh --fast on this session's edits and remind about the slow checks
                                (xcodebuild test, conformance, swift/dotnet test, the Windows app's model tests, the
                                WinUI app build, the landing build, hooks.slow) not run since the last edit; remind once about porting Mac UI changes to Windows
-                               (hooks.macUI/windowsUI).
+                               (hooks.macUI/windowsUI); tell the user once per compaction cycle when Claude's context is
+                               past hooks.longSessionTokens (130k).
   hook.py resume SessionStart (compact|resume): print where this session was, as the agent's context after a
                                compaction: the files it edited, the slow checks it ran, the branch, git status and
                                the recent commits; nothing when the tree is clean and the session has no log.
@@ -49,6 +50,7 @@ RAN: list = []  # (ran-kind, command pattern) of the app's own slow checks (hook
 MAC_UI = None
 WINDOWS_UI = None
 BIG_LINES = 600  # hooks.bigFileLines; 0 disables
+LONG_TOKENS = 130_000  # hooks.longSessionTokens; 0 disables
 
 READERS = re.compile(r"(^|[|;&(]\s*|\s)(cat|less|more|head|tail|bat|nl|xxd|od|strings|jq|view|awk|sed|python3?\s+-c)\b")
 CONTEXT = re.compile(r"\s-(?:[ABC]\s*\d+|[a-zA-Z]*[ABC]\d*)\b|--(?:after|before)?-?context\b")
@@ -60,7 +62,7 @@ NEVER = "^$a"
 
 def setup(root=None):
     """Reads companion.json at `root` ($CLAUDE_PROJECT_DIR, else found from the current directory)."""
-    global ROOT, CONFIG, NAMES, L10N, GUARDED, I18N, SLOW, RAN, MAC_UI, WINDOWS_UI, BIG_LINES
+    global ROOT, CONFIG, NAMES, L10N, GUARDED, I18N, SLOW, RAN, MAC_UI, WINDOWS_UI, BIG_LINES, LONG_TOKENS
     root = Path(root or os.environ.get("CLAUDE_PROJECT_DIR") or companion.find_root())
     CONFIG = companion.load(root)
     ROOT = CONFIG.root
@@ -121,6 +123,7 @@ def setup(root=None):
     MAC_UI = re.compile(CONFIG.get("hooks.macUI")) if CONFIG.get("hooks.macUI") else None
     WINDOWS_UI = re.compile(CONFIG.get("hooks.windowsUI")) if CONFIG.get("hooks.windowsUI") else None
     BIG_LINES = int(CONFIG.get("hooks.bigFileLines", BIG_LINES) or 0)
+    LONG_TOKENS = int(CONFIG.get("hooks.longSessionTokens", LONG_TOKENS) or 0)
 
 
 def rel(path):
@@ -393,20 +396,73 @@ def verify_script():
     return wrapper if wrapper.exists() else TOOLS / "verify.sh"
 
 
+def context_size(transcript):
+    """The context of the session's last model call in tokens, and how many compactions came before it, from Claude's
+    transcript; (0, 0) when there is none (Codex, Copilot) or it has no usage yet."""
+    try:
+        data = Path(transcript).read_bytes()
+    except (OSError, TypeError):
+        return 0, 0
+    tokens = 0
+    for line in reversed(data[-1_000_000:].splitlines()):
+        if b'"usage"' not in line or b'"isSidechain":true' in line:
+            continue
+        try:
+            usage = json.loads(line)["message"]["usage"]
+        except (ValueError, KeyError, TypeError):
+            continue
+        tokens = sum(usage.get(k) or 0 for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+        break
+    return tokens, data.count(b'"subtype":"compact_boundary"')
+
+
+def long_session(event):
+    """Once per compaction cycle past hooks.longSessionTokens: tell the user the session is long. Every call resends
+    the whole context, so one long session costs far more than the same work split across fresh ones."""
+    if not LONG_TOKENS:
+        return None
+    tokens, compactions = context_size(event.get("transcript_path"))
+    marker = f"long-session-{compactions}"
+    if tokens < LONG_TOKENS:
+        return None
+    try:
+        if f"\tran\t{marker}" in state_file(event).read_text():
+            return None
+    except OSError:
+        pass
+    record(event, "ran", marker)
+    after = f" after {compactions} compaction{'s' if compactions != 1 else ''}" if compactions else ""
+    return (f"This session's context is {tokens // 1000}k tokens{after}, and every call resends it. Start a new session "
+            "for the next task, or /compact at the next milestone.")
+
+
 def stop(event):
     if event.get("stop_hook_active"):
         return
+    long = long_session(event)
+    problems = stop_problems(event)
+    if problems:
+        if long:  # the agent goes on, so the user hears it from the agent
+            problems.append(f"Then tell the user in one line: {long}")
+        print("\n\n".join(problems), file=sys.stderr)
+        sys.exit(2)
+    if long:
+        print(json.dumps({"systemMessage": long}))  # shown to the user; costs the agent nothing
+
+
+def stop_problems(event):
+    """What the agent must still do before stopping: failed fast checks, slow checks not run, the parity reminder."""
     try:
         lines = state_file(event).read_text().splitlines()
     except OSError:
-        return
+        return []
     last_edit, last_ran = {}, {}
     for line in lines:
         stamp, kind, value = line.split("\t", 2)
         (last_edit if kind == "edit" else last_ran)[value] = float(stamp)
     edited = sorted(p for p in last_edit if not p.startswith("/"))
     if not edited:
-        return
+        return []
 
     problems = []
     script = verify_script()
@@ -430,16 +486,14 @@ def stop(event):
         newest = max((t for p, t in last_edit.items() if re.search(pattern, p)), default=None)
         if newest is not None and last_ran.get(kind, 0) < newest:
             stale.append(label)
-    if note := parity_reminder(event, last_edit, last_ran):
-        problems.append(note)
+    if reminder := parity_reminder(event, last_edit, last_ran):
+        problems.append(reminder)
     if stale:
         files = " ".join(shlex.quote(p) for p in edited)
         problems.append(f"Not run since your last edit: {', '.join(stale)}. "
                         f"Run `{rel(script)} -- {files}` (it runs only what applies), "
                         "or tell the user why you're skipping it.")
-    if problems:
-        print("\n\n".join(problems), file=sys.stderr)
-        sys.exit(2)
+    return problems
 
 
 def git_lines(*args):
@@ -468,7 +522,7 @@ def resume(event):
         bucket = edited if kind == "edit" else ran if kind == "ran" else None
         if bucket is not None and value not in bucket:
             bucket.append(value)
-    ran = [kind for kind in ran if kind != "parity-reminded"]  # a reminder's marker, not a check
+    ran = [kind for kind in ran if kind != "parity-reminded" and not kind.startswith("long-session-")]  # reminders' markers
     status = git_lines("status", "--short")
     if not edited and not ran and not status:
         return

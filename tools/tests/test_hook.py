@@ -380,6 +380,41 @@ class ShellScripts(unittest.TestCase):
             self.assertIsNone(validate.command(script, ["--fast"], windows=True))
 
 
+class LongSession(HookTestCase):
+    """`hook.py stop` past hooks.longSessionTokens: a note to the user, once per compaction cycle."""
+
+    def transcript(self, tokens, compactions=0):
+        path = Path(self.tmp) / "transcript.jsonl"
+        lines = [{"type": "system", "subtype": "compact_boundary"}] * compactions
+        lines += [{"type": "assistant", "message": {"usage": {"input_tokens": 1, "cache_read_input_tokens": tokens - 1}}},
+                  {"type": "assistant", "isSidechain": True, "message": {"usage": {"input_tokens": 5}}}]
+        path.write_text("".join(json.dumps(line, separators=(",", ":")) + "\n" for line in lines))
+        return {"session_id": "long", "transcript_path": str(path)}
+
+    def note(self, event):
+        done = self.run_hook("stop", event)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        return json.loads(done.stdout)["systemMessage"] if done.stdout.strip() else None
+
+    def test_tells_the_user_once_per_compaction_cycle(self):
+        self.assertIsNone(self.note(self.transcript(90_000)))
+        self.assertIn("150k tokens, and every call", self.note(self.transcript(150_000)) or "")
+        self.assertIsNone(self.note(self.transcript(160_000)), "once")
+        self.assertIn("140k tokens after 1 compaction,", self.note(self.transcript(140_000, compactions=1)) or "")
+
+    def test_no_transcript_or_disabled(self):
+        self.assertIsNone(self.note({"session_id": "codex"}))
+        self.configure(longSessionTokens=0)
+        self.assertIsNone(self.note(self.transcript(500_000)))
+
+    def test_a_blocked_stop_asks_the_agent_to_pass_it_on(self):
+        self.run_hook("post", {"session_id": "long", "tool_name": "Edit",
+                               "tool_input": {"file_path": str(self.root / "macos/FixtureCore/Sources/FixtureCore/A.swift")}})
+        done = self.run_hook("stop", self.transcript(150_000))
+        self.assertEqual(done.returncode, 2)
+        self.assertIn("Then tell the user in one line: This session's context is 150k", done.stderr)
+
+
 class Resume(HookTestCase):
     """`hook.py resume`: the session's edits and checks from its log, then the repository's state."""
 

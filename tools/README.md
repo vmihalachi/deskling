@@ -92,7 +92,9 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    inside GitHub Actions only). The hook reads the guards, the slow-check table and the parity patterns (`hooks.*`) from `companion.json`, and
    fails open when the file is missing or invalid. It also refuses to load any text file over `hooks.bigFileLines`
    lines (600) whole: a `Read` without `offset`/`limit`, `cat`, or `sed` without a range; the refusal names the outline
-   command (`grep -n '^\(func\|class\|...\)'`) to run first.
+   command (`grep -n '^\(func\|class\|...\)'`) to run first. On `Stop` it tells the user, once per compaction cycle,
+   when Claude's context is past `hooks.longSessionTokens` (130000; 0 disables), so the next task goes to a fresh
+   session.
 
 5. **Skills.** Symlink the generic ones next to the app's own:
 

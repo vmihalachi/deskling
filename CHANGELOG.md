@@ -23,6 +23,13 @@ package and the NuGet packages together.
   UTF-8, so a byte the locale's code page lacks no longer drops the report. Deskling's own Stop hook
   (`.claude/hooks/validate.py`) does the same.
 
+## 0.11.1 - 2026-10-16
+
+- **Tools (`hooks/hook.py stop`)**: tells the user, once per compaction cycle, when Claude's context is past
+  `hooks.longSessionTokens` (130000 by default, 0 disables), read from the session's transcript, so the next task goes
+  to a fresh session. When the context is too long and the Stop hook is also blocking, the agent is asked to pass the
+  note on.
+
 ## 0.11.0 - 2026-10-16
 
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
