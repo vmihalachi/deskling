@@ -6,7 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-- **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: a touch or pen press-and-hold (0.6 s, still) on the desktop character opens its menu, as a right click does, instead of saying a line; a tap still says one, and a drag or a pinch wins over a hold. The menu opens at the finger or the mouse pointer (the new `DesktopWindow.OnMenuAt`), not always at the mouse pointer.
+- **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: a touch or pen press-and-hold on the desktop character
+  opens its menu, as a right click does, instead of saying a line: 0.6 s within 10 DIPs (`TouchDragThreshold`, Windows'
+  2.7 mm between a tap and a drag). A tap still says a line, and a drag or a pinch wins over a hold. A finger or a pen
+  now drags only past those 10 DIPs (the mouse still past 3), so a resting finger doesn't nudge the character. The menu
+  opens at the finger or the mouse pointer (the new `DesktopWindow.OnMenuAt`), not always at the mouse pointer; with
+  no menu to show, a hold is a click.
 
 ## 0.11.5 - 2026-10-16
 

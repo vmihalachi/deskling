@@ -35,8 +35,9 @@ namespace Deskling.Windows.Companion.Desktop;
 /// <see cref="SetSize"/> grows it upward in place; its size is in DIPs, at the scale of the display it stands on. It stays
 /// wholly on a display's work area (<see cref="FloatingPlacement.Clamped"/>): a drag ends inside one, and when displays
 /// change it moves onto one, returning to the anchor once that fits again. A press goes by its own pointer's positions,
-/// the mouse's or a finger's (<see cref="PressTracker"/>): a click (under 3 DIPs of movement) calls <see cref="OnClick"/>;
-/// a one-finger or mouse drag moves it and reports the new anchor; a right click, or a finger or a pen held still for
+/// the mouse's or a finger's (<see cref="PressTracker"/>): a click (under <see cref="DragThreshold"/> DIPs of movement for
+/// the mouse, <see cref="TouchDragThreshold"/> for a finger or a pen) calls <see cref="OnClick"/>; a one-finger or mouse
+/// drag moves it and reports the new anchor; a right click, or a finger or a pen held as still for
 /// <see cref="HoldGesture.HoldSeconds"/> and lifted, calls <see cref="OnMenuAt"/> (or <see cref="OnMenu"/>) at the
 /// pointer; Ctrl+wheel (which a precision touchpad's pinch sends) and a touch pinch report one step per gesture, and a
 /// pinch is never a click, a drag or a hold. A second window can ride along (<see cref="AttachTo"/>, for the bubble):
@@ -47,8 +48,14 @@ public sealed class DesktopWindow : IDisposable
     public const double FadeInSeconds = 0.4;
     public const double FadeOutSeconds = 0.2;
 
-    /// <summary>How far the pointer moves, in DIPs, before a press is a drag rather than a click.</summary>
+    /// <summary>How far the mouse pointer moves, in DIPs, before a press is a drag rather than a click.</summary>
     public const double DragThreshold = 3;
+
+    /// <summary>
+    /// The same for a finger or a pen, which drifts more while it rests: Windows' own threshold between a tap and a drag,
+    /// 2.7 mm (about 10 DIPs). A press-and-hold has to stay within it too.
+    /// </summary>
+    public const double TouchDragThreshold = 10;
 
     /// <summary>The wheel turns one notch (120) per step; a touch pinch must scale this much.</summary>
     private const int WheelStep = 120;
@@ -180,9 +187,10 @@ public sealed class DesktopWindow : IDisposable
 
     /// <summary>
     /// A right click or a touch or pen press-and-hold: show the menu at this point on screen (pixels), where the mouse
-    /// pointer or the finger is (a finger doesn't move the mouse pointer). Called instead of <see cref="OnMenu"/> when set.
+    /// pointer or the finger is (a finger doesn't move the mouse pointer), and say whether one showed: a hold with no menu
+    /// to show is a click (<see cref="OnClick"/>). Called instead of <see cref="OnMenu"/> when set.
     /// </summary>
-    public Action<PointInt32>? OnMenuAt { get; set; }
+    public Func<PointInt32, bool>? OnMenuAt { get; set; }
 
     /// <summary>The displays changed (one was added, removed or rearranged), after the window moved onto one.</summary>
     public Action? OnScreensChanged { get; set; }
@@ -524,7 +532,8 @@ public sealed class DesktopWindow : IDisposable
         if (!IsMovable || !press.IsPressed)
             return;
         var at = OnScreen(e.GetCurrentPoint(root).Position);
-        if (press.Move(e.Pointer.PointerId, at.X, at.Y, DragThreshold * Scale) is not var (dx, dy))
+        var threshold = DragThresholdFor(e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) * Scale;
+        if (press.Move(e.Pointer.PointerId, at.X, at.Y, threshold) is not var (dx, dy))
             return;
         window.AppWindow.Move(new PointInt32(frameAtPress.X + dx, frameAtPress.Y + dy));
         OnDragging?.Invoke();
@@ -541,10 +550,10 @@ public sealed class DesktopWindow : IDisposable
         root.ReleasePointerCapture(e.Pointer);
         if ((end is PressTracker.End.Click or PressTracker.End.Hold) && e.Pointer.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse)
             touchAnswered = true;
-        if (end == PressTracker.End.Hold)
-            ShowMenu(at);
-        else
+        if (end != PressTracker.End.Hold)
             Ended(end);
+        else if (!ShowMenu(at))
+            OnClick?.Invoke();
     }
 
     /// <summary>The capture went elsewhere mid-press: a drag ends where it is, a click or a hold doesn't happen.</summary>
@@ -566,17 +575,22 @@ public sealed class DesktopWindow : IDisposable
         return timer;
     }
 
-    /// <summary>The menu, for a right click or a hold at <paramref name="local"/> in the content (DIPs).</summary>
-    private void ShowMenu(XamlPoint local)
+    /// <summary>The menu, for a right click or a hold at <paramref name="local"/> in the content (DIPs): whether one showed.</summary>
+    private bool ShowMenu(XamlPoint local)
     {
         if (OnMenuAt is { } menuAt)
         {
             var at = OnScreen(local);
-            menuAt(new PointInt32((int)Math.Round(at.X), (int)Math.Round(at.Y)));
+            return menuAt(new PointInt32((int)Math.Round(at.X), (int)Math.Round(at.Y)));
         }
-        else
-            OnMenu?.Invoke();
+        if (OnMenu is not { } menu)
+            return false;
+        menu();
+        return true;
     }
+
+    /// <summary>How far a press's pointer moves, in DIPs, before the press is a drag: a finger or a pen goes further.</summary>
+    internal static double DragThresholdFor(bool mouse) => mouse ? DragThreshold : TouchDragThreshold;
 
     private void Ended(PressTracker.End end)
     {

@@ -278,11 +278,11 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
 
     // The menu
 
-    /// <summary>The menu at <paramref name="at"/> on screen: the mouse pointer's or the finger's.</summary>
-    private void ShowMenu(PointInt32 at)
+    /// <summary>The menu at <paramref name="at"/> on screen, the mouse pointer's or the finger's: false when there is none.</summary>
+    private bool ShowMenu(PointInt32 at)
     {
         if (Menu?.Invoke() is not { Count: > 0 } items)
-            return;
+            return false;
         menuHost.SetMenu(MenuConversion.ToTray(items));
         var before = DesktopNative.GetForegroundWindow();
         menuHost.ShowMenu(at);
@@ -297,6 +297,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
                     DesktopNative.SetForegroundWindow(before);
             }
         );
+        return true;
     }
 
     // Position
