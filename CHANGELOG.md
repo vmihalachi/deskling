@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.4 - 2026-10-16
+
 - **Tools (`vm.sh`)**: `vm.sh` builds an app linked with `companion.py link`. The link's Directory.Build.targets points
   the Windows projects at `../../deskling/dotnet/`, which the VM's copy of the app lacked, so `vm.sh build` stopped
   with CS0246 errors; now every command also mirrors the linked checkout (what git sees there, the README and test
