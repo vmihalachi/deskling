@@ -17,6 +17,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `fonts.py` | Builds the display faces from pinned variable fonts (`fonts`, plus `fonts.faces` for an upright beside an italic; needs fontTools). |
 | `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images (needs Pillow). |
 | `check-layout.sh` | `screenshots.sh` in every language (or the ones named), side by side and hidden, naming the languages whose windows don't fit. |
+| `screens.py` | The same screens on the Mac, Windows and iOS in any languages, from one manifest (`screens` in `companion.json`: each canonical screen's shot on each platform): `capture` builds each platform once and runs them side by side (the Mac hidden, `--jobs` languages at a time; Windows in the Parallels VM through `vm.sh check-layout`; iOS on simulators of its own on the newest runtime that runs each device, a screen opened at launch by `screens.screenEnv`, `display` for a device with several screens) into `build/screens/<platform>/<lang>/<screen>-<theme>.png`, with every platform's problems in one `problems.txt`; `compare` makes one sheet per screen, language and theme (desktops on top, devices below, one height per row) and an `index.html` to flip through them; `diff --against NAME` and `accept NAME` keep a perceptual hash per image, so a review looks only at what changed. Needs Pillow (re-runs under `/usr/bin/python3` when this Python lacks it). |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
@@ -25,11 +26,11 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
 | `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. `-Only` runs hidden (cloaked windows, shot as soon as they have drawn), so the PC stays usable, with `-Front` for active windows. |
-| `windows/check-layout.ps1` | `screenshots.ps1` in every language (or the ones named), side by side and hidden after one build, naming the languages whose text doesn't fit. |
+| `windows/check-layout.ps1` | `screenshots.ps1` in every language (or the ones named), side by side and hidden after one build, naming the languages whose text doesn't fit; each language's shots and `problems.txt` in `build/layout-check/<lang>` (or `-Out <folder>`). |
 | `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
 | `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
-| `windows/vm.sh` | On a Mac, the WinUI app built and checked in a Parallels Windows VM from the working tree as it is (uncommitted changes too): `build` (x64 and ARM64), `test`, `screenshots <folder>` (the PNGs back on the Mac), `smoke`, `run -- <command>`, `status`. Without prlctl or the VM it says so in one line and exits 3. |
+| `windows/vm.sh` | On a Mac, the WinUI app built and checked in a Parallels Windows VM from the working tree as it is (uncommitted changes too): `build` (x64 and ARM64), `test`, `screenshots <folder>` (the PNGs back on the Mac), `check-layout [lang…]` (`check-layout.ps1`, the shots back in `<windows.dir>/build/layout-check`), `smoke`, `run -- <command>`, `status`. Without prlctl or the VM it says so in one line and exits 3. |
 | `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks, the Windows parity reminder. |
 | `skills/` | `localization`, `add-phrase`, `add-setting`, `conformance`, `voice`, `windows-port`, `release-mac`, `review-invariants`. |
 
@@ -190,7 +191,9 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
 - **On a Mac, in the Parallels VM.** `deskling/tools/windows/vm.sh build` mirrors the working tree (what git sees,
   uncommitted changes and submodules included) into a Windows VM in Parallels Desktop and builds the app there, Debug,
   for x64 and ARM64, so a Mac change is ported and built in the same session. `screenshots <folder>` runs the
-  screenshot script there and copies the PNGs into the Mac folder, `smoke` publishes the Native AOT package for the
+  screenshot script there and copies the PNGs into the Mac folder, `check-layout [lang…]` runs `check-layout.ps1`
+  there (one build, the languages side by side, all of them unless named) and copies each language's shots and
+  `problems.txt` back into `<windows.dir>/build/layout-check/<lang>`, `smoke` publishes the Native AOT package for the
   VM's platform and runs `smoke-package.ps1` on it (`-- -SideBySide` where the Store copy is installed), `test` runs
   the test projects and `run -- <command>` anything else in the copy; arguments after `--` go to the command. The copy
   is incremental (only changed files travel, `bin` and `obj` stay), and `verify.sh` builds through it when the VM is

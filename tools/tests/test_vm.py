@@ -172,6 +172,15 @@ class BodyTests(unittest.TestCase):
         wrapper.write_text("& \"$PSScriptRoot/../../deskling/tools/windows/screenshots.ps1\" @args\n", "utf8")
         self.assertIn(r"& 'windows\scripts\screenshots.ps1' -Out $shots", vm.screenshots_body(self.ctx, shots, ""))
 
+    def test_check_layout_runs_the_languages_in_one_go_and_copies_each_folder(self):
+        folder = Path("/tmp/layout")
+        body = vm.check_layout_body(self.ctx, folder, ["fr", "de"], "-Only home,settings -Jobs 2")
+        self.assertIn(vm.guest_path(vm.HERE / "check-layout.ps1"), body, "Deskling's, through the share")
+        self.assertIn("-Out $out 'fr' 'de' -Only home,settings -Jobs 2", body)
+        self.assertIn(f"Copy-ShotFolders $out {vm.ps(vm.guest_path(folder))}", body)
+        self.assertIn("-Out $out }", vm.check_layout_body(self.ctx, folder, [], ""), "languages.all when none")
+        self.assertEqual(vm.layout_folder(self.ctx), self.root / "windows" / "build" / "layout-check")
+
     def test_smoke_publishes_then_runs_the_smoke_script(self):
         body = vm.smoke_body(self.ctx, None, "-SideBySide")
         self.assertIn("$platform = Get-GuestPlatform", body)
@@ -374,7 +383,8 @@ echo "ran $*"
         for args, words in ((["bogus"], "unknown command"), (["screenshots"], "one folder"),
                             (["run"], "after --"), (["build", "x86"], "unknown platform"),
                             (["test", "fast"], "ARGS go after --"),
-                            (["smoke", "x64", "ARM64"], "one platform")):
+                            (["smoke", "x64", "ARM64"], "one platform"),
+                            (["check-layout", "-Only"], "takes languages")):
             with self.subTest(args=args):
                 done = self.run_vm(*args)
                 self.assertEqual(done.returncode, 2, done.stderr)

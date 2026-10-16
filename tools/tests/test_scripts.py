@@ -132,7 +132,11 @@ chmod +x "$app/Fixture"
         self.assertEqual(result.returncode, 1, result.stdout)
         self.assertIn("Problems (it):", result.stderr)
         self.assertIn("the content needs 540 pt", result.stderr)
-        self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"], "the shots are still copied")
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png", "problems.txt"],
+                         "the shots are still copied, the problems beside them")
+        self.assertIn("the content needs 540 pt", (out / "problems.txt").read_text())
+        self.assertEqual(self.run_script("screenshots.sh", str(out), "en").returncode, 0)
+        self.assertFalse((out / "problems.txt").exists(), "a clean run removes the last run's problems")
 
     def test_check_layout_runs_every_language_and_names_the_ones_that_fail(self):
         self.fake_app({"de": "panel-light.png: the content needs 540 pt of height, the window has 520"})

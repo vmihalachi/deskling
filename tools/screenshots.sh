@@ -10,8 +10,9 @@
 #   --front     the windows come forward and are shot key, as in use (the default without --only); leave the Mac alone.
 #   --no-build  run the last build (check-layout.sh builds once, then runs the languages side by side).
 #   --build-only  just build.
-# Fails, after copying the shots, when the run reports problems (ScreenshotCapture's problems.txt): a window that
-# couldn't be drawn, a shot that wasn't written, content taller than its window. check-layout.sh runs it per language.
+# Fails, after copying the shots, when the run reports problems (ScreenshotCapture's problems.txt, left next to the
+# shots): a window that couldn't be drawn, a shot that wasn't written, content taller than its window. check-layout.sh
+# runs it per language.
 set -e
 ONLY=""
 HIDDEN=""
@@ -48,6 +49,7 @@ SRC=$(env "$ENV_NAME=${ONLY:-all}" DESKLING_SCREENSHOT_HIDDEN="$HIDDEN" "$DERIVE
   -AppleLanguages "($LANG_CODE)" -AppleLocale "$LANG_CODE" | tail -1)
 [ -d "$SRC" ] || { echo "No screenshots were rendered" >&2; exit 1; }
 mkdir -p "$OUT"
+rm -f "$OUT/problems.txt"
 COUNT=0
 for file in "$SRC"/*.png; do
   [ -e "$file" ] || continue
@@ -59,7 +61,10 @@ done
 [ "$COUNT" -gt 0 ] || { echo "No screenshots matched --only $ONLY" >&2; exit 1; }
 echo "$COUNT screenshots in $OUT"
 PROBLEMS=""
-[ ! -s "$SRC/problems.txt" ] || PROBLEMS=$(sed 's/^/  /' "$SRC/problems.txt")
+if [ -s "$SRC/problems.txt" ]; then
+  PROBLEMS=$(sed 's/^/  /' "$SRC/problems.txt")
+  cp "$SRC/problems.txt" "$OUT/problems.txt"
+fi
 # Each run renders into a folder of its own in the app's temporary folder; one named by DESKLING_SCREENSHOT_DIR stays.
 [ -n "$DESKLING_SCREENSHOT_DIR" ] || rm -rf "$SRC"
 if [ -n "$PROBLEMS" ]; then

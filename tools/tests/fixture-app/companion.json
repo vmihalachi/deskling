@@ -54,6 +54,19 @@
   "sounds": { "out": "macos/Fixture/Resources/Sounds", "recipes": "macos/scripts/sounds.py" },
   "fonts": null,
   "screenshots": { "out": "screenshots/macos", "shots": ["panel", "home"], "store": null },
+  "screens": {
+    "screenEnv": "FIXTURE_SCREEN",
+    "platforms": {
+      "mac": { "capture": "mac", "label": "macOS" },
+      "windows": { "capture": "windows", "label": "Windows", "crop": true },
+      "phone": { "capture": "ios", "label": "iPhone", "device": "iPhone 17 Pro" }
+    },
+    "list": {
+      "panel": { "mac": "panel", "windows": "panel" },
+      "home": { "mac": "home", "windows": "home", "ios": "today" },
+      "settings": { "mac": "settings", "windows": null, "phone": { "shot": "settings", "env": { "FIXTURE_TWO": "1" } } }
+    }
+  },
   "landing": null,
   "store": {
     "dir": "store-listing",

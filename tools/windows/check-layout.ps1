@@ -4,12 +4,13 @@ Renders the WinUI app's windows in each language and fails when one has a proble
 fails on). Longer translations are where text runs out of room, so run it after changing text or a window's layout.
 Windows only; the Mac's is check-layout.sh.
 
-Usage: deskling/tools/windows/check-layout.ps1 [-Only name,name] [-Jobs n] [-Platform x64|ARM64] [-Project path] [language ...]
+Usage: deskling/tools/windows/check-layout.ps1 [-Only name,name] [-Jobs n] [-Platform x64|ARM64] [-Project path] [-Out folder]
+                                                [language ...]
        (default: every language in companion.json's languages.all)
 Shots go to <windows.dir>\build\layout-check\<language> (with -Project, <name>-layout-check\<language> in the temporary
-folder), to look at what failed. It builds once, then runs the languages side by side (-Jobs at a time: $env:LAYOUT_JOBS,
-default 4) with the windows hidden (screenshots.ps1 -Hidden): you can keep working meanwhile, and the shots show the
-windows inactive.
+folder; with -Out, <folder>\<language>), with the language's problems.txt when it has problems, to look at what
+failed. It builds once, then runs the languages side by side (-Jobs at a time: $env:LAYOUT_JOBS, default 4) with the
+windows hidden (screenshots.ps1 -Hidden): you can keep working meanwhile, and the shots show the windows inactive.
 #>
 [CmdletBinding(PositionalBinding = $false)]
 param(
@@ -17,6 +18,7 @@ param(
     [int] $Jobs = $(if ($env:LAYOUT_JOBS) { [int]$env:LAYOUT_JOBS } else { 4 }),
     [ValidateSet("x64", "ARM64")][string] $Platform = $(if ([Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq "Arm64") { "ARM64" } else { "x64" }),
     [string] $Project = "",
+    [string] $Out = "",
     [Parameter(ValueFromRemainingArguments = $true)][string[]] $Languages = @()
 )
 $ErrorActionPreference = "Stop"
@@ -36,7 +38,7 @@ function Find-Root {
 
 if ($Project) {
     $Project = (Resolve-Path $Project).Path
-    $out = Join-Path ([IO.Path]::GetTempPath()) "$([IO.Path]::GetFileNameWithoutExtension($Project))-layout-check"
+    if (-not $Out) { $Out = Join-Path ([IO.Path]::GetTempPath()) "$([IO.Path]::GetFileNameWithoutExtension($Project))-layout-check" }
 }
 if (-not $Project -or $Languages.Count -eq 0) {
     $root = Find-Root
@@ -45,10 +47,10 @@ if (-not $Project -or $Languages.Count -eq 0) {
     if (-not $Project) {
         if (-not $config.windows -or -not $config.windows.app) { throw "companion.json has no windows.app." }
         $Project = (Resolve-Path (Join-Path $root "$($config.windows.dir)/$($config.windows.app)/$($config.windows.app).csproj")).Path
-        $out = Join-Path $root "$($config.windows.dir)/build/layout-check"
+        if (-not $Out) { $Out = Join-Path $root "$($config.windows.dir)/build/layout-check" }
     }
 }
-$out = [IO.Path]::GetFullPath($out)
+$Out = [IO.Path]::GetFullPath($Out)
 
 & $screenshots -BuildOnly -Project $Project -Platform $Platform
 if ($LASTEXITCODE) { exit 1 }
@@ -59,9 +61,9 @@ $shell = (Get-Process -Id $PID).Path
 function Quote([string] $argument) { '"' + ($argument -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"' }
 function Start-Language([string] $language) {
     # Only this run's shots, so the folder shows what failed now.
-    Remove-Item (Join-Path (Join-Path $out $language) "*.png") -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path (Join-Path $Out $language) "*.png"), (Join-Path (Join-Path $Out $language) "problems.txt") -ErrorAction SilentlyContinue
     $arguments = @("-NoProfile", "-NonInteractive", "-File", $screenshots, "-NoBuild", "-Hidden", "-Project", $Project,
-        "-Platform", $Platform, "-Language", $language, "-Out", (Join-Path $out $language))
+        "-Platform", $Platform, "-Language", $language, "-Out", (Join-Path $Out $language))
     if ($Only) { $arguments += @("-Only", ($Only -join ",")) }
     $info = New-Object Diagnostics.ProcessStartInfo $shell
     $info.Arguments = ($arguments | ForEach-Object { Quote $_ }) -join " "
@@ -102,7 +104,7 @@ foreach ($language in $Languages) {
     }
 }
 if ($failed.Count -gt 0) {
-    [Console]::Error.WriteLine("Layout problems in: $($failed -join ' ') (shots in $out)")
+    [Console]::Error.WriteLine("Layout problems in: $($failed -join ' ') (shots in $Out)")
     exit 1
 }
 "Every window fits in: $($Languages -join ' ')"

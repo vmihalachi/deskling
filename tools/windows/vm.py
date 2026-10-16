@@ -8,13 +8,17 @@ in the app's Windows workflow. `vm.sh` runs this file.
     deskling/tools/windows/vm.sh build [x64|ARM64…] [-- ARGS]   # the WinUI app (windows.app), Debug; both platforms
     deskling/tools/windows/vm.sh test [-- ARGS]                 # windows.coreTests and windows.appTests
     deskling/tools/windows/vm.sh screenshots DIR [-- ARGS]      # the screenshot script; the PNGs land in DIR on the Mac
+    deskling/tools/windows/vm.sh check-layout [LANG…] [-- ARGS] # check-layout.ps1: one build, the languages side by side;
+                                                                # the PNGs land in <windows.dir>/build/layout-check/<LANG>
     deskling/tools/windows/vm.sh smoke [x64|ARM64] [-- ARGS]    # publish the MSIX (Native AOT), then smoke-package.ps1
     deskling/tools/windows/vm.sh run -- COMMAND…                # a PowerShell command in the VM's copy
 
 ARGS go as they are, in PowerShell syntax, to `dotnet build`, `dotnet test`, the screenshot script (`-Language fr`,
-`-Only home,settings`) or smoke-package.ps1 (`-SideBySide`). The screenshot and smoke scripts are the app's own
-(`<windows.dir>/scripts/screenshots.ps1`, `smoke-package.ps1`) when it has them, else Deskling's beside this file.
-`screenshots` and `smoke` run for the VM's own platform unless `-Platform` / a platform is given.
+`-Only home,settings`), check-layout.ps1 (`-Only home,settings`, `-Jobs 2`) or smoke-package.ps1 (`-SideBySide`). Those
+three scripts are the app's own (`<windows.dir>/scripts/screenshots.ps1`, `check-layout.ps1`, `smoke-package.ps1`) when
+it has them, else Deskling's beside this file. `screenshots`, `check-layout` and `smoke` run for the VM's own platform
+unless `-Platform` / a platform is given. `check-layout` runs every language in companion.json's `languages.all` unless
+some are named, and replaces their folders' shots and problems.txt on the Mac.
 
 The copy: the files git sees (tracked and untracked but not ignored, submodules included, symlinks left out) are
 mirrored into `%USERPROFILE%\deskling-vm\<checkout>-<hash>` in the VM through the Mac's shared folders. The VM lists
@@ -68,7 +72,7 @@ HERE = Path(__file__).resolve().parent
 GUEST_SCRIPT = HERE / "vm-guest.ps1"
 UNAVAILABLE = 3
 PLATFORMS = ("x64", "ARM64")
-COMMANDS = ("status", "sync", "build", "test", "screenshots", "smoke", "run")
+COMMANDS = ("status", "sync", "build", "test", "screenshots", "check-layout", "smoke", "run")
 
 
 class Unavailable(Exception):
@@ -451,6 +455,27 @@ def screenshots_body(ctx: Context, mac_dir: Path, extra: str) -> str:
     ))
 
 
+def check_layout_body(ctx: Context, mac_dir: Path, languages: list[str], extra: str) -> str:
+    """check-layout.ps1 into a folder of the VM's own, then each language's shots and problems.txt into `mac_dir`."""
+    script, out = ctx.script("check-layout.ps1"), ctx.guest_out + "\\layout-check"
+    command = " ".join([f"& {ps(script)} -Out $out", *(ps(language) for language in languages), *([extra] if extra else [])])
+    return "\n".join((
+        f"$out = Reset-GuestFolder {ps(out)}",
+        "try {",
+        f"  {step(f'check-layout ({script})', command)}",
+        f"}} finally {{ Copy-ShotFolders $out {ps(guest_path(mac_dir))} }}",
+        "Exit-Steps",
+    ))
+
+
+def layout_folder(ctx: Context) -> Path:
+    """Where `check-layout` puts the shots on the Mac: `<windows.dir>/build/layout-check`, as check-layout.ps1 does."""
+    folder = ctx.config.path("windows.dir")
+    if not folder:
+        raise Usage("companion.json has no windows.dir")
+    return folder / "build" / "layout-check"
+
+
 def smoke_body(ctx: Context, platform: str | None, extra: str) -> str:
     project = ctx.windows_project("windows.app")
     if not project:
@@ -493,6 +518,10 @@ def command_body(ctx: Context, command: str, words: list[str], extra: str) -> st
         if len(words) != 1:
             raise Usage("screenshots needs one folder on the Mac for the PNGs (ARGS go after --)")
         return screenshots_body(ctx, shots_folder(words[0]), extra)
+    if command == "check-layout":
+        if any(word.startswith("-") for word in words):
+            raise Usage("check-layout takes languages (ARGS go after --)")
+        return check_layout_body(ctx, layout_folder(ctx), words, extra)
     if command == "smoke":
         platforms = parse_platforms(words)
         if len(platforms) > 1:
@@ -507,6 +536,15 @@ def command_body(ctx: Context, command: str, words: list[str], extra: str) -> st
 
 def shots_folder(word: str) -> Path:
     return Path(word).expanduser().resolve()
+
+
+def clear_shots(folder: Path, keep_pngs: bool = False) -> None:
+    """Makes `folder` and drops the last run's problems.txt (and its PNGs), so what lands there is this run's."""
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "problems.txt").unlink(missing_ok=True)
+    if not keep_pngs:
+        for png in folder.glob("*.png"):
+            png.unlink()
 
 
 def main(argv: list[str]) -> int:
@@ -534,11 +572,17 @@ def main(argv: list[str]) -> int:
             sync(ctx)
             if body is None:
                 return 0
+            if command == "check-layout":
+                folder = layout_folder(ctx)
+                for language in words or ctx.config.languages:
+                    clear_shots(folder / language)
+                code = powershell(ctx, body).returncode
+                print(f"vm.sh: the shots are in {folder}")
+                return code
             if command != "screenshots":
                 return powershell(ctx, body).returncode
             folder = shots_folder(words[0])
-            folder.mkdir(parents=True, exist_ok=True)
-            (folder / "problems.txt").unlink(missing_ok=True)
+            clear_shots(folder, keep_pngs=True)
             code = powershell(ctx, body).returncode
             print(f"vm.sh: the shots are in {folder}")
             return code

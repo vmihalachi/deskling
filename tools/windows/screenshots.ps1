@@ -23,9 +23,10 @@ Usage: deskling/tools/windows/screenshots.ps1 [-Only name,name] [-Hidden|-Front]
   -NoBuild        run the last build (check-layout.ps1 builds once, then runs the languages side by side).
   -BuildOnly      just build.
   -Project        another WinUI project than companion.json's (Deskling's fixture app).
-Fails, after copying the shots, when the run reports problems (problems.txt): a window that didn't open or couldn't be
-drawn, a shot that wasn't written, text that doesn't fit (LayoutCheck); or when the app didn't finish the run (it
-crashed or was closed partway, so some windows have no shot). check-layout.ps1 runs it per language.
+Fails, after copying the shots, when the run reports problems (problems.txt, left next to the shots): a window that
+didn't open or couldn't be drawn, a shot that wasn't written, text that doesn't fit (LayoutCheck); or when the app
+didn't finish the run (it crashed or was closed partway, so some windows have no shot). check-layout.ps1 runs it per
+language.
 #>
 param(
     [string[]] $Only = @(),
@@ -130,6 +131,7 @@ if ($shots.Count -eq 0) {
     throw "No screenshots were rendered (exit code $($run.ExitCode))."
 }
 New-Item -ItemType Directory -Force $Out | Out-Null
+Remove-Item (Join-Path $Out "problems.txt") -ErrorAction SilentlyContinue
 foreach ($shot in $shots) {
     Copy-Item $shot.FullName $Out -Force
 }
@@ -138,6 +140,7 @@ $problems = Join-Path $work "problems.txt"
 $found = @(if (Test-Path $problems) { Get-Content $problems -Encoding UTF8 })
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 if ($found.Count -gt 0) {
+    $found | Set-Content (Join-Path $Out "problems.txt") -Encoding UTF8
     [Console]::Error.WriteLine("Problems$(if ($Language) { " ($Language)" }):")
     $found | ForEach-Object { [Console]::Error.WriteLine("  $_") }
     exit 1
