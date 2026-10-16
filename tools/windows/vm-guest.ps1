@@ -121,10 +121,19 @@ function Find-Package([string]$Folder) {
 }
 
 # The shots and the run's problems.txt, into the Mac's folder through the share.
-function Copy-Shots([string]$From, [string]$To) {
+function Copy-Shots([string]$From, [string]$To, [string]$Label = '') {
     $files = @(Get-ChildItem -LiteralPath $From -File -ErrorAction SilentlyContinue |
             Where-Object { $_.Extension -eq '.png' -or $_.Name -eq 'problems.txt' })
     foreach ($file in $files) { Copy-Item -LiteralPath $file.FullName -Destination $To -Force }
     $count = @($files | Where-Object { $_.Extension -eq '.png' }).Count
-    [Console]::Out.WriteLine("$count screenshots copied to the Mac")
+    [Console]::Out.WriteLine("$count screenshots$(if ($Label) { " ($Label)" }) copied to the Mac")
+}
+
+# Copy-Shots for each folder in $From (check-layout's one per language), into a folder of the same name in $To.
+function Copy-ShotFolders([string]$From, [string]$To) {
+    foreach ($folder in @(Get-ChildItem -LiteralPath $From -Directory -ErrorAction SilentlyContinue)) {
+        $target = Join-Path $To $folder.Name
+        New-Item -ItemType Directory -Force $target | Out-Null
+        Copy-Shots $folder.FullName $target $folder.Name
+    }
 }

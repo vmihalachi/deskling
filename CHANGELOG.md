@@ -6,6 +6,24 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools (`screens.py`)**: the same screens on every platform and in every language, side by side. A `screens`
+  manifest in `companion.json` maps each canonical screen to each platform's shot (by platform name or capture kind,
+  `null` where it has none, with launch variables for an iOS variant). `capture [--platforms] [--langs en,fr|all]
+  [--only] [--themes] [--jobs]` builds each platform once and runs them at the same time: the Mac hidden through
+  `screenshots.sh` (or the app's script), Windows in the Parallels VM through `vm.sh check-layout` (or `vm.sh
+  screenshots` per language), iOS on simulators of its own (one per device, made on the newest runtime that runs it, in the run's first language, 9:41,
+  a screen opened at launch by `screens.screenEnv`, shot once two captures a second apart agree, `display` for a
+  device with several screens such as a closed iPhone Duo's outer one). It writes `build/screens/<platform>/<lang>/
+  <screen>-<theme>.png`, Windows cropped to its window, and one `problems.txt` for every platform. `compare` makes a
+  sheet per screen, language and theme (landscape platforms on top, portrait below, each row one height) and a static
+  `index.html` to flip through them by screen, language and theme; `diff --against NAME` and `accept NAME` keep a
+  256-bit difference hash per image in a git-ignored baseline, so a review looks only at the sheets that changed.
+- **Tools (`windows/vm.sh check-layout`)**: `check-layout.ps1` in the VM, one build and the languages side by side
+  (all of them unless named, ARGS after `--` such as `-Only home -Jobs 2`), each language's shots and `problems.txt`
+  copied back into `<windows.dir>/build/layout-check/<lang>`. `check-layout.ps1` takes `-Out <folder>`.
+- **Tools (`screenshots.sh`, `windows/screenshots.ps1`)**: a run with problems leaves its `problems.txt` next to the
+  shots (and a clean run removes the last one), so a tool reading the folder sees them.
+
 ## 0.11.6 - 2026-10-16
 
 - **Windows.Companion (`QuietHoursEditor`)**: the quiet-hour chips take four or three columns when the widest, as
