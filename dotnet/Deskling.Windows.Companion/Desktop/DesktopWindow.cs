@@ -531,6 +531,12 @@ internal sealed partial class TransparentBackdrop : SystemBackdrop
         connectedTarget.SystemBackdrop = compositor.CreateColorBrush(global::Windows.UI.Color.FromArgb(0, 0, 0, 0));
     }
 
+    /// <summary>
+    /// Nothing to do: the brush is transparent in every theme and contrast theme. The base class's handler, which WinUI
+    /// calls when Windows switches theme or contrast, throws E_INVALIDARG for this target and ended the app.
+    /// </summary>
+    protected override void OnDefaultSystemBackdropConfigurationChanged(ICompositionSupportsSystemBackdrop target, XamlRoot xamlRoot) { }
+
     protected override void OnTargetDisconnected(ICompositionSupportsSystemBackdrop disconnectedTarget)
     {
         disconnectedTarget.SystemBackdrop = null;

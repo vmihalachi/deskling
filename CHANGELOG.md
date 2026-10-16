@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+A Windows app with the desktop character on no longer crashes when Windows switches theme or contrast.
+
+- **Windows.Companion**: the desktop character's transparent backdrop ignores WinUI's backdrop configuration change,
+  which comes when Windows switches its light or dark mode or a contrast theme on or off. `SystemBackdrop`'s own
+  handler threw E_INVALIDARG for it, and the app ended (0xc000027b) as soon as the desktop window existed.
+
 ## 0.10.5 - 2026-10-16
 
 - **C# (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs, as the Mac's. `WindowManager.OpensHidden` opens
