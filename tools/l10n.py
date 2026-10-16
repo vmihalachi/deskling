@@ -98,7 +98,7 @@ BASE_RULES = (
 
 def configure(config: companion.Config | None = None) -> None:
     """Points the module at an app: its catalogs, languages, rules and export folders."""
-    global CONFIG, ROOT, MACOS, LANDING_I18N, WORK_DIR, DERIVED, SOURCE, LANGUAGES, WINDOWS_STRINGS, LINUX_PO
+    global CONFIG, ROOT, MACOS, LANDING_I18N, WORK_DIR, DERIVED, SOURCE, LANGUAGES, WINDOWS_STRINGS, LINUX_PO, ANDROID_STRINGS
     global GLOSSARY_KEYS, GLOSSARY_SOURCES, RULES, PLURAL_CATEGORIES, SCOPED
     CONFIG = config or companion.load()
     ROOT = CONFIG.root
@@ -114,6 +114,7 @@ def configure(config: companion.Config | None = None) -> None:
     LANGUAGES = CONFIG.languages
     WINDOWS_STRINGS = CONFIG.path("windows.strings")
     LINUX_PO = CONFIG.path("l10n.linuxPo")
+    ANDROID_STRINGS = CONFIG.path("l10n.androidStrings")
     GLOSSARY_KEYS = list(CONFIG.get("l10n.glossaryKeys", []))
     GLOSSARY_SOURCES = [
         (ROOT / source["file"], re.compile(source["pattern"])) for source in CONFIG.get("l10n.glossarySources", [])
@@ -746,22 +747,32 @@ def cmd_sync(args) -> int:
     catalog = CATALOGS["app"]
     before = set(load_catalog(catalog)["strings"])
     scheme = CONFIG.require("mac.scheme")
+    # An app with an iPhone and iPad target builds that too: strings only it shows (`#if os(iOS)`) would
+    # otherwise be marked stale, and `prune` would drop them.
+    builds = [(scheme, ["-destination", "platform=macOS"])]
+    if ios := CONFIG.get("mac.iosScheme"):
+        builds.append((ios, ["-destination", "generic/platform=iOS Simulator", "CODE_SIGNING_ALLOWED=NO"]))
     log_path = WORK_DIR.parent / "l10n-build.log"
     if not args.no_build:
-        print(f"building (output in {log_path.relative_to(ROOT)})…", flush=True)
+        print(f"building {', '.join(name for name, _ in builds)} (output in {log_path.relative_to(ROOT)})…", flush=True)
         WORK_DIR.parent.mkdir(parents=True, exist_ok=True)
         with open(log_path, "w") as log:
-            build = subprocess.run(
-                ["xcodebuild", "-project", CONFIG.require("mac.project"), "-scheme", scheme,
-                 "-destination", "platform=macOS", "-derivedDataPath", str(DERIVED), "build"],
-                cwd=MACOS, stdout=log, stderr=subprocess.STDOUT,
-            )
+            for name, options in builds:
+                build = subprocess.run(
+                    ["xcodebuild", "-project", CONFIG.require("mac.project"), "-scheme", name, *options,
+                     "-derivedDataPath", str(DERIVED), "build"],
+                    cwd=MACOS, stdout=log, stderr=subprocess.STDOUT,
+                )
+                if build.returncode != 0:
+                    break
         if build.returncode != 0:
             tail = log_path.read_text("utf8", "replace").splitlines()
             print("\n".join(line for line in tail if "error:" in line)[-4000:] or "\n".join(tail[-30:]))
             fail("build failed")
-    marker = CONFIG.get("l10n.stringsdataFilter") or f"{scheme}.build"
-    stringsdata = [p for p in DERIVED.rglob("*.stringsdata") if marker in str(p) and "Tests" not in p.name]
+    markers = [CONFIG.get("l10n.stringsdataFilter")] if CONFIG.get("l10n.stringsdataFilter") else [
+        f"{name}.build" for name, _ in builds]
+    stringsdata = [p for p in DERIVED.rglob("*.stringsdata")
+                   if any(marker in str(p) for marker in markers) and "Tests" not in p.name]
     if not stringsdata:
         fail(f"no .stringsdata under {DERIVED}; build first (drop --no-build)")
     result = subprocess.run(
@@ -1033,11 +1044,79 @@ def linux_files(root: Path | None = None) -> dict[Path, str]:
     return files
 
 
+def android_name(key: str) -> str:
+    """An Android resource name for a catalog key: `s_` plus `resw_name(key).lower()`, so every
+    name starts with a lowercase ASCII letter, uses only `[a-z0-9_]`, and never collides with a
+    Java or Kotlin keyword."""
+    return "s_" + resw_name(key).lower()
+
+
+def android_values_dir(lang: str) -> str:
+    if lang == SOURCE:
+        return "values"
+    if lang == "zh-Hans":
+        return "values-zh-rCN"
+    if "-" in lang:
+        base, region = lang.split("-", 1)
+        return f"values-{base}-r{region}"
+    return f"values-{lang}"
+
+
+def android_escape(text: str) -> str:
+    escaped = (
+        text.replace("\\", "\\\\")
+        .replace("\r", "")
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+        .replace("'", "\\'")
+        .replace('"', '\\"')
+    )
+    if escaped.startswith(("@", "?")):
+        escaped = "\\" + escaped
+    if escaped.startswith(" "):
+        escaped = "\\u0020" + escaped[1:]
+    if escaped.endswith(" "):
+        escaped = escaped[:-1] + "\\u0020"
+    return xml_escape(escaped)
+
+
+ANDROID_HEADER = """<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from {catalog} by deskling/tools/l10n.py export-android. Don't edit. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+"""
+
+
+def android_text(lang: str, categories: dict[str, list[str]] | None = None) -> str:
+    categories = plural_categories() if categories is None else categories
+    lines = [ANDROID_HEADER.replace("{catalog}", catalog_label())]
+    for unit in export_units(lang):
+        name = android_name(unit["key"])
+        plural = unit.get("plural", {})
+        values = (
+            [(f"{name}{PLURAL_SEP}{cat}", plural.get(cat, plural["other"])) for cat in categories[unit["key"]]]
+            if plural
+            else [(name, unit["value"])]
+        )
+        for n, text in values:
+            lines.append(f'  <string name="{xml_escape(n)}" formatted="false">{android_escape(text)}</string>\n')
+    lines.append("</resources>\n")
+    return "".join(lines)
+
+
+def android_files(root: Path | None = None) -> dict[Path, str]:
+    root = root or ANDROID_STRINGS
+    if root is None:
+        fail("companion.json has no l10n.androidStrings: pass --out")
+    categories = plural_categories()
+    return {root / android_values_dir(lang) / "strings.xml": android_text(lang, categories) for lang in export_languages()}
+
+
 def stale_exports() -> list[Path]:
     """Generated files that differ from the catalog. Only checked once the port's folder exists."""
     stale = []
     ports = [(WINDOWS_STRINGS.parents[1], windows_files)] if WINDOWS_STRINGS else []
     ports += [(LINUX_PO.parent, linux_files)] if LINUX_PO else []
+    ports += [(ANDROID_STRINGS.parents[3], android_files)] if ANDROID_STRINGS else []
     for folder, files in ports:
         if not folder.exists():
             continue
@@ -1066,6 +1145,10 @@ def cmd_export_windows(args) -> int:
 
 def cmd_export_linux(args) -> int:
     return write_export(linux_files(Path(args.out) if args.out else None), args.dry_run)
+
+
+def cmd_export_android(args) -> int:
+    return write_export(android_files(Path(args.out) if args.out else None), args.dry_run)
 
 
 def main() -> int:
@@ -1108,6 +1191,7 @@ def main() -> int:
     for name, func, default, help_text in (
         ("export-windows", cmd_export_windows, "windows.strings", "write .resw files for the Windows port"),
         ("export-linux", cmd_export_linux, "l10n.linuxPo", "write .po files for the Linux port"),
+        ("export-android", cmd_export_android, "l10n.androidStrings", "write values*/strings.xml files for the Android port"),
     ):
         cmd = sub.add_parser(name, help=help_text)
         cmd.add_argument("--out", help=f"output directory (default: {default} in companion.json)")

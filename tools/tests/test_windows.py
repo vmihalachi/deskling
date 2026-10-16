@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import shutil
 import struct
 import subprocess
@@ -192,8 +193,92 @@ class TargetsTests(unittest.TestCase):
 
 @unittest.skipUnless(POWERSHELL, "needs PowerShell")
 class PowerShellTests(unittest.TestCase):
-    def powershell(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run([POWERSHELL, "-NoProfile", "-NonInteractive", *args], capture_output=True, text=True)
+    def powershell(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+        return subprocess.run([POWERSHELL, "-NoProfile", "-NonInteractive", *args], capture_output=True, text=True, env=env)
+
+    def layout_tools(self, folder: Path, failing: str = "") -> None:
+        """check-layout.ps1 beside a screenshots.ps1 that records each call (a JSON file per call, since the languages
+        run at once) and reports a problem in the `failing` language, as screenshots.ps1 does."""
+        shutil.copy(WINDOWS / "check-layout.ps1", folder / "check-layout.ps1")
+        (folder / "screenshots.ps1").write_text(
+            "param([switch] $BuildOnly, [switch] $NoBuild, [switch] $Hidden, [string] $Project, [string] $Platform,\n"
+            "      [string] $Language, [string] $Out, [string[]] $Only)\n"
+            "@{ BuildOnly = [bool]$BuildOnly; NoBuild = [bool]$NoBuild; Hidden = [bool]$Hidden; Language = $Language;\n"
+            "   Out = $Out; Only = ($Only -join ',') } | ConvertTo-Json -Compress |\n"
+            "   Set-Content -LiteralPath (Join-Path $PSScriptRoot \"call-$([guid]::NewGuid()).json\")\n"
+            f"if ($Language -eq '{failing}') {{\n"
+            "    [Console]::Error.WriteLine(\"Problems ($Language):\")\n"
+            "    [Console]::Error.WriteLine('  panel-light.png: \"Settings\" is cut off with an ellipsis')\n"
+            "    exit 1\n"
+            "}\n", "utf8")
+
+    def test_check_layout_builds_once_then_runs_the_languages_hidden(self):
+        with fixture_app() as root, tempfile.TemporaryDirectory() as temp:
+            project = root / "windows" / "Fixture.App" / "Fixture.App.csproj"
+            project.parent.mkdir(parents=True)
+            project.write_text("<Project />", "utf8")
+            tools = Path(temp)
+            self.layout_tools(tools, failing="de")
+
+            def calls() -> list[dict]:
+                found = [json.loads(path.read_text("utf-8-sig")) for path in tools.glob("call-*.json")]
+                for path in tools.glob("call-*.json"):
+                    path.unlink()
+                return found
+
+            done = self.powershell("-File", str(tools / "check-layout.ps1"))
+            self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+            self.assertEqual([line for line in done.stdout.splitlines() if line.startswith("==")], ["== en", "== it", "== de"])
+            self.assertIn("panel-light.png: \"Settings\" is cut off", done.stderr)
+            self.assertIn("Layout problems in: de", done.stderr)
+            made = calls()
+            self.assertEqual(sum(call["BuildOnly"] for call in made), 1, "one build for every language")
+            runs = sorted((call for call in made if not call["BuildOnly"]), key=lambda call: call["Language"])
+            self.assertEqual([call["Language"] for call in runs], ["de", "en", "it"], "languages.all")
+            for call in runs:
+                self.assertTrue(call["NoBuild"] and call["Hidden"], call)
+                self.assertEqual(Path(call["Out"]), root / "windows" / "build" / "layout-check" / call["Language"])
+
+            done = self.powershell("-File", str(tools / "check-layout.ps1"), "-Only", "panel,home", "-Jobs", "1", "en", "it")
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertIn("Every window fits in: en it", done.stdout)
+            self.assertEqual(sorted(call["Only"] for call in calls() if not call["BuildOnly"]), ["panel,home", "panel,home"])
+
+    def test_screenshots_build_once_or_not_at_all(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            project = folder / "Fixture.App.csproj"
+            project.write_text("<Project />", "utf8")
+            app = folder / "bin"
+            app.mkdir()
+            props = folder / "props.json"
+            props.write_text(json.dumps({"Properties": {"TargetDir": str(app) + os.sep, "AssemblyName": "Fixture.App"}}), "utf8")
+            log = folder / "dotnet.log"
+            fake = folder / "fake"
+            fake.mkdir()
+            # dotnet logs its command and answers the property query.
+            if os.name == "nt":
+                (fake / "dotnet.cmd").write_text(f'@echo off\r\necho %1>> "{log}"\r\nif "%1"=="msbuild" type "{props}"\r\n', "utf8")
+            else:
+                (fake / "dotnet").write_text(f'#!/bin/sh\necho "$1" >> "{log}"\n[ "$1" != msbuild ] || cat "{props}"\n', "utf8")
+                (fake / "dotnet").chmod(0o755)
+            env = {**os.environ, "PATH": str(fake) + os.pathsep + os.environ["PATH"]}
+
+            def shots(*args: str) -> tuple[subprocess.CompletedProcess, list[str]]:
+                log.unlink(missing_ok=True)
+                done = self.powershell("-File", str(WINDOWS / "screenshots.ps1"), "-Project", str(project), *args, env=env)
+                return done, log.read_text().split() if log.exists() else []
+
+            done, _ = shots("-NoBuild")
+            self.assertNotEqual(done.returncode, 0)
+            self.assertIn("build it first", done.stdout + done.stderr)
+            (app / "Fixture.App.exe").write_bytes(b"")
+            done, ran = shots("-BuildOnly")
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            self.assertEqual(ran, ["build", "msbuild"], "one property query for the folder and the name")
+            done, ran = shots("-BuildOnly", "-NoBuild")
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            self.assertEqual(ran, ["msbuild"])
 
     def test_the_scripts_parse(self):
         for script in sorted(WINDOWS.glob("*.ps1")):

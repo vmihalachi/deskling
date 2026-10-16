@@ -35,7 +35,12 @@ public sealed partial class SettingsView : UserControl
         );
         LanguageChoice.Languages = App.Languages;
         AppearanceButtons.SelectedIndex = (int)model.Settings.Appearance;
-        AppearanceButtons.SelectionChanged += (_, _) => Model.Settings.Appearance = (AppearanceSetting)AppearanceButtons.SelectedIndex;
+        // RadioButtons reports -1 between clearing the old choice and selecting the new one, as the apps' guards know.
+        AppearanceButtons.SelectionChanged += (_, _) =>
+        {
+            if (AppearanceButtons.SelectedIndex >= 0)
+                Model.Settings.Appearance = (AppearanceSetting)AppearanceButtons.SelectedIndex;
+        };
     }
 
     public FixtureModel Model { get; }

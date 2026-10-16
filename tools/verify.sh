@@ -159,7 +159,7 @@ swift_format() {
   # Fix with: xcrun swift-format format -i --configuration <mac.dir>/.swift-format <files>
   if [ "$all" = 1 ]; then
     local dirs=()
-    for d in "$MAC_APP" "$MAC_TESTS" "$MAC_CORE/Sources" "$MAC_CORE/Tests"; do [ -n "$d" ] && [ -d "$d" ] && dirs+=("$d"); done
+    for d in "$MAC_APP" "$MAC_TESTS" "$MAC_DIR/Shared" "$MAC_DIR/macOS" "$MAC_DIR/iOS" "$MAC_CORE/Sources" "$MAC_CORE/Tests"; do [ -n "$d" ] && [ -d "$d" ] && dirs+=("$d"); done
     xcrun swift-format lint -r --strict --configuration "$config" "${dirs[@]}"
     return
   fi

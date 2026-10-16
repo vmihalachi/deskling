@@ -46,7 +46,7 @@ instance, drawing helpers; on the Mac also the status item, speech and chimes), 
 companion's views, desktop presence and delivery), `DesklingStore` / `Deskling.Core` `Store/` + `Deskling.Windows` (one-time unlockables and tips: StoreKit 2 on the Mac,
 the Microsoft Store on Windows, both since 0.3.0), `DesklingTesting` / `Deskling.Testing` (fakes, fixtures, conformance generators and replays), and `tools/` (Python
 tools, scripts and agent skills a companion app vendors as a submodule).
-macOS 14+ and Windows (.NET 10); desktop only. Version 0.x: minor versions may change public types. The package ships no strings.
+macOS 14+ and Windows 11 (.NET 10); desktop only. Version 0.x: minor versions may change public types. The package ships no strings.
 
 ## Brand Commitments
 

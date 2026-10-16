@@ -40,10 +40,12 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under
-  *Unreleased*. Bump the version in the same change as the tag, in all five places: `Deskling.version`
+  *Unreleased*, with `**Breaking.**` in a breaking one. A change never bumps the version or tags: on every push to
+  `master`, `release.yml` runs `scripts/release.sh`, which gives the *Unreleased* entries the next version (a patch, or
+  a minor while 0.x for a breaking one), moves them under it and puts it in all five places: `Deskling.version`
   (`Sources/DesklingCore/Deskling.swift`), `DesklingInfo.Version` (`dotnet/Deskling.Core/DesklingInfo.cs`),
   the `DesklingVersion` default in `dotnet/Directory.Build.props`, `site/index.html` (the `vX.Y.Z` label in the
   header and both `exact:` install snippets) and `README.md` (the `exact:` install pin and the `git tag` example under
-  *Releases*). Move *Unreleased* to the new section. `scripts/verify.sh` fails when these disagree, so run it before
-  committing.
+  *Releases*); then it commits, tags and publishes. `scripts/verify.sh` fails when these disagree. The `release`
+  skill has the manual ways, for a number the rule gets wrong.
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.
