@@ -410,12 +410,20 @@ def stop(event):
 
     problems = []
     script = verify_script()
-    try:
-        done = subprocess.run([str(script), "--fast", "--", *edited], cwd=ROOT, capture_output=True, text=True, timeout=170)
-        if done.returncode:
-            problems.append("Fast checks on the files you edited failed:\n" + done.stdout[-4000:] + done.stderr[-1000:])
-    except (OSError, subprocess.TimeoutExpired):
-        pass
+    command = companion.shell_command(script)
+    if command is None:
+        problems.append(f"{rel(script)} didn't run: Windows starts no shell script itself and there's no Git for "
+                        "Windows bash here, so the fast checks on your edits were skipped. Tell the user.")
+    else:
+        try:
+            # UTF-8 as the checks print it, whatever the locale: a byte cp1252 lacks would raise and skip the report.
+            done = subprocess.run([*command, "--fast", "--", *edited], cwd=ROOT, capture_output=True, text=True,
+                                  encoding="utf8", errors="replace", timeout=170)
+            if done.returncode:
+                problems.append("Fast checks on the files you edited failed:\n"
+                                + done.stdout[-4000:] + done.stderr[-1000:])
+        except (OSError, subprocess.TimeoutExpired):
+            pass
 
     stale = []
     for kind, pattern, label in SLOW:
@@ -504,8 +512,12 @@ def cloud_stop(event):
     branch = default_branch()
     base = ["--base", branch] if branch else []  # shallow clone or no remote branch: working-tree changes only
     script = verify_script()
+    command = companion.shell_command(script)
     try:
-        done = subprocess.run([str(script), *base], cwd=ROOT, capture_output=True, text=True, timeout=1500)
+        if command is None:
+            raise OSError("no bash to run verify.sh")
+        done = subprocess.run([*command, *base], cwd=ROOT, capture_output=True, text=True, encoding="utf8",
+                              errors="replace", timeout=1500)
     except (OSError, subprocess.TimeoutExpired):
         print("{}")
         return

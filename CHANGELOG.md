@@ -16,6 +16,12 @@ package and the NuGet packages together.
   Git for Windows' bash, and skips with its reason what can't run there (`test_vm`, since `vm.py` drives the Mac's
   Parallels VM; the Mac's VM build in `verify.sh`, replaced by a test of the Windows build; a fake landing tool that
   is a shell script). A test file can skip itself as it loads (`unittest.SkipTest`).
+- **Tools (`hooks/hook.py`)**: on Windows the Stop hook runs the app's `verify.sh --fast` on the session's edits. It
+  couldn't start the script there and skipped the checks without a word; now it goes through Git for Windows' bash
+  (the new `companion.shell_command` and `companion.git_bash`: `bash` on PATH unless it's System32's, which is WSL's,
+  else the one beside git.exe), and without that bash it says the checks were skipped. The checks' output is read as
+  UTF-8, so a byte the locale's code page lacks no longer drops the report. Deskling's own Stop hook
+  (`.claude/hooks/validate.py`) does the same.
 
 ## 0.11.0 - 2026-10-16
 

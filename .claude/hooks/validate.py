@@ -24,7 +24,8 @@ The repo specifics live in validate.json next to this file:
    "format_patterns": ["\\.cs$"]}                optional: which edited files `format` gets (default: all of them)
 
 State lives in <git-dir>/agent-validate/<session>.files and .passed, so parallel sessions in one checkout only
-check their own edits and a worktree keeps its own. Standard library only, runs with python3 -I, on Windows too.
+check their own edits and a worktree keeps its own. Standard library only, runs with python3 -I, on Windows too,
+where a check that is a shell script runs through Git for Windows' bash.
 Anything unexpected exits 0 without output: a hook must never break the session.
 """
 import hashlib
@@ -147,6 +148,39 @@ def executable(name):
     return shutil.which(name)
 
 
+def git_bash():
+    """Git for Windows' bash: `bash` on PATH unless it's System32's (WSL's, which runs the script in Linux instead),
+    else Git\\bin\\bash.exe beside git.exe (Git\\cmd\\git.exe). None when there's none."""
+    found = shutil.which("bash")
+    if found and "system32" not in found.lower():
+        return found
+    git_exe = shutil.which("git")
+    for folder in Path(git_exe).resolve().parents if git_exe else []:
+        if (folder / "bin" / "bash.exe").is_file():
+            return str(folder / "bin" / "bash.exe")
+    return None
+
+
+def shell_script(path):
+    """A `.sh` file or one that starts with #!, which Windows can't start as a program."""
+    if Path(path).suffix.lower() == ".sh":
+        return True
+    try:
+        with open(path, "rb") as f:
+            return f.read(2) == b"#!"
+    except OSError:
+        return False
+
+
+def command(exe, args, windows=os.name == "nt"):
+    """The command line that starts `exe` with `args`: as it is, except a shell script on Windows, which goes through
+    Git for Windows' bash (with forward slashes, for the script's `dirname "$0"`). None when that bash is missing."""
+    if not (windows and shell_script(exe)):
+        return [exe, *args]
+    bash = git_bash()
+    return [bash, Path(exe).as_posix(), *args] if bash else None
+
+
 def check(event, cfg, state, session):
     files = [f for f in listed(state, session) if (ROOT / f).is_file()]
     if not files:
@@ -169,8 +203,13 @@ def check(event, cfg, state, session):
         if exe is None:
             report(event, f"`{argv[0]}` is not available here, so {'`' + label + '`' if label != argv[0] else 'it'} did not run.", block=False)
             return
+        line = command(exe, argv[1:])
+        if line is None:
+            report(event, f"`{label}` is a shell script and there's no Git for Windows bash here to run it, "
+                          "so it did not run.", block=False)
+            return
         try:
-            run = subprocess.run([exe, *argv[1:]], cwd=ROOT, capture_output=True, text=True, errors="replace")
+            run = subprocess.run(line, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
         except OSError as error:
             report(event, f"`{label}` could not start: {error}", block=False)
             return

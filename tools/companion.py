@@ -239,6 +239,29 @@ def git_env() -> dict[str, str]:
     return {key: value for key, value in os.environ.items() if key not in GIT_LOCAL_ENV}
 
 
+def git_bash() -> str | None:
+    """Git for Windows' bash, which runs the shell scripts on Windows: `bash` on PATH unless it's System32's (WSL's,
+    which runs the script in Linux instead), else Git\\bin\\bash.exe beside git.exe (Git\\cmd\\git.exe). None when
+    there's none."""
+    found = shutil.which("bash")
+    if found and "system32" not in found.lower():
+        return found
+    git = shutil.which("git")
+    for folder in Path(git).resolve().parents if git else []:
+        if (folder / "bin" / "bash.exe").is_file():
+            return str(folder / "bin" / "bash.exe")
+    return None
+
+
+def shell_command(script: Path, windows: bool = os.name == "nt") -> list[str] | None:
+    """The command that runs the shell script `script`: the script itself on macOS and Linux; on Windows, which starts
+    no `.sh` itself, `git_bash` with the script's path in forward slashes. None on a Windows without that bash."""
+    if not windows:
+        return [str(script)]
+    bash = git_bash()
+    return [bash, script.as_posix()] if bash else None
+
+
 # MARK: Pins: where the Deskling release is pinned, `bump`, `link` and `unlink`
 
 

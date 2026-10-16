@@ -5,24 +5,32 @@ quietly blocks or lets through things in every session. Runs the hook over the f
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
+from unittest import mock
 
-from support import TOOLS, fixture_app
+from support import BASH, NO_SHELL, REPO, TOOLS, companion, fixture_app
 
 HOOK = TOOLS / "hooks" / "hook.py"
+VALIDATE = REPO / ".claude" / "hooks" / "validate.py"  # Deskling's own Stop hook, beside the apps' hook.py
 
 
-def load_hook():
-    spec = importlib.util.spec_from_file_location("hook", HOOK)
+def load(path):
+    spec = importlib.util.spec_from_file_location(path.stem, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_hook():
+    return load(HOOK)
 
 
 class HookTestCase(unittest.TestCase):
@@ -307,6 +315,69 @@ class StopAndParity(HookTestCase):
         self.assertIn("tools/verify.sh -- macos/FixtureCore/", done.stderr)
         self.run_hook("post", {"session_id": "stop", "tool_name": "Bash", "tool_input": {"command": "scripts/verify.sh"}})
         self.assertEqual(self.run_hook("stop", {"session_id": "stop"}).returncode, 0)
+
+    @unittest.skipIf(BASH is None, NO_SHELL)
+    def test_stop_reports_what_the_fast_checks_reject(self):
+        # The app's scripts/verify.sh wrapper, which the hook takes over Deskling's; on Windows it runs through bash.
+        wrapper = self.root / "scripts" / "verify.sh"
+        wrapper.parent.mkdir()
+        wrapper.write_text('#!/bin/sh\necho "lint: rejected $*"\nexit 1\n', "utf8", newline="\n")
+        wrapper.chmod(0o755)
+        edited = "macos/FixtureCore/Sources/FixtureCore/A.swift"
+        event = {"session_id": "rejected", "tool_name": "Edit", "tool_input": {"file_path": str(self.root / edited)}}
+        self.assertEqual(self.run_hook("post", event).returncode, 0)
+        done = self.run_hook("stop", {"session_id": "rejected"})
+        self.assertEqual(done.returncode, 2, done.stderr)
+        self.assertIn(f"Fast checks on the files you edited failed:\nlint: rejected --fast -- {edited}", done.stderr)
+
+    def test_stop_says_so_when_windows_has_no_bash(self):
+        self.hook.record(self.event, "edit", "macos/FixtureCore/Sources/FixtureCore/A.swift")
+        stderr = io.StringIO()
+        with mock.patch.object(self.hook.companion, "shell_command", return_value=None), redirect_stderr(stderr):
+            with self.assertRaises(SystemExit) as stopped:
+                self.hook.stop(self.event)
+        self.assertEqual(stopped.exception.code, 2)
+        self.assertIn("didn't run: Windows starts no shell script itself and there's no Git for Windows bash here",
+                      stderr.getvalue())
+
+
+class ShellScripts(unittest.TestCase):
+    """How the Stop hooks start verify.sh: itself on macOS and Linux; on Windows, which starts no shell script itself,
+    through Git for Windows' bash, never WSL's."""
+
+    def test_the_command_is_the_script_or_bash_with_it(self):
+        script = TOOLS / "verify.sh"
+        self.assertEqual(companion.shell_command(script, windows=False), [str(script)])
+        with mock.patch.object(companion, "git_bash", return_value="bash.exe"):
+            self.assertEqual(companion.shell_command(script, windows=True), ["bash.exe", script.as_posix()])
+        with mock.patch.object(companion, "git_bash", return_value=None):
+            self.assertIsNone(companion.shell_command(script, windows=True))
+
+    def test_git_bash_is_the_one_beside_git_not_system32s(self):
+        with tempfile.TemporaryDirectory() as temp:
+            git = Path(temp).resolve() / "Git"
+            for path in (git / "cmd" / "git.exe", git / "bin" / "bash.exe"):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"")
+            found = {"bash": r"C:\Windows\System32\bash.exe", "git": str(git / "cmd" / "git.exe")}
+            with mock.patch.object(companion.shutil, "which", side_effect=found.get):
+                self.assertEqual(companion.git_bash(), str(git / "bin" / "bash.exe"))
+            with mock.patch.object(companion.shutil, "which", side_effect={"bash": "/usr/bin/bash"}.get):
+                self.assertEqual(companion.git_bash(), "/usr/bin/bash")
+            with mock.patch.object(companion.shutil, "which", return_value=None):
+                self.assertIsNone(companion.git_bash())
+
+    @unittest.skipUnless(VALIDATE.is_file(), "no .claude/hooks/validate.py in this checkout")
+    def test_deskling_s_validate_hook_runs_a_shell_script_check_through_bash_on_windows(self):
+        validate = load(VALIDATE)
+        script = str(REPO / "scripts" / "verify.sh")
+        self.assertEqual(validate.command(script, ["--fast"], windows=False), [script, "--fast"])
+        with mock.patch.object(validate, "git_bash", return_value="bash.exe"):
+            self.assertEqual(validate.command(script, ["--fast"], windows=True),
+                             ["bash.exe", Path(script).as_posix(), "--fast"])
+            self.assertEqual(validate.command(sys.executable, ["-V"], windows=True), [sys.executable, "-V"])
+        with mock.patch.object(validate, "git_bash", return_value=None):
+            self.assertIsNone(validate.command(script, ["--fast"], windows=True))
 
 
 class Resume(HookTestCase):
