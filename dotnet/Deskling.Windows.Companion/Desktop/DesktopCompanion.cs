@@ -33,6 +33,15 @@ namespace Deskling.Windows.Companion.Desktop;
 /// (<see cref="CompanionViews{TWindow}.DesktopCharacter"/>). Positions are the anchor (the window's bottom middle) in
 /// screen pixels, y down. UI thread only; asks for no permission.
 /// </summary>
+/// <remarks>
+/// It has no keyboard path, by design: both windows are no-activate tool windows, so the app in front keeps the
+/// keyboard, and neither Tab nor Alt+Tab reaches them. Narrator finds the character as one button (named like its canvas,
+/// whose action says something) by touch or the pointer. Its actions are all in the tray icon's menu, which the keyboard
+/// reaches (Win+B, then Shift+F10 on the icon): Say something, Shh, and the desktop submenu to show it, hide it for a
+/// while and change its size. Only moving it takes the pointer; a keyboard user it is in the way of hides it from there.
+/// The tray menu has no position reset: the character only ever stands where a drag left it or in its default corner,
+/// both wholly on a display, so there is nothing to recover from the keyboard.
+/// </remarks>
 public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
 {
     /// <summary>The default spot: this far (DIPs) in from the bottom right of the primary display's work area.</summary>
@@ -67,7 +76,17 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
 
     /// <param name="characterView">The app's view of the character (a <see cref="CharacterCanvas"/> bound to its state).</param>
     /// <param name="sayActionName">What Narrator calls the action that says something.</param>
-    public DesktopCompanion(UIElement characterView, DesktopLayout layout, DesktopSize size, DesktopPosition? position, string sayActionName)
+    /// <param name="title">
+    /// The windows' title, which Narrator reads for them (the host passes the tray icon's tooltip); null leaves WinUI's.
+    /// </param>
+    public DesktopCompanion(
+        UIElement characterView,
+        DesktopLayout layout,
+        DesktopSize size,
+        DesktopPosition? position,
+        string sayActionName,
+        string? title = null
+    )
     {
         queue = DispatcherQueue.GetForCurrentThread() ?? throw new InvalidOperationException("Make the desktop character on the UI thread.");
         this.layout = layout;
@@ -98,6 +117,8 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         };
         // A tray host without a glyph shows no icon: its hidden window owns the menu.
         menuHost = new TrayIconHost(queue, Guid.NewGuid(), "Deskling.DesktopCompanion.Menu");
+        if (title is not null)
+            character.Title = bubble.Title = title;
     }
 
     public Action? OnSay { get; set; }
@@ -109,6 +130,16 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
     public Action? OnBubbleDismissed { get; set; }
 
     public Func<IReadOnlyList<MenuItem>>? Menu { get; set; }
+
+    /// <summary>
+    /// Whether the menu's words carry their own access keys ("&amp;Say something"); off by default, so every "&amp;"
+    /// shows as written. See <see cref="TrayIconHost.AccessKeys"/>.
+    /// </summary>
+    public bool MenuAccessKeys
+    {
+        get => menuHost.AccessKeys;
+        set => menuHost.AccessKeys = value;
+    }
 
     public bool IsShown => character.IsShown;
 

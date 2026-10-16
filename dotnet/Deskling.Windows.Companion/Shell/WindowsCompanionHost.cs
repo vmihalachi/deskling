@@ -46,7 +46,10 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     private ElementTheme theme = ElementTheme.Default;
 
     /// <param name="trayIconId">The tray icon's identity (see <see cref="TrayStatusItem"/>).</param>
-    /// <param name="trayToolTip">The tray icon's tooltip and accessible name (the configuration's <c>StatusItemTooltip</c>).</param>
+    /// <param name="trayToolTip">
+    /// The tray icon's tooltip and accessible name (the configuration's <c>StatusItemTooltip</c>), and the title Narrator
+    /// reads for the panel's window and the desktop character's.
+    /// </param>
     /// <param name="windowIconPath">The windows' <c>.ico</c>; the executable's icon by default.</param>
     /// <param name="queue">The UI thread's queue; the current thread's by default.</param>
     public WindowsCompanionHost(
@@ -90,12 +93,21 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
 
     ITimers ICompanionHost<TWindow>.Timers => Timers;
 
+    /// <summary>
+    /// Whether the menus' words (the app's <c>MenuCopy</c>) carry their own access keys, written the Win32 way:
+    /// "&amp;Say something" makes S the key and "&amp;&amp;" shows one "&amp;". Off by default, so every "&amp;" shows as
+    /// written and Windows takes each item's first letter. Applies to the tray icon's menu and the desktop character's
+    /// (<see cref="Deskling.Windows.Shell.TrayIconHost.AccessKeys"/>).
+    /// </summary>
+    public bool MenuAccessKeys { get; init; }
+
     public IStatusItem MakeStatusItem()
     {
         StatusItem?.Dispose();
         StatusItem = new TrayStatusItem(trayIconId, trayToolTip, views.Panel, Timers, () => ReduceMotion, queue)
         {
             Theme = theme,
+            MenuAccessKeys = MenuAccessKeys,
         };
         return StatusItem;
     }
@@ -103,7 +115,7 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
     public IDesktopCompanion MakeDesktop(DesktopLayout layout, DesktopSize size, DesktopPosition? position, string sayActionName)
     {
         Desktop = views.DesktopCharacter is { } character
-            ? new Desktop.DesktopCompanion(character(), layout, size, position, sayActionName) { Theme = theme }
+            ? new Desktop.DesktopCompanion(character(), layout, size, position, sayActionName, trayToolTip) { MenuAccessKeys = MenuAccessKeys, Theme = theme }
             : new AbsentDesktop();
         return Desktop;
     }

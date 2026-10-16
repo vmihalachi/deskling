@@ -14,7 +14,10 @@ the fixture) keeps the language picked in Settings across a restart, WinUI's own
 edited by hand reads as missing values instead of stopping the launch; packaged apps are unchanged, and an app opts in
 by passing `LanguageSetting.ForApp` to `CompanionApp.Start`. Narrator hears what appears on its own (a new line in the
 bubble, the status pill's new kind of status, Support's thanks, the restart, notification and startup notes), each once
-and in the app's own words, once the bubble and the pill opt in.
+and in the app's own words, once the bubble and the pill opt in. The companion's windows get keyboard and Narrator
+fixes: the tray panel focuses its first row on every open and takes the arrow keys, Support opens on its ask, a tray
+menu cancelled from the keyboard gives the focus back, and the windows, the character and the hours editors are named in
+the app's words; apps can mark their own tray menu access keys.
 
 - **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
   from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
@@ -75,6 +78,25 @@ and in the app's own words, once the bubble and the pill opt in.
 - **Fixture**: Undo hides after 8 s and when pressed (`Show.WhenSet` and `Show.Has` treat x:Bind's empty string as
   unset), the clock line collapses while it's empty, and Home and the panel show a joke's setup as the bubble's
   header over its punchline.
+- **Windows**: `TrayIconHost` gives the focus back to the notification area (`NIM_SETFOCUS`) when a menu opened from
+  the keyboard is cancelled, names its hidden window with the tooltip, and tells a click from the keyboard
+  (`ByKeyboard`). `AccessKeys` (off by default) lets the menu's words carry their own access keys, a single "&" marking
+  the key and "&&" showing one; `WithoutAccessKeys` reads such words without their marks.
+- **Windows.Companion**: the tray panel puts the focus on its first row on every open (with the keyboard's focus visual
+  when opened from the keyboard), moves between rows with Up and Down, and takes the tray tooltip as its window title;
+  so do the desktop character's windows (`DesktopCompanion`'s new `title`, `DesktopWindow.Title`).
+  `WindowsCompanionHost.MenuAccessKeys` turns access keys on for the tray menu and the desktop character's.
+  `DesktopCompanion`'s doc says it has no keyboard path and where its actions are.
+- **Windows.Companion**: `SupportWindow` rebuilds on load only when the store changed since it was made, so it opens
+  with the focus on the ask, not on Restore purchases. It and the tray panel hide WinUI's "Esc" accelerator tooltip.
+- **Windows.Companion**: `CharacterCanvas` takes an empty `Line` (what `x:Bind` passes for null) as none, so it reads
+  its `AccessibilityLabel` before the first line. `QuietHoursEditor` is a group named by its `Title`, its chips are
+  named as times in the culture (`HourName`) and make one Tab stop with the arrow keys between them.
+  `ActiveHoursEditor` is a group named by `ActiveHours`, with the days a group named by `Days`. The labels these
+  editors, `LanguageRow` and `LaunchAtStartupToggle` show beside a control that already carries the words are hidden
+  from Narrator.
+- **Fixture app**: section titles are headings, the tray menu marks its access keys, and the desktop character is named
+  by its label while its bubble shows the line.
 
 ## 0.10.5 - 2026-10-16
 

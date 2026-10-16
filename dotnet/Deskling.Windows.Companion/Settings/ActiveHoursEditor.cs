@@ -3,6 +3,7 @@ using Deskling.Companion.Settings;
 using Deskling.Windows.Companion.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
@@ -13,7 +14,9 @@ namespace Deskling.Windows.Companion.Settings;
 /// (Swift's <c>ActiveHoursEditor</c>), for Settings and onboarding. Every word is the app's (<see cref="Copy"/>); the chips
 /// take its <see cref="ChipStyle"/>. The pickers stack under the label, each with its own ("From", "To"): two WinUI time
 /// pickers don't fit side by side in a companion's window (their minutes get cut off), where the Mac puts them in one
-/// row.
+/// row. Narrator reads the editor as a group named by <see cref="ActiveHoursCopy.ActiveHours"/>, the pickers by their
+/// labels and the weekday chips, with their full day names, as a group named by <see cref="ActiveHoursCopy.Days"/>; the
+/// labels on screen are left out, so nothing is read twice.
 /// </summary>
 public sealed partial class ActiveHoursEditor : UserControl
 {
@@ -24,6 +27,7 @@ public sealed partial class ActiveHoursEditor : UserControl
     private readonly TextBlock toLabel = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock daysLabel = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly (int Weekday, ToggleButton Chip)[] chips;
+    private readonly GroupGrid days;
     private readonly SettingsWatch watch;
     private CompanionSettings? settings;
     private bool refreshing;
@@ -64,13 +68,17 @@ public sealed partial class ActiveHoursEditor : UserControl
                     return (weekday, chip);
                 }),
         ];
-        var days = new Grid { ColumnSpacing = Space.Item };
+        var days = new GroupGrid { ColumnSpacing = Space.Item };
         days.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         days.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         days.Children.Add(daysLabel);
         Grid.SetColumn(row, 1);
         days.Children.Add(row);
 
+        // The group, the pickers and the days carry these words for Narrator.
+        foreach (var shown in new[] { label, fromLabel, toLabel, daysLabel })
+            AutomationProperties.SetAccessibilityView(shown, AccessibilityView.Raw);
+        this.days = days;
         var stack = new StackPanel { Spacing = Space.Item };
         stack.Children.Add(label);
         stack.Children.Add(pickers);
@@ -96,6 +104,7 @@ public sealed partial class ActiveHoursEditor : UserControl
         }
     }
 
+    /// <summary>The editor's words, shown on screen and read by Narrator as the names of the editor, its pickers and its days.</summary>
     public ActiveHoursCopy? Copy
     {
         get;
@@ -106,8 +115,10 @@ public sealed partial class ActiveHoursEditor : UserControl
             fromLabel.Text = value?.From ?? "";
             toLabel.Text = value?.To ?? "";
             daysLabel.Text = value?.Days ?? "";
+            AutomationProperties.SetName(this, value?.ActiveHours ?? "");
             AutomationProperties.SetName(from, value?.From ?? "");
             AutomationProperties.SetName(to, value?.To ?? "");
+            AutomationProperties.SetName(days, value?.Days ?? "");
         }
     }
 
@@ -130,6 +141,8 @@ public sealed partial class ActiveHoursEditor : UserControl
     public static TimeSpan Time(int minute) => TimeSpan.FromMinutes(Math.Clamp(minute, 0, 24 * 60 - 1));
 
     public static int Minute(TimeSpan time) => (int)Math.Round(time.TotalMinutes) % (24 * 60);
+
+    protected override AutomationPeer OnCreateAutomationPeer() => new GroupPeer(this, nameof(ActiveHoursEditor));
 
     private void SetMinute(TimeSpan? time, bool start)
     {

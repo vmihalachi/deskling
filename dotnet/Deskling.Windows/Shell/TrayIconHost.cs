@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Text;
 using Deskling.Windows.System;
 using Microsoft.UI.Dispatching;
 using Windows.Graphics;
@@ -10,7 +11,10 @@ namespace Deskling.Windows.Shell;
 /// keyboard's menu key, and by a left click unless <see cref="Selected"/> has a handler. The owner rebuilds the menu
 /// with <see cref="SetMenu"/> and the glyph with <see cref="SetGlyph"/>; the glyph is redrawn when the taskbar
 /// switches between light and dark and re-added when Explorer restarts. A hidden window on the UI thread receives
-/// the icon's messages, so create the host there.
+/// the icon's messages, so create the host there; it takes the tooltip as its name, which Narrator reads while the menu
+/// opens. A menu opened and cancelled from the keyboard gives the focus back to the notification area
+/// (<c>NIM_SETFOCUS</c>), not to that hidden window. Menu words show every "&amp;" as written unless
+/// <see cref="AccessKeys"/> is on.
 /// </summary>
 public sealed class TrayIconHost : IDisposable
 {
@@ -18,6 +22,9 @@ public sealed class TrayIconHost : IDisposable
 
     /// <summary>The icon's id under its window when Windows refuses the GUID.</summary>
     private const uint FallbackId = 1;
+
+    /// <summary>How far (pixels) the pointer may be off the icon and still count as having clicked it.</summary>
+    private const int PointerSlop = 8;
 
     /// <summary>Broadcast when Explorer (re)starts, which drops every icon.</summary>
     private static readonly uint TaskbarCreated = NativeMethods.RegisterWindowMessageW("TaskbarCreated");
@@ -63,6 +70,21 @@ public sealed class TrayIconHost : IDisposable
     /// </summary>
     public event Action? MenuOpening;
 
+    /// <summary>
+    /// Whether the latest click or menu on the icon came from the keyboard (Enter, Space, Shift+F10 or the menu key on
+    /// the focused icon) rather than the pointer: true when the pointer wasn't on the icon. Read it in
+    /// <see cref="Selected"/> to show the focus the way the user came, as a flyout opened from the keyboard should.
+    /// </summary>
+    public bool ByKeyboard { get; private set; }
+
+    /// <summary>
+    /// Whether the menu's words carry their own access keys, written the Win32 way: a single "&amp;" marks the next
+    /// character as the item's key and "&amp;&amp;" shows one "&amp;". Off by default: every "&amp;" shows as written,
+    /// and Windows takes each item's first letter, which items may share. Turn it on only with words written for it;
+    /// the same words shown anywhere else (a panel's rows) go through <see cref="WithoutAccessKeys"/> there.
+    /// </summary>
+    public bool AccessKeys { get; set; }
+
     /// <summary>The small-icon size at the system DPI (16 px at 100 %), for drawing glyphs.</summary>
     public static int SmallIconPixels => Math.Max(16, NativeMethods.GetSystemMetrics(NativeMethods.SM_CXSMICON));
 
@@ -73,10 +95,13 @@ public sealed class TrayIconHost : IDisposable
     public void SetGlyph(Func<bool, nint> draw, string toolTip)
     {
         glyph = draw;
+        if (toolTip != this.toolTip)
+            window.SetName(toolTip);
         this.toolTip = toolTip;
         Redraw();
     }
 
+    /// <summary>The menu's rows, shown from the next time it opens.</summary>
     public void SetMenu(IEnumerable<TrayMenuItem> items) => menu = [.. items];
 
     /// <summary>The icon's bounds in screen pixels, for placing a flyout next to it; false while it isn't shown.</summary>
@@ -104,7 +129,43 @@ public sealed class TrayIconHost : IDisposable
     }
 
     /// <summary>Opens the menu at a screen point, as a right click does.</summary>
-    public void ShowMenu(PointInt32 anchor)
+    public void ShowMenu(PointInt32 anchor) => ShowMenu(anchor, fromKeyboard: false);
+
+    /// <summary>
+    /// <paramref name="text"/> as it reads with its access-key marks taken out: a single "&amp;" dropped and
+    /// "&amp;&amp;" shown as "&amp;". For words written for <see cref="AccessKeys"/> that also show outside the menu.
+    /// </summary>
+    public static string WithoutAccessKeys(string text)
+    {
+        if (!text.Contains('&', StringComparison.Ordinal))
+            return text;
+        var plain = new StringBuilder(text.Length);
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] != '&')
+                plain.Append(text[i]);
+            else if (i + 1 < text.Length && text[i + 1] == '&')
+                plain.Append(text[++i]);
+        }
+        return plain.ToString();
+    }
+
+    /// <summary>A row's words as the menu takes them: as written with <paramref name="accessKeys"/>, else every "&amp;" doubled so it shows.</summary>
+    internal static string MenuText(string text, bool accessKeys) => accessKeys ? text : text.Replace("&", "&&", StringComparison.Ordinal);
+
+    /// <summary>
+    /// <see cref="ByKeyboard"/> from where the pointer is: on the icon (give or take a few pixels) after a click on it, or,
+    /// when the icon's bounds are unknown, at <paramref name="anchor"/>, the point a click reports.
+    /// </summary>
+    internal static bool IsPointerOn(RectInt32? icon, PointInt32 anchor, PointInt32 pointer) =>
+        icon is { } rect
+            ? pointer.X >= rect.X - PointerSlop
+                && pointer.X <= rect.X + rect.Width + PointerSlop
+                && pointer.Y >= rect.Y - PointerSlop
+                && pointer.Y <= rect.Y + rect.Height + PointerSlop
+            : Math.Abs(pointer.X - anchor.X) <= PointerSlop && Math.Abs(pointer.Y - anchor.Y) <= PointerSlop;
+
+    private void ShowMenu(PointInt32 anchor, bool fromKeyboard)
     {
         MenuOpening?.Invoke();
         if (menu.Count == 0 || window.Handle == 0)
@@ -134,6 +195,10 @@ public sealed class TrayIconHost : IDisposable
         // Queued, so a command (Quit, say) never runs inside this window's message handler.
         if (chosen > 0)
             dispatcher.TryEnqueue(() => commands[chosen - 1]());
+        // Cancelled from the keyboard (Esc), the focus would stay on this hidden window: back to the notification area,
+        // as Windows asks. Not when a click elsewhere cancelled it and gave that window the foreground.
+        else if (fromKeyboard && added && NativeMethods.GetForegroundWindow() == window.Handle)
+            Notify(NativeMethods.NIM_SETFOCUS, 0);
     }
 
     public void Dispose()
@@ -203,14 +268,17 @@ public sealed class TrayIconHost : IDisposable
         {
             // Version 4 puts the event in lParam's low word and the icon's anchor point in wParam.
             var anchor = new PointInt32((short)(wParam & 0xFFFF), (short)((wParam >> 16) & 0xFFFF));
-            switch ((uint)(lParam & 0xFFFF))
+            var kind = (uint)(lParam & 0xFFFF);
+            if (kind is NativeMethods.WM_LBUTTONUP or NativeMethods.WM_CONTEXTMENU)
+                ByKeyboard = !IsPointerOn(TryGetIconRect(out var icon) ? icon : null, anchor, Pointer());
+            switch (kind)
             {
                 case NativeMethods.WM_LBUTTONUP when Selected is { } selected:
                     dispatcher.TryEnqueue(() => selected(anchor));
                     break;
                 case NativeMethods.WM_LBUTTONUP:
                 case NativeMethods.WM_CONTEXTMENU:
-                    ShowMenu(anchor);
+                    ShowMenu(anchor, ByKeyboard);
                     break;
             }
             return 0;
@@ -224,8 +292,10 @@ public sealed class TrayIconHost : IDisposable
         return null;
     }
 
+    private static PointInt32 Pointer() => NativeMethods.GetCursorPos(out var point) ? new PointInt32(point.X, point.Y) : default;
+
     /// <summary>A menu for <paramref name="items"/>; a command's ID is its position in <paramref name="commands"/> plus one.</summary>
-    private static nint Build(IEnumerable<TrayMenuItem> items, List<Action> commands)
+    private nint Build(IEnumerable<TrayMenuItem> items, List<Action> commands)
     {
         var handle = NativeMethods.CreatePopupMenu();
         foreach (var item in items)
@@ -235,14 +305,14 @@ public sealed class TrayIconHost : IDisposable
                 case TrayMenuItem.Command command:
                     commands.Add(command.Invoke);
                     var check = command.IsChecked ? NativeMethods.MF_CHECKED : 0;
-                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | check, (nuint)commands.Count, Escape(command.Text));
+                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | check, (nuint)commands.Count, MenuText(command.Text, AccessKeys));
                     break;
                 case TrayMenuItem.Label label:
-                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | NativeMethods.MF_GRAYED, 0, Escape(label.Text));
+                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_STRING | NativeMethods.MF_GRAYED, 0, MenuText(label.Text, AccessKeys));
                     break;
                 case TrayMenuItem.Submenu submenu:
                     var child = Build(submenu.Items, commands);
-                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_POPUP, (nuint)child, Escape(submenu.Text));
+                    NativeMethods.AppendMenuW(handle, NativeMethods.MF_POPUP, (nuint)child, MenuText(submenu.Text, AccessKeys));
                     break;
                 default:
                     NativeMethods.AppendMenuW(handle, NativeMethods.MF_SEPARATOR, 0, null);
@@ -251,9 +321,6 @@ public sealed class TrayIconHost : IDisposable
         }
         return handle;
     }
-
-    /// <summary>Menus read "&amp;" as an access-key marker.</summary>
-    private static string Escape(string text) => text.Replace("&", "&&", StringComparison.Ordinal);
 
     private static void DestroyIcon(nint icon)
     {

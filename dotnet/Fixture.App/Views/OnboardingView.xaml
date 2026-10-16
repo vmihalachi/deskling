@@ -5,7 +5,7 @@
     xmlns:dv="using:Deskling.Windows.Companion.Views">
     <Grid RowDefinitions="*,Auto">
         <StackPanel Margin="{x:Bind dv:WindowInset.ContentOverActionBar}" Spacing="16">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Welcome" />
+            <TextBlock AutomationProperties.HeadingLevel="Level1" Style="{StaticResource TitleTextBlockStyle}" Text="Welcome" />
             <TextBlock Text="The fixture's first run. Get started opens Home, as an app's onboarding does." TextWrapping="Wrap" />
         </StackPanel>
         <dv:ActionBar Grid.Row="1">

@@ -142,7 +142,10 @@ public sealed partial class CharacterCanvas : UserControl
         }
     }
 
-    /// <summary>The latest line, which Narrator reads.</summary>
+    /// <summary>
+    /// The latest line, which Narrator reads instead of <see cref="AccessibilityLabel"/>; null or empty is none. Leave it
+    /// unset where a <see cref="SpeechBubble"/> beside the canvas shows the same line, or Narrator reads it twice.
+    /// </summary>
     public string? Line
     {
         get => line;
@@ -392,7 +395,14 @@ public sealed partial class CharacterCanvas : UserControl
         return brush;
     }
 
-    private void UpdateName() => AutomationProperties.SetName(this, line ?? accessibilityLabel ?? "");
+    /// <summary>
+    /// What Narrator reads: the line, else the label. x:Bind hands a null line over as "", so an empty line counts as
+    /// none, as <see cref="SpeechBubble"/>'s words do.
+    /// </summary>
+    internal static string AccessibleName(string? line, string? accessibilityLabel) =>
+        string.IsNullOrEmpty(line) ? accessibilityLabel ?? "" : line;
+
+    private void UpdateName() => AutomationProperties.SetName(this, AccessibleName(line, accessibilityLabel));
 
     /// <summary>One part: a canvas the size of the view box whose visual takes the part's transform, holding its paths or its image.</summary>
     private sealed class PartView

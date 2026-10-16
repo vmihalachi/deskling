@@ -1,6 +1,9 @@
 namespace Deskling.Windows.Shell;
 
-/// <summary>A row of the tray menu (see <see cref="TrayIconHost.SetMenu"/>). Text arrives already localized.</summary>
+/// <summary>
+/// A row of the tray menu (see <see cref="TrayIconHost.SetMenu"/>). Text arrives already localized; an "&amp;" in it is an
+/// access-key mark only with <see cref="TrayIconHost.AccessKeys"/> on.
+/// </summary>
 public abstract record TrayMenuItem
 {
     /// <summary>

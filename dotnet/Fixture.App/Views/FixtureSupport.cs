@@ -3,6 +3,8 @@ using Deskling.Windows.Companion.Support;
 using Deskling.Windows.Companion.Views;
 using Deskling.Windows.Shell;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FixtureApp.Views;
@@ -34,8 +36,8 @@ public static class FixtureSupport
                 Done: "Done"
             ),
             new SupportLook(
-                Title: () => new TextBlock { Text = "Support", Style = Style("TitleTextBlockStyle") },
-                TipsHeader: () => new TextBlock { Text = "Leave a tip", Style = Style("BodyStrongTextBlockStyle") },
+                Title: () => Heading("Support", "TitleTextBlockStyle", AutomationHeadingLevel.Level1),
+                TipsHeader: () => Heading("Leave a tip", "BodyStrongTextBlockStyle", AutomationHeadingLevel.Level2),
                 Character: celebrating => new CharacterCanvas
                 {
                     Character = model.GlyphCharacter,
@@ -50,6 +52,14 @@ public static class FixtureSupport
             ),
             () => model.Windows.Close(FixtureWindow.Support)
         );
+
+    /// <summary>A title that Narrator's heading navigation finds.</summary>
+    private static TextBlock Heading(string text, string style, AutomationHeadingLevel level)
+    {
+        var block = new TextBlock { Text = text, Style = Style(style) };
+        AutomationProperties.SetHeadingLevel(block, level);
+        return block;
+    }
 
     /// <summary>Through XamlCast: under Native AOT an untyped resource can arrive as a plain DependencyObject.</summary>
     private static Style Style(string key) => XamlCast.As<Style>(Application.Current.Resources[key])!;

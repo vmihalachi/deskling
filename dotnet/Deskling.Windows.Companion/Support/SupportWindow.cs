@@ -2,6 +2,7 @@ using System.Numerics;
 using Deskling.Core.Store;
 using Deskling.Windows.Companion.Shell;
 using Deskling.Windows.Companion.Views;
+using Deskling.Windows.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -33,6 +34,7 @@ public sealed partial class SupportWindow : UserControl
     private bool wasSupporter;
     private bool justSupported;
     private SupportStage? shown;
+    private object? built;
 
     public SupportWindow(PurchaseStore purchases, SupportProducts products, SupportCopy copy, SupportLook look, Action onDone)
     {
@@ -74,11 +76,18 @@ public sealed partial class SupportWindow : UserControl
             onDone();
         };
         KeyboardAccelerators.Add(escape);
+        // Esc is a convenience, not something to show as a tooltip floating above the window.
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         wasSupporter = purchases.IsOwned(products.Supporter);
         Loaded += async (_, _) =>
         {
             purchases.Changed += changed;
-            Rebuild();
+            // WinUI has already focused the ask: rebuild only for a change since, or the focus falls to Restore.
+            if (!Equals(built, Built()))
+            {
+                Rebuild();
+                FocusAsk();
+            }
             await purchases.LoadProductsIfNeededAsync();
         };
         Unloaded += (_, _) => purchases.Changed -= changed;
@@ -123,6 +132,7 @@ public sealed partial class SupportWindow : UserControl
         restore.IsEnabled = !purchases.IsBusy;
         var thanks = Thanks(shown, stage, copy);
         shown = stage;
+        built = Built();
         if (thanks is not null && IsLoaded)
         {
             // The bought button is gone: once WinUI has moved focus off it, focus lands on Done on purpose and Narrator
@@ -134,6 +144,22 @@ public sealed partial class SupportWindow : UserControl
             });
         }
     }
+
+    /// <summary>What the body was built from, to tell whether the store changed since.</summary>
+    private object Built() =>
+        (
+            purchases.IsOwned(products.Supporter),
+            purchases.JustTipped,
+            purchases.IsBusy,
+            purchases.IsPending,
+            purchases.Error,
+            purchases.LoadState,
+            purchases.Products
+        );
+
+    /// <summary>The focus on the stage's first button (the ask), as WinUI puts it when the window opens.</summary>
+    private void FocusAsk() =>
+        XamlCast.As<Control>(FocusManager.FindFirstFocusableElement(body))?.Focus(FocusState.Programmatic);
 
     /// <summary>
     /// The thanks Narrator hears when the window turns from <paramref name="shown"/> to <paramref name="stage"/>: the

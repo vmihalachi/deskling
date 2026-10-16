@@ -5,7 +5,10 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace FixtureApp.Views;
 
-/// <summary>The character on the desktop: a canvas that follows the model (code, as it lives in a window of its own).</summary>
+/// <summary>
+/// The character on the desktop: a canvas that follows the model (code, as it lives in a window of its own), named by
+/// its label while its bubble shows the line.
+/// </summary>
 public static class DesktopCharacter
 {
     public static CharacterCanvas Make(FixtureModel model)
@@ -20,7 +23,7 @@ public static class DesktopCharacter
         {
             canvas.Mood = model.Mood;
             canvas.Talking = model.IsVoicing;
-            canvas.Line = model.Bubble;
+            // No Line: the desktop bubble shows it, so Narrator would read it twice.
         }
         Update();
         model.PropertyChanged += (_, _) => Update();
