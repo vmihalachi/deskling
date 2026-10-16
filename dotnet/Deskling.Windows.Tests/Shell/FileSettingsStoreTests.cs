@@ -55,6 +55,40 @@ public sealed class FileSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void AValueThatDoesntMatchItsTypeOrANullEntryReadsAsNullInsteadOfThrowing()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(File)!);
+        global::System.IO.File.WriteAllText(
+            File,
+            """
+            {
+              "b": { "Type": "bool", "Value": "yes" },
+              "i": { "Type": "int", "Value": 2.5 },
+              "big": { "Type": "int", "Value": 9999999999 },
+              "d": { "Type": "double", "Value": "1" },
+              "s": { "Type": "string", "Value": 3 },
+              "ss": { "Type": "string[]", "Value": ["a", null] },
+              "sx": { "Type": "string[]", "Value": [1, 2] },
+              "is": { "Type": "int[]", "Value": "1,2" },
+              "gone": null,
+              "deskling.language": { "Type": "string", "Value": { "tag": "de" } }
+            }
+            """);
+
+        var store = new FileSettingsStore(File);
+        Assert.Null(store.GetBool("b"));
+        Assert.Null(store.GetInteger("i"));
+        Assert.Null(store.GetInteger("big"));
+        Assert.Null(store.GetDouble("d"));
+        Assert.Null(store.GetString("s"));
+        Assert.Null(store.GetStrings("ss"));
+        Assert.Null(store.GetStrings("sx"));
+        Assert.Null(store.GetIntegers("is"));
+        Assert.Null(store.GetString("gone"));
+        Assert.Null(store.GetString("deskling.language"));
+    }
+
+    [Fact]
     public void RemoveForgetsAndAnUnreadableFileStartsEmpty()
     {
         var store = new FileSettingsStore(File);

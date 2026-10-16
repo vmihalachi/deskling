@@ -26,8 +26,14 @@ public sealed partial class SettingsView : UserControl
         Quiet.Settings = model.Settings;
         // Unpackaged, the fixture has no startup task: the toggle shows off and can't be turned on.
         Startup.Copy = new LaunchAtStartupCopy("Open at sign-in", "Windows blocked this. Turn it on in Settings › Apps › Startup.");
-        LanguageChoice.Copy = new LanguageCopy("Language", "Same as Windows", "Restart the fixture to use it.", "Restart");
-        LanguageChoice.Languages = ["en", "de", "ro"];
+        LanguageChoice.Copy = new LanguageCopy(
+            "Language",
+            "Same as Windows",
+            "Restart the fixture to use it.",
+            "Restart",
+            "Windows didn't restart the fixture. Quit it and open it again."
+        );
+        LanguageChoice.Languages = App.Languages;
         AppearanceButtons.SelectedIndex = (int)model.Settings.Appearance;
         // RadioButtons reports -1 between clearing the old choice and selecting the new one, as the apps' guards know.
         AppearanceButtons.SelectionChanged += (_, _) =>

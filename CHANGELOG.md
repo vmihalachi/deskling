@@ -9,7 +9,10 @@ package and the NuGet packages together.
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
 (**Breaking** for its build). A Windows app with the desktop character on no longer crashes when Windows switches theme
 or contrast. The speech bubble's countdown dial no longer crashes a Windows app when the countdown's stamp and the wall
-clock disagree. The desktop character follows the app's appearance setting.
+clock disagree. The desktop character follows the app's appearance setting. An unpackaged Windows app (a Debug build,
+the fixture) keeps the language picked in Settings across a restart, WinUI's own words included, and a settings file
+edited by hand reads as missing values instead of stopping the launch; packaged apps are unchanged, and an app opts in
+by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
 
 - **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
   from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
@@ -34,6 +37,27 @@ clock disagree. The desktop character follows the app's appearance setting.
   The bubble stayed dark with the app set to Light on a dark Windows.
 - **Fixture app**: the Appearance buttons ignore the -1 index `RadioButtons` reports between two choices, which crashed
   the fixture on every click; the apps already guarded it.
+- **Windows.Companion**: the language row works without package identity. There the override
+  (`ApplicationLanguages.PrimaryLanguageOverride`) lasts only for the process and refuses `""`, so the pick was lost
+  on restart and "Same as Windows" couldn't clear it (the note stayed, and Settings opened again showed the old
+  language). `LanguageRow` now stores the tag in the app's settings under `deskling.language`, through the new
+  `LanguageSetting` (`Deskling.Windows`), and the new optional `language` argument of `CompanionApp.Start` sets it
+  again before `Application.Start`: as the override, so `Loc.Choose` picks it, and as the process's preferred UI
+  language (`SetProcessPreferredUILanguages`), since WinUI's own words don't follow the override unpackaged. "Same as
+  Windows" removes the key; a stored tag the app no longer has is ignored; screenshot runs read none. The row keeps
+  its pick for the process instead of reading the override back, so the restart note shows only while the next start
+  would differ from this one, and a Settings window opened again shows the pick. With a package nothing changes:
+  `LanguageSetting.ForApp` gives null, Windows keeps the override and the row sets it as before.
+- **Windows.Companion**: `LanguageCopy.RestartRefused` (optional; null shows nothing, as before) is the line shown
+  under Restart when Windows refuses `AppInstance.Restart` (the app isn't in front, a restart is pending).
+- **Windows**: `LocalSettingsStore.ForApp` gives one file store per folder for the whole process, so the language
+  `CompanionApp.Start` reads and the settings the app makes share it instead of writing over each other's changes.
+- **Windows**: `FileSettingsStore`'s getters return null for a value that doesn't match the type stored with it, or
+  for a null entry (a settings file edited by hand), instead of throwing, as its contract says. The language is now
+  read in `Main`, where a throw would stop every launch.
+- **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
+  pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
+  `RestartRefused`.
 
 ## 0.10.5 - 2026-10-16
 

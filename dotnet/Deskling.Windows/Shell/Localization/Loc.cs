@@ -51,9 +51,10 @@ public static class Loc
 
     /// <summary>
     /// The language to run in, out of the app's <paramref name="languages"/> (its <c>Strings</c> folders, the default
-    /// first): the one picked in the app (<c>ApplicationLanguages.PrimaryLanguageOverride</c>, which
-    /// <c>LanguageRow</c> sets), else the first of Windows' preferred languages the app has, else the default. Pass the
-    /// result to <see cref="UseLanguage"/>.
+    /// first): the one picked in the app (<c>ApplicationLanguages.PrimaryLanguageOverride</c>, which <c>LanguageRow</c>
+    /// sets with a package and <c>CompanionApp.Start</c> sets from the app's <see cref="LanguageSetting"/> without one),
+    /// else the first of Windows' preferred languages the app has, else the default. Pass the result to
+    /// <see cref="UseLanguage"/>.
     /// </summary>
     public static string Choose(IReadOnlyList<string> languages) =>
         LanguageMatch.Choose(
