@@ -6,6 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion (`SupportWindow`, `ActiveHoursEditor`, `QuietHoursEditor`)**: in a contrast theme, the Support
+  window's accent buttons (Done, the supporter button, the tips) and the checked weekday and quiet-hour chips draw
+  their words in their style's contrast colors (WinUI's: the highlight text on the highlight) instead of each word on a
+  box of the window's color. WinUI draws that box, the backplate, behind all of an app's text by default; these
+  controls turn it off (`HighContrastAdjustment="None"`). Nothing changes in light or dark. An app's own accent buttons
+  need the same attribute.
+- **Fixture app**: Home's "Say something" and onboarding's "Get started" turn the backplate off the same way.
+
 ## 0.11.3 - 2026-10-16
 
 - **Shell (`NotificationPoster`, `AppNotifier`)**: an app can hold back a reminder while the last one is still waiting.

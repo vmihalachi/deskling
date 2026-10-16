@@ -34,7 +34,9 @@ public sealed partial class QuietHoursEditor : UserControl
         for (var hour = 0; hour < 24; hour++)
         {
             var h = hour;
-            var chip = new ToggleButton { Content = Label(hour, CultureInfo.CurrentCulture), HorizontalAlignment = HorizontalAlignment.Stretch };
+            var chip = HighlightFill.Plain(
+                new ToggleButton { Content = Label(hour, CultureInfo.CurrentCulture), HorizontalAlignment = HorizontalAlignment.Stretch }
+            );
             AutomationProperties.SetName(chip, HourName(hour, CultureInfo.CurrentCulture));
             chip.Click += (_, _) => SetHour(h, chip.IsChecked == true);
             Grid.SetColumn(chip, hour % 6);
