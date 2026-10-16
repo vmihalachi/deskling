@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.10 - 2026-10-16
+
 - **Tools (`windows/check-layout.ps1`, `screens.py`)**: a packaged app's languages run one at a time, since it runs one
   copy from one development registration: side by side, a language's run found another's copy running or closed it.
   `screens.py`'s `"vm": "screenshots"` mode passes `-Only`, so it takes just the screens asked for.
