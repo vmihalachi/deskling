@@ -6,6 +6,10 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows (`Formats`)**: `MonthDayYear` reads "Oct 5, 2026" as documented, not "05-Oct-26": it asks for the full
+  year, since a bare `year` let Windows pick the language's short pattern with an abbreviated month.
+  `WeekdayMonthDayYear` asks the same way.
+
 ## 0.11.8 - 2026-10-16
 
 - **Tools (`screenshots.sh`, `windows/screenshots.ps1`)**: `--only` / `-Only` copies only the shots it names, also when
