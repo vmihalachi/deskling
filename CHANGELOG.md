@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.2 - 2026-10-16
+
 - **Tools (Windows)**: the tools work in a Windows checkout, where `core.autocrlf` gives text files CRLF line endings.
   `companion.py link` finds the Deskling package in a CRLF `project.yml` (it stopped with "no Deskling package with a
   url and a version to switch"), and `character.py --check` (so `scripts/fixture-art.sh --check`) takes a text output
