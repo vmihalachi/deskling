@@ -15,6 +15,27 @@ package and the NuGet packages together.
   window without `DrawnBounds` (the bubble) takes touch over its whole frame. Mouse clicks pass through around the
   character as before. A press goes by its own pointer, so a one-finger drag moves the character instead of saying a
   line, and a pinch or a second finger is never a click: a pinch steps the size without a line.
+- **Windows.Companion (`SupportWindow`, `ActiveHoursEditor`, `QuietHoursEditor`)**: in a contrast theme, the Support
+  window's accent buttons (Done, the supporter button, the tips) and the checked weekday and quiet-hour chips draw
+  their words in their style's contrast colors (WinUI's: the highlight text on the highlight) instead of each word on a
+  box of the window's color. WinUI draws that box, the backplate, behind all of an app's text by default; these
+  controls turn it off (`HighContrastAdjustment="None"`). Nothing changes in light or dark. An app's own accent buttons
+  need the same attribute.
+- **Fixture app**: Home's "Say something" and onboarding's "Get started" turn the backplate off the same way.
+- **Companion (`QuietRules`, `CompanionAppModel`)**: Say something answers while a line is being spoken, so a
+  notification's Say more, which comes while its line is still heard, no longer does nothing. A button press is not
+  skipped as `speaking` any more: `sayNow()` (`SayNow()` on Windows) cuts the line being said, as Shh does, and says
+  the new one; every other trigger still waits for the speech to end. The new `say-more-while-speaking` timeline in
+  `conformance/companion/quiet` pins it; the other vectors, the apps' standard timelines included, stay as they were
+  (none of them presses the button mid-line).
+- **Windows companion (`WindowManager`, `WindowInset`)**: scrolled content no longer slides under the caption buttons.
+  The window keeps the 32-DIP caption band above the view, as a row of its own on the window's paper outside the
+  view's scroller, and `WindowInset.Window`, `Content` and `ContentOverActionBar` start 24 under the band instead of
+  holding it, as the Mac's `windowPadding`; a view in a `WindowManager` window sits where it did.
+  `ScreenshotCapture.CaptureWindow` builds its window the same way.
+- **Windows**: `TrayIconHost`'s menu (the tray icon's, and the desktop character's through the same host) is dark
+  while the taskbar is, outside a contrast theme. It read light on a dark taskbar. The mode is read at each opening, so
+  switching Windows' mode shows at the next one, and the process's other menus keep the default.
 
 ## 0.11.4 - 2026-10-16
 

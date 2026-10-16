@@ -9,7 +9,11 @@
             <TextBlock Text="The fixture's first run. Get started opens Home, as an app's onboarding does." TextWrapping="Wrap" />
         </StackPanel>
         <dv:ActionBar Grid.Row="1">
-            <Button Click="{x:Bind Model.CompleteOnboarding}" Content="Get started" Style="{StaticResource AccentButtonStyle}" />
+            <Button
+                Click="{x:Bind Model.CompleteOnboarding}"
+                Content="Get started"
+                HighContrastAdjustment="None"
+                Style="{StaticResource AccentButtonStyle}" />
         </dv:ActionBar>
     </Grid>
 </UserControl>

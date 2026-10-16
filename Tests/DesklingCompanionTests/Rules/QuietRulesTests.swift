@@ -30,7 +30,21 @@ final class QuietRulesTests: XCTestCase {
     func testNothingOverlapsSpeech() {
         let speaking = Snapshot(isSpeaking: true)
         XCTAssertEqual(QuietRules.decide(trigger: .due, snapshot: speaking, manners: talkative), .skip(.speaking))
-        XCTAssertEqual(QuietRules.decide(trigger: .buttonPress, snapshot: speaking, manners: talkative), .skip(.speaking))
+        XCTAssertEqual(QuietRules.decide(trigger: .welcomeBack, snapshot: speaking, manners: talkative), .skip(.speaking))
+    }
+
+    func testAButtonPressAnswersMidLineAndTheShellCutsIt() {
+        // A notification's Say more comes while its line is still heard: the press is delivered, never queued.
+        let speaking = Snapshot(isSpeaking: true)
+        XCTAssertEqual(
+            QuietRules.decide(trigger: .buttonPress, snapshot: speaking, manners: talkative),
+            .deliver(ChannelPlan(speak: true, chime: true, notify: false)))
+        XCTAssertEqual(
+            QuietRules.decide(trigger: .buttonPress, snapshot: Snapshot(busy: [.call], isSpeaking: true), manners: talkative),
+            .deliver(.bubbleOnly))
+        XCTAssertEqual(
+            QuietRules.decide(trigger: .buttonPress, snapshot: Snapshot(isScreenLocked: true, isSpeaking: true), manners: talkative),
+            .skip(.locked))
     }
 
     func testMutedOutputFallsBackToANotificationWhenAllowed() {

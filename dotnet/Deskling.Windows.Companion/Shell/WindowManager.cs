@@ -11,8 +11,9 @@ namespace Deskling.Windows.Companion.Shell;
 /// <summary>
 /// The app's windows by id (<see cref="IWindowHost{TWindow}"/>, Swift's <c>WindowManager</c>), so they can be opened
 /// from anywhere (the tray, a notification). The app supplies each window's <see cref="WindowSpec"/> and
-/// content. A window's content reaches under its title bar (the Mac's transparent title bar), so the content leaves
-/// room for the caption buttons; it is sized in DIPs on the display it opens on. The app has no taskbar button while
+/// content. A window's content reaches under its title bar (the Mac's transparent title bar): the window's paper fills
+/// it, and the view sits under a band kept for the caption buttons (<see cref="WindowFrame"/>), so scrolled content
+/// never slides under them; it is sized in DIPs on the display it opens on. The app has no taskbar button while
 /// idle; each open window has its own. UI thread only.
 /// </summary>
 public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
@@ -100,10 +101,7 @@ public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
     {
         var spec = this.spec(id);
         var view = content(id);
-        var root = new Grid();
-        // The look's paper behind the content and under the title bar, as the Mac's window background.
-        LookBinding.Keep(root, () => root.Background = LookBinding.Brush(root, p => p.Paper));
-        root.Children.Add(view);
+        var root = WindowFrame.Make(view);
         var window = new Window
         {
             Title = spec.Title,
