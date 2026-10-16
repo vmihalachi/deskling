@@ -6,6 +6,18 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Companion (`QuietRules`, `CompanionAppModel`)**: Say something answers while a line is being spoken, so a
+  notification's Say more, which comes while its line is still heard, no longer does nothing. A button press is not
+  skipped as `speaking` any more: `sayNow()` (`SayNow()` on Windows) cuts the line being said, as Shh does, and says
+  the new one; every other trigger still waits for the speech to end. The new `say-more-while-speaking` timeline in
+  `conformance/companion/quiet` pins it; the other vectors, the apps' standard timelines included, stay as they were
+  (none of them presses the button mid-line).
+- **Windows companion (`WindowManager`, `WindowInset`)**: scrolled content no longer slides under the caption buttons.
+  The window keeps the 32-DIP caption band above the view, as a row of its own on the window's paper outside the
+  view's scroller, and `WindowInset.Window`, `Content` and `ContentOverActionBar` start 24 under the band instead of
+  holding it, as the Mac's `windowPadding`; a view in a `WindowManager` window sits where it did.
+  `ScreenshotCapture.CaptureWindow` builds its window the same way.
+
 ## 0.11.3 - 2026-10-16
 
 - **Shell (`NotificationPoster`, `AppNotifier`)**: an app can hold back a reminder while the last one is still waiting.

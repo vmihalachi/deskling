@@ -9,8 +9,9 @@
     /// without a current recording stays unsaid unless the library falls back to the system voice), else with the system
     /// voice. Without speech the parts follow each other after `PhraseTiming.partDelay`. `isSpeaking` holds from the
     /// first part until the last finished, beats included, so the app's `Snapshot.isSpeaking` keeps other lines out; a
-    /// call or Shh cuts the whole joke with `stop()`. The app supplies the words (`localize`, from its String Catalog)
-    /// and the tune's bubble text; the package ships none. Needs the main actor; never touches the network.
+    /// call, Shh or a button press mid-line cuts the whole joke with `stop()`. The app supplies the words (`localize`,
+    /// from its String Catalog) and the tune's bubble text; the package ships none. Needs the main actor; never touches
+    /// the network.
     @MainActor
     public final class DeliveryPerformer {
         public let bank: PhraseBank

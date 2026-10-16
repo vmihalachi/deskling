@@ -41,7 +41,21 @@ public sealed class QuietRulesTests
     {
         var speaking = new Snapshot { IsSpeaking = true };
         Assert.Equal(new Outcome.Skip(SkipReason.Speaking), QuietRules.Decide(Trigger.Due, speaking, Talkative));
-        Assert.Equal(new Outcome.Skip(SkipReason.Speaking), QuietRules.Decide(Trigger.ButtonPress, speaking, Talkative));
+        Assert.Equal(new Outcome.Skip(SkipReason.Speaking), QuietRules.Decide(Trigger.WelcomeBack, speaking, Talkative));
+    }
+
+    [Fact]
+    public void AButtonPressAnswersMidLineAndTheShellCutsIt()
+    {
+        // A notification's Say more comes while its line is still heard: the press is delivered, never queued.
+        var speaking = new Snapshot { IsSpeaking = true };
+        Assert.Equal(new Outcome.Deliver(new ChannelPlan(true, true, false)), QuietRules.Decide(Trigger.ButtonPress, speaking, Talkative));
+        Assert.Equal(
+            new Outcome.Deliver(ChannelPlan.BubbleOnly),
+            QuietRules.Decide(Trigger.ButtonPress, BusyWith(BusyReason.Call) with { IsSpeaking = true }, Talkative));
+        Assert.Equal(
+            new Outcome.Skip(SkipReason.Locked),
+            QuietRules.Decide(Trigger.ButtonPress, new Snapshot { IsScreenLocked = true, IsSpeaking = true }, Talkative));
     }
 
     [Fact]

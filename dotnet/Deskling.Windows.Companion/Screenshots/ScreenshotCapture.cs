@@ -152,14 +152,14 @@ public static partial class ScreenshotCapture
     }
 
     /// <summary>
-    /// <paramref name="view"/> in a window built the way the app's are (content under a title bar on the look's paper),
+    /// <paramref name="view"/> in a window built the way the app's are (<see cref="Shell.WindowFrame"/>: the view under the
+    /// caption buttons' band on the look's paper),
     /// <paramref name="size"/> DIPs of content, in <paramref name="theme"/>: for states a real window can't be told to open in.
     /// </summary>
     public static async Task CaptureWindow(UIElement view, XamlSize size, ElementTheme theme, string path)
     {
-        var root = new Grid { RequestedTheme = theme };
-        LookBinding.Keep(root, () => root.Background = LookBinding.Brush(root, p => p.Paper));
-        root.Children.Add(view);
+        var root = Shell.WindowFrame.Make(view);
+        root.RequestedTheme = theme;
         var window = new Window { Content = root, ExtendsContentIntoTitleBar = true };
         window.AppWindow.TitleBar.PreferredTheme = theme == ElementTheme.Dark ? TitleBarTheme.Dark : TitleBarTheme.Light;
         var scale = Scale(window);

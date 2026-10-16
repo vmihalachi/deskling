@@ -124,7 +124,10 @@ public sealed class CompanionCoordinator
         return null;
     }
 
-    /// <summary>Say something: the toy's button. Restarts the chatter interval.</summary>
+    /// <summary>
+    /// Say something: the toy's button. Restarts the chatter interval. Answers even while a line is being spoken: the
+    /// shell cuts that line before it performs this one (<see cref="QuietRules"/>).
+    /// </summary>
     public Delivery? Poke(Snapshot snapshot)
     {
         Scheduler.SessionCompleted();
