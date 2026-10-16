@@ -15,12 +15,13 @@ namespace Deskling.Windows.Companion.Settings;
 /// The language the app speaks (Swift's <c>LanguageRow</c>). The Mac sends the user to System Settings' per-app list;
 /// Windows has no such page for every app, so this is a list in the app: Windows' language first, then each of the
 /// app's in its own words ("Deutsch", "Português (Brasil)"). A new language applies at the next start, so a note and a
-/// restart button show while the pick differs from the language this run started in, and a Settings window opened again
-/// shows the pick. With package identity the pick is the Windows App SDK's
-/// <c>ApplicationLanguages.PrimaryLanguageOverride</c>, which Windows keeps. Without one that override lasts only for the
-/// process, so the pick goes into the app's settings instead (the <see cref="LanguageSetting"/> the app passed to
-/// <see cref="CompanionApp.Start"/>, which sets it again at the next start); an app that passes none comes back in
-/// Windows' language after a restart. The words are the app's; the button takes its <see cref="ButtonStyle"/>.
+/// restart button show while the pick differs from the language this run started in (Narrator hears the note as it
+/// appears, and again as the button's help text), and a Settings window opened again shows the pick. With package
+/// identity the pick is the Windows App SDK's <c>ApplicationLanguages.PrimaryLanguageOverride</c>, which Windows keeps.
+/// Without one that override lasts only for the process, so the pick goes into the app's settings instead (the
+/// <see cref="LanguageSetting"/> the app passed to <see cref="CompanionApp.Start"/>, which sets it again at the next
+/// start); an app that passes none comes back in Windows' language after a restart. The words are the app's; the button
+/// takes its <see cref="ButtonStyle"/>.
 /// </summary>
 public sealed partial class LanguageRow : UserControl
 {
@@ -85,6 +86,8 @@ public sealed partial class LanguageRow : UserControl
             AutomationProperties.SetName(choices, value?.Label ?? "");
             note.Text = value?.RestartNote ?? "";
             restart.Content = value?.Restart;
+            // The button says why it's there: the note beside it.
+            AutomationProperties.SetHelpText(restart, value?.RestartNote ?? "");
             refused.Text = value?.RestartRefused ?? "";
             Rebuild();
         }
@@ -154,8 +157,11 @@ public sealed partial class LanguageRow : UserControl
 
     private void UpdateRestart()
     {
+        var before = restartRow.Visibility;
         restartRow.Visibility = Pick.ChangesAtRestart ? Visibility.Visible : Visibility.Collapsed;
         refused.Visibility = Visibility.Collapsed;
+        if (Announcer.Appears(before, restartRow.Visibility))
+            Announcer.Say(note, Copy?.RestartNote, Announcer.Note);
     }
 
     private void DefaultRestart()

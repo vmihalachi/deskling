@@ -16,7 +16,8 @@ namespace Deskling.Windows.Companion.Support;
 /// family), then, once that's bought, the tips with the store's prices. One ask at a time, and never right after a
 /// purchase: buying the supporter or a tip leaves only a thank-you until the window opens again (the app makes a fresh
 /// one for each open, and the model acknowledges the tip when it closes). Restore brings the supporter back. The app
-/// opens it only when the user asks; every word and the look are the app's. Esc is Done.
+/// opens it only when the user asks; every word and the look are the app's. Esc is Done. Right after a purchase or a
+/// tip, focus moves to Done and Narrator hears the thanks.
 /// </summary>
 public sealed partial class SupportWindow : UserControl
 {
@@ -120,8 +121,30 @@ public sealed partial class SupportWindow : UserControl
         if (Status() is { } status)
             body.Children.Add(status);
         restore.IsEnabled = !purchases.IsBusy;
+        var thanks = Thanks(shown, stage, copy);
         shown = stage;
+        if (thanks is not null && IsLoaded)
+        {
+            // The bought button is gone: once WinUI has moved focus off it, focus lands on Done on purpose and Narrator
+            // hears the thanks after it.
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                done.Focus(FocusState.Programmatic);
+                Announcer.Say(done, thanks, Announcer.Thanks);
+            });
+        }
     }
+
+    /// <summary>
+    /// The thanks Narrator hears when the window turns from <paramref name="shown"/> to <paramref name="stage"/>: the
+    /// welcome line and its note after the supporter purchase, the tip's thanks after a tip, in the app's words; null
+    /// for any other stage, or when the stage didn't change.
+    /// </summary>
+    public static string? Thanks(SupportStage? shown, SupportStage stage, SupportCopy copy) =>
+        stage == shown ? null
+        : stage == SupportStage.Welcome ? string.IsNullOrEmpty(copy.WelcomeNote) ? copy.WelcomeLine : $"{copy.WelcomeLine} {copy.WelcomeNote}"
+        : stage == SupportStage.Tipped ? copy.TipThanksLine
+        : null;
 
     /// <summary>The character beside <paramref name="text"/>.</summary>
     private Grid Aside(string text)

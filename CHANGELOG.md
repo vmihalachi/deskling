@@ -12,7 +12,9 @@ or contrast. The speech bubble's countdown dial no longer crashes a Windows app 
 clock disagree. The desktop character follows the app's appearance setting. An unpackaged Windows app (a Debug build,
 the fixture) keeps the language picked in Settings across a restart, WinUI's own words included, and a settings file
 edited by hand reads as missing values instead of stopping the launch; packaged apps are unchanged, and an app opts in
-by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
+by passing `LanguageSetting.ForApp` to `CompanionApp.Start`. Narrator hears what appears on its own (a new line in the
+bubble, the status pill's new kind of status, Support's thanks, the restart, notification and startup notes), each once
+and in the app's own words, once the bubble and the pill opt in.
 
 - **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
   from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
@@ -58,6 +60,21 @@ by passing `LanguageSetting.ForApp` to `CompanionApp.Start`.
 - **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
   pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
   `RestartRefused`.
+- **Windows.Companion (`SpeechBubble`)**: `Announces` (off by default) raises a polite UI Automation notification
+  with each new line while the bubble is on screen, under one activity id for every bubble, so only the latest is
+  read. The "…" shown while there's no line is hidden from UI Automation.
+- **Windows.Companion (`StatusPill`)**: `Announces` and `Kind` announce the status when its kind (a key the app
+  chooses) changes, never as the minute countdown ticks down; without a `Kind` the pill stays quiet.
+- **Windows.Companion (`SupportWindow`)**: right after the supporter purchase or a tip, focus moves to Done and
+  Narrator hears the thanks (`WelcomeLine` and `WelcomeNote`, or `TipThanksLine`).
+- **Windows.Companion (`LanguageRow`, `NotificationPermissionNote`, `LaunchAtStartupToggle`)**: the restart note, the
+  notification note and the startup "blocked" line are announced when they appear, and the Restart button, the Open
+  settings button and the toggle carry the note as their help text.
+- **Fixture**: Home's bubble and pill announce (the pill's kind is the status line with the countdown at its last
+  minute).
+- **Fixture**: Undo hides after 8 s and when pressed (`Show.WhenSet` and `Show.Has` treat x:Bind's empty string as
+  unset), the clock line collapses while it's empty, and Home and the panel show a joke's setup as the bubble's
+  header over its punchline.
 
 ## 0.10.5 - 2026-10-16
 

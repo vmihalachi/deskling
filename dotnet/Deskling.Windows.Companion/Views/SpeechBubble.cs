@@ -23,6 +23,7 @@ namespace Deskling.Windows.Companion.Views;
 /// keeps the words clear of that corner (set it where a countdown can appear, so the size doesn't change when it does).
 /// New words fade in over 0.15 s, unless Windows' animation effects are off. A <see cref="Header"/> sits above the words
 /// in the same card (a joke's setup over its punchline), and <see cref="OutlineThickness"/> draws a hairline instead.
+/// With <see cref="Announces"/>, Narrator hears each new line without focus moving; the "…" is never read.
 /// </summary>
 public sealed partial class SpeechBubble : UserControl
 {
@@ -73,7 +74,7 @@ public sealed partial class SpeechBubble : UserControl
         Content = frame;
         AutomationProperties.SetAccessibilityView(backdrop, AccessibilityView.Raw);
         AutomationProperties.SetAccessibilityView(dialHost, AccessibilityView.Raw);
-        words.Text = "…";
+        ShowWords(null);
         Layout();
         backdrop.SizeChanged += (_, _) => Reshape();
         Loaded += (_, _) =>
@@ -92,11 +93,29 @@ public sealed partial class SpeechBubble : UserControl
         {
             if (text == value)
                 return;
+            var announcement = Announcement(Announces, text, value);
             text = value;
-            words.Text = string.IsNullOrEmpty(value) ? "…" : value;
+            ShowWords(value);
             FadeIn();
+            Announcer.Say(words, announcement, Announcer.Line);
         }
     }
+
+    /// <summary>
+    /// True has Narrator hear each new line as it appears (a polite notification, without moving focus) while the bubble
+    /// is on screen; false (the default) keeps it quiet. Opt in on the one bubble that should speak, such as Home's:
+    /// every bubble shares one activity id and only the latest notification is read, but one opt-in keeps the same line
+    /// from being queued once per view. The words are the line itself; it never announces the "…" or the header.
+    /// </summary>
+    public bool Announces { get; set; }
+
+    /// <summary>
+    /// What a bubble announces when its words go from <paramref name="shown"/> to <paramref name="next"/>: the new
+    /// words when it <paramref name="announces"/> and they changed to a line; null otherwise (no opt-in, the same words,
+    /// or the "…" of no line).
+    /// </summary>
+    public static string? Announcement(bool announces, string? shown, string? next) =>
+        announces && !string.IsNullOrEmpty(next) && next != shown ? next : null;
 
     /// <summary>
     /// Something above the words, inside the card (a joke's setup, small, over its punchline); null for none. It keeps
@@ -168,6 +187,14 @@ public sealed partial class SpeechBubble : UserControl
             countdown = value;
             ShowCountdown();
         }
+    }
+
+    /// <summary>The words, or "…" hidden from UI Automation while there's no line (it isn't something said).</summary>
+    private void ShowWords(string? value)
+    {
+        var thinking = string.IsNullOrEmpty(value);
+        words.Text = thinking ? "…" : value;
+        AutomationProperties.SetAccessibilityView(words, thinking ? AccessibilityView.Raw : AccessibilityView.Content);
     }
 
     private void Layout()

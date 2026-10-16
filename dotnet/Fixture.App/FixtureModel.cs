@@ -5,6 +5,7 @@ using Deskling.Companion.Phrases;
 using Deskling.Companion.Settings;
 using Deskling.Companion.Shell.App;
 using Deskling.Companion.Shell.Desktop;
+using Deskling.Companion.Shell.Performance;
 using Deskling.Companion.Shell.Signals;
 using Deskling.Companion.Shell.Speech;
 using Deskling.Core.Scheduling;
@@ -78,6 +79,9 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     private readonly IClock clock;
     private readonly ITimers timers;
     private string clockLine = "";
+    private IReadOnlyList<string> sayingParts = [];
+    private string bubbleHeader = "";
+    private string statusKind = "";
 
     public FixtureModel(
         CompanionSettings settings,
@@ -115,6 +119,16 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         DesktopLayout = new DesktopLayout(art);
         GlyphCharacter = new RiggedCharacter(art);
         RasterCharacter = new RiggedCharacter(rasterArt);
+        StatusKind = KindOfStatus();
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(StatusLine))
+                StatusKind = KindOfStatus();
+            else if (e.PropertyName == nameof(JustMuted))
+                OnPropertyChanged(nameof(HasJustMuted));
+            else if (e.PropertyName == nameof(BubblePhraseId))
+                OnPropertyChanged(nameof(HasBubblePhrase));
+        };
     }
 
     /// <summary>The fixture's paints (<c>Tests/Fixtures/characters/palette.json</c>) over Windows' colors.</summary>
@@ -165,6 +179,35 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     /// <summary>How far the fixture's clock runs ahead of the wall clock, once skipped.</summary>
     public string ClockLine { get => clockLine; private set => Set(ref clockLine, value); }
 
+    /// <summary>
+    /// A joke's setup while its punchline is in the bubble (the bubbles' header); empty otherwise. Never null: x:Bind
+    /// skips a function binding whose argument turns null, so a null would leave the last setup showing.
+    /// </summary>
+    public string BubbleHeader { get => bubbleHeader; private set => Set(ref bubbleHeader, value); }
+
+    /// <summary>A line was just muted, so Home offers Undo (x:Bind can't follow <see cref="CompanionAppModel.JustMuted"/> back to null).</summary>
+    public bool HasJustMuted => JustMuted is not null;
+
+    /// <summary>The bubble shows a phrase that can be muted (x:Bind can't follow <see cref="CompanionAppModel.BubblePhraseId"/> back to null).</summary>
+    public bool HasBubblePhrase => !string.IsNullOrEmpty(BubblePhraseId);
+
+    /// <summary>
+    /// The status pill's kind: the status line as it reads with the countdown at its last minute, so it changes with the
+    /// status (Shh, a call, off hours, back to the countdown) and not as the minutes count down.
+    /// </summary>
+    public string StatusKind { get => statusKind; private set => Set(ref statusKind, value); }
+
+    /// <summary>Keeps the phrase's parts, so the bubble can show a joke's setup over its punchline.</summary>
+    public override void WillSay(Phrase phrase) => sayingParts = phrase.LocalizedParts(base.Configuration.Localize);
+
+    /// <summary>The setup goes to the header while a later part shows; a line or a tune has none.</summary>
+    public override void ShowBubble(string text)
+    {
+        var index = sayingParts.ToList().IndexOf(text);
+        BubbleHeader = index > 0 ? sayingParts[0] : "";
+        base.ShowBubble(text);
+    }
+
     /// <summary>Each window's title and size.</summary>
     public static WindowSpec Spec(FixtureWindow id) =>
         id switch
@@ -202,6 +245,13 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
             ClockLine = $"The clock runs {skipping.Skipped:h\\:mm\\:ss} ahead.";
         }
         Tick();
+    }
+
+    private string KindOfStatus()
+    {
+        var status = Coordinator.Scheduler.Status;
+        var at = status is SchedulerStatus.Scheduled scheduled ? scheduled.Date : clock.Now;
+        return StatusLineFor(status, Signals.Snapshot(), at, TimeZone, Coordinator.Scheduler.EndOfToday, base.Configuration.Status);
     }
 
     /// <summary><see cref="MakeLineDue"/> in 10 s: time to go full screen.</summary>
