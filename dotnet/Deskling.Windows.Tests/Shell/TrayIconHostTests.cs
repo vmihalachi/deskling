@@ -35,6 +35,15 @@ public sealed class TrayIconHostTests
     }
 
     [Fact]
+    public void TheMenuIsDarkOnADarkTaskbarOutsideAContrastTheme()
+    {
+        Assert.True(TrayIconHost.IsMenuDark(taskbarLight: false, contrastTheme: false));
+        Assert.False(TrayIconHost.IsMenuDark(taskbarLight: true, contrastTheme: false));
+        Assert.False(TrayIconHost.IsMenuDark(taskbarLight: false, contrastTheme: true));
+        Assert.False(TrayIconHost.IsMenuDark(taskbarLight: true, contrastTheme: true));
+    }
+
+    [Fact]
     public void APointerOnTheIconIsAClickAndOneElsewhereIsTheKeyboard()
     {
         var icon = new RectInt32(1800, 1040, 24, 24);

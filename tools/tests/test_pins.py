@@ -282,6 +282,7 @@ class LinkTests(PinsTestCase):
         targets = (self.root / "windows/Directory.Build.targets").read_text("utf8")
         self.assertIn('<_DesklingLinkable Include="Deskling.Companion;Deskling.Core" />', targets)
         self.assertIn("$(MSBuildThisFileDirectory)../../deskling/dotnet/", targets)
+        self.assertEqual(companion.linked_dotnet(companion.load(self.root)), "../../deskling/dotnet/", "for vm.sh")
         self.assertEqual(self.calls, ["regenerate_project"])
 
         code, out = self.cli("pins")
@@ -305,6 +306,7 @@ class LinkTests(PinsTestCase):
         self.assertFalse((self.root / ".git" / "deskling-link").exists())
         self.assertEqual(self.calls, ["regenerate_project", "regenerate_project"])
         self.assertEqual(self.cli("pins")[0], 0)
+        self.assertIsNone(companion.linked_dotnet(companion.load(self.root)))
         self.assertIn("Not linked", self.cli("unlink")[1])
 
     def test_unlink_keeps_what_else_changed_meanwhile(self):
