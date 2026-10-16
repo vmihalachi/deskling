@@ -6,6 +6,9 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion (`QuietHoursEditor`)**: the quiet-hour chips take four or three columns when the widest, as
+  measured (label, chip style, text size), doesn't fit six (`Columns`), so a 12-hour culture's "10 AM" isn't cut off.
+
 ## 0.11.5 - 2026-10-16
 
 - **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: touch works on the desktop character and its bubble with

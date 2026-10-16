@@ -7,14 +7,17 @@ using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using XamlRect = Windows.Foundation.Rect;
+using XamlSize = Windows.Foundation.Size;
 
 namespace Deskling.Windows.Companion.Settings;
 
 /// <summary>
-/// The 24 hours as chips in six columns (Swift's <c>QuietHoursEditor</c>); a chip that is on is an hour without a word.
-/// The title is the app's; the chips take its <see cref="ChipStyle"/>. Narrator reads the editor as a group named by the
-/// title and each chip as its hour in full ("15:00", "3:00 PM"). The chips are one Tab stop, the arrow keys moving
-/// between them.
+/// The 24 hours as chips in six columns (Swift's <c>QuietHoursEditor</c>), or in four or three when the widest chip
+/// doesn't fit a sixth of the width (<see cref="Columns"/>: a 12-hour culture's "10 AM", a large text size); a chip that
+/// is on is an hour without a word. The title is the app's; the chips take its <see cref="ChipStyle"/>. Narrator reads
+/// the editor as a group named by the title and each chip as its hour in full ("15:00", "3:00 PM"). The chips are one
+/// Tab stop, the arrow keys moving between them.
 /// </summary>
 public sealed partial class QuietHoursEditor : UserControl
 {
@@ -26,11 +29,7 @@ public sealed partial class QuietHoursEditor : UserControl
     public QuietHoursEditor()
     {
         IsTabStop = false;
-        var grid = new Grid { ColumnSpacing = Space.Tight, RowSpacing = Space.Tight };
-        for (var column = 0; column < 6; column++)
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        for (var row = 0; row < 4; row++)
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var grid = new ChipGrid();
         for (var hour = 0; hour < 24; hour++)
         {
             var h = hour;
@@ -39,8 +38,6 @@ public sealed partial class QuietHoursEditor : UserControl
             );
             AutomationProperties.SetName(chip, HourName(hour, CultureInfo.CurrentCulture));
             chip.Click += (_, _) => SetHour(h, chip.IsChecked == true);
-            Grid.SetColumn(chip, hour % 6);
-            Grid.SetRow(chip, hour / 6);
             grid.Children.Add(chip);
             chips[hour] = chip;
         }
@@ -89,6 +86,17 @@ public sealed partial class QuietHoursEditor : UserControl
         }
     }
 
+    /// <summary>
+    /// How many columns the chips take in <paramref name="available"/> DIPs, <see cref="Space.Tight"/> apart: six, or four
+    /// or three (so the 24 hours fill whole rows), the most whose columns are at least <paramref name="widest"/> wide;
+    /// three when none are.
+    /// </summary>
+    public static int Columns(double available, double widest)
+    {
+        bool Fits(int columns) => (available - (columns - 1) * Space.Tight) / columns >= widest;
+        return Fits(6) ? 6 : Fits(4) ? 4 : 3;
+    }
+
     /// <summary>"3 PM" or "15", as <paramref name="culture"/> writes hours: its short time pattern without the minutes.</summary>
     public static string Label(int hour, CultureInfo culture)
     {
@@ -128,5 +136,48 @@ public sealed partial class QuietHoursEditor : UserControl
             return;
         for (var hour = 0; hour < 24; hour++)
             chips[hour].IsChecked = s.QuietHours.Contains(hour);
+    }
+
+    /// <summary>
+    /// The chips in rows of <see cref="Columns"/> equal columns, <see cref="Space.Tight"/> apart both ways. The widest
+    /// chip is measured as it would draw, with the chip style's padding and the user's text size, on every layout pass,
+    /// so a new style, text size or width picks the columns again.
+    /// </summary>
+    private sealed partial class ChipGrid : Panel
+    {
+        private int columns = 6;
+
+        protected override XamlSize MeasureOverride(XamlSize available)
+        {
+            var widest = 0.0;
+            foreach (var chip in Children)
+            {
+                chip.Measure(new XamlSize(double.PositiveInfinity, double.PositiveInfinity));
+                widest = Math.Max(widest, chip.DesiredSize.Width);
+            }
+            columns = Columns(available.Width, widest);
+            var width = double.IsInfinity(available.Width) ? widest : ColumnWidth(available.Width);
+            foreach (var chip in Children)
+                chip.Measure(new XamlSize(width, double.PositiveInfinity));
+            var rows = RowHeights();
+            return new XamlSize(columns * width + (columns - 1) * Space.Tight, rows.Sum() + (rows.Length - 1) * Space.Tight);
+        }
+
+        protected override XamlSize ArrangeOverride(XamlSize final)
+        {
+            var width = ColumnWidth(final.Width);
+            var y = 0.0;
+            foreach (var (row, height) in Children.Chunk(columns).Zip(RowHeights()))
+            {
+                for (var column = 0; column < row.Length; column++)
+                    row[column].Arrange(new XamlRect(column * (width + Space.Tight), y, width, height));
+                y += height + Space.Tight;
+            }
+            return final;
+        }
+
+        private double ColumnWidth(double total) => Math.Max(0, (total - (columns - 1) * Space.Tight) / columns);
+
+        private double[] RowHeights() => [.. Children.Chunk(columns).Select(row => row.Max(chip => chip.DesiredSize.Height))];
     }
 }
