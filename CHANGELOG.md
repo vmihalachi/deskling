@@ -6,6 +6,17 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools (Windows)**: the tools work in a Windows checkout, where `core.autocrlf` gives text files CRLF line endings.
+  `companion.py link` finds the Deskling package in a CRLF `project.yml` (it stopped with "no Deskling package with a
+  url and a version to switch"), and `character.py --check` (so `scripts/fixture-art.sh --check`) takes a text output
+  that differs only by CRLFs as current; the PNGs still compare byte for byte. The git output `companion.py`, `l10n.py`
+  and `voice.py` read is decoded as UTF-8 whatever the locale, so `l10n.py`'s reads from git keep "Dì" under cp1252.
+  `synth.py`, `character.py` and `l10n.py check` print paths with `/`, and `companion.py bump` starts a landing tool
+  that is a `.cmd` (`pnpm.cmd`, `npm.cmd`). `tools/tests/run.py` passes on Windows: it runs the shell scripts through
+  Git for Windows' bash, and skips with its reason what can't run there (`test_vm`, since `vm.py` drives the Mac's
+  Parallels VM; the Mac's VM build in `verify.sh`, replaced by a test of the Windows build; a fake landing tool that
+  is a shell script). A test file can skip itself as it loads (`unittest.SkipTest`).
+
 ## 0.11.0 - 2026-10-16
 
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps

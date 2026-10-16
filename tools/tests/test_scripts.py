@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
 import fonts  # noqa: E402
-from support import HERE, TOOLS, fixture_app  # noqa: E402
+from support import BASH, HERE, NO_SHELL, TOOLS, WINDOWS, fixture_app, search_path, shell  # noqa: E402
 
 
 def png(path: Path, size: int, rgba=(255, 200, 0, 255)) -> None:
@@ -48,13 +48,16 @@ class ScriptTests(unittest.TestCase):
 
     def fake(self, name: str, body: str) -> None:
         path = self.bin / name
-        path.write_text("#!/bin/sh\n" + body, "utf8")
+        # LF on Windows too: sh reads a \r as part of its line.
+        path.write_text("#!/bin/sh\n" + body, "utf8", newline="\n")
         path.chmod(0o755)
 
     def run_script(self, script: str, *args: str, env: dict | None = None, cwd: Path | None = None):
-        environment = {**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", **(env or {})}
+        if script.endswith(".sh") and BASH is None:
+            self.skipTest(NO_SHELL)
+        environment = {**os.environ, "PATH": search_path(self.bin), **(env or {})}
         return subprocess.run(
-            [str(TOOLS / script), *args] if script.endswith(".sh") else [sys.executable, str(TOOLS / script), *args],
+            [*shell(TOOLS / script), *args] if script.endswith(".sh") else [sys.executable, str(TOOLS / script), *args],
             cwd=cwd or self.root,
             env=environment, capture_output=True, text=True,
         )
@@ -194,6 +197,15 @@ chmod +x "$app/Fixture"
         self.git(self.root, "add", "-A")
         self.git(self.root, "commit", "-q", "-m", "app")
 
+    @unittest.skipUnless(WINDOWS, "Windows builds the WinUI app itself; elsewhere it's the VM's")
+    def test_verify_builds_the_winui_app_itself_on_windows(self):
+        self.commit_app()
+        self.fake("dotnet", f'echo "$*" >> "{self.log}"\n')
+        result = self.run_script("verify.sh", "--", "windows/Fixture.App/Views/HomeView.xaml")
+        self.assertIn("ok    WinUI app builds (Fixture.App)", result.stdout, result.stderr)
+        self.assertIn("build ", self.log.read_text())
+
+    @unittest.skipIf(WINDOWS, "on Windows verify.sh builds the WinUI app itself and never asks for the Mac's VM")
     def test_verify_builds_the_winui_app_in_the_vm_when_there_is_one(self):
         self.commit_app()
         self.fake("dotnet", "exit 0\n")
@@ -253,8 +265,9 @@ case "$1" in status) echo "VM $2 exist running" ;; exec) [ "$3" = --current-user
 class FontsPlanTests(unittest.TestCase):
     def test_the_plan_comes_from_companion_json(self):
         data = json.loads((HERE / "sunnysays.companion.json").read_text("utf8"))
-        plan = fonts.Plan(companion.Config(data, Path("/app")))
-        self.assertEqual(plan.out, Path("/app/macos/SunnySays/Resources/Fonts"))
+        root = Path("/app").resolve()  # the Config resolves its paths: Q:\app on Windows
+        plan = fonts.Plan(companion.Config(data, root))
+        self.assertEqual(plan.out, root / "macos/SunnySays/Resources/Fonts")
         self.assertEqual(plan.path("Medium"), plan.out / "Fredoka-Medium.ttf")
         self.assertEqual(plan.weights, {"Medium": 500, "SemiBold": 600})
         self.assertEqual(plan.compose["Ș"], ["S", "comma", "below", "Ş"])

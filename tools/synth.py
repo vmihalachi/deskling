@@ -113,10 +113,10 @@ def main(argv: list[str]) -> int:
         path = out / f"{name}.wav"
         if check:
             if not path.exists() or path.read_bytes() != data:
-                stale.append(path.relative_to(config.root))
+                stale.append(path.relative_to(config.root).as_posix())
         else:
             path.write_bytes(data)
-            print(f"wrote {path.relative_to(config.root)} ({(len(data) - 44) / 2 / RATE:.2f} s)")
+            print(f"wrote {path.relative_to(config.root).as_posix()} ({(len(data) - 44) / 2 / RATE:.2f} s)")
     for path in stale:
         print(f"stale: {path} (run deskling/tools/synth.py)")
     return 1 if stale else 0

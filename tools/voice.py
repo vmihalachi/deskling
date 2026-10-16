@@ -961,7 +961,8 @@ def git(*cmd: str, cwd: Path | None = None) -> str:
     cwd = cwd or ROOT
     # In the voices repository, without the GIT_DIR… a git hook exports for the app's (companion.git_env).
     env = None if cwd == ROOT else companion.git_env()
-    result = subprocess.run(["git", "-C", str(cwd), *cmd], capture_output=True, text=True, env=env)
+    # UTF-8 as git writes it (a commit's subject), whatever the locale (cp1252 on a Western Windows).
+    result = subprocess.run(["git", "-C", str(cwd), *cmd], capture_output=True, text=True, encoding="utf8", env=env)
     if result.returncode != 0:
         fail(f"git {cmd[0]} failed in {rel(cwd)}: {result.stderr.strip()[-800:]}")
     return result.stdout.strip()

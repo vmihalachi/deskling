@@ -17,8 +17,11 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "windows"))
+from support import TOOLS, WINDOWS, fixture_app  # noqa: E402
+
+if WINDOWS:
+    raise unittest.SkipTest("vm.py runs on a Mac, driving its Parallels VM (it locks with fcntl, which Windows lacks)")
 import vm  # noqa: E402
-from support import TOOLS, fixture_app  # noqa: E402
 
 VM_SH = TOOLS / "windows" / "vm.sh"
 POWERSHELL = shutil.which("pwsh") or shutil.which("powershell")

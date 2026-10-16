@@ -232,7 +232,9 @@ def set_path(tree: dict, dotted: str, value: object, reference: dict) -> None:
 
 def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
     # Without the GIT_DIR… a git hook exports, so `-C` picks the repository, a submodule's own (companion.git_env).
-    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, env=companion.git_env())
+    # UTF-8 as git writes it, whatever the locale (cp1252 on a Western Windows).
+    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, encoding="utf8",
+                          env=companion.git_env())
 
 
 def git_repository(folder: Path) -> Path | None:
@@ -483,7 +485,7 @@ def cmd_check(args) -> int:
     result = cmd_status(args)
     stale = stale_exports()
     for path in stale:
-        print(f"stale export: {path.relative_to(ROOT)} (run `export-windows` / `export-linux`)")
+        print(f"stale export: {path.relative_to(ROOT).as_posix()} (run `export-windows` / `export-linux`)")
     return 1 if stale else result
 
 
