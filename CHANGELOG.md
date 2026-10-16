@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.5 - 2026-10-16
+
 - **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: touch works on the desktop character and its bubble with
   the mouse pointer elsewhere. A tap fell through to the window behind, since the click-through followed the mouse
   pointer, which a finger doesn't move. Now, while the mouse pointer is off it, the window takes input within a window
