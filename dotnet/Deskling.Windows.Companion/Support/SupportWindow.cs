@@ -29,7 +29,7 @@ public sealed partial class SupportWindow : UserControl
     private readonly Action onDone;
     private readonly StackPanel body = new() { Spacing = Space.Section };
     private readonly Button restore = new();
-    private readonly Button done = new();
+    private readonly Button done = HighlightFill.Plain(new Button());
     private readonly Action changed;
     private bool wasSupporter;
     private bool justSupported;
@@ -211,7 +211,9 @@ public sealed partial class SupportWindow : UserControl
     {
         var stack = new StackPanel { Spacing = Space.Item };
         var price = purchases.Price(products.Supporter);
-        var buy = new Button { Content = copy.BecomeSupporter(price), Style = look.LargePrimary, IsEnabled = !purchases.IsBusy && price is not null };
+        var buy = HighlightFill.Plain(
+            new Button { Content = copy.BecomeSupporter(price), Style = look.LargePrimary, IsEnabled = !purchases.IsBusy && price is not null }
+        );
         buy.Click += async (_, _) => await purchases.BuyAsync(products.Supporter);
         stack.Children.Add(buy);
         stack.Children.Add(Soft(copy.SupporterNote));
@@ -240,6 +242,7 @@ public sealed partial class SupportWindow : UserControl
                 VerticalAlignment = VerticalAlignment.Stretch,
                 IsEnabled = !purchases.IsBusy && price is not null,
             };
+            HighlightFill.Plain(button);
             // A button of two texts has no name of its own for Narrator.
             AutomationProperties.SetName(button, price is null ? copy.TipTitle(tip) : $"{copy.TipTitle(tip)}, {price}");
             button.Click += async (_, _) => await purchases.TipAsync(tip);

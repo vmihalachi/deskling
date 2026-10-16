@@ -91,3 +91,21 @@ internal static class LookBinding
     public static SolidColorBrush Brush(FrameworkElement element, Func<CompanionPalette, ThemedColor> color) =>
         new(color(CompanionLook.Current.PaletteNow).For(element.ActualTheme));
 }
+
+/// <summary>
+/// A control that WinUI fills with Windows' highlight color in a contrast theme (an accent button, a checked chip) keeps
+/// its style's own colors for its words. Under the app's default <c>HighContrastAdjustment</c> (<c>Auto</c>) WinUI draws
+/// every word in the window's text color on a box of the window's color, the backplate: unseen on the window's own
+/// background, a box behind each word on the highlight. WinUI's accent button and toggle button already pair each fill
+/// with its text in their <c>HighContrast</c> resources (the highlight with the highlight text, and their own pairs when
+/// pointed at or pressed), so these controls turn the backplate off. Nothing changes outside a contrast theme.
+/// </summary>
+internal static class HighlightFill
+{
+    public static T Plain<T>(T control)
+        where T : UIElement
+    {
+        control.HighContrastAdjustment = ElementHighContrastAdjustment.None;
+        return control;
+    }
+}

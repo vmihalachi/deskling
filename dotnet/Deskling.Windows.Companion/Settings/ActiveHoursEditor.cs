@@ -61,7 +61,7 @@ public sealed partial class ActiveHoursEditor : UserControl
                 .Select(weekday =>
                 {
                     var day = (DayOfWeek)(weekday - 1);
-                    var chip = new ToggleButton { Content = format.GetShortestDayName(day) };
+                    var chip = HighlightFill.Plain(new ToggleButton { Content = format.GetShortestDayName(day) });
                     AutomationProperties.SetName(chip, format.GetDayName(day));
                     chip.Click += (_, _) => SetWeekday(weekday, chip.IsChecked == true);
                     row.Children.Add(chip);

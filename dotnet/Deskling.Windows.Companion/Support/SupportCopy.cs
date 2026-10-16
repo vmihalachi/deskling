@@ -45,6 +45,10 @@ public sealed record SupportCopy(
 /// bubble over the celebrating character, and its buttons' styles. Each is made when the window needs it. The title and
 /// the tips' header are headings for Narrator only when the app makes them so (<c>AutomationProperties.HeadingLevel</c>).
 /// </summary>
+/// <param name="Primary">
+/// Done's style, and <paramref name="LargePrimary"/> the supporter button's and the tips': accent styles, such as WinUI's
+/// <c>AccentButtonStyle</c>. In a contrast theme their words keep the style's own contrast colors, with no backplate.
+/// </param>
 /// <param name="TipPrice">A tip's price under its name: the app tones it down its own way; 12-point text at 80 % when null.</param>
 public sealed record SupportLook(
     Func<UIElement> Title,

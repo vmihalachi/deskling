@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion (`SupportWindow`, `ActiveHoursEditor`, `QuietHoursEditor`)**: in a contrast theme, the Support
+  window's accent buttons (Done, the supporter button, the tips) and the checked weekday and quiet-hour chips draw
+  their words in their style's contrast colors (WinUI's: the highlight text on the highlight) instead of each word on a
+  box of the window's color. WinUI draws that box, the backplate, behind all of an app's text by default; these
+  controls turn it off (`HighContrastAdjustment="None"`). Nothing changes in light or dark. An app's own accent buttons
+  need the same attribute.
+- **Fixture app**: Home's "Say something" and onboarding's "Get started" turn the backplate off the same way.
 - **Companion (`QuietRules`, `CompanionAppModel`)**: Say something answers while a line is being spoken, so a
   notification's Say more, which comes while its line is still heard, no longer does nothing. A button press is not
   skipped as `speaking` any more: `sayNow()` (`SayNow()` on Windows) cuts the line being said, as Shh does, and says
