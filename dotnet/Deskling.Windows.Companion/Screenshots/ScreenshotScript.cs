@@ -54,6 +54,7 @@ public sealed class ScreenshotScript<TWindow, TSettings>(
     /// </summary>
     public async void Run(Func<Task> prepare, IReadOnlyList<Shot> shots)
     {
+        host.Windows.OpensHidden = ScreenshotCapture.IsHidden;
         try
         {
             ScreenshotCapture.PrepareOutputDirectory();
@@ -104,12 +105,12 @@ public sealed class ScreenshotScript<TWindow, TSettings>(
                 if (!ScreenshotCapture.Wants(sequence.Thanks) && !ScreenshotCapture.Wants(sequence.Supporter))
                     return;
                 host.Windows.Show(sequence.Id);
-                await Task.Delay(TimeSpan.FromSeconds(0.6));
+                await Drawn(sequence.Id, TimeSpan.FromSeconds(0.6));
                 backend.Owned = [sequence.Product];
                 await model.Purchases.RefreshEntitlementsAsync();
                 foreach (var shotName in new[] { sequence.Thanks, sequence.Supporter })
                 {
-                    await Task.Delay(ScreenshotCapture.Settle);
+                    await Drawn(sequence.Id, ScreenshotCapture.Settle);
                     if (ScreenshotCapture.Wants(shotName) && host.Windows.Find(sequence.Id) is { } window)
                         ScreenshotCapture.Capture(window, Path(shotName));
                     host.Windows.Close(sequence.Id);
@@ -129,10 +130,14 @@ public sealed class ScreenshotScript<TWindow, TSettings>(
     private async Task Open(TWindow id, string path)
     {
         host.Windows.Show(id);
-        await Task.Delay(ScreenshotCapture.Settle);
+        await Drawn(id, ScreenshotCapture.Settle);
         if (host.Windows.Find(id) is { } window)
             ScreenshotCapture.Capture(window, path);
         else
             ScreenshotCapture.Report($"{IOPath.GetFileName(path)}: the window didn't open");
     }
+
+    /// <summary>The open window's wait to draw (<see cref="ScreenshotCapture.Drawn(Microsoft.UI.Xaml.Window, TimeSpan)"/>), or <paramref name="wait"/> when it isn't open.</summary>
+    private Task Drawn(TWindow id, TimeSpan wait) =>
+        host.Windows.Find(id) is { } window ? ScreenshotCapture.Drawn(window, wait) : Task.Delay(wait);
 }

@@ -67,6 +67,7 @@ class PreToolUse(HookTestCase):
         root = self.root
         self.assertTrue(self.blocked("Edit", file_path=str(root / "conformance/phrases.json")))
         self.assertTrue(self.blocked("Write", file_path=str(root / "windows/Fixture.App/Strings/en/Resources.resw")))
+        self.assertTrue(self.blocked("Write", file_path=str(root / "android/app/src/main/res/values-it/strings.xml")))
         self.assertFalse(self.blocked("Edit", file_path=str(root / "conformance/README.md")))
         self.assertFalse(self.blocked("Edit", file_path=str(root / "macos/project.yml")))
         self.assertTrue(self.blocked("Write", file_path=str(root / "voices/Voice/it/clown/hello.m4a")))
@@ -141,6 +142,11 @@ class PreToolUse(HookTestCase):
         xcstrings = str(self.root / "macos/Fixture/Resources/Localizable.xcstrings")
         self.assertTrue(self.blocked("Read", path=xcstrings))
         self.assertTrue(self.blocked("Edit", path=str(self.root / "conformance/phrases.json")))
+        (self.root / "macos/Fixture/Views").mkdir(parents=True, exist_ok=True)
+        big = self.root / "macos/Fixture/Views/Big.swift"
+        big.write_text("func f() {}\n" * 700, "utf8")
+        self.assertFalse(self.blocked("Read", path=str(big), view_range=[1, 50]))
+        self.assertTrue(self.blocked("Read", path=str(big), view_range=[1, -1]))
         done = self.run_hook("pre", {"session_id": "t", "tool_name": "Bash",
                                      "tool_input": json.dumps({"command": f"cat {xcstrings}"})})
         self.assertEqual(done.returncode, 2)

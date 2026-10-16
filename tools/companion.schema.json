@@ -32,6 +32,7 @@
         "project": { "type": "string", "description": "The .xcodeproj, relative to mac.dir." },
         "projectSpec": { "type": "string", "description": "The XcodeGen spec, relative to mac.dir." },
         "scheme": { "type": "string" },
+        "iosScheme": { "type": "string", "description": "The iPhone and iPad app's scheme, when the project has one: `l10n.py sync` builds it too (for the iOS Simulator), so strings only it shows aren't marked stale." },
         "app": { "type": "string", "description": "The app target's folder, relative to mac.dir." },
         "core": { "type": "string", "description": "The core Swift package's folder, relative to mac.dir; an app without one leaves it out." },
         "coreModule": { "type": "string" },
@@ -102,6 +103,7 @@
         "rulesFile": { "type": ["string", "null"], "description": "Markdown with the app's transcreation rules, sent with every work file." },
         "pluralCategories": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
         "linuxPo": { "type": ["string", "null"], "description": "Where export-linux writes <lang>.po, or null for no Linux port." },
+        "androidStrings": { "type": ["string", "null"], "description": "Where export-android writes values*/strings.xml, or null for no Android port." },
         "stringsdataFilter": { "type": "string", "description": "A path fragment the app's .stringsdata files contain (default <mac.scheme>.build)." },
         "phraseComment": { "type": "string", "description": "The translator comment of a phrase key: {character}, {tags}, {flavor}, {flavorNote}, {part}." },
         "flavorNotes": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Flavor id → what it does for the listener." }
@@ -253,6 +255,15 @@
             "previews": { "type": "string", "description": "preview-<lang>.mp4; apple/previews by default." },
             "screenshotType": { "type": "string", "description": "APP_DESKTOP by default." },
             "previewType": { "type": "string", "description": "DESKTOP by default." },
+            "ios": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "iphoneScreenshots": { "type": "string", "description": "<lang>/*.png per language, the iPhone 6.9\" set; apple/iphone by default." },
+                "ipadScreenshots": { "type": "string", "description": "<lang>/*.png per language, the iPad 13\" set; apple/ipad by default." }
+              },
+              "description": "A universal app's iPhone and iPad version page: the listing then has ios.promo, ios.keywords, ios.description and an optional ios.whatsnew (check.py), and push.py fills the iOS version too (--only ios-text,ios-screenshots)."
+            },
             "iaps": {
               "type": "object",
               "description": "The in-app purchases by product id; a missing one is created.",

@@ -1,7 +1,11 @@
-#if os(macOS)
-    import AppKit
+#if os(macOS) || os(iOS)
     import CoreText
     import Foundation
+    #if os(macOS)
+        import AppKit
+    #elseif os(iOS)
+        import UIKit
+    #endif
 
     /// Registers the fonts an app bundles, for the process only (no install, no prompt). macOS usually loads them
     /// already through `ATSApplicationFontsPath`; registering again covers a missing folder reference, and an "already
@@ -25,7 +29,11 @@
 
         /// Whether every font in `names` (PostScript names) can be made at `size`.
         public static func isAvailable(_ names: [String], size: CGFloat = 12) -> Bool {
-            names.allSatisfy { NSFont(name: $0, size: size) != nil }
+            #if os(macOS)
+                names.allSatisfy { NSFont(name: $0, size: size) != nil }
+            #elseif os(iOS)
+                names.allSatisfy { UIFont(name: $0, size: size) != nil }
+            #endif
         }
     }
 #endif

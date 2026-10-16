@@ -221,6 +221,25 @@ public sealed class ReminderScheduler
         NextFireDate = clock.Now.AddSeconds(NextInterval());
     }
 
+    /// <summary>
+    /// Picks up the next reminder an earlier run of the app scheduled, for an app the system ends between reminders:
+    /// <paramref name="date"/> replaces the interval drawn at creation, so a relaunch doesn't push the reminder out.
+    /// Ignored while paused, outside the active hours and for a date not after now.
+    /// </summary>
+    public void Restore(DateTimeOffset date)
+    {
+        var now = clock.Now;
+        if (PausedUntil is not null || !IsWithinActiveHours(now) || date <= now)
+            return;
+        NextFireDate = date;
+    }
+
+    /// <summary>
+    /// A reminder went out without <see cref="Tick"/>: the system delivered one the app scheduled ahead. Until it's
+    /// answered, <see cref="Snooze"/> reminds again in its minutes, as after a reminder <see cref="Tick"/> fired.
+    /// </summary>
+    public void ReminderDelivered() => HasUnansweredReminder = true;
+
     private SchedulerDecision FireReminder(DateTimeOffset now)
     {
         ClearBusyState();

@@ -153,11 +153,91 @@ public final class ReminderScheduler {
     /// clamped to `interval − 1` so the next interval is never shorter than a second. With zero jitter the random
     /// source is never consulted, so the committed vectors stay exact.
     private func nextInterval() -> TimeInterval {
+        nextInterval(using: &random)
+    }
+
+    private func nextInterval(using rng: inout RandomSource) -> TimeInterval {
         guard config.intervalJitter > 0 else { return config.interval }
         let jitter = min(config.intervalJitter, max(config.interval - 1, 0))
-        let unit = random.nextUnit()
+        let unit = rng.nextUnit()
         let offset = ((unit * 2 - 1) * jitter + 0.5).rounded(.down)
         return config.interval + offset
+    }
+
+    /// Up to `limit` future reminder fire dates in `(from, until]`, advancing a copy of the scheduler
+    /// state through active-hour windows, quiet hours and `pausedUntil` assuming no idle and no busy input.
+    public func upcomingReminders(from: Date, until: Date, limit: Int = 64) -> [Date] {
+        guard limit > 0, until > from, config.interval > 0, !config.activeWeekdays.isEmpty else { return [] }
+        var rng = random
+        var cursor = from
+        var paused = pausedUntil
+        var fire: Date? = (paused == nil && isWithinActiveHours(from)) ? nextFireDate : nil
+        if let f = fire, f <= from {
+            fire = from.addingTimeInterval(nextInterval(using: &rng))
+        } else if fire == nil, paused == nil, isWithinActiveHours(from) {
+            fire = from.addingTimeInterval(nextInterval(using: &rng))
+        }
+
+        var results: [Date] = []
+        results.reserveCapacity(min(limit, 64))
+
+        while results.count < limit && cursor <= until {
+            if let p = paused {
+                if cursor < p {
+                    if p > until { break }
+                    cursor = p
+                }
+                paused = nil
+                fire = isWithinActiveHours(cursor) ? cursor.addingTimeInterval(nextInterval(using: &rng)) : nil
+                continue
+            }
+
+            if !isWithinActiveHours(cursor) {
+                fire = nil
+                guard let nextActive = nextActiveDate(after: cursor, until: until) else { break }
+                cursor = nextActive
+                fire = cursor.addingTimeInterval(nextInterval(using: &rng))
+                continue
+            }
+
+            let target = fire ?? cursor.addingTimeInterval(nextInterval(using: &rng))
+            fire = target
+
+            if let inactive = firstInactiveDate(after: cursor, upTo: min(target, until)) {
+                fire = nil
+                cursor = inactive
+                continue
+            }
+
+            if target > until { break }
+            results.append(target)
+            cursor = target
+            fire = target.addingTimeInterval(nextInterval(using: &rng))
+        }
+        return results
+    }
+
+    private func nextMinuteBoundary(after date: Date) -> Date {
+        Date(timeIntervalSinceReferenceDate: (floor(date.timeIntervalSinceReferenceDate / 60) + 1) * 60)
+    }
+
+    private func nextActiveDate(after date: Date, until: Date) -> Date? {
+        var probe = nextMinuteBoundary(after: date)
+        while probe <= until {
+            if isWithinActiveHours(probe) { return probe }
+            probe = probe.addingTimeInterval(60)
+        }
+        return nil
+    }
+
+    private func firstInactiveDate(after date: Date, upTo limit: Date) -> Date? {
+        var probe = nextMinuteBoundary(after: date)
+        while probe <= limit {
+            if !isWithinActiveHours(probe) { return probe }
+            probe = probe.addingTimeInterval(60)
+        }
+        if !isWithinActiveHours(limit) { return limit }
+        return nil
     }
 
     /// Answering a reminder (unanswered, held during a call, or already snoozed until after a call)
@@ -205,5 +285,21 @@ public final class ReminderScheduler {
     public func sessionCompleted() {
         clearBusyState()
         nextFireDate = clock.now.addingTimeInterval(nextInterval())
+    }
+
+    /// Picks up the next reminder an earlier run of the app scheduled, for an app the system ends between reminders
+    /// (on iOS, pre-scheduled notifications fire instead): `date` replaces the interval drawn at creation, so a
+    /// relaunch doesn't push the reminder out. Ignored while paused, outside the active hours and for a date not
+    /// after now.
+    public func restore(nextFireDate date: Date) {
+        let now = clock.now
+        guard pausedUntil == nil, isWithinActiveHours(now), date > now else { return }
+        nextFireDate = date
+    }
+
+    /// A reminder went out without `tick()`: the system delivered one the app scheduled ahead (`upcomingReminders`).
+    /// Until it's answered, `snooze` reminds again in its minutes, as after a reminder `tick()` fired.
+    public func reminderDelivered() {
+        hasUnansweredReminder = true
     }
 }
