@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import plistlib
 import re
 import shutil
 import struct
@@ -151,6 +152,80 @@ chmod +x "$app/Fixture"
         passing = self.run_script("check-layout.sh", "--only", "panel", "en", "it")
         self.assertEqual(passing.returncode, 0, passing.stderr)
         self.assertIn("Every window fits in: en it", passing.stdout)
+
+    @unittest.skipIf(WINDOWS, "the fake xcrun is a shell script")
+    def test_check_layout_ios_runs_the_languages_on_clones_and_names_what_fails(self):
+        state = self.root / "simulators.json"
+        fake_simctl = self.root / "fake_simctl.py"
+        # The Simulator in a JSON file: one runtime with an SE and an iPad, made and cloned devices, and an app that
+        # writes a shot (plus problems.txt in German) and prints its folder with the pty's \r, as the real one does.
+        fake_simctl.write_text(f"""import json, os, sys, tempfile
+from pathlib import Path
+state = Path({str(state)!r})
+data = json.loads(state.read_text()) if state.exists() else {{"devices": [], "next": 1}}
+args = sys.argv[2:]
+with open({str(self.log)!r}, "a") as log:
+    log.write(" ".join(args[:1] + [a for a in args[1:2] if a in ("-j",)]) + "\\n")
+def save():
+    state.write_text(json.dumps(data))
+def new(name):
+    udid = f"UDID-{{data['next']}}"
+    data["next"] += 1
+    data["devices"].append({{"udid": udid, "name": name, "state": "Shutdown", "isAvailable": True}})
+    save()
+    print(udid)
+command = args[0]
+if command == "list" and args[2] == "runtimes":
+    types = [{{"identifier": "com.apple.CoreSimulator.SimDeviceType." + t}}
+             for t in ("iPhone-SE-3rd-generation", "iPad-Pro-13-inch-M5-12GB")]
+    print(json.dumps({{"runtimes": [{{"identifier": "iOS-27-0", "name": "iOS 27.0", "version": "27.0",
+                                     "isAvailable": True, "platform": "iOS", "supportedDeviceTypes": types}}]}}))
+elif command == "list":
+    print(json.dumps({{"devices": {{"iOS-27-0": data["devices"]}}}}))
+elif command == "create":
+    new(args[1])
+elif command == "clone":
+    new(args[2])
+elif command == "delete":
+    data["devices"] = [d for d in data["devices"] if d["udid"] != args[1]]
+    save()
+elif command == "launch":
+    out = Path(tempfile.mkdtemp())
+    (out / "home-light.png").write_bytes(b"png")
+    language = args[args.index("-AppleLocale") + 1]
+    with open({str(self.log)!r}, "a") as log:
+        log.write(f"run {{language}} {{os.environ.get('SIMCTL_CHILD_DESKLING_SCREENSHOT_MODE')}} "
+                  f"{{os.environ.get('SIMCTL_CHILD_DESKLING_SCREENSHOT_ORIENTATION', '-')}}\\n")
+    if language == "de":
+        (out / "problems.txt").write_text("home-light.png: “Wiederholungen” is cut short\\n")
+    sys.stdout.write(f"app.fixture.dev: 4242\\r\\n{{out}}\\r\\n")
+""", "utf8")
+        self.fake("xcrun", f'exec "{sys.executable}" "{fake_simctl}" "$@"\n')
+        app = self.root / "Fixture.app"
+        app.mkdir()
+        (app / "Info.plist").write_bytes(plistlib.dumps({"CFBundleIdentifier": "app.fixture.dev"}))
+
+        result = self.run_script("check-layout-ios.py", "--app", str(app), "--devices", "se,ipad-landscape", "en", "de")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual([line for line in result.stdout.splitlines() if line.startswith("==")],
+                         ["== ios-se en", "== ios-se de", "== ios-ipad-landscape en", "== ios-ipad-landscape de"])
+        self.assertIn("“Wiederholungen” is cut short", result.stdout)
+        self.assertIn("Layout problems in: ios-se/de ios-ipad-landscape/de", result.stderr)
+        checked = self.root / "macos" / "build" / "layout-check"
+        self.assertTrue((checked / "ios-ipad-landscape" / "en" / "home-light.png").exists())
+        self.assertTrue((checked / "ios-se" / "de" / "problems.txt").exists())
+        runs = sorted(line for line in self.log.read_text().splitlines() if line.startswith("run "))
+        self.assertEqual(runs, ["run de all -", "run de all landscape", "run en all -", "run en all landscape"])
+        names = [d["name"] for d in json.loads(state.read_text())["devices"]]
+        self.assertEqual(sorted(names), ["fixture layout: iPad-Pro-13-inch-M5-12GB", "fixture layout: iPhone-SE-3rd-generation"],
+                         "the templates stay, the clones go")
+
+        self.log.unlink()
+        passing = self.run_script("check-layout-ios.py", "--app", str(app), "--devices", "se", "--only", "home", "en")
+        self.assertEqual(passing.returncode, 0, passing.stderr)
+        self.assertIn("Every screen fits on se in: en", passing.stdout)
+        self.assertNotIn("create", self.log.read_text().split(), "the template is made once")
+        self.assertIn("run en home -", self.log.read_text())
 
     def test_verify_runs_what_the_paths_need(self):
         result = self.run_script("verify.sh", "--fast", "--", "conformance/phrases.json")

@@ -6,6 +6,24 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **CompanionUI (`ScreenshotCapture`), Shell (`LayoutCheck`)**: the screenshot run works on iOS. The wanted shots, the
+  output folder, `problems.txt`, the throwaway defaults, `sampleNow` and the silent fakes are shared; the Mac's capture
+  moves to `ScreenshotCapture+macOS.swift`. On iOS, `capture(_:to:timeout:)` draws the key window (sheets and covers
+  included) once it has settled, comparing small drawings a frame apart instead of sleeping, and returns whether it
+  had; `setAppearance(_:)` turns every window light or dark; `prepareWindow()` turns the window to landscape
+  (`DESKLING_SCREENSHOT_ORIENTATION`; on an iPad, whose windowed multitasking won't turn an app, the window takes the
+  turned screen's size) or narrows it to a Split View width (`DESKLING_SCREENSHOT_WIDTH`, compact under 678 pt).
+  `LayoutCheck` on iOS reports SwiftUI content taller than its screen outside a scroll view (`overflows(in:)`), what
+  is pushed past the safe area outside one (`offScreen(in:)`, from the accessibility frames, for screens built on a
+  `GeometryReader`), SwiftUI text cut short (`truncatedText(in:)`: each static text measured in the font
+  accessibility reports, skipped when the font lacks its characters), and UIKit labels ending in "…"
+  (`truncatedLabels(in:)`). The text checks need accessibility on in the Simulator.
+- **tools (`check-layout-ios.py`)**: the iOS layout check. Builds the Debug app for the Simulator once, clones a kept
+  template simulator per job, and runs every language (or the ones named) on iPhone SE, the largest iPhone, iPad Pro
+  13" upright, turned and in a 375 pt Split View third, and the iPhone Duo closed, one launch per language with no
+  reboot; shots and problems in `<mac.dir>/build/layout-check/ios-<device>/<language>`. `--devices`, `--only`,
+  `--jobs` (`LAYOUT_JOBS`, default 4), `--text-size` (Dynamic Type), `--app`, `--keep`.
+
 ## 0.11.10 - 2026-10-16
 
 - **Tools (`windows/check-layout.ps1`, `screens.py`)**: a packaged app's languages run one at a time, since it runs one
