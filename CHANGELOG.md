@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.8 - 2026-10-16
+
 - **Tools (`screenshots.sh`, `windows/screenshots.ps1`)**: `--only` / `-Only` copies only the shots it names, also when
   the app renders more. `windows/screenshots.ps1` runs a packaged Debug build (`WindowsPackageType` MSIX, for an app
   that needs package identity): it registers the build output as a development package (removing the app's other
