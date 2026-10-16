@@ -1,78 +1,149 @@
 name: Release
 
-# A vX.Y.Z tag versions both sides: this packs the NuGet packages, pushes them to NuGet.org through Trusted
-# Publishing (OIDC: no stored key; nuget.org → your account → Trusted Publishing → a policy for repository
-# vmihalachi/deskling and workflow file release.yml, plus the NUGET_USER repository variable set to your nuget.org
-# username) and drafts a GitHub release with the matching CHANGELOG section. The Swift package needs nothing more than
-# the tag itself; @deskling/landing (tools/landing) is staged on npm at the tag's version for an owner to approve, when
-# tools/landing changed since the version npm has (see the version and npm jobs). Run it from Actions with a version to
-# have it create the tag on master (for sessions whose credentials can't push tags), or push the tag yourself. Either
-# way the version job first runs `scripts/verify.sh --version`: the release fails before it tags or packs anything when
-# the version disagrees with the pinned version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
-# site/index.html, README.md) or has no CHANGELOG.md section, so a mistyped tag can't ship packages whose
-# Deskling.version says otherwise.
+# Every push to master that touches CHANGELOG.md or the version releases what it brought, so nobody tags by hand:
+# scripts/release.sh plan decides. A change that bumped the version (Deskling.swift and the seven other strings, with
+# its CHANGELOG.md section) is tagged at the commit that bumped it; otherwise entries under CHANGELOG.md's Unreleased
+# heading get the next version (a patch, or a minor while 0.x when one says **Breaking**), committed to master by
+# scripts/release.sh bump, then tagged. Merges that land while a release runs go out together in the next one (one run
+# at a time, each on master as it is when it starts). A tag pushed by hand (vX.Y.Z) or a manual run with a version tags
+# and releases that commit as before; a manual run without one does what a push does.
+#
+# Then it packs the NuGet packages, pushes them to NuGet.org through Trusted Publishing (OIDC: no stored key;
+# nuget.org → your account → Trusted Publishing → a policy for repository vmihalachi/deskling and workflow file
+# release.yml, plus the NUGET_USER repository variable set to your nuget.org username) and makes the GitHub release
+# with the matching CHANGELOG section. The Swift package needs nothing more than the tag itself; @deskling/landing
+# (tools/landing) is staged on npm at the release's version for an owner to approve, when tools/landing changed since
+# the version npm has (see the version and npm jobs). Before it tags or packs anything, `scripts/verify.sh --version`
+# checks the version against the pinned version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
+# site/index.html, README.md) and the CHANGELOG.md section, so no package ships with a Deskling.version that says
+# otherwise. Tags pushed with the workflow's token start no other workflow, so this run carries the release through.
 on:
   push:
+    branches:
+      - master
+    paths:
+      - "CHANGELOG.md"
+      - "Sources/DesklingCore/Deskling.swift"
     tags:
       - "v*"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to tag and release, without the v (must match a CHANGELOG.md section)"
-        required: true
+        description: "Version to tag on this commit and release, without the v (needs its CHANGELOG.md section). Empty: release what master has waiting, as a push does."
+        required: false
         type: string
 
 permissions:
   contents: write
+
+# One release at a time; a run waiting behind it is replaced by a newer one, which starts from the newer master.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_NOLOGO: "1"
 
 jobs:
-  # Decides the version and whether @deskling/landing ships, and, for manual runs, puts the tag on this commit.
+  # Decides what to release and tags it (committing the bump first when there is one), and whether @deskling/landing
+  # ships. release is false when nothing is waiting, and every other job skips.
   version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write  # queues the next release, and the site after a bump
     outputs:
-      version: ${{ steps.v.outputs.version }}
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+      ref: ${{ steps.plan.outputs.ref }}
       landing: ${{ steps.landing.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # the tags, for the landing's diff
+          fetch-depth: 0  # the tags, for the plan and the landing's diff
+          # A push or an empty manual run releases master as it is now, not as it was when the run was queued.
+          ref: ${{ (github.ref_type == 'branch' && inputs.version == '') && 'master' || '' }}
 
-      - id: v
-        name: Version from the tag or the input
+      - id: plan
+        name: Plan, bump and tag
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -n "${{ inputs.version }}" ]; then v="${{ inputs.version }}"; else v="${GITHUB_REF_NAME#v}"; fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "Releasing $v"
-
-      # The same check scripts/verify.sh --all runs by hand, against the version being released.
-      - name: Check the version against the pinned version strings and CHANGELOG.md
-        run: scripts/verify.sh --version "${{ steps.v.outputs.version }}"
-
-      - name: Tag this commit (manual runs)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          v="${{ steps.v.outputs.version }}"
-          existing=$(git ls-remote --tags origin "refs/tags/v$v^{}" | cut -f1)
-          [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$v" | cut -f1)
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ -z "$existing" ]; then
-            git tag -a "v$v" -m "Deskling $v" && git push origin "v$v"
-          elif [ "$existing" = "$GITHUB_SHA" ]; then
-            echo "v$v already points here"
+          out() { echo "$1=$2" >> "$GITHUB_OUTPUT"; }
+          # Tags never move: v$1 goes on $2 unless it is there already, and a v$1 elsewhere stops the release.
+          tag() {
+            local existing
+            existing=$(git ls-remote --tags origin "refs/tags/v$1^{}" | cut -f1)
+            [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$1" | cut -f1)
+            if [ -z "$existing" ]; then
+              git tag -a "v$1" -m "Deskling $1" "$2" && git push origin "v$1"
+            elif [ "$existing" != "$2" ]; then
+              echo "v$1 already exists at $existing (tags are protected and never move): release the next version"
+              return 1
+            fi
+          }
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version=${GITHUB_REF_NAME#v} sha=$GITHUB_SHA
+            scripts/verify.sh --version "$version"
+          elif [ -n "$VERSION" ]; then
+            version=$VERSION sha=$GITHUB_SHA
+            scripts/verify.sh --version "$version"
+            tag "$version" "$sha"
           else
-            echo "v$v already exists at $existing (tags are protected and never move): release the next version"; exit 1
+            for attempt in 1 2 3; do
+              plan=$(scripts/release.sh plan)  # set -e stops here when it fails; inside the read below it wouldn't
+              read -r action version sha <<< "$plan"
+              case $action in
+                none)
+                  echo "Nothing to release: every version is tagged and CHANGELOG.md's Unreleased section is empty." |
+                    tee -a "$GITHUB_STEP_SUMMARY"
+                  out release false
+                  exit 0 ;;
+                tag)
+                  # A change bumped the version: release the commit that did. Entries that landed after it go out
+                  # in the next run, queued here.
+                  more=false
+                  if scripts/release.sh pending; then more=true; fi
+                  git checkout -q "$sha"
+                  scripts/verify.sh --version "$version"
+                  tag "$version" "$sha"
+                  if [ "$more" = true ]; then gh workflow run release.yml --ref master; fi
+                  break ;;
+                bump)
+                  scripts/release.sh bump "$version"
+                  scripts/verify.sh --version "$version"
+                  git commit -qam "$version: release"
+                  if git push -q origin HEAD:master; then
+                    sha=$(git rev-parse HEAD)
+                    tag "$version" "$sha"
+                    gh workflow run pages.yml --ref master  # the site's version label; a push of ours starts nothing
+                    break
+                  fi
+                  # Master moved while this ran: plan again on top of it.
+                  [ "$attempt" -lt 3 ] || { echo "master kept moving; the next push releases it"; exit 1; }
+                  git fetch -q origin master && git reset -q --hard origin/master ;;
+                *)
+                  echo "scripts/release.sh plan said '$plan'"
+                  exit 1 ;;
+              esac
+            done
           fi
+          echo "Releasing $version ($sha)" | tee -a "$GITHUB_STEP_SUMMARY"
+          out release true
+          out version "$version"
+          out ref "$sha"
 
       # @deskling/landing ships only when tools/landing changed since the version npm has, so its versions skip the
       # releases that leave it alone. Compared with npm rather than the previous tag: a release whose landing was never
       # staged or approved is caught up by the next one, and a re-run after the approval stages nothing twice.
       - id: landing
         name: Whether tools/landing changed since npm's version
+        if: steps.plan.outputs.release == 'true'
         run: |
           published=$(npm view @deskling/landing version 2>/dev/null || true)
           if [ -z "$published" ]; then
@@ -90,9 +161,12 @@ jobs:
   # Deskling.Core, Deskling.Companion, Deskling.Companion.Shell and Deskling.Testing: tests and the packages, on Linux.
   core:
     needs: version
+    if: needs.version.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -120,9 +194,12 @@ jobs:
   # Windows.
   windows:
     needs: version
+    if: needs.version.outputs.release == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -157,6 +234,8 @@ jobs:
         working-directory: tools/landing
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-node@v6
         with:
@@ -223,6 +302,8 @@ jobs:
       DESKLING_VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-dotnet@v6
         with:
