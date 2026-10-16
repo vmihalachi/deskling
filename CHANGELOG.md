@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.1 - 2026-10-16
+
 - **Shell (`LayoutCheck`)**: on iOS, `offScreen(in:)` no longer reports a lazy stack's rows that report frames past
   the content's end before it has laid them out (a long Library grid on iPad listed about 50): an element inside a
   scroll view counts as scrolled to anywhere along the way that view scrolls (`ScrollArea`), while one pushed past the
