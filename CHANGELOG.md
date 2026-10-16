@@ -17,6 +17,13 @@ package and the NuGet packages together.
   Parallels VM; the Mac's VM build in `verify.sh`, replaced by a test of the Windows build; a fake landing tool that
   is a shell script). A test file can skip itself as it loads (`unittest.SkipTest`).
 
+## 0.11.1 - 2026-10-16
+
+- **Tools (`hooks/hook.py stop`)**: tells the user, once per compaction cycle, when Claude's context is past
+  `hooks.longSessionTokens` (130000 by default, 0 disables), read from the session's transcript, so the next task goes
+  to a fresh session. When the context is too long and the Stop hook is also blocking, the agent is asked to pass the
+  note on.
+
 ## 0.11.0 - 2026-10-16
 
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
