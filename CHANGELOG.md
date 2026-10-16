@@ -6,6 +6,14 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Windows.Companion (`QuietHoursEditor`)**: the quiet-hour chips take four or three columns when the widest, as
+  measured (label, chip style, text size), doesn't fit six (`Columns`), so a 12-hour culture's "10 AM" isn't cut off.
+- **Windows.Companion (`DesktopWindow`, `DesktopCompanion`)**: a touch or pen press-and-hold on the desktop character
+  opens its menu, as a right click does, instead of saying a line: 0.6 s within 10 DIPs (`TouchDragThreshold`, Windows'
+  2.7 mm between a tap and a drag). A tap still says a line, and a drag or a pinch wins over a hold. A finger or a pen
+  now drags only past those 10 DIPs (the mouse still past 3), so a resting finger doesn't nudge the character. The menu
+  opens at the finger or the mouse pointer (the new `DesktopWindow.OnMenuAt`), not always at the mouse pointer; with
+  no menu to show, a hold is a click.
 - **Windows (`AppNotifier`, `SingleInstance`), Windows.Companion (`CompanionNotifier`, `CompanionApp`)**: a launch for a
   notification click follows Windows App SDK's order. The notifier registers with Windows as it's made, before the app
   reads its activation, where Windows App SDK waits for the click (read first, it threw and the click was lost); a copy

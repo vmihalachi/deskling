@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Deskling.Companion.Shell.Desktop;
+using Deskling.Windows.Companion.Views;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Dispatching;
@@ -34,19 +35,27 @@ namespace Deskling.Windows.Companion.Desktop;
 /// <see cref="SetSize"/> grows it upward in place; its size is in DIPs, at the scale of the display it stands on. It stays
 /// wholly on a display's work area (<see cref="FloatingPlacement.Clamped"/>): a drag ends inside one, and when displays
 /// change it moves onto one, returning to the anchor once that fits again. A press goes by its own pointer's positions,
-/// the mouse's or a finger's (<see cref="PressTracker"/>): a click (under 3 DIPs of movement) calls <see cref="OnClick"/>;
-/// a one-finger or mouse drag moves it and reports the new anchor; a right click calls <see cref="OnMenu"/>; Ctrl+wheel
-/// (which a precision touchpad's pinch sends) and a touch pinch report one step per gesture, and a pinch is never a click
-/// or a drag. A second window can ride along (<see cref="AttachTo"/>, for the bubble): Windows keeps it above its owner,
-/// and the app places it with <see cref="SetFrame"/>. UI thread only.
+/// the mouse's or a finger's (<see cref="PressTracker"/>): a click (under <see cref="DragThreshold"/> DIPs of movement for
+/// the mouse, <see cref="TouchDragThreshold"/> for a finger or a pen) calls <see cref="OnClick"/>; a one-finger or mouse
+/// drag moves it and reports the new anchor; a right click, or a finger or a pen held as still for
+/// <see cref="HoldGesture.HoldSeconds"/> and lifted, calls <see cref="OnMenuAt"/> (or <see cref="OnMenu"/>) at the
+/// pointer; Ctrl+wheel (which a precision touchpad's pinch sends) and a touch pinch report one step per gesture, and a
+/// pinch is never a click, a drag or a hold. A second window can ride along (<see cref="AttachTo"/>, for the bubble):
+/// Windows keeps it above its owner, and the app places it with <see cref="SetFrame"/>. UI thread only.
 /// </remarks>
 public sealed class DesktopWindow : IDisposable
 {
     public const double FadeInSeconds = 0.4;
     public const double FadeOutSeconds = 0.2;
 
-    /// <summary>How far the pointer moves, in DIPs, before a press is a drag rather than a click.</summary>
+    /// <summary>How far the mouse pointer moves, in DIPs, before a press is a drag rather than a click.</summary>
     public const double DragThreshold = 3;
+
+    /// <summary>
+    /// The same for a finger or a pen, which drifts more while it rests: Windows' own threshold between a tap and a drag,
+    /// 2.7 mm (about 10 DIPs). A press-and-hold has to stay within it too.
+    /// </summary>
+    public const double TouchDragThreshold = 10;
 
     /// <summary>The wheel turns one notch (120) per step; a touch pinch must scale this much.</summary>
     private const int WheelStep = 120;
@@ -92,6 +101,15 @@ public sealed class DesktopWindow : IDisposable
     private DispatcherQueueTimer? wheelEnd;
     private bool pinched;
 
+    /// <summary>Times a finger's or a pen's press for a hold; the press's end stops it.</summary>
+    private DispatcherQueueTimer? holdTimer;
+
+    /// <summary>
+    /// Whether the last press was a finger's or a pen's that came up a click or a hold, which XAML may follow with a
+    /// RightTapped of its own.
+    /// </summary>
+    private bool touchAnswered;
+
     /// <param name="content">What the window shows; it fills the window.</param>
     /// <param name="size">The window's size in DIPs.</param>
     /// <param name="anchor">The middle of its bottom edge, in screen pixels.</param>
@@ -129,7 +147,10 @@ public sealed class DesktopWindow : IDisposable
         root.RightTapped += (_, e) =>
         {
             e.Handled = true;
-            OnMenu?.Invoke();
+            // A finger's or a pen's press that came up a hold or a click has had its answer already.
+            if (touchAnswered && e.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse)
+                return;
+            ShowMenu(e.GetPosition(root));
         };
         root.PointerWheelChanged += OnWheel;
         root.ManipulationMode = ManipulationModes.Scale;
@@ -159,8 +180,17 @@ public sealed class DesktopWindow : IDisposable
     /// <summary>A pinch or Ctrl+wheel: +1 bigger, -1 smaller, once per gesture.</summary>
     public Action<int>? OnPinch { get; set; }
 
-    /// <summary>A right click: show the menu.</summary>
+    /// <summary>
+    /// A right click or a touch or pen press-and-hold: show the menu. <see cref="OnMenuAt"/>, when set, is called instead.
+    /// </summary>
     public Action? OnMenu { get; set; }
+
+    /// <summary>
+    /// A right click or a touch or pen press-and-hold: show the menu at this point on screen (pixels), where the mouse
+    /// pointer or the finger is (a finger doesn't move the mouse pointer), and say whether one showed: a hold with no menu
+    /// to show is a click (<see cref="OnClick"/>). Called instead of <see cref="OnMenu"/> when set.
+    /// </summary>
+    public Func<PointInt32, bool>? OnMenuAt { get; set; }
 
     /// <summary>The displays changed (one was added, removed or rearranged), after the window moved onto one.</summary>
     public Action? OnScreensChanged { get; set; }
@@ -328,6 +358,7 @@ public sealed class DesktopWindow : IDisposable
         poll.Dispose();
         displays.Stop();
         wheelEnd?.Stop();
+        holdTimer?.Stop();
         window.Close();
     }
 
@@ -469,8 +500,10 @@ public sealed class DesktopWindow : IDisposable
 
     private void OnPressed(object sender, PointerRoutedEventArgs e)
     {
+        touchAnswered = false;
         var point = e.GetCurrentPoint(root);
-        if (point.Properties.IsRightButtonPressed || (e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse && !point.Properties.IsLeftButtonPressed))
+        var mouse = e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse;
+        if (point.Properties.IsRightButtonPressed || (mouse && !point.Properties.IsLeftButtonPressed))
             return;
         root.CapturePointer(e.Pointer);
         var at = OnScreen(point.Position);
@@ -478,6 +511,14 @@ public sealed class DesktopWindow : IDisposable
         {
             case PressTracker.Start.Press:
                 frameAtPress = Frame;
+                // A finger or a pen held still is a right click, as across Windows; XAML raises no RightTapped for one
+                // on this window. The mouse has its right button.
+                holdTimer?.Stop();
+                if (!mouse && (OnMenu is not null || OnMenuAt is not null))
+                {
+                    holdTimer ??= MakeHoldTimer();
+                    holdTimer.Start();
+                }
                 break;
             case PressTracker.Start.EndsDrag:
                 DragEnded();
@@ -491,7 +532,8 @@ public sealed class DesktopWindow : IDisposable
         if (!IsMovable || !press.IsPressed)
             return;
         var at = OnScreen(e.GetCurrentPoint(root).Position);
-        if (press.Move(e.Pointer.PointerId, at.X, at.Y, DragThreshold * Scale) is not var (dx, dy))
+        var threshold = DragThresholdFor(e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) * Scale;
+        if (press.Move(e.Pointer.PointerId, at.X, at.Y, threshold) is not var (dx, dy))
             return;
         window.AppWindow.Move(new PointInt32(frameAtPress.X + dx, frameAtPress.Y + dy));
         OnDragging?.Invoke();
@@ -501,18 +543,54 @@ public sealed class DesktopWindow : IDisposable
     {
         // Read first: releasing the capture raises PointerCaptureLost at once, which ends the press.
         var end = press.Up(e.Pointer.PointerId);
+        var at = e.GetCurrentPoint(root).Position;
         pressed = press.IsPressed;
+        if (!pressed)
+            holdTimer?.Stop();
         root.ReleasePointerCapture(e.Pointer);
-        Ended(end);
+        if ((end is PressTracker.End.Click or PressTracker.End.Hold) && e.Pointer.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse)
+            touchAnswered = true;
+        if (end != PressTracker.End.Hold)
+            Ended(end);
+        else if (!ShowMenu(at))
+            OnClick?.Invoke();
     }
 
-    /// <summary>The capture went elsewhere mid-press: a drag ends where it is, a click doesn't happen.</summary>
+    /// <summary>The capture went elsewhere mid-press: a drag ends where it is, a click or a hold doesn't happen.</summary>
     private void EndPress(uint pointer)
     {
         var end = press.Lost(pointer);
         pressed = press.IsPressed;
+        if (!pressed)
+            holdTimer?.Stop();
         Ended(end);
     }
+
+    private DispatcherQueueTimer MakeHoldTimer()
+    {
+        var timer = queue.CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(HoldGesture.HoldSeconds);
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) => press.Hold();
+        return timer;
+    }
+
+    /// <summary>The menu, for a right click or a hold at <paramref name="local"/> in the content (DIPs): whether one showed.</summary>
+    private bool ShowMenu(XamlPoint local)
+    {
+        if (OnMenuAt is { } menuAt)
+        {
+            var at = OnScreen(local);
+            return menuAt(new PointInt32((int)Math.Round(at.X), (int)Math.Round(at.Y)));
+        }
+        if (OnMenu is not { } menu)
+            return false;
+        menu();
+        return true;
+    }
+
+    /// <summary>How far a press's pointer moves, in DIPs, before the press is a drag: a finger or a pen goes further.</summary>
+    internal static double DragThresholdFor(bool mouse) => mouse ? DragThreshold : TouchDragThreshold;
 
     private void Ended(PressTracker.End end)
     {
@@ -655,10 +733,11 @@ internal sealed class TouchArea
 }
 
 /// <summary>
-/// How the pointers down on a desktop window add up: a click, a drag, or a pinch, which is neither. It goes by each
-/// pointer's own positions (screen pixels), since a finger doesn't move the mouse cursor. The first pointer down starts
-/// the press and only it drags; a second one down, or a pinch's scale, makes the press a pinch, which ends a drag where it
-/// is and never clicks. The press is over once every pointer is up. UI thread only.
+/// How the pointers down on a desktop window add up: a click, a drag, a hold, or a pinch, which is none of them. It goes
+/// by each pointer's own positions (screen pixels), since a finger doesn't move the mouse cursor. The first pointer down
+/// starts the press and only it drags; a second one down, or a pinch's scale, makes the press a pinch, which ends a drag
+/// where it is and never clicks or holds. A press the window has timed as held (<see cref="Hold"/>) comes up as a hold
+/// instead of a click, unless it drags or pinches first. The press is over once every pointer is up. UI thread only.
 /// </summary>
 internal sealed class PressTracker
 {
@@ -668,6 +747,7 @@ internal sealed class PressTracker
     private double startY;
     private bool dragging;
     private bool pinch;
+    private bool held;
 
     /// <summary>What a pointer going down did.</summary>
     public enum Start
@@ -688,6 +768,9 @@ internal sealed class PressTracker
         None,
         Click,
         Drag,
+
+        /// <summary>A press-and-hold: the menu, as a right click.</summary>
+        Hold,
     }
 
     /// <summary>Whether a pointer is down.</summary>
@@ -701,8 +784,18 @@ internal sealed class PressTracker
             return Pinch() == End.Drag ? Start.EndsDrag : Start.Joined;
         }
         contacts.Add(id);
-        (pointer, startX, startY, dragging, pinch) = (id, x, y, false, false);
+        (pointer, startX, startY, dragging, pinch, held) = (id, x, y, false, false, false);
         return Start.Press;
+    }
+
+    /// <summary>
+    /// The press has been down long enough to be a press-and-hold: one that hasn't dragged or pinched comes up as
+    /// <see cref="End.Hold"/> instead of a click. Dragging or pinching later still wins.
+    /// </summary>
+    public void Hold()
+    {
+        if (IsPressed && !dragging && !pinch)
+            held = true;
     }
 
     /// <summary>
@@ -720,7 +813,10 @@ internal sealed class PressTracker
         return ((int)Math.Round(dx), (int)Math.Round(dy));
     }
 
-    /// <summary>A pointer came up: a click when the press's only pointer comes up without having dragged or pinched.</summary>
+    /// <summary>
+    /// A pointer came up: a click when the press's only pointer comes up without having dragged or pinched, a hold when
+    /// it was held too.
+    /// </summary>
     public End Up(uint id)
     {
         if (!contacts.Contains(id))
@@ -728,13 +824,14 @@ internal sealed class PressTracker
         var end =
             id != pointer ? End.None
             : dragging ? End.Drag
-            : !pinch && contacts.Count == 1 ? End.Click
-            : End.None;
+            : pinch || contacts.Count != 1 ? End.None
+            : held ? End.Hold
+            : End.Click;
         Lift(id);
         return end;
     }
 
-    /// <summary>A pointer's capture went elsewhere: a drag ends where it is, and the press won't click.</summary>
+    /// <summary>A pointer's capture went elsewhere: a drag ends where it is, and the press won't click or hold.</summary>
     public End Lost(uint id)
     {
         if (!contacts.Contains(id))

@@ -5,6 +5,7 @@ using Deskling.Testing.Conformance;
 using Deskling.Testing.Fixtures;
 using Deskling.Windows.Companion.Settings;
 using Deskling.Windows.Companion.Support;
+using Deskling.Windows.Companion.Views;
 
 namespace Deskling.Windows.Companion.Tests.Settings;
 
@@ -40,6 +41,21 @@ public sealed class SettingsRowsTests
         Assert.True(american.Contains('3') && american.Contains("PM"), american);
         Assert.True(german.Contains("15") && !german.Contains("PM"), german);
         Assert.Equal("09", british);
+    }
+
+    [Fact]
+    public void QuietHourChipsTakeSixColumnsUnlessTheWidestChipDoesNotFit()
+    {
+        // The fixture's Settings: 356 px across, a 24-hour chip ("10") about 38 px wide, a 12-hour one ("10 AM") about 63.
+        Assert.Equal(6, QuietHoursEditor.Columns(356, 38));
+        Assert.Equal(4, QuietHoursEditor.Columns(356, 63));
+        Assert.Equal(3, QuietHoursEditor.Columns(356, 100));
+        // A column exactly as wide as the chip fits it; the gaps between the columns count.
+        Assert.Equal(6, QuietHoursEditor.Columns(6 * 50 + 5 * Space.Tight, 50));
+        Assert.Equal(4, QuietHoursEditor.Columns(6 * 50 + 5 * Space.Tight - 1, 50));
+        // Three when nothing fits, six with no limit.
+        Assert.Equal(3, QuietHoursEditor.Columns(100, 200));
+        Assert.Equal(6, QuietHoursEditor.Columns(double.PositiveInfinity, 63));
     }
 
     [Fact]

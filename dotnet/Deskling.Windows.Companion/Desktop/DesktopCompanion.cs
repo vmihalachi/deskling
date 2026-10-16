@@ -106,7 +106,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         bubble.AttachTo(character);
         character.OnClick = () => OnSay?.Invoke();
         character.OnPinch = step => OnPinch?.Invoke(step);
-        character.OnMenu = ShowMenu;
+        character.OnMenuAt = ShowMenu;
         character.OnDragging = () => PlaceBubble(measure: false);
         character.OnDragEnded = DragEnded;
         character.OnScreensChanged = () => PlaceBubble(measure: false);
@@ -278,14 +278,14 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
 
     // The menu
 
-    private void ShowMenu()
+    /// <summary>The menu at <paramref name="at"/> on screen, the mouse pointer's or the finger's: false when there is none.</summary>
+    private bool ShowMenu(PointInt32 at)
     {
         if (Menu?.Invoke() is not { Count: > 0 } items)
-            return;
+            return false;
         menuHost.SetMenu(MenuConversion.ToTray(items));
         var before = DesktopNative.GetForegroundWindow();
-        var (x, y) = ShellNative.Cursor();
-        menuHost.ShowMenu(new PointInt32(x, y));
+        menuHost.ShowMenu(at);
         // The menu took the foreground for its hidden window. Give it back after the chosen command (queued after the
         // menu) has run, unless that command opened a window of its own.
         queue.TryEnqueue(
@@ -297,6 +297,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
                     DesktopNative.SetForegroundWindow(before);
             }
         );
+        return true;
     }
 
     // Position
