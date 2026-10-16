@@ -13,6 +13,29 @@ package and the NuGet packages together.
   controls turn it off (`HighContrastAdjustment="None"`). Nothing changes in light or dark. An app's own accent buttons
   need the same attribute.
 - **Fixture app**: Home's "Say something" and onboarding's "Get started" turn the backplate off the same way.
+- **Companion (`QuietRules`, `CompanionAppModel`)**: Say something answers while a line is being spoken, so a
+  notification's Say more, which comes while its line is still heard, no longer does nothing. A button press is not
+  skipped as `speaking` any more: `sayNow()` (`SayNow()` on Windows) cuts the line being said, as Shh does, and says
+  the new one; every other trigger still waits for the speech to end. The new `say-more-while-speaking` timeline in
+  `conformance/companion/quiet` pins it; the other vectors, the apps' standard timelines included, stay as they were
+  (none of them presses the button mid-line).
+- **Windows companion (`WindowManager`, `WindowInset`)**: scrolled content no longer slides under the caption buttons.
+  The window keeps the 32-DIP caption band above the view, as a row of its own on the window's paper outside the
+  view's scroller, and `WindowInset.Window`, `Content` and `ContentOverActionBar` start 24 under the band instead of
+  holding it, as the Mac's `windowPadding`; a view in a `WindowManager` window sits where it did.
+  `ScreenshotCapture.CaptureWindow` builds its window the same way.
+- **Windows**: `TrayIconHost`'s menu (the tray icon's, and the desktop character's through the same host) is dark
+  while the taskbar is, outside a contrast theme. It read light on a dark taskbar. The mode is read at each opening, so
+  switching Windows' mode shows at the next one, and the process's other menus keep the default.
+
+## 0.11.4 - 2026-10-16
+
+- **Tools (`vm.sh`)**: `vm.sh` builds an app linked with `companion.py link`. The link's Directory.Build.targets points
+  the Windows projects at `../../deskling/dotnet/`, which the VM's copy of the app lacked, so `vm.sh build` stopped
+  with CS0246 errors; now every command also mirrors the linked checkout (what git sees there, the README and test
+  resources too) to the VM folder that path resolves to, `%USERPROFILE%\deskling-vm\deskling` beside the app's copy, in
+  the same incremental way. A link the VM can't follow (an absolute path, or one that leaves `DESKLING_VM_DIR`) stops
+  with what to do. `companion.linked_dotnet` reads the link's reference.
 
 ## 0.11.3 - 2026-10-16
 

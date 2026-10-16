@@ -315,9 +315,13 @@
 
         // MARK: Actions
 
-        /// Say something: the panel button, a click on the desktop character, the notification's button.
+        /// Say something: the panel button, a click on the desktop character, the notification's button. Mid-line (a
+        /// notification's Say more comes while its line is still heard) it cuts that line, as Shh does, and says the new one.
         public func sayNow() {
-            if let delivery = coordinator.poke(snapshot: signals.snapshot()) { perform(delivery) }
+            if let delivery = coordinator.poke(snapshot: signals.snapshot()) {
+                if performer.isSpeaking { stopSpeaking() }
+                perform(delivery)
+            }
             refreshStatus()
         }
 

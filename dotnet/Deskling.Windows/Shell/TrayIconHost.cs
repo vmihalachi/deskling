@@ -12,7 +12,7 @@ namespace Deskling.Windows.Shell;
 /// with <see cref="SetMenu"/> and the glyph with <see cref="SetGlyph"/>; the glyph is redrawn when the taskbar
 /// switches between light and dark and re-added when Explorer restarts. A hidden window on the UI thread receives
 /// the icon's messages, so create the host there; it takes the tooltip as its name, which Narrator reads while the menu
-/// opens. A menu opened and cancelled from the keyboard gives the focus back to the notification area
+/// opens. The menu is dark while the taskbar is, outside a contrast theme. A menu opened and cancelled from the keyboard gives the focus back to the notification area
 /// (<c>NIM_SETFOCUS</c>), not to that hidden window. Menu words show every "&amp;" as written unless
 /// <see cref="AccessKeys"/> is on.
 /// </summary>
@@ -165,6 +165,11 @@ public sealed class TrayIconHost : IDisposable
                 && pointer.Y <= rect.Y + rect.Height + PointerSlop
             : Math.Abs(pointer.X - anchor.X) <= PointerSlop && Math.Abs(pointer.Y - anchor.Y) <= PointerSlop;
 
+    /// <summary>Whether the menu draws dark: as the taskbar does, unless a contrast theme is on.</summary>
+    internal static bool IsMenuDark(bool taskbarLight, bool contrastTheme) => !taskbarLight && !contrastTheme;
+
+    private static bool ContrastThemeIsOn => new global::Windows.UI.ViewManagement.AccessibilitySettings().HighContrast;
+
     private void ShowMenu(PointInt32 anchor, bool fromKeyboard)
     {
         MenuOpening?.Invoke();
@@ -176,6 +181,12 @@ public sealed class TrayIconHost : IDisposable
             NativeMethods.GetSystemMetrics(NativeMethods.SM_MENUDROPALIGNMENT) != 0
                 ? NativeMethods.TPM_RIGHTALIGN
                 : NativeMethods.TPM_LEFTALIGN;
+        // Win32 menus are light unless the process asks for dark ones: dark while it's open when the taskbar is, read
+        // at each opening so a switch of Windows' mode shows at the next. Back to the default afterwards, so the
+        // process's other menus (a window's system menu) keep theirs. A contrast theme draws its own colors.
+        var dark = IsMenuDark(AppearanceWatcher.IsTaskbarLight, ContrastThemeIsOn);
+        if (dark)
+            NativeMethods.SetPreferredAppMode(NativeMethods.AppModeForceDark);
         // The foreground window and the WM_NULL afterwards make the menu close when you click elsewhere.
         NativeMethods.SetForegroundWindow(window.Handle);
         var chosen = NativeMethods.TrackPopupMenuEx(
@@ -192,6 +203,8 @@ public sealed class TrayIconHost : IDisposable
         );
         NativeMethods.PostMessageW(window.Handle, NativeMethods.WM_NULL, 0, 0);
         NativeMethods.DestroyMenu(handle);
+        if (dark)
+            NativeMethods.SetPreferredAppMode(NativeMethods.AppModeDefault);
         // Queued, so a command (Quit, say) never runs inside this window's message handler.
         if (chosen > 0)
             dispatcher.TryEnqueue(() => commands[chosen - 1]());

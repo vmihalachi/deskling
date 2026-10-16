@@ -4,7 +4,7 @@ r"""Builds and checks a companion app's Windows side in a Parallels Windows VM o
 in the app's Windows workflow. `vm.sh` runs this file.
 
     deskling/tools/windows/vm.sh status                         # can the VM run commands? One line; exit 0 when it can
-    deskling/tools/windows/vm.sh sync                           # mirror the working tree into the VM (every command does)
+    deskling/tools/windows/vm.sh sync                           # mirror the working tree (and a linked Deskling)
     deskling/tools/windows/vm.sh build [x64|ARM64…] [-- ARGS]   # the WinUI app (windows.app), Debug; both platforms
     deskling/tools/windows/vm.sh test [-- ARGS]                 # windows.coreTests and windows.appTests
     deskling/tools/windows/vm.sh screenshots DIR [-- ARGS]      # the screenshot script; the PNGs land in DIR on the Mac
@@ -19,8 +19,17 @@ ARGS go as they are, in PowerShell syntax, to `dotnet build`, `dotnet test`, the
 The copy: the files git sees (tracked and untracked but not ignored, submodules included, symlinks left out) are
 mirrored into `%USERPROFILE%\deskling-vm\<checkout>-<hash>` in the VM through the Mac's shared folders. The VM lists
 the files it lacks or holds in another version (size, mtime), the Mac sends a tar of just those, and the VM unpacks
-it and deletes the files the Mac no longer has, leaving build output (bin, obj) alone so builds stay incremental. One
-vm.sh run at a time per checkout; others wait.
+it and deletes the files the Mac no longer has, leaving build output (bin, obj) alone so builds stay incremental. Every
+command syncs first.
+
+While the app is linked to a Deskling checkout (`companion.py link`), its Windows projects build that checkout's
+`dotnet/` projects, which they find by a relative path (`../../deskling/dotnet/`). So that checkout's files (again what
+git sees: the projects read its README and test resources outside `dotnet/` too) are mirrored the same way, to the VM
+folder the path resolves to from the copy: `%USERPROFILE%\deskling-vm\deskling` for the usual `../deskling` beside the
+app. A link the VM can't follow (an absolute path, or one that leaves DESKLING_VM_DIR) is refused; link a checkout
+beside the app instead.
+
+One vm.sh run at a time per checkout, and per VM folder of a linked Deskling; others wait.
 
 Environment:
   DESKLING_VM        the VM's name in Parallels ("Windows 11")
@@ -38,6 +47,7 @@ from __future__ import annotations
 import base64
 import fcntl
 import hashlib
+import ntpath
 import os
 import re
 import shutil
@@ -46,7 +56,7 @@ import sys
 import tarfile
 import threading
 import time
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -157,12 +167,22 @@ def write_tar(root: Path, names: list[str], archive: Path) -> None:
 
 
 @dataclass
+class Linked:
+    """The Deskling checkout the app's Windows projects build while linked, and where the VM's copy of it goes."""
+
+    checkout: Path
+    guest: str  # the VM folder the app's relative reference resolves to from the app's copy
+    stage: Path
+
+
+@dataclass
 class Context:
     root: Path
     config: companion.Config
     vm: str
     key: str
     stage: Path  # on the Mac, seen by the VM through the share
+    linked: Linked | None = None
 
     @property
     def guest_root(self) -> str:
@@ -192,6 +212,33 @@ class Context:
         folder = self.config.path("windows.dir")
         own = folder / "scripts" / name if folder else None
         return self.guest_tool(own if own and own.is_file() else HERE / name)
+
+
+def linked_checkout(ctx: Context) -> Linked | None:
+    """The Deskling checkout the app's Windows projects build while linked (`companion.py link`), with the VM folder
+    their relative reference resolves to from the app's copy, as MSBuild resolves it there. None when they build the
+    pinned packages, or when the checkout is inside the app's own (its copy carries it). Raises Usage when the
+    reference leads nowhere the VM's copies may go."""
+    reference = companion.linked_dotnet(ctx.config)
+    windows = ctx.config.path("windows.dir")
+    if reference is None or windows is None:
+        return None
+    advice = "link a Deskling checkout beside the app (`companion.py unlink`, then `link`)"
+    if os.path.isabs(reference):
+        raise Usage(f"the Windows projects are linked to {reference}, a Mac path the VM doesn't have: {advice}")
+    dotnet = (windows / reference).resolve()
+    from_base = ntpath.normpath("\\".join((ctx.key, windows_rel(windows.relative_to(ctx.root).as_posix()),
+                                           windows_rel(reference))))
+    folder = ntpath.dirname(from_base)
+    if folder == ctx.key or folder.startswith(ctx.key + "\\"):
+        return None
+    if not folder or folder == ".." or folder.startswith("..\\"):
+        raise Usage(f"the Windows projects are linked to {dotnet}, which lands outside {guest_base()} in the VM: "
+                    f"{advice}")
+    if not dotnet.is_dir():
+        raise Usage(f"the Windows projects are linked to {dotnet}, which isn't there: {advice}")
+    stage = ctx.stage.parent / f"linked-{re.sub(r'[^A-Za-z0-9._-]', '-', folder)}"
+    return Linked(dotnet.parent, f"{guest_base()}\\{folder}", stage)
 
 
 def prlctl(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
@@ -308,13 +355,13 @@ def powershell(ctx: Context, body: str, capture: bool = False) -> subprocess.Com
 
 
 @contextmanager
-def one_at_a_time(stage: Path):
+def one_at_a_time(stage: Path, what: str = "in this checkout"):
     stage.mkdir(parents=True, exist_ok=True)
     with open(stage / "lock", "w") as handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            print("vm.sh: waiting for another vm.sh run in this checkout", file=sys.stderr)
+            print(f"vm.sh: waiting for another vm.sh run {what}", file=sys.stderr)
             fcntl.flock(handle, fcntl.LOCK_EX)
         yield
 
@@ -322,18 +369,20 @@ def one_at_a_time(stage: Path):
 # MARK: Commands
 
 
-def sync(ctx: Context) -> None:
-    """Mirrors the working tree into the VM's copy (see the module's docstring)."""
+def mirror(ctx: Context, source: Path, guest: str, stage: Path) -> str:
+    """Mirrors what git sees in `source` into the VM's folder `guest` (see the module's docstring), through `stage`;
+    returns what it did."""
     try:
-        files = list_files(ctx.root)
+        files = list_files(source)
     except subprocess.CalledProcessError as error:
-        sys.exit(f"vm.sh: git can't list the files of {ctx.root}: {error.stderr.decode(errors='replace').strip()}")
-    write_list(files, ctx.stage / "files.tsv")
-    archive, need_file = ctx.stage / "sync.tar", ctx.stage / "need.txt"
+        sys.exit(f"vm.sh: git can't list the files of {source}: {error.stderr.decode(errors='replace').strip()}")
+    write_list(files, stage / "files.tsv")
+    archive, need_file = stage / "sync.tar", stage / "need.txt"
 
     def round_trip() -> tuple[list[str], str, int]:
         need_file.unlink(missing_ok=True)
-        done = powershell(ctx, f"Sync-Tree $Root {ps(guest_path(ctx.stage))}\nexit 0", capture=True)
+        done = powershell(ctx, f"Sync-Tree (Resolve-GuestFolder {ps(guest)}) {ps(guest_path(stage))}\nexit 0",
+                          capture=True)
         match = re.search(r"^synced\t(.+)\t(\d+)\s*$", done.stdout, re.M)
         if done.returncode or not match or not need_file.exists():
             sys.exit(f"vm.sh: the copy into the VM failed:\n{done.stdout[-2000:]}{done.stderr[-2000:]}")
@@ -342,12 +391,20 @@ def sync(ctx: Context) -> None:
     archive.unlink(missing_ok=True)
     need, where, removed = round_trip()
     if need:
-        write_tar(ctx.root, need, archive)
+        write_tar(source, need, archive)
         missing, _, _ = round_trip()
         archive.unlink(missing_ok=True)
         if missing:
             sys.exit(f"vm.sh: {len(missing)} files didn't arrive in the VM, e.g. {missing[0]}")
-    print(f"vm.sh: {len(files)} files in {ctx.vm}:{where} ({len(need)} copied, {removed} removed)", flush=True)
+    return f"{len(files)} files in {ctx.vm}:{where} ({len(need)} copied, {removed} removed)"
+
+
+def sync(ctx: Context) -> None:
+    """Mirrors the working tree into the VM's copy, then a linked Deskling checkout (see the module's docstring)."""
+    print(f"vm.sh: {mirror(ctx, ctx.root, ctx.guest_root, ctx.stage)}", flush=True)
+    if ctx.linked:
+        done = mirror(ctx, ctx.linked.checkout, ctx.linked.guest, ctx.linked.stage)
+        print(f"vm.sh: {done}, the linked Deskling {ctx.linked.checkout}", flush=True)
 
 
 def parse_platforms(words: list[str]) -> list[str]:
@@ -467,9 +524,13 @@ def main(argv: list[str]) -> int:
         config = companion.load()
         key = checkout_key(config.root)
         ctx = Context(config.root, config, vm, key, Path.home() / "Library" / "Caches" / "deskling-vm" / key)
+        ctx.linked = linked_checkout(ctx)
         body = command_body(ctx, command, words, extra)
         ensure_ready(vm)
-        with one_at_a_time(ctx.stage):
+        with ExitStack() as locks:
+            locks.enter_context(one_at_a_time(ctx.stage))
+            if ctx.linked:
+                locks.enter_context(one_at_a_time(ctx.linked.stage, f"with the linked Deskling in {ctx.linked.guest}"))
             sync(ctx)
             if body is None:
                 return 0

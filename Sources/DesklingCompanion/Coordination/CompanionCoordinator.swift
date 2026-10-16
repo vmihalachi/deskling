@@ -88,7 +88,8 @@ public final class CompanionCoordinator {
         return nil
     }
 
-    /// Say something: the toy's button. Restarts the chatter interval.
+    /// Say something: the toy's button. Restarts the chatter interval. Answers even while a line is being spoken: the
+    /// shell cuts that line before it performs this one (`QuietRules`).
     public func poke(snapshot: Snapshot) -> Delivery? {
         scheduler.sessionCompleted()
         return deliver(.buttonPress, snapshot: heeded(snapshot), now: clock.now)

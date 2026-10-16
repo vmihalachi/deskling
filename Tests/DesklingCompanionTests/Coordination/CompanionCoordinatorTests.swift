@@ -155,7 +155,11 @@ final class CompanionCoordinatorTests: XCTestCase {
 
     func testSpeakingSkipsAndMutedFallsBack() {
         let c = makeCoordinator(start: monday(10)) { $0.channels = [.voice] }
-        XCTAssertNil(c.poke(snapshot: Snapshot(isSpeaking: true)))
+        XCTAssertNil(c.event(.wentLight, snapshot: Snapshot(isSpeaking: true)))
+        // The button answers mid-line (a notification's Say more); the shell cuts the line being said.
+        let pressed = c.poke(snapshot: Snapshot(isSpeaking: true))
+        XCTAssertEqual(pressed?.trigger, .buttonPress)
+        XCTAssertEqual(pressed?.plan, ChannelPlan(speak: true, chime: false, notify: false))
         let muted = c.event(.wentDark, snapshot: Snapshot(isOutputMuted: true, notificationsAuthorized: true))
         XCTAssertEqual(muted?.plan, ChannelPlan(speak: false, chime: false, notify: true))
     }

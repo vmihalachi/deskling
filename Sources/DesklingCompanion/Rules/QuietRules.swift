@@ -51,7 +51,7 @@ public enum SkipReason: String, Codable, Sendable {
     case busy
     case away
     case locked
-    /// A line is being spoken; two never overlap.
+    /// A line is being spoken; two never overlap (a button press is delivered, and the shell cuts the line).
     case speaking
     /// The user turned this kind of comment off.
     case disabled
@@ -79,12 +79,15 @@ public struct Manners: Equatable, Sendable {
 
 /// Decides whether a line may be delivered right now and how. Pure; `conformance/companion/quiet` pins it.
 ///
-/// In order: a comment the user turned off is skipped; nothing starts while a line is being spoken; nothing
-/// is said to a locked screen; nothing is said to an empty room (idle past the threshold) except the
-/// welcome back itself; a call or full-screen app holds everything except a button press, which still shows
-/// in the panel but neither speaks nor chimes. Then the channels: voice and chime only when the output isn't
-/// muted; a notification when that channel is on, or as the fallback when voice or chime would have played
-/// but the output is muted and notifications are allowed. A button press never notifies.
+/// In order: a comment the user turned off is skipped; nothing starts while a line is being spoken, except a
+/// button press: the user asking now (Say something, a click on the character, a notification's Say more, which
+/// comes while its line is still heard) is delivered, and the shell cuts the line being said first, as Shh does, so
+/// two still never overlap and nothing waits in a queue; nothing is said to a locked screen; nothing is said to
+/// an empty room (idle past the threshold) except the welcome back itself; a call or full-screen app holds
+/// everything except a button press, which still shows in the panel but neither speaks nor chimes. Then the
+/// channels: voice and chime only when the output isn't muted; a notification when that channel is on, or as the
+/// fallback when voice or chime would have played but the output is muted and notifications are allowed. A button
+/// press never notifies.
 public enum QuietRules {
     public static let awayThreshold: TimeInterval = ChatterCadence.idleThreshold
 
@@ -95,9 +98,9 @@ public enum QuietRules {
         case .wentDark, .wentLight: if !manners.commentOnAppearance { return .skip(.disabled) }
         default: break
         }
-        if snapshot.isSpeaking { return .skip(.speaking) }
-        if snapshot.isScreenLocked { return .skip(.locked) }
         let isButton = trigger == .buttonPress
+        if snapshot.isSpeaking && !isButton { return .skip(.speaking) }
+        if snapshot.isScreenLocked { return .skip(.locked) }
         if snapshot.idleSeconds >= awayThreshold && trigger != .welcomeBack && !isButton { return .skip(.away) }
         let busy = !snapshot.busy.isEmpty
         if busy && !isButton { return .skip(.busy) }

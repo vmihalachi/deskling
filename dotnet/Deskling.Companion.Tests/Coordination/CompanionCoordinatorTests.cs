@@ -176,9 +176,28 @@ public sealed class CompanionCoordinatorTests
     public void SpeakingSkipsAndMutedFallsBack()
     {
         var c = Make(Monday(10), configure: s => s.Channels = Channels.Voice);
-        Assert.Null(c.Poke(new Snapshot { IsSpeaking = true }));
+        Assert.Null(c.Event(Trigger.WentLight, new Snapshot { IsSpeaking = true }));
+        // The button answers mid-line (a notification's Say more); the shell cuts the line being said.
+        var pressed = c.Poke(new Snapshot { IsSpeaking = true });
+        Assert.Equal(Trigger.ButtonPress, pressed?.Trigger);
+        Assert.Equal(new ChannelPlan(true, false, false), pressed?.Plan);
         var muted = c.Event(Trigger.WentDark, new Snapshot { IsOutputMuted = true, NotificationsAuthorized = true });
         Assert.Equal(new ChannelPlan(false, false, true), muted?.Plan);
+    }
+
+    [Fact]
+    public void SayMoreWhileTheNotifiedLineIsSpokenIsAnswered()
+    {
+        // conformance/companion/quiet/say-more-while-speaking.json's story.
+        var c = Make(Monday(10), seed: 3, configure: s => s.Channels = Channels.Voice | Channels.Notification);
+        var notified = Assert.Single(Run(c, 35)).Delivery;
+        Assert.Equal(new ChannelPlan(true, false, true), notified.Plan);
+        var speaking = new Snapshot { IsSpeaking = true };
+        var pressed = c.Poke(speaking);
+        Assert.Equal(Trigger.ButtonPress, pressed?.Trigger);
+        Assert.Equal(new ChannelPlan(true, false, false), pressed?.Plan);
+        Assert.Null(c.Event(Trigger.WentDark, speaking)); // anything else still waits for the speech to end
+        Assert.Empty(Run(c, 5));
     }
 
     [Fact]

@@ -29,14 +29,18 @@ public static class Space
 
 /// <summary>
 /// Where content sits in every window (Swift's <c>WindowInset</c>), so titles, text and buttons line up from one window
-/// to the next. The windows' content reaches under the title bar, so the top leaves the caption buttons' band first.
+/// to the next. The windows' content reaches under the title bar, where the window keeps the caption buttons' band
+/// (<see cref="TitleBar"/>) above the view, so a view's inset starts under the band, as the Mac's under its title bar.
 /// </summary>
 public static class WindowInset
 {
     /// <summary>The side margin of every window's content and its action bar.</summary>
     public const double Side = Space.Region;
 
-    /// <summary>The caption buttons' band at the top of every window (WinUI's standard title bar).</summary>
+    /// <summary>
+    /// The caption buttons' band at the top of every window (WinUI's standard title bar): the window reserves it above
+    /// the view, outside any scroller, so scrolled content never slides under the caption buttons.
+    /// </summary>
     public const double TitleBar = 32;
 
     /// <summary>From the bottom of the title bar's band to the top of the window title.</summary>
@@ -52,10 +56,10 @@ public static class WindowInset
     public static Thickness PanelPadding { get; } = new(Panel);
 
     /// <summary>
-    /// The shared window frame (Swift's <c>windowPadding</c>): 32 at the sides, the title bar's band and 24 at the top,
-    /// <paramref name="bottom"/> under the content.
+    /// The shared window frame (Swift's <c>windowPadding</c>): 32 at the sides, 24 at the top (under the caption buttons'
+    /// band, which the window keeps above the view), <paramref name="bottom"/> under the content.
     /// </summary>
-    public static Thickness Window(double bottom = Bottom) => new(Side, TitleBar + Top, Side, bottom);
+    public static Thickness Window(double bottom = Bottom) => new(Side, Top, Side, bottom);
 
     /// <summary><see cref="Window"/> with <see cref="Bottom"/> under the content, for <c>{x:Bind}</c> (which can't call it with a number).</summary>
     public static Thickness Content { get; } = Window();

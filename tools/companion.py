@@ -658,6 +658,18 @@ def linked_to(config: Config) -> str | None:
     return None
 
 
+def linked_dotnet(config: Config) -> str | None:
+    """The folder of Deskling's .NET projects the Windows projects build while linked, as the link's
+    Directory.Build.targets names it: relative to the Windows folder (`../../deskling/dotnet/`) or absolute. None when
+    they build the pinned packages."""
+    windows = config.path("windows.dir")
+    targets = windows / "Directory.Build.targets" if windows else None
+    if not targets or not targets.is_file() or LINK_MARKER not in (text := read_text(targets)):
+        return None
+    match = re.search(r"<DesklingLinkedDotnet>\s*(.*?)\s*</DesklingLinkedDotnet>", text)
+    return match[1].removeprefix("$(MSBuildThisFileDirectory)") if match else None
+
+
 def _link_path(target: Path, base: Path) -> str:
     """`target` relative to `base` when they share a folder below the root (a sibling checkout: ../../deskling), else
     absolute."""
