@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -7,6 +8,8 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
 using XamlSize = Windows.Foundation.Size;
 
@@ -26,7 +29,9 @@ namespace Deskling.Windows.Companion.Screenshots;
 /// caption buttons included, as the Mac's shots show the title bar. Not <c>RenderTargetBitmap</c>: it draws XAML only,
 /// so it would miss the composition visuals the character's parts move on and the bubble's shadow and dial. Every shot is
 /// also checked: a window that didn't open, a PNG that wasn't written, or text that doesn't fit
-/// (<see cref="LayoutCheck.TextProblems"/>) is a problem, written to <see cref="ProblemsFile"/> next to the shots.
+/// (<see cref="LayoutCheck.TextProblems"/>) is a problem, written to <see cref="ProblemsFile"/> next to the shots. A hidden
+/// run (<see cref="IsHidden"/>) cloaks its windows: the compositor still draws them, so <c>PrintWindow</c> captures them
+/// as it would on screen, but inactive.
 /// </remarks>
 public static partial class ScreenshotCapture
 {
@@ -36,15 +41,34 @@ public static partial class ScreenshotCapture
     /// <summary>The file <see cref="Finish"/> writes the run's problems to, next to the shots; absent when there were none.</summary>
     public const string ProblemsFile = "problems.txt";
 
-    /// <summary>How long a window gets to lay out and draw before it is captured.</summary>
+    /// <summary>How long a window gets to lay out and draw before it is captured, in a run in front.</summary>
     public static readonly TimeSpan Settle = TimeSpan.FromSeconds(1.2);
+
+    /// <summary>How long a hidden run's window goes without a layout pass, its images decoded, before it is captured.</summary>
+    private static readonly TimeSpan Quiet = TimeSpan.FromSeconds(0.15);
+
+    /// <summary>
+    /// A hidden run's longest wait for a window to draw: longer than <see cref="Settle"/>, since it only runs out when
+    /// something keeps laying out, and runs side by side (the layout check) start their windows slower.
+    /// </summary>
+    private static readonly TimeSpan HiddenLimit = TimeSpan.FromSeconds(5);
 
     private static readonly List<string> Found = [];
 
     /// <summary>The language a run shoots in, an app's tag ("it"); unset runs in the language the app would choose.</summary>
     public const string LanguageVariable = "DESKLING_SCREENSHOT_LANGUAGE";
 
+    /// <summary>
+    /// <c>1</c>: the run opens its windows hidden (<see cref="Shell.WindowManager{TWindow}.OpensHidden"/>), drawn and
+    /// captured but never on screen and never taking the focus, so it leaves the PC to whoever is using it, and shoots each
+    /// once it has drawn instead of after <see cref="Settle"/>; the shots show the windows inactive. The scripts set it
+    /// for <c>-Only</c> and the layout check.
+    /// </summary>
+    public const string HiddenVariable = "DESKLING_SCREENSHOT_HIDDEN";
+
     public static bool IsEnabled => Environment.GetEnvironmentVariable(ModeVariable) is not null;
+
+    public static bool IsHidden => Environment.GetEnvironmentVariable(HiddenVariable) == "1";
 
     /// <summary>
     /// The language asked for (<see cref="LanguageVariable"/>), else null. An app passes it to <c>Loc.UseLanguage</c>
@@ -66,8 +90,14 @@ public static partial class ScreenshotCapture
     private static IReadOnlyList<string> WantedIn(string? mode) =>
         [.. (mode ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Where(p => p != "all")];
 
+    /// <summary>
+    /// <see cref="DirectoryVariable"/>, else a folder per process in the temporary directory (<c>screenshots-&lt;pid&gt;</c>),
+    /// so runs in several languages at once (the layout check) don't share it.
+    /// </summary>
     public static string OutputDirectory =>
-        Environment.GetEnvironmentVariable(DirectoryVariable) is { Length: > 0 } dir ? dir : Path.Combine(Path.GetTempPath(), "screenshots");
+        Environment.GetEnvironmentVariable(DirectoryVariable) is { Length: > 0 } dir
+            ? dir
+            : Path.Combine(Path.GetTempPath(), $"screenshots-{Environment.ProcessId}");
 
     /// <summary>What the run found wrong so far, one line each, starting with the shot's file name.</summary>
     public static IReadOnlyList<string> Problems => Found;
@@ -135,8 +165,8 @@ public static partial class ScreenshotCapture
         var scale = Scale(window);
         // Not ResizeClient, which adds a caption's height (3.3's outcome).
         Shell.NativeMethods.SetClientSize(window.AppWindow, new SizeInt32((int)Math.Round(size.Width * scale), (int)Math.Round(size.Height * scale)));
-        window.Activate();
-        await Task.Delay(Settle);
+        Present(window);
+        await Drawn(window);
         Capture(window, path);
         window.Close();
     }
@@ -163,13 +193,67 @@ public static partial class ScreenshotCapture
             Shell.NativeMethods.SetClientSize(window.AppWindow, new SizeInt32((int)Math.Ceiling(fit.Width * scale), (int)Math.Ceiling(fit.Height * scale)));
         }
         Fit();
-        window.Activate();
-        await Task.Delay(Settle);
+        Present(window);
+        await Drawn(window);
         // What x:Bind sets arrives once the view has loaded, so it can be taller now than when it was first measured.
         Fit();
-        await Task.Delay(TimeSpan.FromSeconds(0.3));
+        await Drawn(window, TimeSpan.FromSeconds(0.3));
         Capture(window, path);
         window.Close();
+    }
+
+    /// <summary>Waits for <paramref name="window"/> to lay out and draw before a capture (<see cref="Drawn(Window, TimeSpan)"/> over <see cref="Settle"/>).</summary>
+    internal static Task Drawn(Window window) => Drawn(window, Settle);
+
+    /// <summary>
+    /// Waits for <paramref name="window"/> to lay out and draw: <paramref name="wait"/> in a run in front; in a hidden run
+    /// (<see cref="IsHidden"/>) until its content has loaded, its images have decoded and no layout pass has run for
+    /// <see cref="Quiet"/> (a fifth of a second to half a second for most windows), <see cref="HiddenLimit"/> at most.
+    /// </summary>
+    internal static async Task Drawn(Window window, TimeSpan wait)
+    {
+        if (!IsHidden || XamlCast.As<FrameworkElement>(window.Content) is not { } root)
+        {
+            await Task.Delay(wait);
+            return;
+        }
+        var started = Stopwatch.GetTimestamp();
+        var laidOut = started;
+        void LaidOut(object? sender, object args) => laidOut = Stopwatch.GetTimestamp();
+        root.LayoutUpdated += LaidOut;
+        try
+        {
+            while (Stopwatch.GetElapsedTime(started) < HiddenLimit)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(16));
+                if (root.IsLoaded && Stopwatch.GetElapsedTime(laidOut) >= Quiet && !Decoding(root))
+                    return;
+            }
+        }
+        finally
+        {
+            root.LayoutUpdated -= LaidOut;
+        }
+    }
+
+    /// <summary>Whether an image under <paramref name="node"/> is still loading its bitmap (no pixels yet).</summary>
+    private static bool Decoding(DependencyObject node)
+    {
+        if (XamlCast.As<Microsoft.UI.Xaml.Controls.Image>(node) is { Source: { } source } && XamlCast.As<BitmapImage>(source) is { PixelWidth: 0, UriSource: not null })
+            return true;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+            if (Decoding(VisualTreeHelper.GetChild(node, i)))
+                return true;
+        return false;
+    }
+
+    /// <summary>Shows a window made for a shot: in front, or hidden (<see cref="IsHidden"/>) as the window manager's are.</summary>
+    private static void Present(Window window)
+    {
+        if (IsHidden)
+            Shell.NativeMethods.ShowHidden(window.AppWindow);
+        else
+            window.Activate();
     }
 
     private static double Scale(Window window)

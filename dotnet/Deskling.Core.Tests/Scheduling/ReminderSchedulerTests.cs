@@ -497,6 +497,41 @@ public sealed class ReminderSchedulerTests
         Assert.Equal(1, random.Reads);
     }
 
+    [Fact]
+    public void TestRestoreReplacesTheFreshInterval()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        scheduler.Restore(Monday(10, 20));
+        Assert.Equal(Monday(10, 20), scheduler.NextFireDate);
+        Assert.Equal([20, 65], Run(scheduler, 70));
+    }
+
+    [Fact]
+    public void TestRestoreIsIgnoredForAPastDateWhilePausedAndOutsideActiveHours()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        scheduler.Restore(Monday(9, 50));
+        Assert.Equal(Monday(10, 45), scheduler.NextFireDate);
+        scheduler.PauseFor(3600);
+        scheduler.Restore(Monday(10, 30));
+        Assert.Null(scheduler.NextFireDate);
+        var outside = MakeScheduler(Monday(19));
+        outside.Restore(Monday(19, 30));
+        Assert.Null(outside.NextFireDate);
+    }
+
+    [Fact]
+    public void TestSnoozingADeliveredReminderRemindsInItsMinutes()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        _ = Run(scheduler, 20);
+        scheduler.Snooze(10);
+        Assert.Equal(Monday(10, 45), scheduler.NextFireDate);
+        scheduler.ReminderDelivered();
+        scheduler.Snooze(10);
+        Assert.Equal(Monday(10, 30), scheduler.NextFireDate);
+    }
+
     private ReminderScheduler MakeScheduler(DateTimeOffset start, SchedulerConfig? config = null, IRandomSource? random = null)
     {
         clock = new MockClock(start);

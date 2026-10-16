@@ -63,8 +63,10 @@ linked from the Mac's folders.
 - **Run**: `dotnet run --project <windows.dir>/<windows.app> -p:Platform=x64` (or ARM64): the Debug app, unpackaged,
   over a mock store when `PackageIdentity.IsPackaged` is false; its settings in `LocalSettingsStore.ForApp`'s JSON file.
 - **Shoot**: `deskling/tools/windows/screenshots.ps1 [-Only home] [-Language it] [-Configuration Release]` (or the
-  app's `windows/scripts/` wrapper). Look at every shot you touched, light and dark; `-Configuration Release` shoots the
-  Native AOT build, which is where untyped XAML casts fail.
+  app's `windows/scripts/` wrapper). Look at every shot you touched, light and dark; `-Only` runs hidden and fast, with
+  the windows inactive (`-Front` for active ones), and `-Configuration Release` shoots the Native AOT build, which is
+  where untyped XAML casts fail. After changing text or a window's layout, `deskling/tools/windows/check-layout.ps1
+  [-Only settings]` shoots every language side by side and names the ones whose text doesn't fit.
 - **Package**: `dotnet publish <app> -c Release -p:Platform=x64 -p:GenerateAppxPackageOnBuild=true
   -p:AppxPackageSigningEnabled=false`, then `smoke-package.ps1 -Package <.msix> -CheckOnly` (native, no
   `runtimeconfig.json`) and, with Developer Mode, without `-CheckOnly` (it installs, starts and removes it; `-Keep` for

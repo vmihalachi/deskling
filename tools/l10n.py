@@ -747,22 +747,32 @@ def cmd_sync(args) -> int:
     catalog = CATALOGS["app"]
     before = set(load_catalog(catalog)["strings"])
     scheme = CONFIG.require("mac.scheme")
+    # An app with an iPhone and iPad target builds that too: strings only it shows (`#if os(iOS)`) would
+    # otherwise be marked stale, and `prune` would drop them.
+    builds = [(scheme, ["-destination", "platform=macOS"])]
+    if ios := CONFIG.get("mac.iosScheme"):
+        builds.append((ios, ["-destination", "generic/platform=iOS Simulator", "CODE_SIGNING_ALLOWED=NO"]))
     log_path = WORK_DIR.parent / "l10n-build.log"
     if not args.no_build:
-        print(f"building (output in {log_path.relative_to(ROOT)})…", flush=True)
+        print(f"building {', '.join(name for name, _ in builds)} (output in {log_path.relative_to(ROOT)})…", flush=True)
         WORK_DIR.parent.mkdir(parents=True, exist_ok=True)
         with open(log_path, "w") as log:
-            build = subprocess.run(
-                ["xcodebuild", "-project", CONFIG.require("mac.project"), "-scheme", scheme,
-                 "-destination", "platform=macOS", "-derivedDataPath", str(DERIVED), "build"],
-                cwd=MACOS, stdout=log, stderr=subprocess.STDOUT,
-            )
+            for name, options in builds:
+                build = subprocess.run(
+                    ["xcodebuild", "-project", CONFIG.require("mac.project"), "-scheme", name, *options,
+                     "-derivedDataPath", str(DERIVED), "build"],
+                    cwd=MACOS, stdout=log, stderr=subprocess.STDOUT,
+                )
+                if build.returncode != 0:
+                    break
         if build.returncode != 0:
             tail = log_path.read_text("utf8", "replace").splitlines()
             print("\n".join(line for line in tail if "error:" in line)[-4000:] or "\n".join(tail[-30:]))
             fail("build failed")
-    marker = CONFIG.get("l10n.stringsdataFilter") or f"{scheme}.build"
-    stringsdata = [p for p in DERIVED.rglob("*.stringsdata") if marker in str(p) and "Tests" not in p.name]
+    markers = [CONFIG.get("l10n.stringsdataFilter")] if CONFIG.get("l10n.stringsdataFilter") else [
+        f"{name}.build" for name, _ in builds]
+    stringsdata = [p for p in DERIVED.rglob("*.stringsdata")
+                   if any(marker in str(p) for marker in markers) and "Tests" not in p.name]
     if not stringsdata:
         fail(f"no .stringsdata under {DERIVED}; build first (drop --no-build)")
     result = subprocess.run(

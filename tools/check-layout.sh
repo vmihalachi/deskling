@@ -3,8 +3,9 @@
 # window that couldn't be drawn, a shot that wasn't written (the checks screenshots.sh fails on). Longer translations
 # are where a window runs out of room, so run it after changing text or a window's layout.
 # Usage: deskling/tools/check-layout.sh [--only name,name] [language ...]   (default: every language in languages.all)
-# Shots go to <mac.dir>/build/layout-check/<language>, to look at what failed. Windows appear on screen for each
-# language; leave the Mac alone until it's done.
+# Shots go to <mac.dir>/build/layout-check/<language>, to look at what failed. It builds once, then runs the languages
+# side by side (LAYOUT_JOBS at a time, default 4) with the windows hidden (screenshots.sh --hidden): you can keep
+# working meanwhile, and the shots show the windows inactive.
 TOOLS=$(cd "$(dirname "$0")" && pwd)
 get() { python3 "$TOOLS/companion.py" get "$1"; }
 ROOT=$(python3 "$TOOLS/companion.py" root)
@@ -16,13 +17,32 @@ fi
 # shellcheck disable=SC2046
 [ $# -gt 0 ] || set -- $(get languages.all | python3 -c 'import json, sys; print(" ".join(json.load(sys.stdin)))')
 OUT="$ROOT/$(get mac.dir)/build/layout-check"
+JOBS="${LAYOUT_JOBS:-4}"
+LOGS=$(mktemp -d)
+trap 'rm -rf "$LOGS"' EXIT
+
+shoot() {
+  if [ -n "$ONLY" ]; then
+    "$TOOLS/screenshots.sh" --only "$ONLY" --hidden --no-build "$OUT/$1" "$1"
+  else
+    "$TOOLS/screenshots.sh" --hidden --no-build "$OUT/$1" "$1"
+  fi
+}
+
+"$TOOLS/screenshots.sh" --build-only || exit 1
+STARTED=0
+for lang in "$@"; do
+  (shoot "$lang" > /dev/null 2> "$LOGS/$lang.err"; echo $? > "$LOGS/$lang.status") &
+  STARTED=$((STARTED + 1))
+  [ $((STARTED % JOBS)) -ne 0 ] || wait
+done
+wait
 FAILED=""
 for lang in "$@"; do
   echo "== $lang"
-  if [ -n "$ONLY" ]; then
-    "$TOOLS/screenshots.sh" --only "$ONLY" "$OUT/$lang" "$lang" > /dev/null || FAILED="$FAILED $lang"
-  else
-    "$TOOLS/screenshots.sh" "$OUT/$lang" "$lang" > /dev/null || FAILED="$FAILED $lang"
+  if [ "$(cat "$LOGS/$lang.status" 2> /dev/null)" != 0 ]; then
+    FAILED="$FAILED $lang"
+    cat "$LOGS/$lang.err" >&2
   fi
 done
 if [ -n "$FAILED" ]; then
