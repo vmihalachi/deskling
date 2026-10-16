@@ -59,6 +59,12 @@
         /// inactive.
         public var staysRegular = false
 
+        /// Screenshot checks: windows open without activating the app, transparent, click-through and behind the
+        /// other windows, and the app never turns regular (no Dock icon, nothing in ⌘Tab), so a run doesn't take the
+        /// Mac from whoever is using it. They still lay out and draw in-process (`cacheDisplay`), but inactive: grey
+        /// traffic lights and controls, so for layout checks and quick looks, not for the committed shots.
+        public var opensHidden = false
+
         /// A process hosting unit tests never changes its activation policy. Tests open and close windows many
         /// times a second, and the Dock keeps a tile for each switch to regular after the process exits: one run of
         /// an app's window tests left a row of dead icons.
@@ -174,7 +180,7 @@
         }
 
         private func updateActivationPolicy() {
-            guard !hostsTests else { return }
+            guard !hostsTests, !opensHidden else { return }
             let policy: NSApplication.ActivationPolicy = windows.isEmpty ? .accessory : .regular
             if staysRegular && policy == .accessory { return }
             if NSApp.activationPolicy() != policy { NSApp.setActivationPolicy(policy) }
@@ -191,6 +197,14 @@
         }
 
         private func present(_ window: NSWindow) {
+            if opensHidden {
+                window.alphaValue = 0
+                window.ignoresMouseEvents = true
+                window.animationBehavior = .none
+                window.collectionBehavior.formUnion([.transient, .ignoresCycle])
+                window.orderBack(nil)
+                return
+            }
             // macOS 14+ treats activate() as a request it can turn down while another app is
             // in front, so also force the window above other apps. (activate(ignoringOtherApps:)
             // still gets through when nobody is using the Mac; screenshot and preview modes

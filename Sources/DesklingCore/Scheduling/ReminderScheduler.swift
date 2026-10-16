@@ -286,4 +286,20 @@ public final class ReminderScheduler {
         clearBusyState()
         nextFireDate = clock.now.addingTimeInterval(nextInterval())
     }
+
+    /// Picks up the next reminder an earlier run of the app scheduled, for an app the system ends between reminders
+    /// (on iOS, pre-scheduled notifications fire instead): `date` replaces the interval drawn at creation, so a
+    /// relaunch doesn't push the reminder out. Ignored while paused, outside the active hours and for a date not
+    /// after now.
+    public func restore(nextFireDate date: Date) {
+        let now = clock.now
+        guard pausedUntil == nil, isWithinActiveHours(now), date > now else { return }
+        nextFireDate = date
+    }
+
+    /// A reminder went out without `tick()`: the system delivered one the app scheduled ahead (`upcomingReminders`).
+    /// Until it's answered, `snooze` reminds again in its minutes, as after a reminder `tick()` fired.
+    public func reminderDelivered() {
+        hasUnansweredReminder = true
+    }
 }

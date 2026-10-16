@@ -438,6 +438,63 @@ final class ReminderSchedulerTests: XCTestCase {
         XCTAssertEqual(high.nextFireDate, monday(10, 40))
     }
 
+    func testRestoreReplacesTheFreshInterval() {
+        let s = makeScheduler(start: monday(10))
+        s.restore(nextFireDate: monday(10, 20))
+        XCTAssertEqual(s.nextFireDate, monday(10, 20))
+        XCTAssertEqual(run(s, minutes: 70), [20, 65])
+    }
+
+    func testRestoreIsIgnoredForAPastDateWhilePausedAndOutsideActiveHours() {
+        let s = makeScheduler(start: monday(10))
+        s.restore(nextFireDate: monday(9, 50))
+        XCTAssertEqual(s.nextFireDate, monday(10, 45))
+        s.pause(for: 3600)
+        s.restore(nextFireDate: monday(10, 30))
+        XCTAssertNil(s.nextFireDate)
+        let outside = makeScheduler(start: monday(19))
+        outside.restore(nextFireDate: monday(19, 30))
+        XCTAssertNil(outside.nextFireDate)
+    }
+
+    func testSnoozingADeliveredReminderRemindsInItsMinutes() {
+        let s = makeScheduler(start: monday(10))
+        _ = run(s, minutes: 20)
+        s.snooze(minutes: 10)
+        XCTAssertEqual(s.nextFireDate, monday(10, 45), "nothing to answer: snooze never brings the reminder closer")
+        s.reminderDelivered()
+        s.snooze(minutes: 10)
+        XCTAssertEqual(s.nextFireDate, monday(10, 30))
+    }
+
+    func testUpcomingRemindersFollowTheInterval() {
+        let s = makeScheduler(start: monday(9, 30))
+        XCTAssertEqual(
+            s.upcomingReminders(from: monday(9, 30), until: monday(12)), [monday(10, 15), monday(11), monday(11, 45)])
+        XCTAssertEqual(s.upcomingReminders(from: monday(9, 30), until: monday(12), limit: 2), [monday(10, 15), monday(11)])
+        XCTAssertEqual(s.nextFireDate, monday(10, 15), "planning leaves the scheduler as it was")
+    }
+
+    func testUpcomingRemindersSkipToTheNextActiveDay() {
+        let s = makeScheduler(start: monday(17))
+        let tuesday = { (h: Int, m: Int) in self.monday(h, m).addingTimeInterval(86_400) }
+        XCTAssertEqual(
+            s.upcomingReminders(from: monday(17), until: tuesday(11, 0)),
+            [monday(17, 45), tuesday(9, 45), tuesday(10, 30)])
+    }
+
+    func testUpcomingRemindersStartAfterAPause() {
+        let s = makeScheduler(start: monday(10))
+        s.pause(until: monday(11))
+        XCTAssertEqual(s.upcomingReminders(from: monday(10), until: monday(13)), [monday(11, 45), monday(12, 30)])
+    }
+
+    func testUpcomingRemindersFollowARestoredDate() {
+        let s = makeScheduler(start: monday(10))
+        s.restore(nextFireDate: monday(10, 5))
+        XCTAssertEqual(s.upcomingReminders(from: monday(10), until: monday(11)), [monday(10, 5), monday(10, 50)])
+    }
+
     func testJitterIsClampedSoTheIntervalNeverDropsBelowASecond() {
         var config = SchedulerConfig()
         config.interval = 60

@@ -2,8 +2,9 @@
 
 `store.dir` holds one `<lang>.md` per language in `languages.all`: each field is a `### Heading `field.id`` followed by
 a ```text block (`parse`). `store.apple` names the app in App Store Connect (its Apple ID, platform, copyright, the
-listing language → App Store Connect locale map, the in-app purchases), `store.microsoft` the Partner Center import.
-Standard library only.
+listing language → App Store Connect locale map, the in-app purchases); `store.apple.ios`, when present, adds the iPhone
+and iPad version page of a universal app (`ios.*`: the name and subtitle are the app's, shared by both platforms).
+`store.microsoft` is the Partner Center import. Standard library only.
 """
 
 from __future__ import annotations
@@ -27,6 +28,14 @@ APPLE_LIMITS = {
     "apple.description": 4000,
     "apple.whatsnew": 4000,
 }
+# The iOS version page of an app that also ships on the Mac (`store.apple.ios`); App Store Connect keeps the name and
+# subtitle once per app, so only the version's fields repeat.
+IOS_LIMITS = {
+    "ios.promo": 170,
+    "ios.keywords": 100,  # bytes, see check.py
+    "ios.description": 4000,
+    "ios.whatsnew": 4000,
+}
 IAP_NAME_LIMIT = 30
 IAP_DESCRIPTION_LIMIT = 45
 MICROSOFT_LIMITS = {
@@ -39,10 +48,12 @@ MICROSOFT_LIMITS = {
     "ms.copyright": 200,
 }
 # Fields a file may leave out: What's New only exists from the second version on.
-OPTIONAL = {"apple.whatsnew"}
+OPTIONAL = {"apple.whatsnew", "ios.whatsnew"}
 # list fields: one entry per line, at most this many lines
 MAX_LINES = {"ms.features": 20, "ms.search": 7, "ms.captions": 10}
-MULTI_LINE = {"apple.description", "apple.whatsnew", "ms.description"}
+MULTI_LINE = {"apple.description", "apple.whatsnew", "ios.description", "ios.whatsnew", "ms.description"}
+# Keyword fields: comma-separated, counted in bytes, never repeating a word of the name or subtitle.
+KEYWORDS = {"apple.keywords", "ios.keywords"}
 
 
 def parse(path: Path) -> dict[str, str]:
@@ -92,6 +103,10 @@ class Listing:
                       if self.review_shots and spec.get("reviewShot") else None}
             for product, spec in apple.get("iaps", {}).items()
         }
+        self.ios = apple.get("ios")
+        ios = self.ios or {}
+        self.iphone_screenshots = self.dir / ios.get("iphoneScreenshots", "apple/iphone")
+        self.ipad_screenshots = self.dir / ios.get("ipadScreenshots", "apple/ipad")
         self.microsoft = config.get("store.microsoft")
 
     def site(self, lang: str) -> str:
@@ -107,6 +122,8 @@ class Listing:
         for spec in self.iaps.values():
             limits[spec["name"]] = IAP_NAME_LIMIT
             limits[spec["description"]] = IAP_DESCRIPTION_LIMIT
+        if self.ios is not None:
+            limits.update(IOS_LIMITS)
         if self.microsoft is not None:
             limits.update(MICROSOFT_LIMITS)
         return limits

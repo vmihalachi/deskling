@@ -84,7 +84,7 @@ mkdir -p "$app"
 cat > "$app/Fixture" <<'APP'
 #!/bin/sh
 out=$(mktemp -d)
-echo "$DESKLING_SCREENSHOT_MODE $*" > "$out/args.txt"
+echo "$DESKLING_SCREENSHOT_MODE hidden=$DESKLING_SCREENSHOT_HIDDEN $*" >> "{self.root / 'runs.log'}"
 printf png > "$out/panel-light.png"
 echo "$out"
 APP
@@ -96,12 +96,19 @@ chmod +x "$app/Fixture"
         self.assertIn("-project Fixture.xcodeproj -scheme Fixture -configuration Debug", self.log.read_text())
         self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"])
         self.assertIn("1 screenshots in", result.stdout)
+        # --only runs hidden unless --front; a full run comes forward; --build-only doesn't run the app.
+        self.run_script("screenshots.sh", "--only", "panel", "--front", str(out), "it")
+        self.run_script("screenshots.sh", str(out), "it")
+        self.run_script("screenshots.sh", "--build-only")
+        runs = (self.root / "runs.log").read_text().splitlines()
+        self.assertEqual([line.split(" -Apple")[0] for line in runs], ["panel hidden=1", "panel hidden=0", "all hidden=0"])
 
     def fake_app(self, problems: dict[str, str] | None = None) -> None:
         """xcodebuild "builds" an app that writes a shot and prints its folder; in the languages named in `problems`
         it also writes that problems.txt, as ScreenshotCapture.finish() does."""
         cases = "".join(f'  {lang}) printf "%s\\n" "{text}" > "$out/problems.txt" ;;\n' for lang, text in (problems or {}).items())
-        self.fake("xcodebuild", f'''while [ $# -gt 0 ]; do [ "$1" = -derivedDataPath ] && derived="$2"; shift; done
+        self.fake("xcodebuild", f'''echo build >> "{self.log}"
+while [ $# -gt 0 ]; do [ "$1" = -derivedDataPath ] && derived="$2"; shift; done
 app="$derived/Build/Products/Debug/Fixture.app/Contents/MacOS"
 mkdir -p "$app"
 cat > "$app/Fixture" <<'APP'
@@ -131,6 +138,8 @@ chmod +x "$app/Fixture"
         self.assertEqual([line for line in result.stdout.splitlines() if line.startswith("==")], ["== en", "== it", "== de"])
         self.assertIn("Layout problems in: de", result.stderr)
         self.assertTrue((self.root / "macos" / "build" / "layout-check" / "it" / "panel-light.png").exists())
+        self.assertEqual(self.log.read_text().split(), ["build"], "one build for every language")
+        self.assertIn("panel-light.png: the content needs 540 pt", result.stderr)
         passing = self.run_script("check-layout.sh", "--only", "panel", "en", "it")
         self.assertEqual(passing.returncode, 0, passing.stderr)
         self.assertIn("Every window fits in: en it", passing.stdout)

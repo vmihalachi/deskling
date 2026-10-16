@@ -20,7 +20,14 @@
         public static let modeVariable = "DESKLING_SCREENSHOT_MODE"
         public static let directoryVariable = "DESKLING_SCREENSHOT_DIR"
 
+        /// `1`: the run opens its windows hidden (`WindowManager.opensHidden`) and doesn't wait for them to be key, so it
+        /// leaves the Mac to whoever is using it; the shots show the windows inactive. The scripts set it for `--only`
+        /// and the layout check.
+        public static let hiddenVariable = "DESKLING_SCREENSHOT_HIDDEN"
+
         public static var isEnabled: Bool { ProcessInfo.processInfo.environment[modeVariable] != nil }
+
+        public static var isHidden: Bool { ProcessInfo.processInfo.environment[hiddenVariable] == "1" }
 
         /// The shot name prefixes asked for; empty means all.
         public static var wanted: [String] {
@@ -38,7 +45,9 @@
             if let dir = ProcessInfo.processInfo.environment[directoryVariable], !dir.isEmpty {
                 return URL(fileURLWithPath: dir, isDirectory: true)
             }
-            return FileManager.default.temporaryDirectory.appendingPathComponent("screenshots", isDirectory: true)
+            // One per process, so runs in several languages at once (the layout check) don't share it.
+            return FileManager.default.temporaryDirectory.appendingPathComponent(
+                "screenshots-\(ProcessInfo.processInfo.processIdentifier)", isDirectory: true)
         }
 
         /// The file `finish()` writes the run's problems to, next to the shots; absent when there were none.
@@ -87,8 +96,8 @@
 
         // MARK: Capture
 
-        /// Draws the whole window (title bar included) once it is key, so it looks as it does in use, then checks that
-        /// its content fits (`LayoutCheck`).
+        /// Draws the whole window (title bar included) once it is key (unless `isHidden`), so it looks as it does in use,
+        /// then checks that its content fits (`LayoutCheck`).
         public static func capture(_ window: NSWindow, to url: URL) async {
             let shot = url.lastPathComponent
             await makeKey(window, for: shot)
@@ -150,6 +159,7 @@
         /// Shots show a window key, with colored traffic lights. macOS 14+ may turn `activate()` down while another app
         /// is in front, so this asks again until the window is key, and stops the run rather than save an inactive shot.
         public static func makeKey(_ window: NSWindow, for shot: String) async {
+            guard !isHidden else { return }
             var tries = 0
             while !(NSApp.isActive && window.isKeyWindow) {
                 if tries == 30 {

@@ -15,16 +15,17 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
 | `fonts.py` | Builds the display faces from pinned variable fonts (`fonts`, plus `fonts.faces` for an upright beside an italic; needs fontTools). |
-| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written); App Store images (needs Pillow). |
-| `check-layout.sh` | `screenshots.sh` in every language (or the ones named), naming the languages whose windows don't fit. |
+| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images (needs Pillow). |
+| `check-layout.sh` | `screenshots.sh` in every language (or the ones named), side by side and hidden, naming the languages whose windows don't fit. |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
 | `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies. |
-| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits; App Store Connect (text, in-app purchases, screenshots, previews, review notes; `--status` reads only); a Partner Center import folder. |
+| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too); App Store Connect (text, in-app purchases, screenshots, previews, review notes, and a universal app's iOS page and iPhone and iPad screenshots; `--status` reads only); a Partner Center import folder. |
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
-| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. |
+| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. `-Only` runs hidden (cloaked windows, shot as soon as they have drawn), so the PC stays usable, with `-Front` for active windows. |
+| `windows/check-layout.ps1` | `screenshots.ps1` in every language (or the ones named), side by side and hidden after one build, naming the languages whose text doesn't fit. |
 | `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
 | `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
