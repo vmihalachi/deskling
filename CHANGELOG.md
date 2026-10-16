@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.11.3 - 2026-10-16
+
 - **Shell (`NotificationPoster`, `AppNotifier`)**: an app can hold back a reminder while the last one is still waiting.
   `NotificationPoster.delivered(prefix:)` lists the notifications still in Notification Center and
   `removeDelivered(ids:)` takes some down; `NotificationCategorySpec.options` sets the category's options, and a
