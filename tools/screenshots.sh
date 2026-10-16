@@ -3,8 +3,9 @@
 # in screenshot mode (Deskling's ScreenshotCapture, started by `mac.screenshotEnv`). Your real settings aren't touched.
 # Usage: deskling/tools/screenshots.sh [--only name,name] [--hidden|--front] [--no-build] [output-dir] [language]
 #        (defaults: screenshots.out, the source language)
-#   --only      just the shots whose file names start with one of the names, for checking a change. Pair it with a
-#               scratch output-dir so the committed screenshots stay as they are. Implies --hidden.
+#   --only      just the shots whose file names start with one of the names, for checking a change: the app renders
+#               those, and only those are copied. Pair it with a scratch output-dir so the committed screenshots stay as
+#               they are. Implies --hidden.
 #   --hidden    the windows open transparent, behind everything and without taking the focus, so you can keep working;
 #               the shots show them inactive (grey traffic lights and controls). For checks, never the committed shots.
 #   --front     the windows come forward and are shot key, as in use (the default without --only); leave the Mac alone.
@@ -54,6 +55,14 @@ COUNT=0
 for file in "$SRC"/*.png; do
   [ -e "$file" ] || continue
   name=$(basename "$file")
+  if [ -n "$ONLY" ]; then
+    # An app may render more than it was asked for (a demo that makes all its shots in one go): keep only those.
+    match=""
+    for prefix in $(echo "$ONLY" | tr ',' ' '); do
+      case "$name" in "$prefix"*) match=1 ;; esac
+    done
+    [ -n "$match" ] || continue
+  fi
   cp "$file" "$OUT"/
   echo "$OUT/$name"
   COUNT=$((COUNT + 1))

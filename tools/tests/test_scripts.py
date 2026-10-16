@@ -79,7 +79,7 @@ class ScriptTests(unittest.TestCase):
         self.assertIn("Updated conformance/ from macos/FixtureCore", result.stdout)
 
     def test_screenshots_build_run_and_copy(self):
-        # xcodebuild "builds" an app that writes one PNG per shot it's asked for and prints the folder.
+        # xcodebuild "builds" an app that writes its PNGs, one more than asked for, and prints the folder.
         self.fake("xcodebuild", f'''echo "$*" > "{self.log}"
 while [ $# -gt 0 ]; do [ "$1" = -derivedDataPath ] && derived="$2"; shift; done
 app="$derived/Build/Products/Debug/Fixture.app/Contents/MacOS"
@@ -89,6 +89,7 @@ cat > "$app/Fixture" <<'APP'
 out=$(mktemp -d)
 echo "$DESKLING_SCREENSHOT_MODE hidden=$DESKLING_SCREENSHOT_HIDDEN $*" >> "{self.root / 'runs.log'}"
 printf png > "$out/panel-light.png"
+printf png > "$out/demo-light.png"
 echo "$out"
 APP
 chmod +x "$app/Fixture"
@@ -97,7 +98,7 @@ chmod +x "$app/Fixture"
         result = self.run_script("screenshots.sh", "--only", "panel", str(out), "it")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("-project Fixture.xcodeproj -scheme Fixture -configuration Debug", self.log.read_text())
-        self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"])
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["panel-light.png"], "only the shots asked for")
         self.assertIn("1 screenshots in", result.stdout)
         # --only runs hidden unless --front; a full run comes forward; --build-only doesn't run the app.
         self.run_script("screenshots.sh", "--only", "panel", "--front", str(out), "it")
