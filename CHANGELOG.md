@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Tools (`hooks/hook.py stop`)**: tells the user, once per compaction cycle, when Claude's context is past
+  `hooks.longSessionTokens` (130000 by default, 0 disables), read from the session's transcript, so the next task goes
+  to a fresh session. When the context is too long and the Stop hook is also blocking, the agent is asked to pass the
+  note on.
+
 ## 0.11.0 - 2026-10-16
 
 The Windows packages require Windows 11, so a Windows app moves to `net10.0-windows10.0.22000.0` when it bumps
