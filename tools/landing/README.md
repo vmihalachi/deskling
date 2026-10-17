@@ -42,16 +42,12 @@ locale's dotted keys. Locale files must share the default's keys. `csp.mediaSrc`
 
 Released from Laching's `release.yml` on each `vX.Y.Z` tag that changes `tools/landing` since the version on npm, at
 the tag's version (the `version` here is a placeholder), so its versions skip the Laching releases that leave it alone:
-its `npm` job stages the tarball on npm through trusted publishing (no stored token; provenance attached), and it goes
-live once an owner approves it with 2FA, on npmjs.com (the package's Staged tab) or with `npm stage list
-@laching/landing` and `npm stage approve <id>`. The trusted publisher on npmjs.com is repository `vmihalachi/laching`,
-workflow `release.yml`, environment `npm`, stage publish only; the package's publishing access is "Require two-factor
-authentication and disallow tokens". npm attaches a trusted publisher only to a package that exists, so the owner set it
-up once by hand (npm 11.15 or later, 2FA on): `npm login`; in an empty folder holding only
-`{"name": "@laching/landing", "version": "0.0.0"}`, `npm stage publish --access public --tag bootstrap`, which creates
-the package (npm's public placeholder `0.0.0-stage`; the staged version stays hidden); `npm stage reject <id>` on that
-version; `npm trust github @laching/landing --repo vmihalachi/laching --file release.yml --env npm
---allow-stage-publish`.
+its `npm` job publishes the tarball to npm through trusted publishing (no stored token; provenance attached). The
+release's dispatch is the human gate: nothing is published without someone running `release.yml`. The trusted
+publisher on npmjs.com is repository `vmihalachi/laching`, workflow `release.yml`, environment `npm`; the package's
+publishing access is "Require two-factor authentication and disallow tokens". npm attaches a trusted publisher only to
+a package that exists, so the package is created once by hand, then `npm trust github @laching/landing --repo
+vmihalachi/laching --file release.yml --env npm` adds the publisher.
 
 Peer dependencies: `vite-plus` and `@resvg/resvg-js`. Develop with `npm ci`, `npx vp test run`,
 `npx vp check` and `npx tsc --noEmit`.

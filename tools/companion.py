@@ -350,6 +350,7 @@ class Pin(NamedTuple):
     version: str
     file: Path | None = None
     span: tuple[int, int] | None = None
+    package: str | None = None  # a `Laching.*` NuGet reference's package
 
 
 def read_text(path: Path) -> str:
@@ -435,7 +436,8 @@ def pin_sites(config: Config) -> list[Pin]:
     if windows and windows.is_dir():
         for file in sorted([*windows.rglob("*.csproj"), *windows.rglob("Directory.Packages.props")]):
             for match in _NUGET.finditer(read_text(file)):
-                found.append(Pin(f"{rel(file, config.root)} {match.group(1)}", match.group(2), file, match.span(2)))
+                found.append(Pin(f"{rel(file, config.root)} {match.group(1)}", match.group(2), file, match.span(2),
+                                 match.group(1)))
     if config.get("android") and (gradle := _kotlin_properties(config)) and gradle.is_file():
         match = _GRADLE_VERSION.search(read_text(gradle))
         # No file of its own to rewrite: `bump` moves the submodule and this moves with it.
@@ -449,10 +451,46 @@ def _kotlin_properties(config: Config) -> Path | None:
     return laching / "kotlin" / "gradle.properties" if laching else None
 
 
+_LACHING_VERSION = re.compile(r"<LachingVersion[^>]*>([^<]+)</LachingVersion>")
+
+
+def _nuget_version(submodule: Path, tag: str | None = None) -> str | None:
+    """LachingVersion, the one version of Laching's NuGet packages, from its `dotnet/Directory.Build.props` in the
+    submodule's checkout or at `tag`: the release they last shipped in, which trails the tag when they didn't change
+    since. None when there is none to read."""
+    if tag is None:
+        file = submodule / "dotnet" / "Directory.Build.props"
+        text = read_text(file) if file.is_file() else ""
+    else:
+        text = git(submodule, "show", f"{tag}:dotnet/Directory.Build.props").stdout
+    match = _LACHING_VERSION.search(text)
+    return match.group(1) if match else None
+
+
+def _released_package_version(config: Config, pin: Pin, version: str) -> str | None:
+    """The version Laching `version`'s NuGet packages have (LachingVersion at the tag), for a NuGet pin; None for a pin
+    of another kind."""
+    submodule = _submodule(config)
+    return _nuget_version(submodule, f"v{version}") if pin.package and submodule else None
+
+
 def pins(config: Config) -> list[tuple[str, str]]:
     """Where the Laching release is pinned and the version each place names (`pin_sites`), plus, while the app is
-    linked to a Laching checkout, a line that never agrees, so nothing linked gets committed."""
-    found = [(pin.label, pin.version) for pin in pin_sites(config)]
+    linked to a Laching checkout, a line that never agrees, so nothing linked gets committed. Every `Laching.*` NuGet
+    reference names the release's NuGet version (LachingVersion in the submodule): when that trails the tag, its line
+    stands for the release and says so; when a reference names another, its line never agrees."""
+    submodule = _submodule(config)
+    release = (_submodule_tag(submodule) or "(not on a tag)") if submodule else ""
+    nuget = _nuget_version(submodule) if submodule else None
+    found = []
+    for pin in pin_sites(config):
+        wanted = nuget if pin.package and nuget else pin.version
+        if pin.version != wanted:
+            found.append((f"{pin.label} (the release's NuGet packages are {wanted})", f"{pin.version}, not {wanted}"))
+        elif pin.package and nuget and wanted != release.removeprefix("v"):
+            found.append((f"{pin.label} {wanted} (NuGet's version in {release})", release))
+        else:
+            found.append((pin.label, pin.version))
     if linked := linked_to(config):
         found.append((f"linked to {linked}: `companion.py unlink` before committing", "(linked)"))
     return found
@@ -580,7 +618,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     target = max((v for v in published if _version_key(v) <= _version_key(version)), key=_version_key, default=None)
     if target is None or _version_key(target) <= _version_key(pin.version):
         return [], [f"{_LANDING_PACKAGE} stays at {pin.version}: npm has nothing newer at or below {version} "
-                    "(it ships only when it changes, and a staged version waits for approval)"]
+                    "(it ships only when it changes)"]
     folder = pin.file.parent
     lockfile = next((folder / name for name in _LOCKFILES if (folder / name).is_file()), None)
     files = [pin.file, *([lockfile] if lockfile else [])]
@@ -675,6 +713,7 @@ def _bump_pins(config: Config, version: str) -> list[Path]:
         if pin.span is None:
             raise PinError(f"{pin.label} names no version to move ({pin.version or 'empty'})")
         new = ("v" if pin.version.startswith("v") else "") + version
+        new = _released_package_version(config, pin, version) or new
         if pin.version != new:
             edits.setdefault(pin.file, []).append((pin.span, new))
     for file, replacements in edits.items():

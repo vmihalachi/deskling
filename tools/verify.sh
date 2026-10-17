@@ -23,7 +23,7 @@
 #   android.dir/**/*.kt(s)                 ktlint; ./gradlew :<android.core>:test for android.core and conformance/
 #   landing/, phrases/settings vectors     <landing.tool> check and build
 #   store.dir/*.md                         store/check.py (the listing's field limits)
-#   always                                 the Laching pins agree (submodule tag = laching.tag = SwiftPM = XcodeGen = NuGet)
+#   always                                 the Laching pins agree (submodule tag = laching.tag = SwiftPM = XcodeGen; NuGet = each package's version in it)
 #
 # Prints one line per check and the tail of the log for failures. Exit 1 if anything failed.
 set -uo pipefail
