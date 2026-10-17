@@ -6,21 +6,6 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-## 0.13.1 - 2026-10-17
-
-- **Companion (`CharacterArt.Parse`)**: reads `characters/<skin>.json` through a source-generated `JsonSerializerContext`
-  instead of walking a `JsonDocument` by hand (#85). Art that parsed before parses to the same values; a missing member
-  (or a null where a value belongs) now fails with the serializer's message, which names the member, instead of
-  `missing 'x'`, still as an `InvalidDataException` starting `not character art JSON:`.
-- **Core (`StringTable`), Windows (`Loc`), Testing (`ReswStrings`)**: a new public base, `Laching.Core.Localization.StringTable`,
-  holds the `.resw` lookup, plural and fallback logic (`Get`, `Localize`, `Format`, `Plural`) over an abstract
-  `Lookup(name)` (#86). `Loc` and `ReswStrings` both read through it instead of each keeping a copy, so the test double
-  can't drift from the app. No behavior change.
-- **Testing**: `Fixtures.Fixture` (the fixture bank, defaults, vector and raster art and skin catalog, loaded once),
-  `Fixtures.FixtureCopy` with `FixtureWindow` (the fixture model's roles and placeholder status, desktop and menu words),
-  the signal fakes `FakePower`, `FakeAppearance` and `FakeScreenLock`, and `VectorSupport.OptionalDouble`, `OptionalInt`,
-  `OptionalUInt64` and `OptionalStrings` (#87). Laching's own test projects and the fixture app use them instead of
-  their copies; the fixture app's status pill now reads "Next in about N min" like the tests' model.
 - **Kotlin core (`laching.core.scheduling`)**: `Instant.plusSeconds(Double)`, the scheduler's rounding of fractional
   seconds to the nanosecond, is public next to `Clock`; `laching.testing.MockClock` advances with it (#90).
 - **Companion (`RigGroup`, `Blink`, `BubbleAnchor`, `MoodRig`)**: `Decodable`, with the `characters/<skin>.json` keys;
@@ -37,6 +22,22 @@ package and the NuGet packages together.
   constructor takes the app's `ProductCatalog` first, `Purchases()` no longer takes one, and `ScreenshotScript` takes the
   `MockStoreBackend` (#88). Apps write `new SampleEnvironment(catalog, prices, timers)` and `sample.Purchases()` when they
   next bump.
+
+## 0.13.1 - 2026-10-17
+
+- **Companion (`CharacterArt.Parse`)**: reads `characters/<skin>.json` through a source-generated `JsonSerializerContext`
+  instead of walking a `JsonDocument` by hand (#85). Art that parsed before parses to the same values; a missing member
+  (or a null where a value belongs) now fails with the serializer's message, which names the member, instead of
+  `missing 'x'`, still as an `InvalidDataException` starting `not character art JSON:`.
+- **Core (`StringTable`), Windows (`Loc`), Testing (`ReswStrings`)**: a new public base, `Laching.Core.Localization.StringTable`,
+  holds the `.resw` lookup, plural and fallback logic (`Get`, `Localize`, `Format`, `Plural`) over an abstract
+  `Lookup(name)` (#86). `Loc` and `ReswStrings` both read through it instead of each keeping a copy, so the test double
+  can't drift from the app. No behavior change.
+- **Testing**: `Fixtures.Fixture` (the fixture bank, defaults, vector and raster art and skin catalog, loaded once),
+  `Fixtures.FixtureCopy` with `FixtureWindow` (the fixture model's roles and placeholder status, desktop and menu words),
+  the signal fakes `FakePower`, `FakeAppearance` and `FakeScreenLock`, and `VectorSupport.OptionalDouble`, `OptionalInt`,
+  `OptionalUInt64` and `OptionalStrings` (#87). Laching's own test projects and the fixture app use them instead of
+  their copies; the fixture app's status pill now reads "Next in about N min" like the tests' model.
 
 ## 0.13.0 - 2026-10-17
 
