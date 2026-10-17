@@ -52,11 +52,11 @@
         {
           "at" : "2026-09-28T11:01:00Z",
           "chime" : false,
-          "id" : "after-call-1",
+          "id" : "morning-1",
           "index" : 0,
           "notify" : false,
           "speak" : true,
-          "trigger" : "afterCall"
+          "trigger" : "due"
         }
       ],
       "isShushed" : false,

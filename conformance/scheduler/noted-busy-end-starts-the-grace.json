@@ -1,0 +1,212 @@
+{
+  "config" : {
+    "activeEndMinute" : 1080,
+    "activeStartMinute" : 540,
+    "activeWeekdays" : [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "afterCallFallbackSeconds" : 900,
+    "busyGraceSeconds" : 30,
+    "idleThresholdSeconds" : 300,
+    "intervalSeconds" : 2700,
+    "postponeDuringCalls" : true,
+    "postponeDuringFullScreen" : true,
+    "quietHours" : [
+
+    ]
+  },
+  "description" : "A 1 s busy poll notes the call going on after the last tick: the held reminder comes the grace after the call ended.",
+  "initialState" : {
+    "endOfToday" : "2026-09-29T00:00:00Z",
+    "isAway" : false,
+    "isHolding" : false,
+    "isWaitingForCall" : false,
+    "nextFireDate" : "2026-09-28T10:45:00Z",
+    "now" : "2026-09-28T10:00:00Z",
+    "pausedUntil" : null,
+    "status" : {
+      "date" : "2026-09-28T10:45:00Z",
+      "type" : "scheduled"
+    }
+  },
+  "name" : "noted-busy-end-starts-the-grace",
+  "start" : "2026-09-28T10:00:00Z",
+  "steps" : [
+    {
+      "busy" : [
+
+      ],
+      "count" : 40,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:45:00Z",
+          "now" : "2026-09-28T10:40:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T10:45:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+        "call"
+      ],
+      "count" : 6,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 5
+          },
+          {
+            "decision" : "postpone",
+            "tick" : 6
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:45:00Z",
+          "now" : "2026-09-28T10:46:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+        "call"
+      ],
+      "count" : 17,
+      "everySeconds" : 1,
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:45:00Z",
+          "now" : "2026-09-28T10:46:17Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "op" : "noteBusy"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 3,
+      "everySeconds" : 1,
+      "expect" : {
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : true,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T10:45:00Z",
+          "now" : "2026-09-28T10:46:20Z",
+          "pausedUntil" : null,
+          "status" : {
+            "reason" : "call",
+            "type" : "postponed"
+          }
+        }
+      },
+      "op" : "noteBusy"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 2,
+      "everySeconds" : 20,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "postpone",
+            "tick" : 1
+          },
+          {
+            "decision" : "remind",
+            "tick" : 2
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T11:32:00Z",
+          "now" : "2026-09-28T10:47:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T11:32:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    },
+    {
+      "busy" : [
+
+      ],
+      "count" : 46,
+      "everySeconds" : 60,
+      "expect" : {
+        "decisions" : [
+          {
+            "decision" : "remind",
+            "tick" : 45
+          }
+        ],
+        "state" : {
+          "endOfToday" : "2026-09-29T00:00:00Z",
+          "isAway" : false,
+          "isHolding" : false,
+          "isWaitingForCall" : false,
+          "nextFireDate" : "2026-09-28T12:17:00Z",
+          "now" : "2026-09-28T11:33:00Z",
+          "pausedUntil" : null,
+          "status" : {
+            "date" : "2026-09-28T12:17:00Z",
+            "type" : "scheduled"
+          }
+        }
+      },
+      "idleSeconds" : 0,
+      "op" : "ticks"
+    }
+  ],
+  "timeZone" : "UTC"
+}
