@@ -11,10 +11,17 @@ namespace Deskling.Companion.Shell.Screenshots;
 /// What a screenshot run's model is built on, so the user's real settings and the store are never touched (Swift's
 /// <c>ScreenshotCapture.SampleEnvironment</c>): an in-memory settings store, a clock stopped at <see cref="Now"/> (a
 /// Tuesday at 10:30 by default, inside the default active hours), an idle time of zero, never busy, a signal hub with no
-/// system watchers, silent channels and a store with fixed prices. The capture itself is the platform's.
+/// system watchers, silent channels, a store with fixed prices and a fixed <see cref="Seed"/>. The capture itself is the
+/// platform's.
 /// </summary>
 public sealed class SampleEnvironment
 {
+    /// <summary>
+    /// The seed every screenshot run's model is made with (<see cref="CompanionAppModel{TWindow, TSettings}"/>'s
+    /// <c>seed</c>), the same on every side (Swift's <c>sampleSeed</c>): the scheduler's jitter and the picker draw the
+    /// same, so the next line's time reads the same every run.
+    /// </summary>
+    public const ulong SampleSeed = 20_261_013;
     /// <param name="prices">Display prices by product id, as the store would show them ("1,99 €").</param>
     /// <param name="timers">The UI thread's timers (the hub's busy watch never runs: nothing is ever busy).</param>
     /// <param name="now">The moment the run shows; <see cref="SampleNow"/> by default.</param>
@@ -27,6 +34,9 @@ public sealed class SampleEnvironment
     }
 
     public DateTimeOffset Now { get; }
+
+    /// <summary>The model's seed: <see cref="SampleSeed"/>.</summary>
+    public ulong Seed => SampleSeed;
 
     public InMemorySettingsStore Store { get; } = new();
 

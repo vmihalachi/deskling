@@ -110,7 +110,8 @@ public partial class App : CompanionApp
             sample.Chime,
             sample.Notifier,
             sample.Signals,
-            sample.Purchases(Catalog)
+            sample.Purchases(Catalog),
+            sample.Seed
         );
         new ScreenshotScript<FixtureWindow, CompanionSettings>(model, host, sample.Backend, id => id.ToString().ToLowerInvariant()).Run(
             () =>

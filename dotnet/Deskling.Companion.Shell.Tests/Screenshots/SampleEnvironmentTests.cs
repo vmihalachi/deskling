@@ -26,6 +26,15 @@ public sealed class SampleEnvironmentTests
     }
 
     [Fact]
+    public void TheSeedIsTheSameEveryRunAndOnEverySide()
+    {
+        var first = new SampleEnvironment(new Dictionary<string, string>(), new ManualTimers());
+        var second = new SampleEnvironment(new Dictionary<string, string>(), new ManualTimers());
+        Assert.Equal(first.Seed, second.Seed);
+        Assert.Equal(20_261_013UL, first.Seed);  // Swift's ScreenshotCapture.SampleEnvironment.sampleSeed
+    }
+
+    [Fact]
     public async Task ThePricesAreFixedAndPurchasesCancelled()
     {
         var catalog = new ProductCatalog(["fixture.supporter"], ["fixture.tip"]);

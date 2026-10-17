@@ -6,6 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **CompanionUI (`ScreenshotCapture.SampleEnvironment`), Companion.Shell (`SampleEnvironment`)**: a fixed `seed`
+  (`sampleSeed` / `SampleSeed`, the same on both sides) for the screenshot run's model, so the scheduler's jitter and the
+  picker draw the same every run and a shot showing the next line's time no longer changes from run to run (#6). The
+  fixture app passes it; outside a screenshot run a model still picks its seed at random. Apps pass `sample.seed`
+  (`sample.Seed`) to their model when they next bump.
+
 ## 0.12.4 - 2026-10-17
 
 - **Kotlin (`deskling.core`)**: `ReminderScheduler.upcomingReminders(from, until, limit)`, the Swift projection an

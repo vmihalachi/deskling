@@ -141,7 +141,8 @@ public partial class App : CompanionApp
         return model = new MyModel(settings, MyBank.Load(), host /* , … */);  // a CompanionAppModel<MyWindow, MySettings>
     }
 
-    // With DESKLING_SCREENSHOT_MODE set: the same model over a SampleEnvironment, through a ScreenshotScript.
+    // With DESKLING_SCREENSHOT_MODE set: the same model over a SampleEnvironment (its Seed too, so the next line's time
+    // is the same every run), through a ScreenshotScript.
     protected override bool RunScreenshots() => false;
 }
 ```

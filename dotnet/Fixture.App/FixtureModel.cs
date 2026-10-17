@@ -96,7 +96,8 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         IChimePlaying chime,
         ICompanionNotifying notifier,
         SignalHub signals,
-        PurchaseStore purchases)
+        PurchaseStore purchases,
+        ulong? seed = null)
         : base(
             settings,
             bank,
@@ -112,7 +113,8 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
             notifier,
             signals,
             purchases,
-            new VoiceLibrary(null, "en", allowTesting: false))
+            new VoiceLibrary(null, "en", allowTesting: false),
+            seed)
     {
         this.clock = clock;
         timers = host.Timers;

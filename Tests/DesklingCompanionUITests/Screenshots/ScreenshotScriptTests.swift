@@ -25,7 +25,7 @@
                 configuration: FixtureModel.configuration, clock: sample.clock, idle: sample.idle, busy: sample.busy,
                 calendar: .current, speaker: sample.speaker, chime: sample.chime, notifier: sample.notifier, signals: sample.signals,
                 purchases: sample.purchases(catalog: ProductCatalog(unlockables: ["fixture.supporter"]), prefix: "deskling.tests"),
-                voices: VoiceLibrary(folder: nil, language: "en", allowTesting: true), seed: 7)
+                voices: VoiceLibrary(folder: nil, language: "en", allowTesting: true), seed: sample.seed)
             var custom: [String] = []
             let script = ScreenshotScript(
                 model: model, backend: sample.backend,
@@ -41,6 +41,13 @@
             XCTAssertEqual(custom, ["sheet-light.png", "sheet-dark.png"])
             XCTAssertTrue(ScreenshotCapture.problems.isEmpty, "\(ScreenshotCapture.problems)")
             try? FileManager.default.removeItem(at: directory)
+        }
+
+        func testTheSeedIsTheSameEveryRunAndOnEverySide() {
+            let first = ScreenshotCapture.SampleEnvironment(prices: [:])
+            let second = ScreenshotCapture.SampleEnvironment(prices: [:])
+            XCTAssertEqual(first.seed, second.seed)
+            XCTAssertEqual(first.seed, 20_261_013)  // C#'s SampleEnvironment.SampleSeed
         }
     }
 #endif
