@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from support import TOOLS, fixture_app
+from support import TOOLS, FixtureAppTestCase
 
 sys.path.insert(0, str(TOOLS / "store"))
 import check  # noqa: E402
@@ -99,18 +99,14 @@ class FakeApi:
         pass
 
 
-def quiet(_):
-    pass
+def discard(_line):
+    """push.Sync's log, unread."""
 
 
-class StoreTests(unittest.TestCase):
+class StoreTests(FixtureAppTestCase):
     def setUp(self):
-        self._app = fixture_app()
-        self.root = self._app.__enter__()
+        super().setUp()
         self.listing = listing_module.load(self.root)
-
-    def tearDown(self):
-        self._app.__exit__(None, None, None)
 
     # MARK: The listing and check.py
 
@@ -268,7 +264,7 @@ class StoreTests(unittest.TestCase):
 
     def test_text_patches_only_what_changed_and_adds_missing_languages(self):
         api, version = self.setup_app()
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         result = sync.text(["en", "de"], sync.version("1.0.2", False, None), extra=False, write=True)
         self.assertEqual(sync.problems, [])
         self.assertIn(("PATCH", "appStoreVersionLocalizations", ("whatsNew",)), api.calls)
@@ -286,7 +282,7 @@ class StoreTests(unittest.TestCase):
 
     def test_whats_new_is_left_out_on_a_first_version(self):
         api, version = self.setup_app(earlier=False)
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         sync.text(["de"], version, extra=False, write=True)
         de = next(x for x in api.children("appStoreVersionLocalizations", version["id"]) if x["attributes"]["locale"] == "de-DE")
         self.assertNotIn("whatsNew", de["attributes"])
@@ -303,7 +299,7 @@ class StoreTests(unittest.TestCase):
         api, mac = self.setup_app()
         api.add("builds", {"version": "4", "platform": "MAC_OS", "processingState": "VALID"}, self.listing.app_id)
         api.add("builds", {"version": "4", "platform": "IOS", "processingState": "VALID"}, self.listing.app_id)
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         with self.assertRaises(SystemExit, msg="no iOS version without --create"):
             sync.version("1.0.2", False, None, sync.ios)
         version = sync.version("1.0.2", True, "4", sync.ios)
@@ -341,7 +337,7 @@ class StoreTests(unittest.TestCase):
 
     def test_dry_run_writes_nothing(self):
         api, _ = self.setup_app()
-        sync = push.Sync(self.listing, api, apply=False, log=quiet)
+        sync = push.Sync(self.listing, api, apply=False, log=discard)
         localizations = sync.text(["en", "it"], sync.version("1.0.2", False, None), extra=False, write=True)
         sync.screenshots(localizations)
         sync.iaps(["en"], extra=False)
@@ -353,7 +349,7 @@ class StoreTests(unittest.TestCase):
         for name in ("1-home.png", "2-settings.png"):
             (folder / name).write_bytes(PNG + name.encode())
         api, version = self.setup_app()
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         localizations = sync.text(["en"], version, extra=False, write=False)
         locale = localizations["en-US"][1]
         shot_set = api.add("appScreenshotSets", {"screenshotDisplayType": self.listing.screenshot_type}, locale["id"])
@@ -369,7 +365,7 @@ class StoreTests(unittest.TestCase):
 
     def test_extra_locales_only_when_present_or_asked(self):
         api, version = self.setup_app()
-        sync = push.Sync(self.listing, api, apply=False, log=quiet)
+        sync = push.Sync(self.listing, api, apply=False, log=discard)
         self.assertEqual(set(sync.text(["en"], version, extra=False, write=False)), {"en-US"})
         api.add("appStoreVersionLocalizations", {"locale": "en-GB"}, version["id"])
         self.assertEqual(set(sync.text(["en"], version, extra=False, write=False)), {"en-US", "en-GB"})
@@ -378,8 +374,8 @@ class StoreTests(unittest.TestCase):
     def test_missing_version_needs_create(self):
         api = FakeApi(self.listing.app_id)
         with self.assertRaises(SystemExit):
-            push.Sync(self.listing, api, apply=False, log=quiet).version("9.9", False, None)
-        version = push.Sync(self.listing, api, apply=False, log=quiet).version("9.9", True, None)
+            push.Sync(self.listing, api, apply=False, log=discard).version("9.9", False, None)
+        version = push.Sync(self.listing, api, apply=False, log=discard).version("9.9", True, None)
         self.assertIsNone(version["id"])
         self.assertEqual(api.calls, [])
 
@@ -394,7 +390,7 @@ class StoreTests(unittest.TestCase):
         api, version = self.setup_app()
         for product_id in self.listing.iaps:
             api.add("inAppPurchases", {"productId": product_id, "reviewNote": "theirs"}, self.listing.app_id)
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         sync.review(version)
         sync.iaps(["en"], extra=False)
         self.assertEqual(sync.problems, [])
@@ -410,7 +406,7 @@ class StoreTests(unittest.TestCase):
         api, mac = self.setup_app()
         ios = self.add_ios_version(api)
         api.add("appStoreReviewDetails", {"notes": "old"}, ios["id"])
-        sync = push.Sync(self.listing, api, apply=True, log=quiet)
+        sync = push.Sync(self.listing, api, apply=True, log=discard)
         with contextlib.redirect_stdout(io.StringIO()):
             sync.review(mac)
             sync.review(ios, sync.ios)

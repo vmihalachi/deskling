@@ -20,7 +20,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "windows"))
-from support import TOOLS, WINDOWS, fixture_app  # noqa: E402
+from support import TOOLS, WINDOWS, FixtureAppTestCase, git  # noqa: E402
 
 if WINDOWS:
     raise unittest.SkipTest("vm.py runs on a Mac, driving its Parallels VM (it locks with fcntl, which Windows lacks)")
@@ -28,11 +28,6 @@ import vm  # noqa: E402
 
 VM_SH = TOOLS / "windows" / "vm.sh"
 POWERSHELL = shutil.which("pwsh") or shutil.which("powershell")
-
-
-def git(folder: Path, *args: str) -> str:
-    return subprocess.run(["git", "-C", str(folder), "-c", "user.name=t", "-c", "user.email=t@t", *args],
-                          capture_output=True, text=True, check=True).stdout
 
 
 class FilesTests(unittest.TestCase):
@@ -135,19 +130,15 @@ class PathTests(unittest.TestCase):
         self.assertEqual(vm.split_extra(["ARM64"]), (["ARM64"], ""))
 
 
-class BodyTests(unittest.TestCase):
+class BodyTests(FixtureAppTestCase):
     """The PowerShell each command runs in the VM, over the fixture app's companion.json."""
 
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         import companion
 
         config = companion.load(self.root)
         self.ctx = vm.Context(self.root, config, "Windows 11", vm.checkout_key(self.root), self.root / "stage")
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def test_build_both_platforms_with_extra_arguments(self):
         body = vm.build_body(self.ctx, ["x64", "ARM64"], "-c Release")
@@ -195,16 +186,14 @@ class BodyTests(unittest.TestCase):
         self.assertIn("catch", script)
 
 
-class LinkedTests(unittest.TestCase):
+class LinkedTests(FixtureAppTestCase):
     """The fixture app linked (`companion.py link`) to a Laching checkout: what else vm.sh mirrors, and where to."""
 
     def setUp(self):
         import companion
 
+        super().setUp()
         self.companion = companion
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
-        self.addCleanup(self.app.__exit__, None, None, None)
         self.ctx = vm.Context(self.root, companion.load(self.root), "Windows 11", vm.checkout_key(self.root),
                               self.root.parent / "caches" / vm.checkout_key(self.root))
 
@@ -295,17 +284,13 @@ class LinkedTests(unittest.TestCase):
                 self.assertIn("beside the app", str(caught.exception))
 
 
-class UnavailableTests(unittest.TestCase):
+class UnavailableTests(FixtureAppTestCase):
     """vm.sh with a fake prlctl, or none: one line and exit 3 when there's no VM to use."""
 
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         self.bin = self.root / "fake-bin"
         self.bin.mkdir()
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def prlctl(self, status: str, exec_code: int = 0) -> None:
         path = self.bin / "prlctl"

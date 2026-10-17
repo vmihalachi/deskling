@@ -16,7 +16,7 @@ from contextlib import redirect_stderr
 from pathlib import Path
 from unittest import mock
 
-from support import BASH, NO_SHELL, REPO, TOOLS, companion, fixture_app
+from support import BASH, NO_SHELL, REPO, TOOLS, FixtureAppTestCase, companion, git
 
 HOOK = TOOLS / "hooks" / "hook.py"
 VALIDATE = REPO / ".claude" / "hooks" / "validate.py"  # Laching's own Stop hook, beside the apps' hook.py
@@ -33,14 +33,10 @@ def load_hook():
     return load(HOOK)
 
 
-class HookTestCase(unittest.TestCase):
+class HookTestCase(FixtureAppTestCase):
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         self.tmp = tempfile.mkdtemp()
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def run_hook(self, mode, event, payload=None):
         env = {**os.environ, "CLAUDE_PROJECT_DIR": str(self.root), "TMPDIR": self.tmp}
@@ -509,9 +505,8 @@ class Resume(HookTestCase):
         os.environ["TMPDIR"] = self.tmp
         self.hook = load_hook()
         self.hook.setup(self.root)
-        git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
         for args in (["init", "-q"], ["add", "."], ["commit", "-qm", "fixture app", "--no-verify"]):
-            subprocess.run([*git, *args], cwd=self.root, check=True, capture_output=True)
+            git(self.root, *args)
 
     def test_names_each_edited_file_once_and_the_checks_run(self):
         event = {"session_id": "resume"}

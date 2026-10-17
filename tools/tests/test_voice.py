@@ -20,7 +20,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
 import voice  # noqa: E402
-from support import fixture_app  # noqa: E402
+from support import FixtureAppTestCase  # noqa: E402
 
 TEXTS = {
     "hello": "Ciao.",
@@ -31,14 +31,10 @@ TEXTS = {
 }
 
 
-class VoiceTests(unittest.TestCase):
+class VoiceTests(FixtureAppTestCase):
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         voice.configure(companion.load())
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def check(self) -> int:
         with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):

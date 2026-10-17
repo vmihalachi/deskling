@@ -21,7 +21,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
 import fonts  # noqa: E402
-from support import BASH, HERE, NO_SHELL, TOOLS, WINDOWS, fixture_app, search_path, shell  # noqa: E402
+from support import (  # noqa: E402
+    BASH, HERE, NO_SHELL, TOOLS, WINDOWS, FixtureAppTestCase, fixture_app, git, search_path, shell,
+)
 
 
 def png(path: Path, size: int, rgba=(255, 200, 0, 255)) -> None:
@@ -36,16 +38,12 @@ def png(path: Path, size: int, rgba=(255, 200, 0, 255)) -> None:
         + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-class ScriptTests(unittest.TestCase):
+class ScriptTests(FixtureAppTestCase):
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         self.bin = self.root / "fake-bin"
         self.bin.mkdir()
         self.log = self.root / "calls.log"
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def fake(self, name: str, body: str) -> None:
         path = self.bin / name
@@ -411,23 +409,17 @@ elif command == "shell":
         self.assertIn("ok    Laching pins agree", result.stdout, result.stderr)
         self.assertEqual(store_line(result), [], "no store section: --all has no store check to run")
 
-    def git(self, cwd: Path, *args: str) -> str:
-        return subprocess.run(
-            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", *args],
-            cwd=cwd, env=companion.git_env(), capture_output=True, text=True, check=True,
-        ).stdout.strip()
-
     def commit_app(self) -> None:
         """The fixture app as a repository, with laching/ a checkout of its own on the pinned tag."""
         laching = self.root / "laching"
         laching.mkdir()
-        self.git(laching, "init", "-q")
-        self.git(laching, "commit", "-q", "--allow-empty", "-m", "release")
-        self.git(laching, "tag", "v0.5.0")
-        self.git(self.root, "init", "-q")
+        git(laching, "init", "-q")
+        git(laching, "commit", "-q", "--allow-empty", "-m", "release")
+        git(laching, "tag", "v0.5.0")
+        git(self.root, "init", "-q")
         (self.root / ".gitignore").write_text("laching/\nfake-bin/\ncalls.log\n", "utf8")
-        self.git(self.root, "add", "-A")
-        self.git(self.root, "commit", "-q", "-m", "app")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-q", "-m", "app")
 
     @unittest.skipUnless(WINDOWS, "Windows builds the WinUI app itself; elsewhere it's the VM's")
     def test_verify_builds_the_winui_app_itself_on_windows(self):
@@ -474,7 +466,7 @@ case "$1" in status) echo "VM $2 exist running" ;; exec) [ "$3" = --current-user
         self.fake("xcrun", "exit 0\n")
         spec = self.root / "macos" / "project.yml"
         spec.write_text(spec.read_text("utf8") + "\n", "utf8")
-        self.git(self.root, "add", "macos/project.yml")
+        git(self.root, "add", "macos/project.yml")
         result = self.run_script("verify.sh", "--fast", "--staged")
         self.assertIn("FAIL  xcodegen (project.pbxproj in sync)", result.stdout, result.stderr)
         self.assertIn("named after this checkout's folder (app)", result.stdout)

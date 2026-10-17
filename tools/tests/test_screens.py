@@ -18,7 +18,7 @@ import companion  # noqa: E402
 import layoutcheck  # noqa: E402
 import screens  # noqa: E402
 import sim  # noqa: E402
-from support import fixture_app  # noqa: E402
+from support import FixtureAppTestCase  # noqa: E402
 
 try:
     from PIL import Image, ImageDraw
@@ -31,11 +31,9 @@ def manifest(root: Path) -> screens.Screens:
     return screens.Screens(companion.load(root))
 
 
-class ManifestTests(unittest.TestCase):
+class ManifestTests(FixtureAppTestCase):
     def setUp(self):
-        self.context = fixture_app()
-        self.root = self.context.__enter__()
-        self.addCleanup(self.context.__exit__, None, None, None)
+        super().setUp()
         self.screens = manifest(self.root)
         self.mac, self.windows, self.phone = self.screens.platforms
 
@@ -251,12 +249,7 @@ class ManifestTests(unittest.TestCase):
                 self.assertIn(words, error.getvalue())
 
 
-class SimulatorTests(unittest.TestCase):
-    def setUp(self):
-        self.context = fixture_app()
-        self.root = self.context.__enter__()
-        self.addCleanup(self.context.__exit__, None, None, None)
-
+class SimulatorTests(FixtureAppTestCase):
     def test_a_run_moves_the_folder_the_app_drew_into_and_says_when_it_drew_nothing(self):
         drawn = self.root / "container"
         drawn.mkdir()
@@ -325,11 +318,9 @@ class LayoutReportTests(unittest.TestCase):
 
 
 @unittest.skipIf(Image is None, NO_PILLOW)
-class ImageTests(unittest.TestCase):
+class ImageTests(FixtureAppTestCase):
     def setUp(self):
-        self.context = fixture_app()
-        self.root = self.context.__enter__()
-        self.addCleanup(self.context.__exit__, None, None, None)
+        super().setUp()
         self.screens = manifest(self.root)
         self.mac, self.windows, self.phone = self.screens.platforms
 

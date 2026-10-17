@@ -17,18 +17,11 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
-from support import NO_SHEBANG, TOOLS, WINDOWS, fixture_app  # noqa: E402
+from support import NO_SHEBANG, TOOLS, WINDOWS, FixtureAppTestCase, git  # noqa: E402
 
 RESOLVED = "macos/FixtureCore/Package.resolved"
 PROJECT_RESOLVED = "macos/Fixture.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
 PBXPROJ = "macos/Fixture.xcodeproj/project.pbxproj"
-
-
-def git(cwd: Path, *args: str) -> str:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
-    command = ["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.com", "-c", "init.defaultBranch=main",
-               "-c", "tag.gpgSign=false", "-c", "commit.gpgSign=false", *args]
-    return subprocess.run(command, cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout.strip()
 
 
 def resolved(revision: str, version: str, origin_hash: str) -> str:
@@ -43,14 +36,12 @@ def resolved(revision: str, version: str, origin_hash: str) -> str:
     )
 
 
-class PinsTestCase(unittest.TestCase):
+class PinsTestCase(FixtureAppTestCase):
     """The fixture app at `self.root` and a Laching origin next to it, tagged v0.5.0 and v0.6.0. xcodegen and xcodebuild
     are stood in for (`self.calls` records them), and npm has the versions in `self.npm`."""
 
     def setUp(self):
-        stack = ExitStack()
-        self.addCleanup(stack.close)
-        self.root = stack.enter_context(fixture_app())
+        super().setUp()
         self.origin = self.root.parent / "laching-origin"
         self.origin.mkdir()
         (self.origin / "Package.swift").write_text('let package = Package(name: "Laching")\n', "utf8")
@@ -69,6 +60,8 @@ class PinsTestCase(unittest.TestCase):
             self.commits[version] = git(self.origin, "rev-parse", "HEAD")
         self.calls: list[str] = []
         self.npm: list[str] = []
+        stack = ExitStack()
+        self.addCleanup(stack.close)
         for name, value in (("regenerate_project", "regenerated"), ("resolve_packages", "resolved")):
             stack.enter_context(mock.patch.object(companion, name, side_effect=lambda config, n=name, v=value: (
                 self.calls.append(n), v)[1]))
