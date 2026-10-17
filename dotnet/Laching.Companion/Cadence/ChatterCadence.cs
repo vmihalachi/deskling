@@ -76,12 +76,5 @@ public static class Shushes
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static ChatterCadence.Shush? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "hour" => ChatterCadence.Shush.Hour,
-            "restOfToday" => ChatterCadence.Shush.RestOfToday,
-            "untilISay" => ChatterCadence.Shush.UntilISay,
-            _ => null,
-        };
+    public static ChatterCadence.Shush? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }

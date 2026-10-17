@@ -43,6 +43,16 @@ public sealed class CharacterArtJsonTests
         Assert.Equal("hush-leaf", sunny.StillPose(Mood.HushedForCall).Mouth);
     }
 
+    /// <summary>As Swift's <c>Decodable</c>: a member the reader doesn't know is ignored.</summary>
+    [Fact]
+    public void ParseIgnoresUnknownMembers()
+    {
+        var file = JsonNode.Parse(Committed("fixture-vector"))!;
+        file["credits"] = "someone";
+        file["rig"]!["moods"]!["awake"]!["wiggle"] = 1;
+        Assert.Equal(Fixture.Vector.Rig.Bubble, Parse(file.ToJsonString()).Rig.Bubble);
+    }
+
     [Theory]
     [InlineData("missing mood", "asleep")]
     [InlineData("unknown part", "snore")]
@@ -51,6 +61,7 @@ public sealed class CharacterArtJsonTests
     [InlineData("bad frame", "frame")]
     [InlineData("mouths without a rate", "mouthRate")]
     [InlineData("unknown mood", "dancing")]
+    [InlineData("null skin", "not character art JSON")]
     [InlineData("unknown command", "Q")]
     public void ParseRefusesBrokenArt(string change, string needle)
     {
@@ -79,6 +90,9 @@ public sealed class CharacterArtJsonTests
                 break;
             case "unknown mood":
                 moods["dancing"] = moods["awake"]!.DeepClone();
+                break;
+            case "null skin":
+                file["skin"] = null;
                 break;
             default:
                 file["parts"]!["head"]![0]!["d"]![0]![0] = "Q";

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Laching.Companion.Phrases;
 using Laching.Companion.Rules;
 
@@ -10,18 +11,18 @@ public sealed partial record CharacterArt
     /// Reads the <c>characters/&lt;skin&gt;.json</c> format (Swift's <c>CharacterArtJSON.decode</c>; what
     /// <c>tools/character.py --out</c> writes): a part is an array of shapes or an image
     /// <c>{"image": "&lt;skin&gt;.&lt;part&gt;", "frame": [x, y, w, h]}</c>. Refuses art whose rig names a part, pivot,
-    /// glyph frame or mood that isn't there, so <see cref="RiggedCharacter"/> never meets a missing part. Reads with
-    /// <see cref="JsonDocument"/>: no reflection, so Native AOT is happy. Throws <see cref="InvalidDataException"/>.
+    /// glyph frame or mood that isn't there, so <see cref="RiggedCharacter"/> never meets a missing part. Reads through a
+    /// source-generated context, so Native AOT is happy. Throws <see cref="InvalidDataException"/>.
     /// </summary>
     public static CharacterArt Parse(Stream json)
     {
         CharacterArt art;
         try
         {
-            using var doc = JsonDocument.Parse(json);
-            art = ArtFile(doc.RootElement);
+            var file = JsonSerializer.Deserialize(json, ArtJson.Default.ArtFile) ?? throw new InvalidDataException("character art JSON is empty");
+            art = file.Art();
         }
-        catch (Exception error) when (error is JsonException or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException)
+        catch (Exception error) when (error is JsonException or InvalidOperationException or IndexOutOfRangeException)
         {
             throw new InvalidDataException($"not character art JSON: {error.Message}", error);
         }
@@ -29,50 +30,20 @@ public sealed partial record CharacterArt
         return art;
     }
 
-    private static CharacterArt ArtFile(JsonElement root)
-    {
-        var viewBox = Numbers(Get(root, "viewBox"));
-        if (viewBox.Length != 2)
-            throw new InvalidDataException("viewBox needs 2 numbers");
-        var pivots = Get(root, "pivots").EnumerateObject().ToDictionary(p => p.Name, p => PointOf(p.Value, $"pivot '{p.Name}'"));
-        var parts = Get(root, "parts").EnumerateObject().ToDictionary(p => p.Name, p => Content(p.Value, p.Name));
-        var glyph = Get(root, "glyph");
-        return new CharacterArt(
-            new SkinId(Get(root, "skin").GetString()!),
-            new Size(viewBox[0], viewBox[1]),
-            pivots,
-            parts,
-            RigOf(Get(root, "rig")),
-            Get(glyph, "size").GetDouble(),
-            Get(glyph, "frames").EnumerateObject().ToDictionary(p => p.Name, p => (IReadOnlyList<PathShape>)ShapeList(p.Value))
-        );
-    }
-
-    private static PartContent Content(JsonElement e, string name)
+    /// <summary>A part: an array of shapes, or an image object.</summary>
+    internal static PartContent Content(JsonElement e, string name)
     {
         if (e.ValueKind == JsonValueKind.Array)
-            return new PartContent.Vector(ShapeList(e));
-        var frame = Numbers(Get(e, "frame"));
-        if (frame.Length != 4)
+            return new PartContent.Vector(e.Deserialize(ArtJson.Default.ShapeFileArray)!.Select(s => s.Shape()).ToArray());
+        var image = e.Deserialize(ArtJson.Default.ImageFile) ?? throw new InvalidDataException($"part '{name}' is null");
+        if (image.Frame.Length != 4)
             throw new InvalidDataException($"part '{name}': frame needs 4 numbers");
-        return new PartContent.Image(Get(e, "image").GetString()!, new Rect(frame[0], frame[1], frame[2], frame[3]));
+        return new PartContent.Image(image.Image, new Rect(image.Frame[0], image.Frame[1], image.Frame[2], image.Frame[3]));
     }
 
-    private static PathShape[] ShapeList(JsonElement e) => e.EnumerateArray().Select(ShapeOf).ToArray();
-
-    private static PathShape ShapeOf(JsonElement e) =>
-        new(
-            Get(e, "d").EnumerateArray().Select(CommandOf).ToArray(),
-            Role(e, "fill"),
-            Role(e, "stroke"),
-            Get(e, "strokeWidth").GetDouble(),
-            Get(e, "opacity").GetDouble(),
-            Get(e, "evenOdd").GetBoolean()
-        );
-
-    private static PathCommand CommandOf(JsonElement e)
+    /// <summary>A path command: <c>["M", x, y]</c>, <c>["L", x, y]</c>, <c>["C", x1, y1, x2, y2, x, y]</c> or <c>["Z"]</c>.</summary>
+    internal static PathCommand CommandOf(JsonElement[] items)
     {
-        var items = e.EnumerateArray().ToArray();
         var op = items[0].GetString();
         var numbers = items.Skip(1).Select(n => n.GetDouble()).ToArray();
         Point[] Points(int count)
@@ -98,63 +69,10 @@ public sealed partial record CharacterArt
         }
     }
 
-    private static PaintRole? Role(JsonElement e, string name) =>
-        e.TryGetProperty(name, out var value) && value.ValueKind != JsonValueKind.Null ? new PaintRole(value.GetString()!) : (PaintRole?)null;
+    internal static Mood MoodNamed(string name) => Moods.Parse(name) ?? throw new InvalidDataException($"unknown mood '{name}'");
 
-    private static Rig RigOf(JsonElement e)
-    {
-        var blink = Get(e, "blink");
-        var bubble = Get(e, "bubble");
-        return new Rig(
-            Get(e, "period").GetDouble(),
-            Get(e, "stillTime").GetDouble(),
-            Strings(Get(e, "always")),
-            Group(Get(e, "head")),
-            Group(Get(e, "stem")),
-            Group(Get(e, "pulse")),
-            new Blink(Get(blink, "duration").GetDouble(), Numbers(Get(blink, "intervals")), Get(blink, "closedEyes").GetString()!),
-            Get(e, "moods").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => MoodRigOf(p.Value)),
-            Get(e, "glyph").EnumerateObject().ToDictionary(p => MoodNamed(p.Name), p => (IReadOnlyList<string>)Strings(p.Value)),
-            new BubbleAnchor(Get(bubble, "pivot").GetString()!, Get(bubble, "tuck").GetDouble())
-        );
-    }
-
-    private static MoodRig MoodRigOf(JsonElement e) =>
-        new(
-            Get(e, "eyes").GetString()!,
-            Strings(Get(e, "mouth")),
-            Get(e, "mouthRate").GetDouble(),
-            Strings(Get(e, "headExtras")),
-            Strings(Get(e, "overlays")),
-            Get(e, "blink").GetBoolean(),
-            Get(e, "droop").GetDouble(),
-            Get(e, "sink").GetDouble(),
-            Get(e, "sway").GetDouble(),
-            Get(e, "swayPeriod").GetDouble(),
-            Get(e, "pulse").GetDouble(),
-            e.TryGetProperty("restMouth", out var rest) && rest.ValueKind != JsonValueKind.Null ? rest.GetString() : null
-        );
-
-    private static RigGroup Group(JsonElement e) =>
-        new(Get(e, "pivot").GetString()!, Strings(Get(e, "parts")), Get(e, "follow").GetDouble());
-
-    private static Mood MoodNamed(string name) => Moods.Parse(name) ?? throw new InvalidDataException($"unknown mood '{name}'");
-
-    private static Point PointOf(JsonElement e, string what)
-    {
-        var numbers = Numbers(e);
-        return numbers.Length == 2 ? new Point(numbers[0], numbers[1]) : throw new InvalidDataException($"{what} needs 2 numbers");
-    }
-
-    /// <summary>The member <paramref name="name"/>, or an error that names it.</summary>
-    private static JsonElement Get(JsonElement e, string name) =>
-        e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var value)
-            ? value
-            : throw new InvalidDataException($"missing '{name}'");
-
-    private static double[] Numbers(JsonElement e) => e.EnumerateArray().Select(n => n.GetDouble()).ToArray();
-
-    private static string[] Strings(JsonElement e) => e.EnumerateArray().Select(s => s.GetString()!).ToArray();
+    internal static Point PointOf(double[] numbers, string what) =>
+        numbers.Length == 2 ? new Point(numbers[0], numbers[1]) : throw new InvalidDataException($"{what} needs 2 numbers");
 
     /// <summary>Everything the rig names must exist, so <see cref="RiggedCharacter"/> never meets a missing part.</summary>
     private static void Validate(CharacterArt art)
@@ -202,3 +120,91 @@ public sealed partial record CharacterArt
         }
     }
 }
+
+/// <summary>
+/// The shape of <c>characters/&lt;skin&gt;.json</c>. A part stays a <see cref="JsonElement"/> (an array of shapes or an
+/// image), and so does each path command (the op, then its numbers).
+/// </summary>
+internal sealed record ArtFile(
+    string Skin,
+    double[] ViewBox,
+    Dictionary<string, double[]> Pivots,
+    Dictionary<string, JsonElement> Parts,
+    RigFile Rig,
+    GlyphFile Glyph
+)
+{
+    public CharacterArt Art()
+    {
+        if (ViewBox.Length != 2)
+            throw new InvalidDataException("viewBox needs 2 numbers");
+        var rig = new Rig(
+            Rig.Period,
+            Rig.StillTime,
+            Rig.Always,
+            Rig.Head,
+            Rig.Stem,
+            Rig.Pulse,
+            Rig.Blink,
+            Rig.Moods.ToDictionary(p => CharacterArt.MoodNamed(p.Key), p => p.Value),
+            Rig.Glyph.ToDictionary(p => CharacterArt.MoodNamed(p.Key), p => (IReadOnlyList<string>)p.Value),
+            Rig.Bubble
+        );
+        return new CharacterArt(
+            new SkinId(Skin),
+            new Size(ViewBox[0], ViewBox[1]),
+            Pivots.ToDictionary(p => p.Key, p => CharacterArt.PointOf(p.Value, $"pivot '{p.Key}'")),
+            Parts.ToDictionary(p => p.Key, p => CharacterArt.Content(p.Value, p.Key)),
+            rig,
+            Glyph.Size,
+            Glyph.Frames.ToDictionary(p => p.Key, p => (IReadOnlyList<PathShape>)p.Value.Select(s => s.Shape()).ToArray())
+        );
+    }
+}
+
+/// <summary>The rig as the file has it: its groups, blink, moods and bubble are the <see cref="Rig"/>'s own records.</summary>
+internal sealed record RigFile(
+    double Period,
+    double StillTime,
+    string[] Always,
+    RigGroup Head,
+    RigGroup Stem,
+    RigGroup Pulse,
+    Blink Blink,
+    Dictionary<string, MoodRig> Moods,
+    Dictionary<string, string[]> Glyph,
+    BubbleAnchor Bubble
+);
+
+internal sealed record GlyphFile(double Size, Dictionary<string, ShapeFile[]> Frames);
+
+internal sealed record ImageFile(string Image, double[] Frame);
+
+internal sealed record ShapeFile(JsonElement[][] D, double StrokeWidth, double Opacity, bool EvenOdd, string? Fill = null, string? Stroke = null)
+{
+    public PathShape Shape() =>
+        new(
+            D.Select(CharacterArt.CommandOf).ToArray(),
+            Fill is { } fill ? new PaintRole(fill) : (PaintRole?)null,
+            Stroke is { } stroke ? new PaintRole(stroke) : (PaintRole?)null,
+            StrokeWidth,
+            Opacity,
+            EvenOdd
+        );
+}
+
+/// <summary>
+/// Source-generated, so apps can compile it with Native AOT. A missing or null member fails (but <c>fill</c>,
+/// <c>stroke</c> and <c>restMouth</c>, which may be left out); unknown members are ignored, as Swift's
+/// <c>Decodable</c> ignores them. <see cref="RigGroup"/>, <see cref="Blink"/>, <see cref="BubbleAnchor"/> and
+/// <see cref="MoodRig"/> are read as they are: their parameters are the file's member names.
+/// </summary>
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    RespectRequiredConstructorParameters = true,
+    RespectNullableAnnotations = true
+)]
+[JsonSerializable(typeof(ArtFile))]
+[JsonSerializable(typeof(ShapeFile[]))]
+[JsonSerializable(typeof(ImageFile))]
+internal sealed partial class ArtJson : JsonSerializerContext;

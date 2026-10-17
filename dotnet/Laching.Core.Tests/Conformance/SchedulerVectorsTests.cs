@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Laching.Core.Random;
 using Laching.Core.Scheduling;
+using static Laching.Testing.Conformance.VectorSupport;
 
 namespace Laching.Core.Tests;
 
@@ -73,33 +74,8 @@ public sealed class SchedulerVectorsTests
             .Select(d => new TickDecision(d.GetProperty("tick").GetInt32(), d.GetProperty("decision").GetString()!))
             .ToArray();
 
-    // Optional values are either null or left out; both mean "no value".
-
-    private static bool Has(JsonElement e, string name, out JsonElement value) =>
-        e.TryGetProperty(name, out value) && value.ValueKind != JsonValueKind.Null;
-
-    private static string? OptionalString(JsonElement e, string name) => Has(e, name, out var v) ? v.GetString() : null;
-
-    private static double OptionalDouble(JsonElement e, string name, double fallback) =>
-        Has(e, name, out var v) ? v.GetDouble() : fallback;
-
-    private static int OptionalInt(JsonElement e, string name, int fallback) => Has(e, name, out var v) ? v.GetInt32() : fallback;
-
-    private static ulong OptionalUInt64(JsonElement e, string name, ulong fallback) =>
-        Has(e, name, out var v) ? v.GetUInt64() : fallback;
-
-    private static IEnumerable<string> OptionalStrings(JsonElement e, string name) =>
-        Has(e, name, out var v) ? v.EnumerateArray().Select(x => x.GetString()!).ToArray() : [];
-
-    private static BusyReason ParseBusy(string name) =>
-        name switch
-        {
-            "call" => BusyReason.Call,
-            "fullScreen" => BusyReason.FullScreen,
-            _ => throw new InvalidOperationException($"unknown busy reason {name}"),
-        };
-
-    private static string BusyName(BusyReason reason) => reason == BusyReason.Call ? "call" : "fullScreen";
+    private static BusyReason ParseBusyOrThrow(string name) =>
+        ParseBusy(name) ?? throw new InvalidOperationException($"unknown busy reason {name}");
 
     private static string DecisionName(SchedulerDecision decision) =>
         decision == SchedulerDecision.Remind ? "remind" : "postpone";
@@ -201,7 +177,7 @@ public sealed class SchedulerVectorsTests
         private TickDecision[] Ticks(JsonElement step)
         {
             idle.Idle = OptionalDouble(step, "idleSeconds", 0);
-            busy.Reasons = OptionalStrings(step, "busy").Select(ParseBusy).ToHashSet();
+            busy.Reasons = OptionalStrings(step, "busy").Select(ParseBusyOrThrow).ToHashSet();
             var count = step.GetProperty("count").GetInt32();
             var every = OptionalInt(step, "everySeconds", 0);
             var decisions = new List<TickDecision>();

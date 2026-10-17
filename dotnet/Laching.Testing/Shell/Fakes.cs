@@ -69,3 +69,40 @@ public sealed class FakeAudio : IAudioOutputState
 
     public bool? IsOutputMuted() => Muted;
 }
+
+/// <summary>Whether the session is locked, set by the test.</summary>
+public sealed class FakeScreenLock : IScreenLock
+{
+    public bool IsLocked { get; set; }
+}
+
+/// <summary>The power source, set by the test: <see cref="Set"/> changes it and raises <see cref="Changed"/>.</summary>
+public sealed class FakePower : IPowerSource
+{
+    /// <summary>The reading; null as on a desktop without a battery reading.</summary>
+    public PowerState? State { get; set; }
+
+    public event Action? Changed;
+
+    public PowerState? CurrentPowerState() => State;
+
+    public void Set(PowerState state)
+    {
+        State = state;
+        Changed?.Invoke();
+    }
+}
+
+/// <summary>The system's light or dark appearance, set by the test: <see cref="Set"/> changes it and raises <see cref="Changed"/>.</summary>
+public sealed class FakeAppearance : IAppearance
+{
+    public bool IsDark { get; set; }
+
+    public event Action<bool>? Changed;
+
+    public void Set(bool dark)
+    {
+        IsDark = dark;
+        Changed?.Invoke(dark);
+    }
+}

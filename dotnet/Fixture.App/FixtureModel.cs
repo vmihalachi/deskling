@@ -17,15 +17,6 @@ using Size = Windows.Foundation.Size;
 
 namespace FixtureApp;
 
-/// <summary>The fixture app's windows.</summary>
-public enum FixtureWindow
-{
-    Home,
-    Onboarding,
-    Settings,
-    Support,
-}
-
 /// <summary>
 /// The fixture app's model: Laching's fixture bank and its vector character in the tray, placeholder words, and what the
 /// hand checks need besides (a line long enough to start a call during, a clock that skips to the next line).
@@ -52,17 +43,8 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         StatusItemTooltip: "Laching fixture",
         AccessibilityLabel: "Fixture",
         Sounds: new CompanionSounds(Blip: FixtureSounds.Blip, Shh: FixtureSounds.Shh, Hello: FixtureSounds.Hello),
-        Status: new StatusCopy(
-            ShhUntilYouSay: () => "Shh until you say",
-            ShhRestOfToday: () => "Shh for the rest of today",
-            ShhUntil: time => $"Shh until {time:t}",
-            ShhUntilDay: day => $"Shh until {day:ddd} {day:t}",
-            QuietCall: () => "Quiet: you're on a call",
-            QuietFullScreen: () => "Quiet: full screen",
-            OffHours: () => "Off hours",
-            Asleep: () => "Asleep",
-            NextInMinutes: minutes => $"Next line in about {minutes} min"),
-        Desktop: new DesktopCopy(SayActionName: () => "Say something", BackTomorrow: () => "Back tomorrow", BackAt: time => $"Back at {time:t}"),
+        Status: FixtureCopy.Status("t"),
+        Desktop: FixtureCopy.Desktop("t"),
         TuneBubbleText: () => "♪",
         Localize: (_, source) => source,
         SupporterProduct: Supporter);
@@ -101,7 +83,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         : base(
             settings,
             bank,
-            new WindowRoles<FixtureWindow>(FixtureWindow.Home, FixtureWindow.Onboarding, FixtureWindow.Settings, FixtureWindow.Support),
+            FixtureCopy.Roles,
             Configuration,
             host,
             clock,
@@ -151,26 +133,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
         };
 
     /// <summary>The menus' words, with their access keys marked (the host's <c>MenuAccessKeys</c> is on).</summary>
-    public override MenuCopy MenuCopy { get; } = new(
-        Say: "&Say something",
-        WakeUp: "&Wake up",
-        Shh: "S&hh",
-        ForAnHour: "For an &hour",
-        ForTheRestOfToday: "For the &rest of today",
-        UntilISay: "&Until I say",
-        DesktopSubmenu: "&On the desktop",
-        Show: "&Show",
-        ShowNow: "&Show now",
-        HideForAnHour: "&Hide for an hour",
-        HideForTheRestOfToday: "Hide for the &rest of today",
-        Size: "Si&ze",
-        Hide: "H&ide",
-        UntilIShowItAgain: "&Until I show it again",
-        Settings: "S&ettings…",
-        Support: "S&upport…",
-        ThanksForSupporting: "&Thanks for supporting ♥…",
-        Quit: "&Quit",
-        SizeLabel: size => size.RawValue());
+    public override MenuCopy MenuCopy { get; } = FixtureCopy.Menu(accessKeys: true);
 
     public override DesktopLayout DesktopLayout { get; }
 

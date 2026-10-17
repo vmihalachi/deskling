@@ -78,16 +78,5 @@ public static class Frequencies
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static Frequency? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "chatty" => Frequency.Chatty,
-            "sometimes" => Frequency.Sometimes,
-            "every45Minutes" => Frequency.Every45Minutes,
-            "rarely" => Frequency.Rarely,
-            "every90Minutes" => Frequency.Every90Minutes,
-            "every2Hours" => Frequency.Every2Hours,
-            "every3Hours" => Frequency.Every3Hours,
-            _ => null,
-        };
+    public static Frequency? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }

@@ -73,4 +73,19 @@ public sealed class VectorSupportTests
         Assert.False(VectorSupport.Same(JsonNode.Parse("""{"a": 1}"""), JsonNode.Parse("""{"a": 1, "b": 2}""")));
         Assert.True(VectorSupport.Same(null, JsonNode.Parse("null")));
     }
+
+    [Fact]
+    public void OptionalNumbersAndStringsFallBackWhenNullOrLeftOut()
+    {
+        using var doc = JsonDocument.Parse("""{"d": 1.5, "i": 3, "u": 18446744073709551615, "s": ["a"], "n": null}""");
+        var e = doc.RootElement;
+        Assert.Equal(1.5, VectorSupport.OptionalDouble(e, "d", 0));
+        Assert.Equal(7, VectorSupport.OptionalDouble(e, "n", 7));
+        Assert.Equal(3, VectorSupport.OptionalInt(e, "i", 0));
+        Assert.Equal(9, VectorSupport.OptionalInt(e, "missing", 9));
+        Assert.Equal(ulong.MaxValue, VectorSupport.OptionalUInt64(e, "u", 0));
+        Assert.Equal(2UL, VectorSupport.OptionalUInt64(e, "n", 2));
+        Assert.Equal(["a"], VectorSupport.OptionalStrings(e, "s"));
+        Assert.Empty(VectorSupport.OptionalStrings(e, "n"));
+    }
 }

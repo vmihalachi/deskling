@@ -23,14 +23,7 @@ public static class Appearances
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static AppearanceSetting? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "system" => AppearanceSetting.System,
-            "light" => AppearanceSetting.Light,
-            "dark" => AppearanceSetting.Dark,
-            _ => null,
-        };
+    public static AppearanceSetting? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }
 
 /// <summary>How big the character stands on the desktop. The raw values are stored; never rename one.</summary>
@@ -56,14 +49,7 @@ public static class DesktopSizes
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static DesktopSize? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "small" => DesktopSize.Small,
-            "medium" => DesktopSize.Medium,
-            "large" => DesktopSize.Large,
-            _ => null,
-        };
+    public static DesktopSize? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 
     /// <summary>The character's height on the desktop, in points (device-independent pixels on Windows); the width follows the art.</summary>
     public static double Height(this DesktopSize size) =>

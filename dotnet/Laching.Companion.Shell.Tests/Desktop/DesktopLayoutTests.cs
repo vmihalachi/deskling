@@ -8,7 +8,14 @@ namespace Laching.Companion.Shell.Tests.Desktop;
 public sealed class DesktopLayoutTests
 {
     /// <summary>sunnysays' sunflower (120 × 132, the bubble at the face, 44 down, tucked 12 %): the numbers its desktop used.</summary>
-    private static readonly DesktopLayout Sunflower = new(Fixture.Sunflower());
+    private static readonly DesktopLayout Sunflower = new(SunflowerArt());
+
+    /// <summary>The sunflower's art, shared with the Swift tests (<c>Resources/sunflower.json</c>).</summary>
+    private static CharacterArt SunflowerArt()
+    {
+        using var json = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Resources", "sunflower.json"));
+        return CharacterArt.Parse(json);
+    }
 
     [Fact]
     public void TheSunflowersNumbers()

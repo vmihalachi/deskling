@@ -1,4 +1,5 @@
 using Laching.Companion.Rules;
+using Laching.Testing.Fixtures;
 using Laching.Windows.Companion.Support;
 using Laching.Windows.Companion.Views;
 using Laching.Windows.Shell;

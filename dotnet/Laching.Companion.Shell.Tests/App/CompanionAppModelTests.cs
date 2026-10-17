@@ -16,15 +16,6 @@ using Laching.Core.Store;
 
 namespace Laching.Companion.Shell.Tests.App;
 
-/// <summary>The fixture app's windows.</summary>
-public enum FixtureWindow
-{
-    Home,
-    Onboarding,
-    Settings,
-    Support,
-}
-
 /// <summary>An app's model in another assembly: a subclass with state of its own and the hooks an app overrides.</summary>
 internal sealed class FixtureModel(
     CompanionSettings settings,
@@ -41,7 +32,7 @@ internal sealed class FixtureModel(
     : CompanionAppModel<FixtureWindow, CompanionSettings>(
         settings,
         bank,
-        new WindowRoles<FixtureWindow>(FixtureWindow.Home, FixtureWindow.Onboarding, FixtureWindow.Settings, FixtureWindow.Support),
+        FixtureCopy.Roles,
         Configuration,
         host,
         clock,
@@ -62,17 +53,8 @@ internal sealed class FixtureModel(
         StatusItemTooltip: "Fixture",
         AccessibilityLabel: "Fixture",
         Sounds: new CompanionSounds(Blip: "blip", Shh: "shh", Hello: "hello"),
-        Status: new StatusCopy(
-            ShhUntilYouSay: () => "Shh until you say",
-            ShhRestOfToday: () => "Shh for the rest of today",
-            ShhUntil: time => $"Shh until {time:HH:mm}",
-            ShhUntilDay: day => $"Shh until {day:ddd HH:mm}",
-            QuietCall: () => "Quiet: you're on a call",
-            QuietFullScreen: () => "Quiet: full screen",
-            OffHours: () => "Off hours",
-            Asleep: () => "Asleep",
-            NextInMinutes: minutes => $"Next in about {minutes} min"),
-        Desktop: new DesktopCopy(SayActionName: () => "Say something", BackTomorrow: () => "Back tomorrow", BackAt: time => $"Back at {time:HH:mm}"),
+        Status: FixtureCopy.Status("HH:mm"),
+        Desktop: FixtureCopy.Desktop("HH:mm"),
         TuneBubbleText: () => "♪",
         Localize: (_, source) => source,
         SupporterProduct: Supporter);
@@ -97,26 +79,7 @@ internal sealed class FixtureModel(
         }
     }
 
-    public override MenuCopy MenuCopy { get; } = new(
-        Say: "Say something",
-        WakeUp: "Wake up",
-        Shh: "Shh",
-        ForAnHour: "For an hour",
-        ForTheRestOfToday: "For the rest of today",
-        UntilISay: "Until I say",
-        DesktopSubmenu: "On the desktop",
-        Show: "Show",
-        ShowNow: "Show now",
-        HideForAnHour: "Hide for an hour",
-        HideForTheRestOfToday: "Hide for the rest of today",
-        Size: "Size",
-        Hide: "Hide",
-        UntilIShowItAgain: "Until I show it again",
-        Settings: "Settings…",
-        Support: "Support…",
-        ThanksForSupporting: "Thanks for supporting ♥…",
-        Quit: "Quit",
-        SizeLabel: size => size.RawValue());
+    public override MenuCopy MenuCopy { get; } = FixtureCopy.Menu(accessKeys: false);
 
     public override DesktopLayout DesktopLayout { get; } = new(Fixture.Vector);
 

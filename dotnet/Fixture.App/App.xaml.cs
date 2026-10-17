@@ -13,7 +13,7 @@ using Laching.Windows.Companion.Views;
 using Laching.Windows.Shell.Localization;
 using Laching.Windows.System;
 using FixtureApp.Views;
-using Shot = Laching.Windows.Companion.Screenshots.ScreenshotScript<FixtureApp.FixtureWindow, Laching.Companion.Settings.CompanionSettings>.Shot;
+using Shot = Laching.Windows.Companion.Screenshots.ScreenshotScript<Laching.Testing.Fixtures.FixtureWindow, Laching.Companion.Settings.CompanionSettings>.Shot;
 
 namespace FixtureApp;
 
