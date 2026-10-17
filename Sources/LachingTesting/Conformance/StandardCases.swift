@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 extension QuietTimeline {
     /// The timelines every companion app pins (and `conformance/companion` over the fixtures): 17 days of ticks,

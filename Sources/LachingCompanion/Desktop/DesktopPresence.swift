@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// Whether the character stands on the desktop right now, and how long its speech bubble stays there.
 ///

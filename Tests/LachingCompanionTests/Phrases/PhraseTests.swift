@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 import XCTest
 
 final class PhraseTests: XCTestCase {

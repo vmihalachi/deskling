@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// How the character looks and behaves right now. Raw values appear in the vectors; never rename one.
 public enum Mood: String, CaseIterable, Codable, Sendable {

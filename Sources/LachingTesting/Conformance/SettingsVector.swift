@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 /// `settings.json`: every generic preference's storage key and first-launch value, the keys "Reset to defaults"
 /// clears, the names and tables ports need, and the package's timing constants. `base(defaults:)` returns the tree so

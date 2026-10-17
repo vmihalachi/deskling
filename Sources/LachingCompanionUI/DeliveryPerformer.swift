@@ -1,7 +1,7 @@
 #if os(macOS)
+    import Foundation
     import LachingCompanion
     import LachingShell
-    import Foundation
 
     /// Turns a `Delivery` into what the user sees and hears: the bubble text (part by part for a joke), the blip and the
     /// words through a `SpeechSequencer`, a tune on the chime, and one notification when the punchline lands (both parts

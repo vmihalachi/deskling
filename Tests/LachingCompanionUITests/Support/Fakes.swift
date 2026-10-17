@@ -1,7 +1,7 @@
 #if os(macOS)
+    import Foundation
     import LachingCompanionUI
     import LachingShell
-    import Foundation
 
     /// A voice that records what it says and finishes when the test says so.
     @MainActor

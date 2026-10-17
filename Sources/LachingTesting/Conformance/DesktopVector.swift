@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 /// `desktop.json`: `DesktopPresence` over short timelines (the setting, busy moments, hide for a while, show now),
 /// the desktop bubble's lingering time for sample lines and, when asked, `PhraseTiming.partDelay` for the parts of a

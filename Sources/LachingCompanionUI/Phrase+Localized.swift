@@ -1,6 +1,6 @@
 #if os(macOS)
-    import LachingCompanion
     import Foundation
+    import LachingCompanion
 
     extension Phrase {
         /// The phrase in the user's language, one string per part (a setup and its punchline, or a single line): the

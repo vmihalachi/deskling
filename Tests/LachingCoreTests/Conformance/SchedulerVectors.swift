@@ -1,6 +1,6 @@
+import Foundation
 import LachingCore
 import LachingTesting
-import Foundation
 
 /// `conformance/scheduler/*.json`: a config, a timeline of steps (ticks with idle and busy state,
 /// user actions), and the scheduler's expected decisions and state after each step.

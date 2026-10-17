@@ -1,10 +1,10 @@
 #if os(macOS)
     import AppKit
+    import Foundation
     import LachingCompanion
     import LachingCore
     import LachingShell
     import LachingStore
-    import Foundation
     import Observation
     import SwiftUI
 
