@@ -60,7 +60,7 @@ public static class CompanionState
             return Mood.HushedForCall;
         if (snapshot.Busy.Contains(BusyReason.FullScreen))
             return Mood.HushedFullScreen;
-        if (snapshot.IsScreenLocked || snapshot.IdleSeconds >= QuietRules.AwayThresholdSeconds)
+        if (snapshot.IsAway)
             return Mood.Asleep;
         if (status is SchedulerStatus.Postponed postponed)
             return postponed.Reason == BusyReason.Call ? Mood.HushedForCall : Mood.HushedFullScreen;

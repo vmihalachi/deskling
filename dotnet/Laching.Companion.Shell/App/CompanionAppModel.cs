@@ -697,7 +697,7 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
                     return copy.QuietCall();
                 if (snapshot.Busy.Contains(BusyReason.FullScreen))
                     return copy.QuietFullScreen();
-                if (snapshot.IsScreenLocked || snapshot.IdleSeconds >= QuietRules.AwayThresholdSeconds)
+                if (snapshot.IsAway)
                     return copy.Asleep();
                 return copy.NextInMinutes(Math.Max(1, (int)Math.Ceiling((scheduled.Date - now).TotalMinutes)));
             default:

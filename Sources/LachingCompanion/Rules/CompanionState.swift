@@ -24,7 +24,7 @@ public enum CompanionState {
         if case .paused = status { return .shushed }
         if snapshot.busy.contains(.call) { return .hushedForCall }
         if snapshot.busy.contains(.fullScreen) { return .hushedFullScreen }
-        if snapshot.isScreenLocked || snapshot.idleSeconds >= QuietRules.awayThreshold { return .asleep }
+        if snapshot.isAway { return .asleep }
         if case .postponed(let reason) = status { return reason == .call ? .hushedForCall : .hushedFullScreen }
         if status == .away { return .asleep }
         if status == .outsideActiveHours { return .offHours }
