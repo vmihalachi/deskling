@@ -263,9 +263,18 @@ class ExportTests(L10nTestCase):
         self.assertEqual(l10n.export_languages(), ["en", "it", "de"])
         self.assertEqual(len(self.resw), 3)
         self.assertEqual(sorted(path.name for path in self.po), ["LINGUAS", "de.po", "en.po", "it.po"])
-        self.assertEqual(sorted(path.parent.name for path in self.android), ["values", "values-de", "values-it"])
+        self.assertEqual(sorted(path.parent.name for path in self.android), ["values", "values-de", "values-it", "xml"])
         self.assertEqual(l10n.android_values_dir("zh-Hans"), "values-zh-rCN")
         self.assertEqual(l10n.android_values_dir("pt-BR"), "values-pt-rBR")
+        self.assertEqual(self.android[self.root / "android" / "xml" / "locales_config.xml"], (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<!-- Generated from macos/Fixture/Resources/Localizable.xcstrings by deskling/tools/l10n.py export-android. "
+            "Don't edit. -->\n"
+            '<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            '  <locale android:name="en"/>\n  <locale android:name="it"/>\n  <locale android:name="de"/>\n'
+            "</locale-config>\n"))
+        self.assertEqual(l10n.android_locale("zh-Hans"), "zh-CN", "what values-zh-rCN says")
+        self.assertEqual(l10n.android_locale("pt-BR"), "pt-BR")
 
     def test_a_scoped_phrase_is_left_out_of_other_languages(self):
         keys = {lang: {unit["key"] for unit in units} for lang, units in self.units.items()}
@@ -339,6 +348,15 @@ class ExportTests(L10nTestCase):
         self.assertEqual(len(l10n.stale_exports()), 3, "the port exists: its exports must too")
         quiet(l10n.write_export, l10n.windows_files(), False)
         self.assertEqual(l10n.stale_exports(), [])
+        l10n.ANDROID_DIR = self.root / "droid"
+        l10n.ANDROID_STRINGS = l10n.ANDROID_DIR / "app" / "src" / "main" / "res"
+        self.assertEqual(l10n.stale_exports(), [], "no Android folder yet: nothing to check")
+        l10n.ANDROID_DIR.mkdir()
+        self.assertEqual(len(l10n.stale_exports()), 4, "three strings.xml and locales_config.xml")
+        quiet(l10n.write_export, l10n.android_files(), False)
+        self.assertEqual(l10n.stale_exports(), [])
+        l10n.ANDROID_DIR = None
+        self.assertEqual(l10n.stale_exports(), [], "without android.dir the folder is four up from res/")
         stale = l10n.WINDOWS_STRINGS / "de" / "Resources.resw"
         stale.write_text("stale", "utf8")
         self.assertEqual(l10n.stale_exports(), [stale])

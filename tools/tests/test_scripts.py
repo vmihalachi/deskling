@@ -227,6 +227,153 @@ elif command == "launch":
         self.assertNotIn("create", self.log.read_text().split(), "the template is made once")
         self.assertIn("run en home -", self.log.read_text())
 
+    def android_config(self, extra_shot: bool = True) -> None:
+        """The fixture app with an Android side: `android/` and a `droid` platform captured on the AVD Pixel_8."""
+        config = self.root / "companion.json"
+        data = json.loads(config.read_text("utf8"))
+        data["android"] = {"dir": "android", "core": "core", "app": "app"}
+        data["screens"]["platforms"]["droid"] = {"capture": "android", "label": "Android", "avd": "Pixel_8"}
+        data["screens"]["list"]["home"]["android"] = "today"
+        if extra_shot:
+            data["screens"]["list"]["settings"]["droid"] = {"shot": "settings", "env": {"DESKLING_SCREENSHOT_MODE": "two"}}
+        config.write_text(json.dumps(data), "utf8")
+
+    def test_check_layout_android_boots_an_emulator_and_runs_the_languages_on_it(self):
+        self.android_config()
+        state = self.root / "device"  # the emulator's files/screens, and the marker `emu kill` leaves
+        state.mkdir()
+        fake_adb = self.root / "fake_adb.py"
+        # adb against a device that is up at once: the app writes its shots (plus problems.txt in German) into
+        # files/screens when started in screenshot mode; `emu kill` tells the fake emulator to exit.
+        fake_adb.write_text(f"""import shutil, sys
+from pathlib import Path
+state = Path({str(state)!r})
+screens = state / "files" / "screens"
+args = sys.argv[1:]
+if args[:1] == ["-s"]:
+    args = args[2:]
+def log(line):
+    with open({str(self.log)!r}, "a") as out:
+        out.write(line + "\\n")
+command = args[0]
+if command == "install":
+    log("install " + Path(args[-1]).name)
+elif command == "emu":
+    (state / "killed").touch()
+    log("kill")
+elif command == "exec-out":
+    sys.stdout.buffer.write((screens / Path(args[-1]).name).read_bytes())
+elif command == "shell":
+    words = args[1:]
+    if words[:2] == ["getprop", "sys.boot_completed"]:
+        print("1")
+    elif words[:3] == ["settings", "put", "system"]:
+        log(" ".join(words[3:]))
+    elif words[:2] == ["cmd", "package"]:
+        print("priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true")
+        print("app.fixture.dev/.Main")
+    elif words[:2] == ["am", "start"]:
+        value = lambda key: words[words.index(key) + 1]
+        language = value("DESKLING_LANG")
+        log(f"start {{language}} {{value('DESKLING_REGION')}} {{value('DESKLING_SCREENSHOT_MODE')}} {{value('DESKLING_SCREENS')}}")
+        screens.mkdir(parents=True, exist_ok=True)
+        for shot in value("DESKLING_SCREENS").split(","):
+            for theme in ("light", "dark"):
+                (screens / f"{{shot}}-{{theme}}.png").write_bytes(b"png")
+        if language == "de":
+            with open(screens / "problems.txt", "a") as problems:
+                problems.write(f"{{value('DESKLING_SCREENS')}}-light.png: “Wiederholungen” is cut short\\n")
+        (screens / "done").touch()
+    elif words[:1] == ["run-as"]:
+        sub = words[2:]
+        if sub[:2] == ["rm", "-rf"]:
+            shutil.rmtree(screens, ignore_errors=True)
+        elif sub == ["ls", "files/screens/done"]:
+            sys.exit(0 if (screens / "done").exists() else 1)
+        elif sub == ["ls", "files/screens"]:
+            print("\\n".join(sorted(p.name for p in screens.iterdir())))
+""", "utf8")
+        self.fake("adb", f'exec "{sys.executable}" "{fake_adb}" "$@"\n')
+        self.fake("emulator", f'echo "emulator $*" >> "{self.log}"\nwhile [ ! -f "{state}/killed" ]; do sleep 0.1; done\n')
+        apk = self.root / "app-debug.apk"
+        apk.write_bytes(b"apk")
+
+        result = self.run_script("check-layout-android.py", "--apk", str(apk), "--devices", "Pixel_8", "--font-scale", "2.0",
+                                 "en", "de")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual([line for line in result.stdout.splitlines() if line.startswith("==")],
+                         ["== android-Pixel_8 en", "== android-Pixel_8 de"])
+        self.assertIn("settings-light.png: “Wiederholungen” is cut short", result.stdout)
+        self.assertIn("today-light.png: “Wiederholungen” is cut short", result.stdout)
+        self.assertIn("Layout problems in: android-Pixel_8/de", result.stderr)
+        checked = self.root / "macos" / "build" / "layout-check" / "android-Pixel_8"
+        self.assertTrue((checked / "en" / "today-light.png").exists())
+        self.assertTrue((checked / "en" / "settings-dark.png").exists())
+        self.assertEqual(len((checked / "de" / "problems.txt").read_text("utf8").splitlines()), 2,
+                         "both launches' problems, one file")
+        self.assertTrue((checked / "emulator.log").exists())
+        lines = self.log.read_text().splitlines()
+        self.assertEqual([line for line in lines if line.startswith("emulator ")], [
+            "emulator -avd Pixel_8 -port 5554 -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect"])
+        self.assertEqual([line for line in lines if line.startswith(("start", "install", "font_scale", "kill"))], [
+            "install app-debug.apk", "font_scale 2.0",
+            "start en US screens today", "start en US two settings", "start de DE screens today", "start de DE two settings",
+            "font_scale 1.0", "kill",
+        ])
+
+        self.log.unlink()
+        (state / "killed").unlink()
+        passing = self.run_script("check-layout-android.py", "--apk", str(apk), "--devices", "Pixel_8", "--only", "today", "en")
+        self.assertEqual(passing.returncode, 0, passing.stdout + passing.stderr)
+        self.assertIn("Every screen fits on Pixel_8 in: en", passing.stdout)
+        self.assertIn("start en US screens today", self.log.read_text())
+
+    def test_check_layout_android_needs_an_avd(self):
+        self.android_config()
+        config = self.root / "companion.json"
+        data = json.loads(config.read_text("utf8"))
+        del data["screens"]["platforms"]["droid"]["avd"]
+        config.write_text(json.dumps(data), "utf8")
+        result = self.run_script("check-layout-android.py", "--apk", "x.apk", "en")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("no AVD: --devices NAME", result.stderr)
+
+    @unittest.skipIf(WINDOWS, "the fakes are sh scripts")
+    def test_verify_runs_the_kotlin_checks(self):
+        self.android_config(extra_shot=False)
+        self.fake("ktlint", f'echo "ktlint $*" >> "{self.log}"\n')
+        self.fake("java", f'echo "java $*" >> "{self.log}"\n')
+        gradlew = self.root / "android" / "gradlew"
+        gradlew.parent.mkdir()
+        gradlew.write_text(f'#!/bin/sh\necho "gradlew $*" >> "{self.log}"\n', "utf8")
+        gradlew.chmod(0o755)
+        source = self.root / "android" / "core" / "src" / "main" / "kotlin" / "A.kt"
+        source.parent.mkdir(parents=True)
+        source.write_text("fun a() = 1\n", "utf8")
+
+        fast = self.run_script("verify.sh", "--fast", "--", "android/core/src/main/kotlin/A.kt")
+        self.assertEqual(fast.returncode, 0, fast.stdout + fast.stderr)
+        self.assertIn("ok    ktlint", fast.stdout)
+        self.assertIn("ktlint android/core/src/main/kotlin/A.kt", self.log.read_text())
+        self.assertNotIn("gradlew", self.log.read_text(), "--fast leaves the tests")
+
+        self.log.unlink()
+        slow = self.run_script("verify.sh", "--", "android/core/src/main/kotlin/A.kt")
+        self.assertEqual(slow.returncode, 0, slow.stdout + slow.stderr)
+        self.assertIn("ok    gradlew :core:test", slow.stdout)
+        self.assertIn("gradlew :core:test -q --console=plain", self.log.read_text())
+        vectors = self.run_script("verify.sh", "--", "conformance/phrases.json")
+        self.assertIn("ok    gradlew :core:test", vectors.stdout, "the vectors are what :core replays")
+
+        (self.bin / "ktlint").unlink()
+        gradlew.unlink()
+        # $PATH without the folders that hold a real ktlint (Homebrew's, on the maintainer's Mac).
+        without = [f for f in os.environ["PATH"].split(os.pathsep) if not (Path(f) / "ktlint").exists()]
+        path = os.pathsep.join([str(self.bin), str(Path(sys.executable).parent), *without])
+        skipped = self.run_script("verify.sh", "--", "android/core/src/main/kotlin/A.kt", env={"PATH": path})
+        self.assertIn("skip  ktlint: brew install ktlint, or setup-linux.sh", skipped.stdout)
+        self.assertIn("skip  gradlew :core:test: needs android/gradlew and a JDK 17 (setup-linux.sh)", skipped.stdout)
+
     def test_verify_runs_what_the_paths_need(self):
         result = self.run_script("verify.sh", "--fast", "--", "conformance/phrases.json")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -396,6 +543,25 @@ class StoreScreenshotTests(unittest.TestCase):
             result = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py")], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((root / "store" / "en" / "1-panel-dark.png").exists())
+
+            # The Android canvases from a phone's captures: the phone image is portrait, with Play's limits checked.
+            from PIL import Image
+            png(root / "build" / "screens" / "droid" / "en" / "panel-dark.png", 200)
+            captures = str(root / "build" / "screens" / "droid" / "en")
+            phone = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-phone", captures],
+                                   cwd=root, capture_output=True, text=True)
+            self.assertEqual(phone.returncode, 0, phone.stderr)
+            self.assertEqual(Image.open(root / "store" / "android-phone" / "en" / "1-panel-dark.png").size, (1080, 1920))
+            tablet = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-tablet", captures,
+                                     str(root / "tablet"), "en"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(tablet.returncode, 0, tablet.stderr)
+            self.assertEqual(Image.open(root / "tablet" / "1-panel-dark.png").size, (2560, 1600))
+            data["screenshots"]["store"]["canvases"] = {"android-phone": [1080, 2400]}
+            (root / "companion.json").write_text(json.dumps(data), "utf8")
+            tall = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-phone", captures],
+                                  cwd=root, capture_output=True, text=True)
+            self.assertEqual(tall.returncode, 1)
+            self.assertIn("1080×2400: Google Play takes no side more than 2× the other", tall.stderr)
 
 
 class DevIconTests(unittest.TestCase):

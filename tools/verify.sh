@@ -14,12 +14,13 @@
 #   mac.app/tests Swift, mac.projectSpec   xcodegen (fails if project.pbxproj was stale), swift-format lint, xcodebuild test
 #   mac.core                               swift test on the core package
 #   mac.core sources and Conformance/      deskling/tools/conformance.sh (fails if the vectors were stale)
-#   strings (app Swift, .xcstrings, landing i18n)   l10n.py check, phrases.py check, .resw export is current
+#   strings (app Swift, .xcstrings, landing i18n)   l10n.py check, phrases.py check, the .resw and Android strings exports are current
 #   voices, voice config, catalog, phrases.json     voice.py check, the voices pointer is pushed
 #   windows/**/*.cs                        dotnet format whitespace, dotnet test (windows.coreTests)
 #   windows.app, windows.appTests          check-winui.py; dotnet test (windows.appTests, any OS); the app builds on
 #                                          Windows, or on a Mac in the Parallels VM (windows/vm.sh build)
 #   windows.assets (the icon, Assets/)     windows/assets.py --check (the MSIX images match the icon)
+#   android.dir/**/*.kt(s)                 ktlint; ./gradlew :<android.core>:test for android.core and conformance/
 #   landing/, phrases/settings vectors     <landing.tool> check and build
 #   store.dir/*.md                         store/check.py (the listing's field limits)
 #   always                                 the Deskling pins agree (submodule tag = deskling.tag = SwiftPM = XcodeGen = NuGet)
@@ -40,7 +41,7 @@ while [ $# -gt 0 ]; do
     --staged) mode=staged ;;
     --base) mode=base; base="$2"; shift ;;
     --) shift; mode=paths; paths=("$@"); break ;;
-    -h|--help) sed -n '2,25p' "$TOOLS/verify.sh" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,26p' "$TOOLS/verify.sh" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown argument: $1 (see --help)" >&2; exit 2 ;;
   esac
   shift
@@ -154,6 +155,24 @@ resw_current() {
     diff -r --strip-trailing-cr "$logdir/resw" "$WINDOWS_STRINGS"
 }
 
+android_strings_current() {
+  python3 "$TOOLS/l10n.py" export-android --out "$logdir/android" >/dev/null &&
+    diff -r --strip-trailing-cr "$logdir/android" "$ANDROID_STRINGS"
+}
+
+# Kotlin style (ktlint_official, the Android project's .editorconfig) of the changed Kotlin files, or all of them.
+# Fix with: ktlint -F <files>
+kotlin_lint() {
+  if [ "$all" = 1 ]; then
+    (cd "$ANDROID_DIR" && ktlint "**/*.kt" "**/*.kts" "!**/build/**")
+    return
+  fi
+  local files=()
+  while read -r f; do [ -f "$f" ] && files+=("$f"); done < <(printf '%s\n' "$changed" | grep -E "$RE_KOTLIN")
+  [ ${#files[@]} -gt 0 ] || return 0
+  ktlint "${files[@]}"
+}
+
 swift_format() {
   local config="$MAC_DIR/.swift-format"
   # Fix with: xcrun swift-format format -i --configuration <mac.dir>/.swift-format <files>
@@ -225,6 +244,14 @@ fi
 if [ -n "$WINDOWS_STRINGS" ] && [ -d "$WINDOWS_STRINGS" ] && touched "\.xcstrings$|^$WINDOWS_STRINGS/"; then
   check ".resw files match the catalog" resw_current
 fi
+if [ -n "$ANDROID_STRINGS" ] && [ -d "$ANDROID_STRINGS" ] && touched "\.xcstrings$|^$ANDROID_STRINGS/"; then
+  check "Android strings match the catalog" android_strings_current
+fi
+
+if touched "$RE_KOTLIN"; then
+  if has ktlint; then check "ktlint" kotlin_lint
+  else skip "ktlint: brew install ktlint, or setup-linux.sh"; fi
+fi
 
 if touched "$RE_CSHARP"; then
   if has dotnet; then check "dotnet format whitespace" csharp_format
@@ -283,6 +310,12 @@ if [ "$fast" = 0 ]; then
   fi
   if touched "$RE_WINDOWS_ASSETS"; then
     check "Windows images match the icon (windows/assets.py)" python3 "$TOOLS/windows/assets.py" --check
+  fi
+  if touched "$RE_ANDROID_CORE" && [ -n "$ANDROID_DIR" ]; then
+    # The pure Kotlin module replays the vectors; the app module needs the Android SDK, so it builds in kotlin.yml.
+    if [ -x "$ANDROID_DIR/gradlew" ] && { has java || [ -n "${JAVA_HOME:-}" ]; }; then
+      check "gradlew :$ANDROID_CORE:test" bash -c "cd \"$ANDROID_DIR\" && ./gradlew :$ANDROID_CORE:test -q --console=plain"
+    else skip "gradlew :$ANDROID_CORE:test: needs $ANDROID_DIR/gradlew and a JDK 17 (setup-linux.sh)"; fi
   fi
   if touched "$RE_LANDING" && [ -n "$LANDING_DIR" ] && [ -d "$ROOT/$LANDING_DIR" ] && [ -n "$landing_tool" ] &&
     { has "$landing_tool" || [ -x "$landing_tool" ]; }; then

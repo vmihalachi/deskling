@@ -178,6 +178,45 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(problems, ["ios.keywords: 'friend' is already in the name or subtitle"])
         self.assertNotIn("ios.description", self.listing.single_line)
 
+    def enable_google(self):
+        path = self.root / "companion.json"
+        config = json.loads(path.read_text("utf8"))
+        config["store"]["google"] = {}
+        path.write_text(json.dumps(config), "utf8")
+        self.listing = listing_module.load(self.root)
+
+    def write_google_page(self, title="Fixture"):
+        en = self.root / "store-listing" / "en.md"
+        en.write_text(en.read_text("utf8") + "\n".join([
+            "## Google Play", "",
+            "### Title `google.title`", "", "```text", title, "```", "",
+            "### Short description `google.short`", "", "```text", "A friend at the desk, in your pocket too.", "```", "",
+            "### Full description `google.full`", "", "```text", "Fixture says a line now and then.", "",
+            "Nothing leaves your phone.", "```", "",
+            "### Supporter name `google.iap.supporter.name`", "", "```text", "Supporter", "```", "",
+            "### Supporter description `google.iap.supporter.description`", "", "```text", "A thank-you.", "```", ""]), "utf8")
+
+    def test_the_google_play_section_is_checked_only_when_configured(self):
+        self.assertFalse({key for key in self.listing.limits if key.startswith("google.")})
+        self.enable_google()
+        limits = self.listing.limits
+        self.assertEqual({key: limits[key] for key in limits if key.startswith("google.")}, {
+            "google.title": 30, "google.short": 80, "google.full": 4000,
+            "google.iap.supporter.name": 55, "google.iap.supporter.description": 200})
+        self.assertNotIn("google.full", self.listing.single_line)
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertEqual(problems, ["missing field google.title", "missing field google.short", "missing field google.full",
+                                    "missing field google.iap.supporter.name",
+                                    "missing field google.iap.supporter.description"])
+        self.write_google_page()
+        self.assertEqual(check.check(self.listing, self.listing.fields("en"), self.listing.fields("en")), [])
+        self.write_google_page(title="Fixture, the friend who lives at your desk")
+        problems = check.check(self.listing, self.listing.fields("en"), self.listing.fields("en"))
+        self.assertIn("google.title: 42 > 30 characters", problems)
+        result = subprocess.run([sys.executable, str(TOOLS / "store" / "check.py"), "en"], capture_output=True, text=True,
+                                env={**os.environ, "COMPANION_ROOT": str(self.root)})
+        self.assertIn("Play title 42/30, short 41/80", result.stdout)
+
     # MARK: push.py
 
     def test_token_is_a_valid_es256_jwt(self):

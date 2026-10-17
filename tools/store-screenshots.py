@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-"""Composes Mac App Store screenshots from the window captures (`screenshots.store` in companion.json).
+"""Composes store screenshots from the captures (`screenshots.store` in companion.json): the Mac App Store's by default,
+Google Play's with --canvas.
 
-    python3 deskling/tools/store-screenshots.py [captures-dir] [output-dir] [language]
+    python3 deskling/tools/store-screenshots.py [--canvas mac|android-phone|android-tablet] [captures-dir] [output-dir] [language]
 
-Defaults: screenshots.out -> <store.out>/<source language>, the source language. Needs Pillow (pip3 install pillow).
-deskling/tools/store-screenshots.sh [language|all] captures and composes other languages.
+Defaults: screenshots.out -> <store.out>/<source language> (<store.out>/<canvas>/<language> for an Android canvas),
+the source language. Needs Pillow (pip3 install pillow). deskling/tools/store-screenshots.sh [language|all] captures
+and composes the Mac images of other languages.
 
-Each image is one window capture on the paper of its appearance with a headline (`store.font`) and a short note
+Each image is one capture on the paper of its appearance with a headline (`store.font`) and a short note
 (`store.noteFont`, else the same face) in the app's colors (`store.palette`: light/dark → paper, ink, accent,
-accentText). The layout is drawn for 2880 × 1800 and scales with `store.size`. Captions live in `store.captions`, one
-list per language in upload order: `[{"shot": capture, "appearance": "light"|"dark", "headline": [lines], "note":
-text}, …]`; keep them to what ships and free of health or productivity claims.
+accentText). Captions live in `store.captions`, one list per language in upload order: `[{"shot": capture,
+"appearance": "light"|"dark", "headline": [lines], "note": text}, …]`; keep them to what ships and free of health or
+productivity claims.
+
+Canvases: `mac` is landscape, the window on the right and the text beside it, drawn for 2880 × 1800 and scaled to
+`store.size`; `android-phone` (1080 × 1920, 9:16) stacks the caption above the screen, as the iPhone images do, every
+shot of a language reserving its tallest caption's height so the screens line up; `android-tablet` (2560 × 1600, a
+10-inch tablet) is the landscape layout. `store.canvases` overrides an Android canvas's size; Google Play takes each
+side between 320 and 3840 px and no side more than twice the other, which every Android image is checked against.
 """
 
 import json
@@ -22,16 +30,36 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import companion  # noqa: E402
 
+ANDROID_CANVASES = {"android-phone": (1080, 1920), "android-tablet": (2560, 1600)}
+# Google Play's screenshot limits: each side, and the longer side over the shorter.
+PLAY_SIDE = (320, 3840)
+PLAY_RATIO = 2
+
 CONFIG = companion.load()
 ROOT = CONFIG.root
 STORE = CONFIG.require("screenshots.store")
 SOURCE = CONFIG.source_language
-SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else CONFIG.require_path("screenshots.out")
-LANGUAGE = sys.argv[3] if len(sys.argv) > 3 else SOURCE
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else CONFIG.require_path("screenshots.store.out") / LANGUAGE
+ARGS = sys.argv[1:]
+CANVAS = "mac"
+if ARGS[:1] == ["--canvas"]:
+    if len(ARGS) < 2 or ARGS[1] not in ("mac", *ANDROID_CANVASES):
+        sys.exit(f"store-screenshots: --canvas takes mac, {' or '.join(ANDROID_CANVASES)}")
+    CANVAS, ARGS = ARGS[1], ARGS[2:]
+SRC = Path(ARGS[0]) if len(ARGS) > 0 else CONFIG.require_path("screenshots.out")
+LANGUAGE = ARGS[2] if len(ARGS) > 2 else SOURCE
+if len(ARGS) > 1:
+    OUT = Path(ARGS[1])
+elif CANVAS == "mac":
+    OUT = CONFIG.require_path("screenshots.store.out") / LANGUAGE
+else:
+    OUT = CONFIG.require_path("screenshots.store.out") / CANVAS / LANGUAGE
 
-W, H = (int(v) for v in STORE.get("size", [2880, 1800]))
-UNIT = W / 2880  # the layout's numbers are for a 2880-wide canvas
+if CANVAS == "mac":
+    W, H = (int(v) for v in STORE.get("size", [2880, 1800]))
+else:
+    W, H = (int(v) for v in STORE.get("canvases", {}).get(CANVAS, ANDROID_CANVASES[CANVAS]))
+PORTRAIT = CANVAS == "android-phone"
+UNIT = W / (1080 if PORTRAIT else 2880)  # the layouts' numbers are for a 2880-wide (landscape) or 1080-wide (portrait) canvas
 DEFAULT_PALETTE = {
     "light": {"paper": "#FFFFFF", "ink": "#1D1D1F", "accent": "#0A84FF", "accentText": "#0060DF"},
     "dark": {"paper": "#1C1C1E", "ink": "#F5F5F7", "accent": "#0A84FF", "accentText": "#64B5FF"},
@@ -125,11 +153,86 @@ def compose(caption):
     return canvas
 
 
+def portrait_text(draw, caption):
+    """The headline's font (shrunk until its widest line fits the column), the wrapped note and the block's height."""
+    column = W - 2 * px(72)
+    size = px(72)
+    while True:
+        display = ImageFont.truetype(str(HEADLINE_FONT), size)
+        if max(draw.textlength(line, font=display) for line in caption["headline"]) <= column:
+            break
+        size -= 2
+    note_font = ImageFont.truetype(str(NOTE_FONT), px(40))
+    note_lines = wrap(draw, caption["note"], note_font, column)
+    leading, note_leading = round(size * 1.12), px(52)
+    gap = round(size * 0.2)
+    height = len(caption["headline"]) * leading + gap + px(32) + len(note_lines) * note_leading
+    return display, leading, note_font, note_lines, note_leading, gap, height
+
+
+def compose_portrait(caption, text_height):
+    """A phone canvas: the headline and note centered at the top, the screen below them, scaled to what is left."""
+    colors = PALETTE[caption.get("appearance", "light")]
+    canvas = Image.new("RGB", (W, H), colors["paper"])
+    draw = ImageDraw.Draw(canvas)
+    display, leading, note_font, note_lines, note_leading, gap, height = portrait_text(draw, caption)
+
+    def centered_x(text, font):
+        left, _, right, _ = font.getbbox(text)
+        return (W - (right - left)) // 2 - left
+
+    top = px(96)
+    ty = top + (text_height - height) // 2
+    for line in caption["headline"]:
+        draw.text((centered_x(line, display), ty), line, font=display, fill=colors["ink"])
+        ty += leading
+    ty += gap
+    draw.rounded_rectangle(((W - px(72)) // 2, ty + px(4), (W + px(72)) // 2, ty + px(12)), px(4), fill=colors["accent"])
+    ty += px(32)
+    for line in note_lines:
+        draw.text((centered_x(line, note_font), ty), line, font=note_font, fill=colors["accentText"])
+        ty += note_leading
+
+    # The screen below, with rounded corners and a soft shadow, as the Mac window.
+    shot = Image.open(SRC / f"{caption['shot']}-{caption.get('appearance', 'light')}.png").convert("RGB")
+    sy = top + text_height + px(48)
+    scale = min((H - px(72) - sy) / shot.height, (W - 2 * px(72)) / shot.width, MAX_SCALE)
+    shot = shot.resize((round(shot.width * scale), round(shot.height * scale)), Image.LANCZOS)
+    x = (W - shot.width) // 2
+    radius = px(24)
+    shadow = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        (x, sy + px(12), x + shot.width, sy + shot.height + px(12)), radius,
+        fill=90 if caption.get("appearance") == "dark" else 60,
+    )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(px(24)))
+    canvas.paste(Image.new("RGB", (W, H), "#000000"), (0, 0), shadow)
+    canvas.paste(shot, (x, sy), rounded(shot, radius))
+    draw.rounded_rectangle((x, sy, x + shot.width - 1, sy + shot.height - 1), radius, outline=colors["ink"] + "33", width=2)
+    return canvas
+
+
+def play_problem(image):
+    """What Google Play would refuse about an image's size, or None."""
+    short, long = sorted(image.size)
+    if not PLAY_SIDE[0] <= short and long <= PLAY_SIDE[1]:
+        return f"{image.width}×{image.height}: Google Play takes each side between {PLAY_SIDE[0]} and {PLAY_SIDE[1]} px"
+    if long > short * PLAY_RATIO:
+        return f"{image.width}×{image.height}: Google Play takes no side more than {PLAY_RATIO}× the other"
+    return None
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    if PORTRAIT:
+        measure = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        text_height = max(portrait_text(measure, caption)[-1] for caption in CAPTIONS[LANGUAGE])
     for i, caption in enumerate(CAPTIONS[LANGUAGE], 1):
         path = OUT / f"{i}-{caption['shot']}-{caption.get('appearance', 'light')}.png"
-        compose(caption).save(path, optimize=True)
+        image = compose_portrait(caption, text_height) if PORTRAIT else compose(caption)
+        if CANVAS != "mac" and (problem := play_problem(image)):
+            sys.exit(f"store-screenshots: {path.name} {problem} (store.canvases)")
+        image.save(path, optimize=True)
         print(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path)
 
 

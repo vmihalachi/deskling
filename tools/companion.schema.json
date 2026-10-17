@@ -68,6 +68,20 @@
         "screenshots": { "type": "string", "description": "Where windows/screenshots.ps1 copies the shots, e.g. screenshots/windows." }
       }
     },
+    "android": {
+      "type": "object",
+      "description": "The Android app (Kotlin), a Gradle build that includes Deskling's kotlin/ (includeBuild). Absent for an app without one.",
+      "required": ["dir"],
+      "additionalProperties": false,
+      "properties": {
+        "dir": { "type": "string", "description": "The Gradle project's folder (android)." },
+        "core": { "type": "string", "description": "The pure Kotlin module, vector-tested (core by default)." },
+        "app": { "type": "string", "description": "The app module (app by default)." },
+        "applicationId": { "type": "string", "description": "The Play application id; bundleId by default." },
+        "devApplicationId": { "type": "string", "description": "The Debug build's application id; devBundleId by default." },
+        "strings": { "type": "string", "description": "Where l10n.py export-android writes values*/strings.xml and xml/locales_config.xml: the app module's res folder." }
+      }
+    },
     "languages": {
       "type": "object",
       "required": ["source", "all"],
@@ -103,7 +117,7 @@
         "rulesFile": { "type": ["string", "null"], "description": "Markdown with the app's transcreation rules, sent with every work file." },
         "pluralCategories": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
         "linuxPo": { "type": ["string", "null"], "description": "Where export-linux writes <lang>.po, or null for no Linux port." },
-        "androidStrings": { "type": ["string", "null"], "description": "Where export-android writes values*/strings.xml, or null for no Android port." },
+        "androidStrings": { "type": ["string", "null"], "description": "The older name of android.strings (where export-android writes), kept as an alias; android.strings wins when both are set." },
         "stringsdataFilter": { "type": "string", "description": "A path fragment the app's .stringsdata files contain (default <mac.scheme>.build)." },
         "phraseComment": { "type": "string", "description": "The translator comment of a phrase key: {character}, {tags}, {flavor}, {flavorNote}, {part}." },
         "flavorNotes": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Flavor id → what it does for the listener." }
@@ -218,7 +232,12 @@
             "size": { "type": "array", "items": { "type": "number" } },
             "font": { "type": "string", "description": "The headline font file." },
             "noteFont": { "type": "string", "description": "The note's font file (the headline's when absent)." },
-            "palette": { "type": "object", "description": "light/dark → {paper, ink, accent, accentText} hex colors." }
+            "palette": { "type": "object", "description": "light/dark → {paper, ink, accent, accentText} hex colors." },
+            "canvases": {
+              "type": "object",
+              "additionalProperties": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
+              "description": "An Android canvas's [width, height] when not the default: android-phone 1080 × 1920, android-tablet 2560 × 1600 (store-screenshots.py --canvas; Google Play's limits still apply)."
+            }
           }
         }
       }
@@ -239,12 +258,13 @@
             "required": ["capture"],
             "additionalProperties": false,
             "properties": {
-              "capture": { "enum": ["mac", "windows", "ios"] },
+              "capture": { "enum": ["mac", "windows", "ios", "android"] },
               "label": { "type": "string", "description": "The name on the sheets (the platform name)." },
               "script": { "type": "string", "description": "mac: the screenshot script, relative to the root, with screenshots.sh's options (Deskling's)." },
               "vm": { "enum": ["check-layout", "screenshots"], "description": "windows: vm.sh check-layout, every language side by side (the default), or vm.sh screenshots once per language, for a script without -Only." },
               "device": { "type": "string", "description": "ios: the simulator's device type, by name or identifier." },
-              "orientation": { "enum": ["landscape", "portrait"], "description": "The sheet's row: landscape on top (mac, windows), portrait below (ios)." },
+              "avd": { "type": "string", "description": "android: the Android Virtual Device's name (avdmanager list avd)." },
+              "orientation": { "enum": ["landscape", "portrait"], "description": "The sheet's row: landscape on top (mac, windows), portrait below (ios, android)." },
               "crop": { "type": "boolean", "description": "Crop each shot to its window: the transparent or flat margin around it goes." }
             }
           }
@@ -260,7 +280,8 @@
               "additionalProperties": false,
               "properties": {
                 "shot": { "type": "string" },
-                "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "ios: more launch environment for this shot." }
+                "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "ios: more launch environment for this shot; android: more intent extras (DESKLING_SCREENSHOT_MODE names the app's mode, \"screens\" when absent)." },
+                "camera": { "type": "boolean", "description": "android: the shot needs the front camera, so the emulator gets the host's webcam (-camera-front webcam0)." }
               }
             }
           }
@@ -339,6 +360,16 @@
             }
           }
         },
+        "google": {
+          "type": "object",
+          "description": "Google Play; check.py requires the google.* fields of the listing when it's there, and store-screenshots.py knows Play's canvases.",
+          "additionalProperties": false,
+          "properties": {
+            "screenshots": { "type": "string", "description": "<lang>/*.png per language; google/screenshots by default." },
+            "screenshotCount": { "type": "integer", "description": "Screenshots (and captions) per language; 8 by default." },
+            "locales": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Listing language → Play Console locale where it differs from the language (en → en-US, zh-Hans → zh-CN, nb → no-NO, pt-BR → pt-BR); the rest as Apple's." }
+          }
+        },
         "microsoft": {
           "type": "object",
           "description": "The Partner Center import (import.py); check.py requires the ms.* fields when it's there.",
@@ -375,7 +406,7 @@
         },
         "slow": {
           "type": "array",
-          "description": "The app's slow checks, reminded at stop when a matching path changed since they last ran. A `name` of a built-in check (xcodebuild-test, conformance, swift-test, dotnet-test, dotnet-app-test, landing-build, winui-build) replaces its paths (and label); any other name adds a check, counted as run when a shell command matches `ran` (or a full verify.sh).",
+          "description": "The app's slow checks, reminded at stop when a matching path changed since they last ran. A `name` of a built-in check (xcodebuild-test, conformance, swift-test, dotnet-test, dotnet-app-test, landing-build, winui-build, gradle-core-test, android-build) replaces its paths (and label); any other name adds a check, counted as run when a shell command matches `ran` (or a full verify.sh).",
           "items": {
             "type": "object",
             "required": ["name", "paths"],
@@ -389,7 +420,8 @@
           }
         },
         "macUI": { "type": ["string", "null"], "description": "A path regex for Mac UI files; editing one reminds of the Windows twin." },
-        "windowsUI": { "type": ["string", "null"], "description": "The same for Windows UI files." }
+        "windowsUI": { "type": ["string", "null"], "description": "The same for Windows UI files." },
+        "androidUI": { "type": ["string", "null"], "description": "The same for Android UI files; set, the reminder names Windows and Android." }
       }
     }
   }

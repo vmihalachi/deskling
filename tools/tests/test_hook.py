@@ -231,6 +231,92 @@ class StopAndParity(HookTestCase):
         self.assertRegex("windows/Fixture.App.Tests/AppModelTests.cs", kinds["dotnet-app-test"])
         self.assertNotRegex("windows/Fixture.Core/A.cs", kinds["dotnet-app-test"])
 
+    def enable_android(self, session: str = "android") -> None:
+        """The fixture app with an Android port: android/ with core and app modules, and hooks.androidUI."""
+        config = self.root / "companion.json"
+        data = json.loads(config.read_text("utf8"))
+        data["android"] = {"dir": "android", "strings": "android/app/src/main/res"}
+        data["hooks"]["androidUI"] = "^android/app/src/main/kotlin/app/fixture/ui/"
+        config.write_text(json.dumps(data), "utf8")
+        self.hook.setup(self.root)
+        self.event = {"session_id": session}
+
+    def test_android_port_is_named_once_configured(self):
+        self.enable_android()
+        edits = {"macos/Fixture/Views/SettingsView.swift": 100.0}
+        reminder = self.remind(edits) or ""
+        self.assertIn("nothing under windows/Fixture.App or android/app since", reminder)
+        self.assertIn("Windows and Android ports in the same change (windows-port skill)", reminder)
+        self.assertIn("no Windows and Android counterpart", reminder)
+        self.assertIsNone(self.remind(edits), "once")
+        # The Windows port is in; only Android is missing.
+        self.event = {"session_id": "android2"}
+        edits = {"macos/Fixture/Views/HomeView.swift": 100.0, "windows/Fixture.App/Views/HomeView.xaml": 120.0}
+        reminder = self.remind(edits) or ""
+        self.assertIn("nothing under android/app since", reminder)
+        self.assertIn("the Android port in the same change.", reminder)
+        self.assertNotIn("windows-port", reminder)
+        edits["android/app/src/main/kotlin/app/fixture/ui/HomeScreen.kt"] = 130.0
+        self.event = {"session_id": "android3"}
+        self.assertIsNone(self.remind(edits), "both ports are in")
+
+    def test_android_slow_checks_and_gradle_runs(self):
+        self.enable_android()
+        kinds = {kind: pattern for kind, pattern, _ in self.hook.SLOW}
+        self.assertIn("gradle-core-test", kinds)
+        self.assertIn("android-build", kinds)
+        self.assertRegex("android/core/src/main/kotlin/A.kt", kinds["gradle-core-test"])
+        self.assertRegex("conformance/scheduler/x.json", kinds["gradle-core-test"])
+        self.assertNotRegex("android/app/src/main/kotlin/A.kt", kinds["gradle-core-test"])
+        self.assertRegex("android/app/src/main/kotlin/A.kt", kinds["android-build"])
+        self.assertNotRegex("android/core/src/main/kotlin/A.kt", kinds["android-build"])
+        self.assertIn("./gradlew :core:test", dict((k, label) for k, _, label in self.hook.SLOW)["gradle-core-test"])
+        sessions = iter(range(100))
+
+        def reminded_after(path, command, label):
+            session = f"gradle{next(sessions)}"
+            self.run_hook("post", {"session_id": session, "tool_name": "Edit",
+                                   "tool_input": {"file_path": str(self.root / path)}})
+            if command:
+                self.run_hook("post", {"session_id": session, "tool_name": "Bash", "tool_input": {"command": command}})
+            return label in self.run_hook("stop", {"session_id": session}).stderr
+
+        core, app = "android/core/src/main/kotlin/deskling/A.kt", "android/app/src/main/kotlin/app/fixture/A.kt"
+        self.assertTrue(reminded_after(core, None, "Kotlin core tests"))
+        self.assertFalse(reminded_after(core, "cd android && ./gradlew :core:test", "Kotlin core tests"))
+        self.assertFalse(reminded_after(core, "cd android && ./gradlew test", "Kotlin core tests"), "every module")
+        self.assertTrue(reminded_after(core, "cd android && ./gradlew :app:test", "Kotlin core tests"), "another module")
+        self.assertFalse(reminded_after(core, "deskling/tools/verify.sh", "Kotlin core tests"), "the full verify")
+        self.assertTrue(reminded_after(app, None, "Android app build"))
+        self.assertFalse(reminded_after(app, "cd android && ./gradlew :app:assembleDebug", "Android app build"))
+        self.assertFalse(reminded_after(app, "cd android && ./gradlew build", "Android app build"))
+        self.assertTrue(reminded_after(app, "cd android && ./gradlew :core:test", "Android app build"))
+        self.assertTrue(reminded_after(app, "deskling/tools/verify.sh", "Android app build"), "verify.sh builds no APK")
+
+    @unittest.skipIf(os.name == "nt", "the fake ktlint is a shell script")
+    def test_kotlin_files_are_formatted_with_ktlint_when_it_is_installed(self):
+        self.enable_android()
+        bin_dir = Path(self.tmp) / "bin"
+        bin_dir.mkdir()
+        log = Path(self.tmp) / "ktlint.log"
+        ktlint = bin_dir / "ktlint"
+        ktlint.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\n', "utf8")
+        ktlint.chmod(0o755)
+        for path in ("android/app/src/main/kotlin/app/fixture/A.kt", "android/build.gradle.kts", "kotlin/core/B.kt",
+                     "macos/Fixture/C.kt", "android/README.md"):
+            (self.root / path).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / path).write_text("x\n", "utf8")
+        with mock.patch.dict(os.environ, {"PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"}):
+            for path in ("android/app/src/main/kotlin/app/fixture/A.kt", "android/build.gradle.kts", "kotlin/core/B.kt",
+                         "macos/Fixture/C.kt", "android/README.md"):
+                self.hook.format_file(path)
+        self.assertEqual(log.read_text().splitlines(),
+                         ["-F android/app/src/main/kotlin/app/fixture/A.kt", "-F android/build.gradle.kts", "-F kotlin/core/B.kt"])
+        log.unlink()
+        with mock.patch.dict(os.environ, {"PATH": str(Path(self.tmp) / "empty")}):
+            self.hook.format_file("android/build.gradle.kts")
+        self.assertFalse(log.exists(), "no ktlint, no formatting")
+
     def test_app_model_tests_count_when_their_project_or_the_solution_ran(self):
         edit = {"session_id": "app", "tool_name": "Edit",
                 "tool_input": {"file_path": str(self.root / "windows/Fixture.App/App/AppModel.cs")}}

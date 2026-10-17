@@ -115,6 +115,90 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(capture.ran, {"phone"})
         self.assertFalse((drawn / "1").exists(), "moved out of the app's container")
 
+    def test_android_boots_one_emulator_per_platform_and_runs_each_language_on_it(self):
+        path = self.root / "companion.json"
+        data = json.loads(path.read_text("utf8"))
+        data["android"] = {"dir": "android"}
+        data["screens"]["platforms"]["droid"] = {"capture": "android", "avd": "Pixel_8"}
+        data["screens"]["list"]["home"]["android"] = "today"
+        data["screens"]["list"]["settings"]["droid"] = {
+            "shot": "settings", "env": {"DESKLING_SCREENSHOT_MODE": "two"}, "camera": True}
+        path.write_text(json.dumps(data), "utf8")
+        manifest_ = manifest(self.root)
+        droid = manifest_.platforms[-1]
+        self.assertEqual(manifest_.pick_platforms(["android"]), [droid])
+        self.assertFalse(droid.landscape)
+        self.assertEqual(manifest_.shot("settings", droid),
+                         screens.Shot("settings", (("DESKLING_SCREENSHOT_MODE", "two"),), True))
+        apk = self.root / "android" / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
+        apk.parent.mkdir(parents=True)
+        apk.write_bytes(b"apk")
+        calls = []
+
+        class FakeEmulator:
+            def __init__(self, avd, index, log, camera=False):
+                calls.append(("boot", avd, index, camera, log.name))
+
+            def boot(self):
+                pass
+
+            def install(self, apk):
+                calls.append(("install", apk.name))
+
+            def launcher(self, app_id):
+                return f"{app_id}/.Main"
+
+            def run(self, app_id, component, language, region, shots, extras, raw):
+                calls.append(("run", component, language, region, shots, extras))
+                raw.mkdir(parents=True)
+                for shot in shots:
+                    for theme in ("light", "dark"):
+                        (raw / f"{shot}-{theme}.png").write_bytes(b"png")
+                if extras and language == "de":
+                    (raw / "problems.txt").write_text("settings-light.png: a label ends in …\n", "utf8")
+
+            def kill(self):
+                calls.append(("kill",))
+
+        capture = screens.Capture(manifest_, [droid], ["en", "de"], ["home", "settings"], ["light"], 1, False)
+        with mock.patch.object(screens.avd, "Emulator", FakeEmulator), redirect_stdout(io.StringIO()):
+            code = capture.run()
+        self.assertEqual(code, 1)
+        self.assertEqual(calls, [
+            ("boot", "Pixel_8", 0, True, "droid.log"), ("install", "app-debug.apk"),
+            ("run", "app.fixture.dev/.Main", "en", "US", ["today"], {}),
+            ("run", "app.fixture.dev/.Main", "en", "US", ["settings"], {"DESKLING_SCREENSHOT_MODE": "two"}),
+            ("run", "app.fixture.dev/.Main", "de", "DE", ["today"], {}),
+            ("run", "app.fixture.dev/.Main", "de", "DE", ["settings"], {"DESKLING_SCREENSHOT_MODE": "two"}),
+            ("kill",)])
+        self.assertEqual(sorted(p.name for p in (manifest_.out / "droid" / "en").iterdir()),
+                         ["home-light.png", "settings-light.png"])
+        self.assertEqual(capture.problems, [(3, "de", "settings-light.png: a label ends in …")])
+        self.assertEqual(capture.ran, {"droid"})
+
+    def test_android_without_a_build_or_an_avd_reports_it_for_every_language(self):
+        path = self.root / "companion.json"
+        data = json.loads(path.read_text("utf8"))
+        data["android"] = {"dir": "android"}
+        data["screens"]["platforms"]["droid"] = {"capture": "android"}
+        data["screens"]["list"]["home"]["android"] = "today"
+        path.write_text(json.dumps(data), "utf8")
+        manifest_ = manifest(self.root)
+        droid = manifest_.platforms[-1]
+        capture = screens.Capture(manifest_, [droid], ["en", "de"], ["home"], ["light"], 1, False)
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(capture.run(), screens.VM_UNAVAILABLE)
+        self.assertEqual([text for _, _, text in capture.problems],
+                         [f"no Debug APK in {self.root / 'android' / 'app' / 'build' / 'outputs' / 'apk' / 'debug'} "
+                          "(./gradlew :app:assembleDebug)"] * 2)
+        (self.root / "android" / "app" / "build" / "outputs" / "apk" / "debug").mkdir(parents=True)
+        (self.root / "android" / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk").write_bytes(b"apk")
+        capture = screens.Capture(manifest_, [droid], ["en"], ["home"], ["light"], 1, False)
+        with redirect_stdout(io.StringIO()):
+            capture.run()
+        self.assertEqual([text for _, _, text in capture.problems],
+                         ["no avd in screens.platforms (an AVD name, avdmanager list avd)"])
+
     def test_a_platform_that_didnt_run_reports_its_problems_in_one_list(self):
         capture = screens.Capture(self.screens, [self.mac], ["en"], ["panel", "home"], ["light"], 1, False)
         raw = self.root / "raw"
