@@ -1,6 +1,6 @@
-// Deskling's Kotlin side: `:core` (pure JVM), `:android` (the platform services) and `:testing` (the mocks). Apps
-// consume it with `includeBuild("…/deskling/kotlin")` and dependency substitution of `deskling:core`, `deskling:android`
-// and `deskling:testing`; nothing is published to Maven, the apps pin the submodule's tag.
+// Laching's Kotlin side: `:core` (pure JVM), `:android` (the platform services) and `:testing` (the mocks). Apps
+// consume it with `includeBuild("…/laching/kotlin")` and dependency substitution of `laching:core`, `laching:android`
+// and `laching:testing`; nothing is published to Maven, the apps pin the submodule's tag.
 pluginManagement {
     repositories {
         google()
@@ -16,6 +16,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "deskling"
+rootProject.name = "laching"
 
 include(":core", ":android", ":testing")

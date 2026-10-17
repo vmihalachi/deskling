@@ -66,7 +66,7 @@ class FilesTests(unittest.TestCase):
         (self.root / "link.cs").symlink_to("windows/App/App.cs")
         self.write("odd\tname.cs")
         # A checked-out submodule: a repository of its own, recorded as a gitlink.
-        sub = self.root / "deskling"
+        sub = self.root / "laching"
         sub.mkdir()
         git(sub, "init", "-q")
         self.write("tools/windows/vm.py", folder=sub)
@@ -74,12 +74,12 @@ class FilesTests(unittest.TestCase):
         git(sub, "commit", "-qm", "tools")
         self.write("tools/windows/draft.py", folder=sub)  # untracked in the submodule
         head = git(sub, "rev-parse", "HEAD").strip()
-        git(self.root, "update-index", "--add", "--cacheinfo", f"160000,{head},deskling")
+        git(self.root, "update-index", "--add", "--cacheinfo", f"160000,{head},laching")
 
         files = vm.list_files(self.root)
         names = [name for name, _, _ in files]
         self.assertEqual(names, sorted([
-            ".gitignore", "deskling/tools/windows/draft.py", "deskling/tools/windows/vm.py", "macos/Model.swift",
+            ".gitignore", "laching/tools/windows/draft.py", "laching/tools/windows/vm.py", "macos/Model.swift",
             "windows/App/App.cs", "windows/App/New.cs"]))
         app = next(entry for entry in files if entry[0] == "windows/App/App.cs")
         stat = (self.root / "windows/App/App.cs").stat()
@@ -106,11 +106,11 @@ class PathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             real = os.path.realpath(temp)
             self.assertEqual(vm.guest_path(temp, r"\\Mac\AllFiles"), "\\\\Mac\\AllFiles" + real.replace("/", "\\"))
-            os.environ["DESKLING_VM_SHARE"] = "Z:\\"
+            os.environ["LACHING_VM_SHARE"] = "Z:\\"
             try:
                 self.assertEqual(vm.guest_path(Path(temp) / "a b"), "Z:" + real.replace("/", "\\") + "\\a b")
             finally:
-                del os.environ["DESKLING_VM_SHARE"]
+                del os.environ["LACHING_VM_SHARE"]
 
     def test_each_checkout_gets_its_own_folder(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -164,18 +164,18 @@ class BodyTests(unittest.TestCase):
     def test_screenshots_take_the_apps_wrapper_when_it_has_one(self):
         shots = Path("/tmp/shots")
         body = vm.screenshots_body(self.ctx, shots, "-Language it")
-        self.assertIn(vm.guest_path(vm.HERE / "screenshots.ps1"), body, "Deskling's, through the share")
+        self.assertIn(vm.guest_path(vm.HERE / "screenshots.ps1"), body, "Laching's, through the share")
         self.assertIn("-Out $shots -Language it", body)
         self.assertIn(f"Copy-Shots $shots {vm.ps(vm.guest_path(shots))}", body)
         wrapper = self.root / "windows" / "scripts" / "screenshots.ps1"
         wrapper.parent.mkdir(parents=True, exist_ok=True)
-        wrapper.write_text("& \"$PSScriptRoot/../../deskling/tools/windows/screenshots.ps1\" @args\n", "utf8")
+        wrapper.write_text("& \"$PSScriptRoot/../../laching/tools/windows/screenshots.ps1\" @args\n", "utf8")
         self.assertIn(r"& 'windows\scripts\screenshots.ps1' -Out $shots", vm.screenshots_body(self.ctx, shots, ""))
 
     def test_check_layout_runs_the_languages_in_one_go_and_copies_each_folder(self):
         folder = Path("/tmp/layout")
         body = vm.check_layout_body(self.ctx, folder, ["fr", "de"], "-Only home,settings -Jobs 2")
-        self.assertIn(vm.guest_path(vm.HERE / "check-layout.ps1"), body, "Deskling's, through the share")
+        self.assertIn(vm.guest_path(vm.HERE / "check-layout.ps1"), body, "Laching's, through the share")
         self.assertIn("-Out $out 'fr' 'de' -Only home,settings -Jobs 2", body)
         self.assertIn(f"Copy-ShotFolders $out {vm.ps(vm.guest_path(folder))}", body)
         self.assertIn("-Out $out }", vm.check_layout_body(self.ctx, folder, [], ""), "languages.all when none")
@@ -191,12 +191,12 @@ class BodyTests(unittest.TestCase):
     def test_the_script_loads_the_guest_functions_from_the_share(self):
         script = vm.guest_script(self.ctx, "exit 0")
         self.assertIn(f". {vm.ps(vm.guest_path(vm.GUEST_SCRIPT))}", script)
-        self.assertIn(f"Resolve-GuestFolder '%USERPROFILE%\\deskling-vm\\{self.ctx.key}'", script)
+        self.assertIn(f"Resolve-GuestFolder '%USERPROFILE%\\laching-vm\\{self.ctx.key}'", script)
         self.assertIn("catch", script)
 
 
 class LinkedTests(unittest.TestCase):
-    """The fixture app linked (`companion.py link`) to a Deskling checkout: what else vm.sh mirrors, and where to."""
+    """The fixture app linked (`companion.py link`) to a Laching checkout: what else vm.sh mirrors, and where to."""
 
     def setUp(self):
         import companion
@@ -208,22 +208,22 @@ class LinkedTests(unittest.TestCase):
         self.ctx = vm.Context(self.root, companion.load(self.root), "Windows 11", vm.checkout_key(self.root),
                               self.root.parent / "caches" / vm.checkout_key(self.root))
 
-    def checkout(self, name: str = "deskling") -> Path:
-        """A Deskling checkout beside the app: a git repository with a .NET project, a README and test resources."""
+    def checkout(self, name: str = "laching") -> Path:
+        """A Laching checkout beside the app: a git repository with a .NET project, a README and test resources."""
         folder = self.root.parent / name
         project = "<Project><PropertyGroup><IsPackable>true</IsPackable></PropertyGroup></Project>\n"
-        for path, text in (("Package.swift", 'let package = Package(name: "Deskling")\n'),
-                           ("dotnet/Deskling.Core/Deskling.Core.csproj", project),
-                           ("README.md", "# Deskling\n"), ("Tests/CoreTests/Resources/vectors.json", "[]\n"),
+        for path, text in (("Package.swift", 'let package = Package(name: "Laching")\n'),
+                           ("dotnet/Laching.Core/Laching.Core.csproj", project),
+                           ("README.md", "# Laching\n"), ("Tests/CoreTests/Resources/vectors.json", "[]\n"),
                            (".gitignore", "bin/\nobj/\n")):
             (folder / path).parent.mkdir(parents=True, exist_ok=True)
             (folder / path).write_text(text, "utf8")
         git(folder, "init", "-q")
         git(folder, "add", ".")
-        git(folder, "commit", "-qm", "deskling")
-        (folder / "dotnet/Deskling.Core/obj/project.assets.json").parent.mkdir(parents=True)
-        (folder / "dotnet/Deskling.Core/obj/project.assets.json").write_text("{}", "utf8")  # ignored
-        (folder / "dotnet/Deskling.Core/Draft.cs").write_text("class D {}", "utf8")  # untracked
+        git(folder, "commit", "-qm", "laching")
+        (folder / "dotnet/Laching.Core/obj/project.assets.json").parent.mkdir(parents=True)
+        (folder / "dotnet/Laching.Core/obj/project.assets.json").write_text("{}", "utf8")  # ignored
+        (folder / "dotnet/Laching.Core/Draft.cs").write_text("class D {}", "utf8")  # untracked
         return folder
 
     def link(self, checkout: Path) -> None:
@@ -233,8 +233,8 @@ class LinkedTests(unittest.TestCase):
 
     def write_targets(self, dotnet: str) -> None:
         (self.root / "windows/Directory.Build.targets").write_text(
-            f"<Project>\n  <!-- deskling link -->\n  <PropertyGroup>\n    <DesklingLinkedDotnet>{dotnet}"
-            "</DesklingLinkedDotnet>\n  </PropertyGroup>\n</Project>\n", "utf8")
+            f"<Project>\n  <!-- laching link -->\n  <PropertyGroup>\n    <LachingLinkedDotnet>{dotnet}"
+            "</LachingLinkedDotnet>\n  </PropertyGroup>\n</Project>\n", "utf8")
 
     def test_unlinked_mirrors_the_app_alone(self):
         self.assertIsNone(vm.linked_checkout(self.ctx))
@@ -244,16 +244,16 @@ class LinkedTests(unittest.TestCase):
         self.link(checkout)
         linked = vm.linked_checkout(self.ctx)
         self.assertEqual(linked.checkout, checkout)
-        self.assertEqual(linked.guest, r"%USERPROFILE%\deskling-vm\deskling", r"windows\..\..\deskling from the copy")
-        self.assertEqual(linked.stage, self.ctx.stage.parent / "linked-deskling", "shared by every app linked there")
+        self.assertEqual(linked.guest, r"%USERPROFILE%\laching-vm\laching", r"windows\..\..\laching from the copy")
+        self.assertEqual(linked.stage, self.ctx.stage.parent / "linked-laching", "shared by every app linked there")
         self.assertEqual([name for name, _, _ in vm.list_files(linked.checkout)], [
             ".gitignore", "Package.swift", "README.md", "Tests/CoreTests/Resources/vectors.json",
-            "dotnet/Deskling.Core/Deskling.Core.csproj", "dotnet/Deskling.Core/Draft.cs"])
-        os.environ["DESKLING_VM_DIR"] = "D:\\vm\\"
+            "dotnet/Laching.Core/Laching.Core.csproj", "dotnet/Laching.Core/Draft.cs"])
+        os.environ["LACHING_VM_DIR"] = "D:\\vm\\"
         try:
-            self.assertEqual(vm.linked_checkout(self.ctx).guest, r"D:\vm\deskling")
+            self.assertEqual(vm.linked_checkout(self.ctx).guest, r"D:\vm\laching")
         finally:
-            del os.environ["DESKLING_VM_DIR"]
+            del os.environ["LACHING_VM_DIR"]
 
         with mock.patch.object(self.companion, "regenerate_project", return_value=None), \
                 redirect_stdout(io.StringIO()):
@@ -261,8 +261,8 @@ class LinkedTests(unittest.TestCase):
         self.assertIsNone(vm.linked_checkout(self.ctx))
 
     def test_another_folder_name_keeps_its_name(self):
-        self.link(self.checkout("deskling-wip"))
-        self.assertEqual(vm.linked_checkout(self.ctx).guest, r"%USERPROFILE%\deskling-vm\deskling-wip")
+        self.link(self.checkout("laching-wip"))
+        self.assertEqual(vm.linked_checkout(self.ctx).guest, r"%USERPROFILE%\laching-vm\laching-wip")
 
     def test_sync_mirrors_the_app_then_the_linked_checkout(self):
         checkout = self.checkout()
@@ -273,18 +273,18 @@ class LinkedTests(unittest.TestCase):
             calls = []
             vm.sync(self.ctx)
         self.assertEqual(calls, [(self.root, self.ctx.guest_root, self.ctx.stage),
-                                 (checkout, r"%USERPROFILE%\deskling-vm\deskling", self.ctx.linked.stage)])
-        self.assertIn(f"the linked Deskling {checkout}", out.getvalue())
+                                 (checkout, r"%USERPROFILE%\laching-vm\laching", self.ctx.linked.stage)])
+        self.assertIn(f"the linked Laching {checkout}", out.getvalue())
 
     def test_a_checkout_inside_the_app_comes_with_it(self):
-        self.write_targets("$(MSBuildThisFileDirectory)../deskling/dotnet/")
-        (self.root / "deskling/dotnet").mkdir(parents=True)
+        self.write_targets("$(MSBuildThisFileDirectory)../laching/dotnet/")
+        (self.root / "laching/dotnet").mkdir(parents=True)
         self.assertIsNone(vm.linked_checkout(self.ctx), "the app's own copy holds its submodule")
 
     def test_a_link_the_vm_cant_follow_is_refused(self):
         self.checkout()
-        for dotnet, words in (("/Users/someone/deskling/dotnet/", "a Mac path the VM doesn't have"),
-                              ("$(MSBuildThisFileDirectory)../../../deskling/dotnet/", "lands outside"),
+        for dotnet, words in (("/Users/someone/laching/dotnet/", "a Mac path the VM doesn't have"),
+                              ("$(MSBuildThisFileDirectory)../../../laching/dotnet/", "lands outside"),
                               ("$(MSBuildThisFileDirectory)../../dotnet/", "lands outside"),
                               ("$(MSBuildThisFileDirectory)../../elsewhere/dotnet/", "isn't there")):
             with self.subTest(dotnet=dotnet):
@@ -353,7 +353,7 @@ class UnavailableTests(unittest.TestCase):
         done = self.run_vm("status")
         self.assertEqual((done.returncode, done.stdout.strip()), (0, "vm.sh: the VM 'Windows 11' is ready"))
         done = subprocess.run([str(VM_SH), "status"], cwd=self.root, capture_output=True, text=True,
-                              env={**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", "DESKLING_VM": "Dev Box"})
+                              env={**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", "LACHING_VM": "Dev Box"})
         self.assertIn("'Dev Box' is ready", done.stdout)
 
     def test_a_lost_job_is_tried_again(self):

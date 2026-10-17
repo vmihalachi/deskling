@@ -3,7 +3,7 @@
     What every companion app's WinUI project needs, shared instead of copied (tools/README.md, *Windows apps*). Import
     it at the end of the app's .csproj, after its own properties:
 
-      <Import Project="..\..\deskling\tools\windows\companion.targets" />
+      <Import Project="..\..\laching\tools\windows\companion.targets" />
 
     - x64 and ARM64, the RuntimeIdentifier for the Platform built (the machine's own when none is named), and the same for
       publishing (Native AOT needs one, and an ARM64 publish on an x64 PC would otherwise take the machine's).

@@ -1,12 +1,12 @@
 {
-  "$comment": "A draft of sunnysays' companion.json for its M9 (Deskling 0.5), kept here so the schema is checked against both apps. Paths are relative to sunnysays' root.",
+  "$comment": "A draft of sunnysays' companion.json for its M9 (Laching 0.5), kept here so the schema is checked against both apps. Paths are relative to sunnysays' root.",
   "name": "sunnysays",
   "displayName": "sunnysays",
   "character": "Sunny",
   "bundleId": "app.sunnysays",
   "devBundleId": "app.sunnysays.dev",
   "domain": "sunnysays.app",
-  "deskling": { "tag": "v0.5.0", "path": "deskling" },
+  "laching": { "tag": "v0.5.0", "path": "laching" },
   "mac": {
     "dir": "macos",
     "project": "SunnySays.xcodeproj",
@@ -17,7 +17,7 @@
     "coreModule": "SunnySaysCore",
     "tests": "SunnySaysTests",
     "devAppName": "sunnysays Dev",
-    "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
+    "screenshotEnv": "LACHING_SCREENSHOT_MODE",
     "derivedData": "macos/build/dd.noindex"
   },
   "windows": {

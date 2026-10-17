@@ -4,8 +4,8 @@
 
 ## Read only these
 
-- `README.md` here; 3's outcome; `dotnet/Deskling.Windows.Companion/` as 3 left it; `Deskling.Companion/Figures/`.
-- Swift, for behavior and measurements: `Sources/DesklingCompanionUI/{CharacterView,DesktopCompanion}.swift`, `Theme/*`,
+- `README.md` here; 3's outcome; `dotnet/Laching.Windows.Companion/` as 3 left it; `Laching.Companion/Figures/`.
+- Swift, for behavior and measurements: `Sources/LachingCompanionUI/{CharacterView,DesktopCompanion}.swift`, `Theme/*`,
   `Settings/*`, `Support/*`, `ScreenshotCapture.swift`, `Screenshots/ScreenshotScript.swift`.
 - For the look the apps will put around them: sunnysays' `DESIGN.md` (*Components*, *Motion*) and Pagliacci's, only
   to check the controls take every color and font from outside.
@@ -266,7 +266,7 @@ when the run reports problems. Differences from the brief, and what was found:
   theme alone while Windows is in one (`ScreenshotCapture.Appearances`): run it again with a contrast theme on. Not
   done yet. The package's controls take Windows' contrast colors then (4.1's `ForCurrentContrast`).
 - **The run is Swift's:** the shots are a window, a view at a size, a view at its fitting size, the supporter sequence,
-  and the app's own, each named `<name>-<appearance>.png` and filtered by `DESKLING_SCREENSHOT_MODE` prefixes.
+  and the app's own, each named `<name>-<appearance>.png` and filtered by `LACHING_SCREENSHOT_MODE` prefixes.
   - The model is never launched: no tray icon, hotkey or desktop character. Its status comes from the fixed clock.
   - While a run goes, `ReduceMotion.IsOn` is true and the character holds its still pose, so nothing animates mid-shot.
   - A run claims no single instance (the fixture's `Program`), so it works beside a copy in use.
@@ -290,7 +290,7 @@ Done on this machine (2026-10-13), sequence 4's steps all committed:
 
 ### Hand to 5 (and to sunnysays' M3.2)
 
-What an app on `Deskling.Windows.Companion` must give or know:
+What an app on `Laching.Windows.Companion` must give or know:
 
 - **The look:** `CompanionLook.Current = new CompanionLook(palette) { DisplayFont = … }`, set first thing in
   `MakeCompanion` (and in `RunScreenshots`).

@@ -129,11 +129,11 @@ describe("companionLanding", () => {
     const own = { name: "own-social-assets" };
     const names = landing({ og: undefined, extraPlugins: [own as any] }).plugins.map((p) => p.name);
     expect(names).toEqual([
-      "deskling-landing-html",
-      "deskling-landing-hosting",
+      "laching-landing-html",
+      "laching-landing-hosting",
       "own-social-assets",
     ]);
-    expect(landing().plugins.map((p) => p.name)).toContain("deskling-landing-social-assets");
+    expect(landing().plugins.map((p) => p.name)).toContain("laching-landing-social-assets");
   });
 
   it("refuses locales that don't share their keys", () => {

@@ -2,12 +2,12 @@
 """Keeps the String Catalog's `phrase.<id>` keys in step with the app's phrase bank.
 
 The bank (in the app's Swift core) is the only place a line is written; its source text reaches the catalog through
-the generated `<conformance.dir>/phrases.json`, so regenerate the vectors first (`deskling/tools/conformance.sh`). The
+the generated `<conformance.dir>/phrases.json`, so regenerate the vectors first (`laching/tools/conformance.sh`). The
 app looks these keys up by name and Xcode never extracts them, so they're `manual` catalog entries added through
 `l10n.py add`.
 
-    python3 deskling/tools/phrases.py sync     # add missing keys, update changed text, drop retired lines
-    python3 deskling/tools/phrases.py check    # exit 1 when a key is missing, stale or orphaned, or a weight is under 1
+    python3 laching/tools/phrases.py sync     # add missing keys, update changed text, drop retired lines
+    python3 laching/tools/phrases.py check    # exit 1 when a key is missing, stale or orphaned, or a weight is under 1
 
 A line is one key, `phrase.<id>`; a joke told in beats is one key per part, `phrase.<id>.1`, `.2`, …, each with a
 comment saying which part it is. `sync` owns these entries: when a line's source text changed in the bank it updates
@@ -42,7 +42,7 @@ def read_bank(config: companion.Config) -> list[dict]:
     """The phrases of the generated phrases.json, tunes included."""
     path = config.require_phrases_file()
     if not path.exists():
-        sys.exit(f"{path.relative_to(config.root)} is missing: regenerate the vectors first (deskling/tools/conformance.sh)")
+        sys.exit(f"{path.relative_to(config.root)} is missing: regenerate the vectors first (laching/tools/conformance.sh)")
     return json.loads(path.read_text("utf8"))["phrases"]
 
 

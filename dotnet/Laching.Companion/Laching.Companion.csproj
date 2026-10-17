@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Consumers publish with Native AOT; this runs the trim and AOT analyzers here too. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsPackable>true</IsPackable>
+    <PackageId>Laching.Companion</PackageId>
+    <Description>The pure companion layer for desk-companion apps, mirrored from the Swift LachingCompanion: a phrase bank and picker (lines, jokes in beats, tunes; skins, flavors and languages), chatter cadence presets, quiet rules and mood, write-through settings, a coordinator that replays exactly from a seed, desktop presence, skins, and a rig that animates vector or raster character art. No OS or UI dependencies.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Laching.Core\Laching.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

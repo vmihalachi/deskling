@@ -5,19 +5,19 @@ Lets you (and coding agents) find and fill translation gaps without opening a la
 name and path comes from the app's `companion.json` (`languages`, `l10n`, `mac`, `windows`, `conformance`). Python 3
 standard library only. Run from anywhere inside the app:
 
-  python3 deskling/tools/l10n.py sync                 # build, then xcstringstool sync the catalog
-  python3 deskling/tools/l10n.py status               # summary of gaps per language
-  python3 deskling/tools/l10n.py status -v            # ...with one line per problem
-  python3 deskling/tools/l10n.py export [--lang it] [--since REF]
+  python3 laching/tools/l10n.py sync                 # build, then xcstringstool sync the catalog
+  python3 laching/tools/l10n.py status               # summary of gaps per language
+  python3 laching/tools/l10n.py status -v            # ...with one line per problem
+  python3 laching/tools/l10n.py export [--lang it] [--since REF]
                                                       # write work files to <mac.dir>/build/l10n/<lang>.json
-  python3 deskling/tools/l10n.py apply <mac.dir>/build/l10n/*.json
-  python3 deskling/tools/l10n.py prune                # delete keys Xcode marked stale
-  python3 deskling/tools/l10n.py add FILE.json        # add strings only the Windows/Linux ports use
-  python3 deskling/tools/l10n.py check                # exit 1 if anything is missing or invalid,
+  python3 laching/tools/l10n.py apply <mac.dir>/build/l10n/*.json
+  python3 laching/tools/l10n.py prune                # delete keys Xcode marked stale
+  python3 laching/tools/l10n.py add FILE.json        # add strings only the Windows/Linux ports use
+  python3 laching/tools/l10n.py check                # exit 1 if anything is missing or invalid,
                                                       # or the Windows/Linux exports are stale
-  python3 deskling/tools/l10n.py export-windows [--out DIR] [--dry-run]
+  python3 laching/tools/l10n.py export-windows [--out DIR] [--dry-run]
                                                       # .resw per language for the Windows port
-  python3 deskling/tools/l10n.py export-linux [--out DIR] [--dry-run]
+  python3 laching/tools/l10n.py export-linux [--out DIR] [--dry-run]
                                                       # .po per language for the Linux port
 
 **Language-scoped phrases.** A phrase in `<conformance.dir>/phrases.json` with `languages` (say `["it"]`) exists in
@@ -942,7 +942,7 @@ def xml_escape(text: str) -> str:
 
 
 RESW_HEADER = """<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated from {catalog} by deskling/tools/l10n.py export-windows. Don't edit. -->
+<!-- Generated from {catalog} by laching/tools/l10n.py export-windows. Don't edit. -->
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -1005,7 +1005,7 @@ def po_quote(text: str) -> str:
 def po_text(lang: str) -> str:
     forms, categories = po_plurals(lang)
     code = lang.replace("-", "_")
-    out = [f"# Generated from {catalog_label()} by deskling/tools/l10n.py export-linux. Don't edit.",
+    out = [f"# Generated from {catalog_label()} by laching/tools/l10n.py export-linux. Don't edit.",
            'msgid ""', 'msgstr ""', po_quote(f"Language: {code}\n"), po_quote("MIME-Version: 1.0\n"),
            po_quote("Content-Type: text/plain; charset=UTF-8\n"), po_quote("Content-Transfer-Encoding: 8bit\n"),
            po_quote(f"Plural-Forms: {forms}\n"), ""]
@@ -1094,7 +1094,7 @@ def android_escape(text: str) -> str:
 
 
 ANDROID_HEADER = """<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated from {catalog} by deskling/tools/l10n.py export-android. Don't edit. -->
+<!-- Generated from {catalog} by laching/tools/l10n.py export-android. Don't edit. -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
 """
 
@@ -1121,7 +1121,7 @@ def android_locales_text() -> str:
     setting offers, one per exported language, so the list never drifts from the values folders."""
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>\n',
-        f"<!-- Generated from {catalog_label()} by deskling/tools/l10n.py export-android. Don't edit. -->\n",
+        f"<!-- Generated from {catalog_label()} by laching/tools/l10n.py export-android. Don't edit. -->\n",
         '<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n',
     ]
     lines += [f'  <locale android:name="{android_locale(lang)}"/>\n' for lang in export_languages()]

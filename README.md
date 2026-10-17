@@ -1,56 +1,56 @@
-# Deskling
+# Laching
 
 Building blocks for little companion apps that live in the menu bar, the tray or your pocket: the parts every such
 app needs and nobody wants to write twice. Swift for macOS and iOS, .NET for Windows, Kotlin for Android. MIT.
 
-Deskling grew out of [mybackhurts](https://mybackhurts.app), which ships it, and [sunnysays](https://sunnysays.app), a
+Laching grew out of [mybackhurts](https://mybackhurts.app), which ships it, and [sunnysays](https://sunnysays.app), a
 desk companion in development whose character became the companion layer. [Mister Pagliacci](https://pagliacci.app), a
 clown who tells jokes from the menu bar, is the second companion app built on that layer (in design). It is `0.x` until
 the second app has settled the API, so minor versions may change public types.
 
-**No support.** Deskling is shared as is, for anyone to use, but it is built for these apps: its
-[issues](https://github.com/vmihalachi/deskling/issues) are the owner's own plans, issues and pull requests from
+**No support.** Laching is shared as is, for anyone to use, but it is built for these apps: its
+[issues](https://github.com/vmihalachi/laching/issues) are the owner's own plans, issues and pull requests from
 others aren't monitored, and releases follow what the apps need.
 
 ## What's inside
 
 | Swift product | .NET package | What it does |
 |---|---|---|
-| `DesklingCore` | `Deskling.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. No OS or UI dependencies, so it builds anywhere Swift, .NET or Kotlin runs. |
-| `DesklingCompanion` | `Deskling.Companion` | The pure core of a desk companion: a phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence presets, quiet rules and mood, write-through settings an app subclasses, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or raster character art. The app injects its lines, defaults, skins and palette; the .NET side loads them from the JSON the Swift side writes (`PhraseBank.Parse`, `CharacterArt.Parse`). |
-| `DesklingSystem` | `Deskling.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
-| `DesklingShell` | `Deskling.Windows` | Menu bar / tray app plumbing. A status item with a popover panel, a right-click menu and an animated glyph the app draws. Speech: a speaker (the system voice or a recorded clip), a sequencer that tells a joke in beats, a library of recorded voices that knows which clips are current, a chime player. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a floating desktop window (macOS), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
-| `DesklingCompanionUI` | `Deskling.Companion.Shell` + `Deskling.Windows.Companion` | macOS: the companion on screen, over `DesklingCompanion`. `SignalHub` (the snapshot and the events from the system signals), the menu bar glyph, `CharacterView` (vector and image parts, the wake spring), `DesktopCompanion` (the character and its speech bubble on the desktop), `DeliveryPerformer` (bubble, blip, speech in beats, the notification), `CompanionNotifier`, a `CompanionPalette` the app sets, the speech bubble and status pill, and `ScreenshotCapture` for screenshot runs. Since 0.7 also the companion shell an app subclasses: `CompanionAppModel` (the tick, the channels, the status item, the desktop, the windows, previews, mute and undo, the status line), its delegate and menus, the Settings rows and editors, the Support window, the window chrome and a `ScreenshotScript`; each takes its words from the app. Since 0.8 the same shell on Windows, in two packages: `Deskling.Companion.Shell` (`net10.0`, tested on any OS) is the logic against small interfaces (the app model, the menus as data, speech in beats and recorded voices, the delivery performer, the signal hub, the desktop layout, a screenshot run's sample environment), and `Deskling.Windows.Companion` (WinUI 3) implements them: the app's `Application`, the tray status item with its glyph and panel, the windows, the speaker, chime and notifier, the character on the desktop, and the character canvas, speech bubble, status pill, chrome, Settings rows, Support window and screenshot capture. |
-| `DesklingStore` | `Deskling.Core` (`Store/`) + `Deskling.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
-| `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). The standard picker and quiet case lists, `CompanionVectors` and `ConformanceSuite.companion` build an app's whole suite; `CompanionReplay` replays it. On .NET also the companion shell's fakes (`FakeHost`, `ManualTimers`, `FakeSpeaker`…), for testing an app model without a screen. |
-| `tools/` | `tools/` | Not a package: Python tools, shell scripts and agent skills for companion apps, which vendor this repo as a `deskling/` git submodule pinned to the release. Localization, phrase sync, recorded voices, character art compiling, sounds, fonts, screenshots, verification (including a check that every Deskling pin agrees), the store listing tools (field limits, App Store Connect, Partner Center) and agent hooks, all driven by the app's `companion.json`; and `@deskling/landing`, the landing page's plumbing as Vite plugins, published to npm. See [`tools/README.md`](tools/README.md). |
+| `LachingCore` | `Laching.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. No OS or UI dependencies, so it builds anywhere Swift, .NET or Kotlin runs. |
+| `LachingCompanion` | `Laching.Companion` | The pure core of a desk companion: a phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence presets, quiet rules and mood, write-through settings an app subclasses, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or raster character art. The app injects its lines, defaults, skins and palette; the .NET side loads them from the JSON the Swift side writes (`PhraseBank.Parse`, `CharacterArt.Parse`). |
+| `LachingSystem` | `Laching.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
+| `LachingShell` | `Laching.Windows` | Menu bar / tray app plumbing. A status item with a popover panel, a right-click menu and an animated glyph the app draws. Speech: a speaker (the system voice or a recorded clip), a sequencer that tells a joke in beats, a library of recorded voices that knows which clips are current, a chime player. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a floating desktop window (macOS), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
+| `LachingCompanionUI` | `Laching.Companion.Shell` + `Laching.Windows.Companion` | macOS: the companion on screen, over `LachingCompanion`. `SignalHub` (the snapshot and the events from the system signals), the menu bar glyph, `CharacterView` (vector and image parts, the wake spring), `DesktopCompanion` (the character and its speech bubble on the desktop), `DeliveryPerformer` (bubble, blip, speech in beats, the notification), `CompanionNotifier`, a `CompanionPalette` the app sets, the speech bubble and status pill, and `ScreenshotCapture` for screenshot runs. Since 0.7 also the companion shell an app subclasses: `CompanionAppModel` (the tick, the channels, the status item, the desktop, the windows, previews, mute and undo, the status line), its delegate and menus, the Settings rows and editors, the Support window, the window chrome and a `ScreenshotScript`; each takes its words from the app. Since 0.8 the same shell on Windows, in two packages: `Laching.Companion.Shell` (`net10.0`, tested on any OS) is the logic against small interfaces (the app model, the menus as data, speech in beats and recorded voices, the delivery performer, the signal hub, the desktop layout, a screenshot run's sample environment), and `Laching.Windows.Companion` (WinUI 3) implements them: the app's `Application`, the tray status item with its glyph and panel, the windows, the speaker, chime and notifier, the character on the desktop, and the character canvas, speech bubble, status pill, chrome, Settings rows, Support window and screenshot capture. |
+| `LachingStore` | `Laching.Core` (`Store/`) + `Laching.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
+| `LachingTesting` | `Laching.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). The standard picker and quiet case lists, `CompanionVectors` and `ConformanceSuite.companion` build an app's whole suite; `CompanionReplay` replays it. On .NET also the companion shell's fakes (`FakeHost`, `ManualTimers`, `FakeSpeaker`…), for testing an app model without a screen. |
+| `tools/` | `tools/` | Not a package: Python tools, shell scripts and agent skills for companion apps, which vendor this repo as a `laching/` git submodule pinned to the release. Localization, phrase sync, recorded voices, character art compiling, sounds, fonts, screenshots, verification (including a check that every Laching pin agrees), the store listing tools (field limits, App Store Connect, Partner Center) and agent hooks, all driven by the app's `companion.json`; and `@laching/landing`, the landing page's plumbing as Vite plugins, published to npm. See [`tools/README.md`](tools/README.md). |
 
-Kotlin, for Android (`kotlin/`, a Gradle build an app includes from the submodule; `tools/README.md`): `deskling.core`
-mirrors `DesklingCore` (the scheduler, the random source, plurals, settings, the store, the drawing math),
-`deskling.android` is the phone-side plumbing (Play Billing, alarms, notifications, reduce motion, the screenshot run)
-and `deskling.testing` the fakes. No companion in Kotlin yet.
+Kotlin, for Android (`kotlin/`, a Gradle build an app includes from the submodule; `tools/README.md`): `laching.core`
+mirrors `LachingCore` (the scheduler, the random source, plurals, settings, the store, the drawing math),
+`laching.android` is the phone-side plumbing (Play Billing, alarms, notifications, reduce motion, the screenshot run)
+and `laching.testing` the fakes. No companion in Kotlin yet.
 
-Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
+Everything in `LachingSystem` reads state and never prompts. None of it talks to the network.
 
 ## Install
 
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/deskling", exact: "0.12.6")
+.package(url: "https://github.com/vmihalachi/laching", exact: "0.12.6")
 ```
 
-**.NET** (10), from NuGet.org. `Deskling.Windows` and `Deskling.Windows.Companion` need **Windows 11**: they target
+**.NET** (10), from NuGet.org. `Laching.Windows` and `Laching.Windows.Companion` need **Windows 11**: they target
 `net10.0-windows10.0.22000.0` with `TargetPlatformMinVersion` 10.0.22000.0, so an app targets that or later (the rest
 are `net10.0` and run anywhere):
 
 ```sh
-dotnet add package Deskling.Core
-dotnet add package Deskling.Companion  # the desk companion layer
-dotnet add package Deskling.Windows   # Windows 11; the tray, idle and busy services
-dotnet add package Deskling.Companion.Shell    # a companion app's shell, platform-free (0.8)
-dotnet add package Deskling.Windows.Companion  # Windows 11, WinUI 3: that shell on Windows (0.8)
-dotnet add package Deskling.Testing   # in test projects: fakes, fixtures, vector replays
+dotnet add package Laching.Core
+dotnet add package Laching.Companion  # the desk companion layer
+dotnet add package Laching.Windows   # Windows 11; the tray, idle and busy services
+dotnet add package Laching.Companion.Shell    # a companion app's shell, platform-free (0.8)
+dotnet add package Laching.Windows.Companion  # Windows 11, WinUI 3: that shell on Windows (0.8)
+dotnet add package Laching.Testing   # in test projects: fakes, fixtures, vector replays
 ```
 
 ## Using it
@@ -74,9 +74,9 @@ The package ships no strings, product ids or window lists: the app passes them i
   math (kept on a screen when displays change, a side facing the middle, a platform-neutral top-left origin).
 - **Store.** `PurchaseStore(catalog: ProductCatalog(unlockables:tips:))`; `owned`, `isOwned(_:)`, `buy`, `tip`,
   `restore`; `error: PurchaseError?` is for the app to put into words. Tests use `MockStoreBackend`. On Windows the
-  same store (`Deskling.Core.Store`) runs over `StoreContextBackend(dispatcher, windowHandle)`, which matches add-ons by
+  same store (`Laching.Core.Store`) runs over `StoreContextBackend(dispatcher, windowHandle)`, which matches add-ons by
   their Partner Center Product ID and reports consumables fulfilled so tips can be bought again; `MockStoreBackend`
-  ships in `Deskling.Core` there, for tests and an app's preview modes.
+  ships in `Laching.Core` there, for tests and an app's preview modes.
 - **A companion's profile.** `CompanionDefaults(skin:phraseFlavors:)` states the two product choices (the default
   skin, the flavors on); the package's numbers fill the rest. Subclass
   `CompanionSettings(store:defaults:)` (an `@Observable open class` over any `SettingsStore`) to add the app's own
@@ -92,14 +92,14 @@ The package ships no strings, product ids or window lists: the app passes them i
 - **Languages.** `PhraseContext` takes the app's language: a phrase with `languages` set (`["it"]`) is only picked
   in those, so a joke that only works in Italian is written in Italian. The bank holds source text; the app's String
   Catalog (`phrase.<id>`) supplies the words on screen.
-- **Windows.** In `Deskling.Windows`: `TrayIconHost`, `AppNotifier<TAction>`, `StartupService(taskId)`, `LocalSettingsStore`,
+- **Windows.** In `Laching.Windows`: `TrayIconHost`, `AppNotifier<TAction>`, `StartupService(taskId)`, `LocalSettingsStore`,
   `SingleInstance.Claim(key)`, `WavPlayer`, and the signals `PowerSource`, `OutputMute`, `AppearanceWatcher`,
   `SessionLockWatcher`. String lookup is `Loc` (`Loc.Configure("Resources")`, `Loc.UseLanguage(...)` at launch) and
   `Formats.Configure(new FormatKeys(...))` names the six catalog keys the formatters need.
 
 ## A companion app on Windows
 
-On `Deskling.Windows.Companion` (0.8) a WinUI 3 app is a model, its views and three small files.
+On `Laching.Windows.Companion` (0.8) a WinUI 3 app is a model, its views and three small files.
 [`dotnet/Fixture.App`](dotnet/Fixture.App) is the whole of one, over the fixture bank.
 
 ```csharp
@@ -116,7 +116,7 @@ public static class Program
             LanguageSetting.ForApp("MyApp", App.Languages));
 }
 
-// App.xaml is a <shell:CompanionApp> (xmlns:shell="using:Deskling.Windows.Companion.Shell") with XamlControlsResources.
+// App.xaml is a <shell:CompanionApp> (xmlns:shell="using:Laching.Windows.Companion.Shell") with XamlControlsResources.
 public partial class App : CompanionApp
 {
     internal static readonly IReadOnlyList<string> Languages = ["en", "it"];  // its Strings folders, the default first
@@ -141,7 +141,7 @@ public partial class App : CompanionApp
         return model = new MyModel(settings, MyBank.Load(), host /* , … */);  // a CompanionAppModel<MyWindow, MySettings>
     }
 
-    // With DESKLING_SCREENSHOT_MODE set: the same model over a SampleEnvironment (its Seed too, so the next line's time
+    // With LACHING_SCREENSHOT_MODE set: the same model over a SampleEnvironment (its Seed too, so the next line's time
     // is the same every run), through a ScreenshotScript.
     protected override bool RunScreenshots() => false;
 }
@@ -152,32 +152,32 @@ read the app's own theme dictionaries; buttons, cards, titles as `Style`s), Home
 its own settings and windows, and the MSIX manifest (the startup task's id goes to `LaunchAtStartupToggle`). Image
 parts of a raster character ship as `Assets\Characters\<skin>.<part>.scale-200.png`.
 
-The project imports [`tools/windows/companion.targets`](tools/windows/companion.targets) from the app's `deskling/`
+The project imports [`tools/windows/companion.targets`](tools/windows/companion.targets) from the app's `laching/`
 submodule, last: x64 and ARM64, Debug unpackaged (`dotnet run`; `PackageIdentity.IsPackaged` is false, so the app
 picks a mock store, and `LocalSettingsStore.ForApp` keeps a JSON file) and every other configuration an MSIX with Native
 AOT, the voice clips, sounds and fonts linked from the folders the Mac app bundles.
 Beside it, `tools/windows/` has the screenshot runner, a package smoke test, a lint for the WinUI code that breaks only
 under Native AOT, and the MSIX images from the app icon ([`tools/README.md`](tools/README.md), *Windows apps*). Keep the
-model free of WinUI and its words behind `IStrings`, and its tests run on any OS (`Deskling.Testing`'s `ReswStrings`
+model free of WinUI and its words behind `IStrings`, and its tests run on any OS (`Laching.Testing`'s `ReswStrings`
 reads the app's English `.resw`).
 
 ## The implementations stay identical
 
 The Swift code is the reference. `conformance/` holds JSON vectors generated from it (`scheduler/`, and `companion/`
-over the fixture bank and skins), and `dotnet/Deskling.Core.Tests` and `dotnet/Deskling.Companion.Tests` replay every
+over the fixture bank and skins), and `dotnet/Laching.Core.Tests` and `dotnet/Laching.Companion.Tests` replay every
 one (`kotlin/core` the scheduler's), so a change in behavior on one side fails the other sides' tests. Apps generate their own content vectors with
-`DesklingTesting` and replay them through `Deskling.Testing`. See `conformance/README.md`.
+`LachingTesting` and replay them through `Laching.Testing`. See `conformance/README.md`.
 
 ## Develop
 
 ```sh
 swift build && swift test                       # macOS: the package and its tests
 scripts/conformance.sh                          # regenerate conformance/ from the Swift code
-cd dotnet && dotnet test Deskling.Core.Tests    # .NET: Core builds and tests anywhere; Deskling.Windows builds on Windows (its PRI tooling)
-cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, anywhere
-cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, anywhere
-cd dotnet && dotnet test Deskling.Testing.Tests     # the mocks, conformance helpers and fixtures, anywhere
-cd dotnet && dotnet test Deskling.Windows.Companion.Tests # Windows: the shell's Windows half
+cd dotnet && dotnet test Laching.Core.Tests    # .NET: Core builds and tests anywhere; Laching.Windows builds on Windows (its PRI tooling)
+cd dotnet && dotnet test Laching.Companion.Tests   # the companion vectors, anywhere
+cd dotnet && dotnet test Laching.Companion.Shell.Tests   # the companion shell's logic, anywhere
+cd dotnet && dotnet test Laching.Testing.Tests     # the mocks, conformance helpers and fixtures, anywhere
+cd dotnet && dotnet test Laching.Windows.Companion.Tests # Windows: the shell's Windows half
 dotnet run --project dotnet/Fixture.App         # Windows: the fixture app, a companion on the fixture bank
 scripts/fixture-screenshots.ps1                 # Windows: its windows to PNGs, light and dark (-Only home: hidden, a few seconds)
 python3 tools/tests/run.py                      # the tools' tests
@@ -194,9 +194,9 @@ One tag versions every side, and releases are automatic: every push to master th
 it. By hand, `git tag v0.12.6 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
 on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
-repository `vmihalachi/deskling` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
+repository `vmihalachi/laching` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
 username; without them it says so and attaches the packages to the release instead) and drafts a GitHub release from
-`CHANGELOG.md`. It also stages `@deskling/landing` on npm through trusted publishing, which goes live when an owner
+`CHANGELOG.md`. It also stages `@laching/landing` on npm through trusted publishing, which goes live when an owner
 approves it with 2FA ([`tools/landing/README.md`](tools/landing/README.md)).
 
 ## License

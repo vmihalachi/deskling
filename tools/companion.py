@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Reads a companion app's `companion.json`, the one file every tool in `tools/` takes its names and paths from.
 
-    python3 deskling/tools/companion.py get mac.scheme       # a value: strings as they are, the rest as JSON
-    python3 deskling/tools/companion.py path voice.dir       # a path from the file, made absolute
-    python3 deskling/tools/companion.py root                 # the app's root folder
-    python3 deskling/tools/companion.py validate [FILE…]     # check against companion.schema.json (exit 1 on problems)
-    python3 deskling/tools/companion.py env                  # paths and path patterns as shell assignments (verify.sh)
-    python3 deskling/tools/companion.py pins                 # the Deskling version everywhere it's pinned (exit 1 on a mismatch)
-    python3 deskling/tools/companion.py bump X.Y.Z           # every pin, the submodule and the landing page to vX.Y.Z
-    python3 deskling/tools/companion.py link [DESKLING]      # build against a Deskling checkout (../deskling) until unlink
-    python3 deskling/tools/companion.py unlink               # back to the pinned release, byte for byte
+    python3 laching/tools/companion.py get mac.scheme       # a value: strings as they are, the rest as JSON
+    python3 laching/tools/companion.py path voice.dir       # a path from the file, made absolute
+    python3 laching/tools/companion.py root                 # the app's root folder
+    python3 laching/tools/companion.py validate [FILE…]     # check against companion.schema.json (exit 1 on problems)
+    python3 laching/tools/companion.py env                  # paths and path patterns as shell assignments (verify.sh)
+    python3 laching/tools/companion.py pins                 # the Laching version everywhere it's pinned (exit 1 on a mismatch)
+    python3 laching/tools/companion.py bump X.Y.Z           # every pin, the submodule and the landing page to vX.Y.Z
+    python3 laching/tools/companion.py link [LACHING]      # build against a Laching checkout (../laching) until unlink
+    python3 laching/tools/companion.py unlink               # back to the pinned release, byte for byte
 
 The root is the folder holding `companion.json`: `$COMPANION_ROOT` when set, else the nearest one walking up from the
 current directory. Paths in the file are relative to it. Other tools import this module:
@@ -186,8 +186,8 @@ def derived(config: Config) -> dict[str, str]:
         "ANDROID_STRINGS": rel("android.strings") or rel("l10n.androidStrings"),
         "CONFORMANCE_DIR": conformance,
         "VOICE_DIR": rel("voice.dir"),
-        "DESKLING_PATH": rel("deskling.path"),
-        "DESKLING_TAG": config.get("deskling.tag", ""),
+        "LACHING_PATH": rel("laching.path"),
+        "LACHING_TAG": config.get("laching.tag", ""),
         "GIT_LOCAL_ENV": " ".join(GIT_LOCAL_ENV),  # verify.sh unsets them for git in a submodule
     }
     never = "^$a"  # matches no path: a section the app doesn't have
@@ -246,8 +246,8 @@ GIT_LOCAL_ENV = (
 
 
 def git_env() -> dict[str, str]:
-    """The environment for git in another repository than the app's (a submodule: `deskling/`, the voices): the
-    current one without `GIT_LOCAL_ENV`. Under the pre-commit hook `git -C deskling describe` would otherwise ask the
+    """The environment for git in another repository than the app's (a submodule: `laching/`, the voices): the
+    current one without `GIT_LOCAL_ENV`. Under the pre-commit hook `git -C laching describe` would otherwise ask the
     app's repository, always so in a linked worktree, where the exported GIT_DIR is absolute."""
     return {key: value for key, value in os.environ.items() if key not in GIT_LOCAL_ENV}
 
@@ -275,7 +275,7 @@ def shell_command(script: Path, windows: bool = os.name == "nt") -> list[str] | 
     return [bash, script.as_posix()] if bash else None
 
 
-# MARK: Pins: where the Deskling release is pinned, `bump`, `link` and `unlink`
+# MARK: Pins: where the Laching release is pinned, `bump`, `link` and `unlink`
 
 
 class PinError(Exception):
@@ -283,7 +283,7 @@ class PinError(Exception):
 
 
 class Pin(NamedTuple):
-    """A place the Deskling release is pinned and the version it names. A version written in a file carries the file and
+    """A place the Laching release is pinned and the version it names. A version written in a file carries the file and
     where the version sits in its text, which is what `bump` rewrites."""
 
     label: str
@@ -317,22 +317,22 @@ def _tail(result: subprocess.CompletedProcess, lines: int = 15) -> str:
 
 
 # A Swift manifest or an XcodeGen spec is read in blocks, cut before each `.package(` line and each YAML key that opens
-# a mapping, so the version comes from the block that names Deskling and not from another package's.
+# a mapping, so the version comes from the block that names Laching and not from another package's.
 _BLOCK = re.compile(r"\n(?=[ \t]*(?:\.package|\w+:[ \t]*$))", re.M)
 _PACKAGE_EXACT = r'exact:\s*"([^"]+)"'
 _SPEC_EXACT = r"(?:exactVersion|exact):\s*\"?([0-9][^\s\"]*)"
-_NUGET = re.compile(r'Include="(Deskling\.[A-Za-z.]+)"\s+Version="([^"]+)"')
-_COMPANION_TAG = re.compile(r'"deskling"\s*:\s*\{[^{}]*?"tag"\s*:\s*"([^"]*)"')
-_LANDING_PACKAGE = "@deskling/landing"
-_LANDING_DEPENDENCY = re.compile(r'"@deskling/landing"\s*:\s*"[~^]?(\d+\.\d+\.\d+)"')
+_NUGET = re.compile(r'Include="(Laching\.[A-Za-z.]+)"\s+Version="([^"]+)"')
+_COMPANION_TAG = re.compile(r'"laching"\s*:\s*\{[^{}]*?"tag"\s*:\s*"([^"]*)"')
+_LANDING_PACKAGE = "@laching/landing"
+_LANDING_DEPENDENCY = re.compile(r'"@laching/landing"\s*:\s*"[~^]?(\d+\.\d+\.\d+)"')
 _LOCKFILES = ("package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lock")
 
 
-def _deskling_block_match(text: str, pattern: str) -> re.Match | None:
+def _laching_block_match(text: str, pattern: str) -> re.Match | None:
     cuts = list(_BLOCK.finditer(text))
     compiled = re.compile(pattern)
     for start, end in zip([0, *(cut.end() for cut in cuts)], [*(cut.start() for cut in cuts), len(text)]):
-        if re.search("deskling", text[start:end], re.I) and (match := compiled.search(text, start, end)):
+        if re.search("laching", text[start:end], re.I) and (match := compiled.search(text, start, end)):
             return match
     return None
 
@@ -349,17 +349,17 @@ def _project_resolved(config: Config) -> Path | None:
 
 
 def _resolved_files(config: Config) -> list[Path]:
-    """Where SwiftPM records the resolved Deskling commit: the core package's Package.resolved and the Xcode project's,
+    """Where SwiftPM records the resolved Laching commit: the core package's Package.resolved and the Xcode project's,
     present or not."""
     core = config.path("mac.core", "mac.dir")
     return [file for file in (core / "Package.resolved" if core else None, _project_resolved(config)) if file]
 
 
-_GRADLE_VERSION = re.compile(r"^desklingVersion=(\S+)\s*$", re.M)
+_GRADLE_VERSION = re.compile(r"^lachingVersion=(\S+)\s*$", re.M)
 
 
 def _submodule(config: Config) -> Path | None:
-    submodule = config.path("deskling.path")
+    submodule = config.path("laching.path")
     return submodule if submodule and (submodule / ".git").exists() else None
 
 
@@ -368,18 +368,18 @@ def _submodule_tag(submodule: Path) -> str:
 
 
 def pin_sites(config: Config) -> list[Pin]:
-    """Every place the Deskling release is pinned: the submodule's tag, companion.json's `deskling.tag`, the `exact:` of
-    the core package's Package.swift, the `exactVersion`/`exact` of the XcodeGen spec, every `Deskling.*` NuGet
-    reference under the Windows folder and, for an app with an Android side, the `desklingVersion` of the submodule's
+    """Every place the Laching release is pinned: the submodule's tag, companion.json's `laching.tag`, the `exact:` of
+    the core package's Package.swift, the `exactVersion`/`exact` of the XcodeGen spec, every `Laching.*` NuGet
+    reference under the Windows folder and, for an app with an Android side, the `lachingVersion` of the submodule's
     `kotlin/gradle.properties` (the Gradle build the app includes). A place the app doesn't have is left out."""
     found: list[Pin] = []
     if submodule := _submodule(config):
-        found.append(Pin(f"{config.get('deskling.path')} (submodule tag)", _submodule_tag(submodule) or "(not on a tag)"))
+        found.append(Pin(f"{config.get('laching.path')} (submodule tag)", _submodule_tag(submodule) or "(not on a tag)"))
     manifest = config.root / FILE
     match = _COMPANION_TAG.search(read_text(manifest))
-    found.append(Pin("companion.json deskling.tag", config.get("deskling.tag", ""), manifest, match.span(1) if match else None))
+    found.append(Pin("companion.json laching.tag", config.get("laching.tag", ""), manifest, match.span(1) if match else None))
     for file in _swift_manifests(config):
-        match = _deskling_block_match(read_text(file), _PACKAGE_EXACT if file.name == "Package.swift" else _SPEC_EXACT)
+        match = _laching_block_match(read_text(file), _PACKAGE_EXACT if file.name == "Package.swift" else _SPEC_EXACT)
         version = match.group(1) if match else "(not pinned to a version)"
         found.append(Pin(_rel(config, file), version, file, match.span(1) if match else None))
     windows = config.path("windows.dir")
@@ -390,19 +390,19 @@ def pin_sites(config: Config) -> list[Pin]:
     if config.get("android") and (gradle := _kotlin_properties(config)) and gradle.is_file():
         match = _GRADLE_VERSION.search(read_text(gradle))
         # No file of its own to rewrite: `bump` moves the submodule and this moves with it.
-        found.append(Pin(f"{_rel(config, gradle)} desklingVersion", match.group(1) if match else "(no desklingVersion)"))
+        found.append(Pin(f"{_rel(config, gradle)} lachingVersion", match.group(1) if match else "(no lachingVersion)"))
     return found
 
 
 def _kotlin_properties(config: Config) -> Path | None:
-    """The submodule's `kotlin/gradle.properties`, None without a `deskling.path`."""
-    deskling = config.path("deskling.path")
-    return deskling / "kotlin" / "gradle.properties" if deskling else None
+    """The submodule's `kotlin/gradle.properties`, None without a `laching.path`."""
+    laching = config.path("laching.path")
+    return laching / "kotlin" / "gradle.properties" if laching else None
 
 
 def pins(config: Config) -> list[tuple[str, str]]:
-    """Where the Deskling release is pinned and the version each place names (`pin_sites`), plus, while the app is
-    linked to a Deskling checkout, a line that never agrees, so nothing linked gets committed."""
+    """Where the Laching release is pinned and the version each place names (`pin_sites`), plus, while the app is
+    linked to a Laching checkout, a line that never agrees, so nothing linked gets committed."""
     found = [(pin.label, pin.version) for pin in pin_sites(config)]
     if linked := linked_to(config):
         found.append((f"linked to {linked}: `companion.py unlink` before committing", "(linked)"))
@@ -415,7 +415,7 @@ def pins_agree(found: list[tuple[str, str]]) -> bool:
 
 
 def landing_pin(config: Config) -> Pin | None:
-    """The landing page's `@deskling/landing` version, None without one. Not one of the pins: the package ships only when
+    """The landing page's `@laching/landing` version, None without one. Not one of the pins: the package ships only when
     it changed, so its versions skip releases, and `bump` moves it to npm's newest at or below the release."""
     folder = config.path("landing.dir")
     file = folder / "package.json" if folder else None
@@ -429,7 +429,7 @@ def print_pins(config: Config) -> int:
     found = pins(config)
     agree = pins_agree(found)
     if not agree:
-        print("The Deskling version must be the same everywhere it's pinned:")
+        print("The Laching version must be the same everywhere it's pinned:")
     for where, version in found:
         print(f"  {version:<24} {where}")
     if landing := landing_pin(config):
@@ -445,22 +445,22 @@ def _remote_tag(submodule: Path, tag: str) -> str:
     """The commit `tag` names on the submodule's origin; a PinError when origin has no such tag."""
     result = _git(submodule, "ls-remote", "--tags", "origin", f"refs/tags/{tag}*")
     if result.returncode:
-        raise PinError(f"couldn't list the tags on Deskling's origin:\n{_tail(result)}")
+        raise PinError(f"couldn't list the tags on Laching's origin:\n{_tail(result)}")
     refs = dict(reversed(line.split("\t", 1)) for line in result.stdout.splitlines() if "\t" in line)
     commit = refs.get(f"refs/tags/{tag}^{{}}") or refs.get(f"refs/tags/{tag}")  # an annotated tag's commit, peeled
     if not commit:
-        raise PinError(f"{tag} isn't a tag on Deskling's origin: release it first")
+        raise PinError(f"{tag} isn't a tag on Laching's origin: release it first")
     return commit
 
 
 def _repin_resolved(text: str, version: str, commit: str) -> str:
-    """A Package.resolved with its `deskling` pin at `version` and `commit`."""
+    """A Package.resolved with its `laching` pin at `version` and `commit`."""
 
     def state(match: re.Match) -> str:
         body = re.sub(r'("revision"\s*:\s*")[^"]*(")', lambda m: m.group(1) + commit + m.group(2), match.group(0))
         return re.sub(r'("version"\s*:\s*")[^"]*(")', lambda m: m.group(1) + version + m.group(2), body)
 
-    return re.sub(r'"identity"\s*:\s*"deskling"[^{}]*"state"\s*:\s*\{[^{}]*\}', state, text)
+    return re.sub(r'"identity"\s*:\s*"laching"[^{}]*"state"\s*:\s*\{[^{}]*\}', state, text)
 
 
 def regenerate_project(config: Config) -> str:
@@ -518,7 +518,7 @@ def _modified(folder: Path) -> set[Path]:
 
 
 def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
-    """Moves `@deskling/landing` to npm's newest version at or below `version`, and its lockfile with the landing tool's
+    """Moves `@laching/landing` to npm's newest version at or below `version`, and its lockfile with the landing tool's
     `install` when that's safe: the tool is installed and neither file has uncommitted changes to mix in. What changed,
     and notes."""
     pin = landing_pin(config)
@@ -564,7 +564,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
 
 
 def bump(config: Config, version: str) -> int:
-    """Moves the app to Deskling `version`: every pin `pin_sites` finds, the Package.resolved files, the submodule (to the
+    """Moves the app to Laching `version`: every pin `pin_sites` finds, the Package.resolved files, the submodule (to the
     tag) and the landing page's package. Refuses while linked, or when origin has no such tag. Prints what changed and
     the pins; 1 when they still disagree."""
     version = version.removeprefix("v")
@@ -575,7 +575,7 @@ def bump(config: Config, version: str) -> int:
     tag = f"v{version}"
     submodule = _submodule(config)
     if submodule is None:
-        raise PinError(f"bump needs the Deskling submodule at {config.get('deskling.path') or 'deskling.path'}")
+        raise PinError(f"bump needs the Laching submodule at {config.get('laching.path') or 'laching.path'}")
     commit = _remote_tag(submodule, tag)
     move_submodule = _submodule_tag(submodule) != tag
     if move_submodule:
@@ -642,11 +642,11 @@ def bump(config: Config, version: str) -> int:
     notes += landing_notes
     config = load(config.root)  # companion.json may have changed
     if changed:
-        print(f"Deskling {tag}:")
+        print(f"Laching {tag}:")
         for line in changed:
             print(f"  changed  {line}")
     else:
-        print(f"Deskling {tag}: every pin already names it, nothing changed")
+        print(f"Laching {tag}: every pin already names it, nothing changed")
     for note in filter(None, notes):
         print(f"  note     {note}")
     return print_pins(config)
@@ -654,8 +654,8 @@ def bump(config: Config, version: str) -> int:
 
 # The link: the files `link` changed and what they held, kept in the repository's git folder (out of the work tree, one
 # per worktree) so `unlink` can put them back.
-_LINK_DIR = "deskling-link"
-LINK_MARKER = "deskling link"
+_LINK_DIR = "laching-link"
+LINK_MARKER = "laching link"
 
 
 class _LinkEdit(NamedTuple):
@@ -674,108 +674,108 @@ def _link_dir(config: Config) -> Path:
 
 
 def linked_to(config: Config) -> str | None:
-    """The Deskling checkout the app is linked to (`link`), None when it builds against the pinned release."""
+    """The Laching checkout the app is linked to (`link`), None when it builds against the pinned release."""
     state = _link_dir(config) / "state.json"
     if state.is_file():
         return json.loads(state.read_text("utf8"))["path"]
     windows = config.path("windows.dir")
     targets = windows / "Directory.Build.targets" if windows else None
     if targets and targets.is_file() and LINK_MARKER in read_text(targets):
-        return "a Deskling checkout (Directory.Build.targets)"
+        return "a Laching checkout (Directory.Build.targets)"
     android = config.path("android.dir")
     properties = android / "local.properties" if android else None
     if properties and properties.is_file() and LINK_MARKER in read_text(properties):
-        return "a Deskling checkout (local.properties)"
+        return "a Laching checkout (local.properties)"
     return None
 
 
 def linked_dotnet(config: Config) -> str | None:
-    """The folder of Deskling's .NET projects the Windows projects build while linked, as the link's
-    Directory.Build.targets names it: relative to the Windows folder (`../../deskling/dotnet/`) or absolute. None when
+    """The folder of Laching's .NET projects the Windows projects build while linked, as the link's
+    Directory.Build.targets names it: relative to the Windows folder (`../../laching/dotnet/`) or absolute. None when
     they build the pinned packages."""
     windows = config.path("windows.dir")
     targets = windows / "Directory.Build.targets" if windows else None
     if not targets or not targets.is_file() or LINK_MARKER not in (text := read_text(targets)):
         return None
-    match = re.search(r"<DesklingLinkedDotnet>\s*(.*?)\s*</DesklingLinkedDotnet>", text)
+    match = re.search(r"<LachingLinkedDotnet>\s*(.*?)\s*</LachingLinkedDotnet>", text)
     return match[1].removeprefix("$(MSBuildThisFileDirectory)") if match else None
 
 
 def _link_path(target: Path, base: Path) -> str:
-    """`target` relative to `base` when they share a folder below the root (a sibling checkout: ../../deskling), else
+    """`target` relative to `base` when they share a folder below the root (a sibling checkout: ../../laching), else
     absolute."""
     if os.path.commonpath([target, base]) == os.path.dirname(os.path.commonpath([target, base])):
         return target.as_posix()
     return os.path.relpath(target, base).replace(os.sep, "/")
 
 
-def _link_msbuild(deskling: Path, windows: Path) -> str:
-    """The MSBuild that swaps each `Deskling.*` PackageReference for a ProjectReference to the checkout's project of the
+def _link_msbuild(laching: Path, windows: Path) -> str:
+    """The MSBuild that swaps each `Laching.*` PackageReference for a ProjectReference to the checkout's project of the
     same name. A Directory.Build.targets is read after the project's own items, so the projects stay as they are."""
-    dotnet = deskling / "dotnet"
+    dotnet = laching / "dotnet"
     names = sorted(file.stem for file in dotnet.glob("*/*.csproj")
                    if file.stem == file.parent.name and "<IsPackable>true</IsPackable>" in read_text(file))
     if not names:
-        raise PinError(f"{dotnet} has no packable Deskling project")
+        raise PinError(f"{dotnet} has no packable Laching project")
     path = _link_path(dotnet, windows)
     prefix = "" if os.path.isabs(path) else "$(MSBuildThisFileDirectory)"
     return (
-        f"  <!-- {LINK_MARKER}: Deskling's packages are the projects in {path}, not NuGet's, until\n"
+        f"  <!-- {LINK_MARKER}: Laching's packages are the projects in {path}, not NuGet's, until\n"
         "       `companion.py unlink` takes this out. The pin check fails while it's here. -->\n"
         "  <PropertyGroup>\n"
-        f"    <DesklingLinkedDotnet>{prefix}{path}/</DesklingLinkedDotnet>\n"
+        f"    <LachingLinkedDotnet>{prefix}{path}/</LachingLinkedDotnet>\n"
         "  </PropertyGroup>\n"
         "  <ItemGroup>\n"
-        f'    <_DesklingLinkable Include="{";".join(names)}" />\n'
-        '    <_DesklingNotLinked Include="@(PackageReference)" Exclude="@(_DesklingLinkable)" />\n'
-        '    <_DesklingLinked Include="@(PackageReference)" Exclude="@(_DesklingNotLinked)" />\n'
-        '    <PackageReference Remove="@(_DesklingLinked)" />\n'
-        "    <ProjectReference Include=\"@(_DesklingLinked->'$(DesklingLinkedDotnet)%(Identity)/%(Identity).csproj')\" />\n"
+        f'    <_LachingLinkable Include="{";".join(names)}" />\n'
+        '    <_LachingNotLinked Include="@(PackageReference)" Exclude="@(_LachingLinkable)" />\n'
+        '    <_LachingLinked Include="@(PackageReference)" Exclude="@(_LachingNotLinked)" />\n'
+        '    <PackageReference Remove="@(_LachingLinked)" />\n'
+        "    <ProjectReference Include=\"@(_LachingLinked->'$(LachingLinkedDotnet)%(Identity)/%(Identity).csproj')\" />\n"
         "  </ItemGroup>\n"
     )
 
 
-def _link_properties(deskling: Path, android: Path) -> str:
+def _link_properties(laching: Path, android: Path) -> str:
     """The local.properties lines that point the Android build's `includeBuild` at the checkout's `kotlin/`: the app's
-    settings.gradle.kts reads `deskling.kotlin.dir` from there before falling back to the submodule's."""
+    settings.gradle.kts reads `laching.kotlin.dir` from there before falling back to the submodule's."""
     return (
-        f"# {LINK_MARKER}: Deskling's Kotlin build is this checkout, not the pinned release, until `companion.py unlink`\n"
-        f"deskling.kotlin.dir={_link_path(deskling / 'kotlin', android)}\n"
+        f"# {LINK_MARKER}: Laching's Kotlin build is this checkout, not the pinned release, until `companion.py unlink`\n"
+        f"laching.kotlin.dir={_link_path(laching / 'kotlin', android)}\n"
     )
 
 
 def link(config: Config, checkout: Path | None = None) -> int:
-    """Switches the app from the pinned release to a Deskling checkout (`../deskling` next to the app by default): the
-    XcodeGen spec's and the core package's Deskling become `path:` packages (the project regenerated), the Windows
-    projects build Deskling's projects instead of its NuGet packages, and the Android build includes the checkout's
-    `kotlin/` (`deskling.kotlin.dir` in its git-ignored local.properties). The pins fail until `unlink`."""
-    deskling = (checkout or config.root.parent / "deskling").expanduser().resolve()
-    manifest = deskling / "Package.swift"
-    if not manifest.is_file() or 'name: "Deskling"' not in read_text(manifest):
-        raise PinError(f"{deskling} isn't a Deskling checkout (no Package.swift naming Deskling)")
+    """Switches the app from the pinned release to a Laching checkout (`../laching` next to the app by default): the
+    XcodeGen spec's and the core package's Laching become `path:` packages (the project regenerated), the Windows
+    projects build Laching's projects instead of its NuGet packages, and the Android build includes the checkout's
+    `kotlin/` (`laching.kotlin.dir` in its git-ignored local.properties). The pins fail until `unlink`."""
+    laching = (checkout or config.root.parent / "laching").expanduser().resolve()
+    manifest = laching / "Package.swift"
+    if not manifest.is_file() or 'name: "Laching"' not in read_text(manifest):
+        raise PinError(f"{laching} isn't a Laching checkout (no Package.swift naming Laching)")
     if linked := linked_to(config):
         raise PinError(f"already linked to {linked}: `unlink` first")
     edits: list[_LinkEdit] = []
     spec = config.path("mac.projectSpec", "mac.dir")
     if spec and spec.is_file():
         # \r?: a checkout with CRLF line endings (Windows, core.autocrlf); the version line keeps its \r.
-        match = re.search(r"^(?P<indent>[ \t]+)url:[ \t]*\S*(?i:deskling)\S*[ \t]*\r?\n(?P=indent)"
+        match = re.search(r"^(?P<indent>[ \t]+)url:[ \t]*\S*(?i:laching)\S*[ \t]*\r?\n(?P=indent)"
                           r"(?:exactVersion|exact|version|from|minorVersion|majorVersion):[ \t]*\S+[ \t]*(?=\r?$)",
                           read_text(spec), re.M)
         if not match:
-            raise PinError(f"{_rel(config, spec)}: no Deskling package with a url and a version to switch")
-        edits.append(_LinkEdit(spec, *match.span(), f"{match['indent']}path: {_link_path(deskling, spec.parent)}"))
+            raise PinError(f"{_rel(config, spec)}: no Laching package with a url and a version to switch")
+        edits.append(_LinkEdit(spec, *match.span(), f"{match['indent']}path: {_link_path(laching, spec.parent)}"))
     core = config.path("mac.core", "mac.dir")
     if core and (core / "Package.swift").is_file():
-        match = re.search(r'\.package\(\s*url:\s*"[^"]*(?i:deskling)[^"]*"\s*,\s*exact:\s*"[^"]*"\s*\)',
+        match = re.search(r'\.package\(\s*url:\s*"[^"]*(?i:laching)[^"]*"\s*,\s*exact:\s*"[^"]*"\s*\)',
                           read_text(core / "Package.swift"))
         if not match:
-            raise PinError(f"{_rel(config, core / 'Package.swift')}: no Deskling `.package(url:…, exact:…)` to switch")
-        edits.append(_LinkEdit(core / "Package.swift", *match.span(), f'.package(path: "{_link_path(deskling, core)}")'))
+            raise PinError(f"{_rel(config, core / 'Package.swift')}: no Laching `.package(url:…, exact:…)` to switch")
+        edits.append(_LinkEdit(core / "Package.swift", *match.span(), f'.package(path: "{_link_path(laching, core)}")'))
     windows = config.path("windows.dir")
     if windows and any(pin.file and pin.file.is_relative_to(windows) for pin in pin_sites(config)):
         targets = windows / "Directory.Build.targets"
-        block = _link_msbuild(deskling, windows)
+        block = _link_msbuild(laching, windows)
         if targets.is_file():
             text = read_text(targets)
             if (at := text.rfind("</Project>")) < 0:
@@ -784,13 +784,13 @@ def link(config: Config, checkout: Path | None = None) -> int:
         else:
             edits.append(_LinkEdit(targets, 0, 0, f"<Project>\n{block}</Project>\n"))
     android = config.path("android.dir")
-    if android and android.is_dir() and (deskling / "kotlin" / "settings.gradle.kts").is_file():
+    if android and android.is_dir() and (laching / "kotlin" / "settings.gradle.kts").is_file():
         properties = android / "local.properties"
         text = read_text(properties) if properties.is_file() else ""
         lead = "" if not text or text.endswith("\n") else "\n"
-        edits.append(_LinkEdit(properties, len(text), len(text), lead + _link_properties(deskling, android)))
+        edits.append(_LinkEdit(properties, len(text), len(text), lead + _link_properties(laching, android)))
     if not edits:
-        raise PinError("nothing here pins Deskling to link")
+        raise PinError("nothing here pins Laching to link")
 
     # What SwiftPM and XcodeGen derive from the edited files: put back as they were, whatever the linked builds wrote.
     project = config.get("mac.project")
@@ -809,16 +809,16 @@ def link(config: Config, checkout: Path | None = None) -> int:
                         "linkedHash": hashlib.sha256(linked.encode("utf8")).hexdigest()})
         write_text(edit.file, linked)
     entries += [{"path": _rel(config, file), "derived": True} for file in derived]
-    (folder / "state.json").write_text(json.dumps({"path": str(deskling), "files": entries}, indent=2) + "\n", "utf8")
+    (folder / "state.json").write_text(json.dumps({"path": str(laching), "files": entries}, indent=2) + "\n", "utf8")
 
-    print(f"Linked to {deskling}:")
+    print(f"Linked to {laching}:")
     for edit in edits:
         print(f"  changed  {_rel(config, edit.file)}")
     if spec and (note := regenerate_project(config)):
         print(f"  note     {note}")
-    if deskling.name.lower() != "deskling":
-        print(f"  note     SwiftPM names a local package after its folder, so the products' package \"deskling\" needs "
-              f"the checkout's folder named deskling, not {deskling.name}")
+    if laching.name.lower() != "laching":
+        print(f"  note     SwiftPM names a local package after its folder, so the products' package \"laching\" needs "
+              f"the checkout's folder named laching, not {laching.name}")
     print("Build and test as usual; `companion.py unlink` before committing.")
     print_pins(config)
     return 0

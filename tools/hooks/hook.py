@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Agent hooks for a companion app: Claude Code (.claude/settings.json), Codex (.codex/config.toml) and GitHub Copilot
 (.github/hooks/*.json, pre and post, and cloud-stop for the cloud coding agent) all call this file,
-`python3 deskling/tools/hooks/hook.py <mode>`.
+`python3 laching/tools/hooks/hook.py <mode>`.
 
   hook.py pre    PreToolUse:  refuse to load huge or generated files and to edit generated ones (the String Catalogs,
                                .resw, the Android strings, project.pbxproj, the voice manifest and clips, the vectors,
@@ -72,7 +72,7 @@ def setup(root=None):
     ROOT = CONFIG.root
     NAMES = companion.derived(CONFIG)
     ere = companion.ere
-    tools = f"{NAMES['DESKLING_PATH'] or 'deskling'}/tools"
+    tools = f"{NAMES['LACHING_PATH'] or 'laching'}/tools"
     L10N = (f"use `python3 {tools}/l10n.py status -v`, or `grep -n '\"<key>\"' <file>` without context lines "
             "(localization skill)")
     voice, conformance = NAMES["VOICE_DIR"], NAMES["CONFORMANCE_DIR"]
@@ -177,7 +177,7 @@ def whole_read(path, lines):
 
 
 def deny(reason):
-    reason = f"Blocked by deskling/tools/hooks/hook.py — {reason}"
+    reason = f"Blocked by laching/tools/hooks/hook.py — {reason}"
     print(json.dumps({"permissionDecision": "deny", "permissionDecisionReason": reason}))  # Copilot
     print(reason, file=sys.stderr)
     sys.exit(2)
@@ -316,7 +316,7 @@ def format_file(path):
         return
     mac, windows, android = NAMES["MAC_DIR"], NAMES["WINDOWS_DIR"], NAMES["ANDROID_DIR"]
     swift_format = ROOT / mac / ".swift-format"
-    # Kotlin under the Android project, or under kotlin/ (Deskling's own Kotlin build, when the hook runs there).
+    # Kotlin under the Android project, or under kotlin/ (Laching's own Kotlin build, when the hook runs there).
     kotlin = path.endswith((".kt", ".kts")) and ((android and path.startswith(f"{android}/")) or path.startswith("kotlin/"))
     if mac and path.startswith(f"{mac}/") and path.endswith(".swift") and sys.platform == "darwin" and swift_format.exists():
         command = ["xcrun", "swift-format", "format", "-i", "--configuration", str(swift_format), path]
@@ -424,7 +424,7 @@ def parity_reminder(event, last_edit, last_ran):
 
 
 def verify_script():
-    """The app's scripts/verify.sh wrapper when it has one, else Deskling's."""
+    """The app's scripts/verify.sh wrapper when it has one, else Laching's."""
     wrapper = ROOT / "scripts" / "verify.sh"
     return wrapper if wrapper.exists() else TOOLS / "verify.sh"
 

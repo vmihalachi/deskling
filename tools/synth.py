@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Writes a companion's sounds: short original tones synthesized from numbers, so nothing is sampled or borrowed.
 
-    python3 deskling/tools/synth.py            # writes <sounds.out>/*.wav
-    python3 deskling/tools/synth.py --check    # exit 1 when a committed file differs
+    python3 laching/tools/synth.py            # writes <sounds.out>/*.wav
+    python3 laching/tools/synth.py --check    # exit 1 when a committed file differs
 
 The app's recipes live in its own module (`sounds.recipes` in companion.json), which defines
 `sounds(engine) -> {name: samples}` built from this engine's `tone`, `glide` and `silence` (and may set `PEAK`):
@@ -118,7 +118,7 @@ def main(argv: list[str]) -> int:
             path.write_bytes(data)
             print(f"wrote {path.relative_to(config.root).as_posix()} ({(len(data) - 44) / 2 / RATE:.2f} s)")
     for path in stale:
-        print(f"stale: {path} (run deskling/tools/synth.py)")
+        print(f"stale: {path} (run laching/tools/synth.py)")
     return 1 if stale else 0
 
 

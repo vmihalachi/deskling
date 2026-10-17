@@ -122,7 +122,7 @@ class VoiceTests(unittest.TestCase):
         self.assertIn('"../Voice/it/clown/hello.m4a?v=r"', page)
         self.assertIn("<title>Fixy's voice review</title>", (site / "index.html").read_text("utf8"))
         self.assertIn("Copyright (c) Fixture", (site / "LICENSE").read_text("utf8"))
-        self.assertIn("`deskling/tools/voice.py` in fixture", (site / "README.md").read_text("utf8"))
+        self.assertIn("`laching/tools/voice.py` in fixture", (site / "README.md").read_text("utf8"))
         self.assertIn("The recorded lines of Fixy, in Fixture, made with ElevenLabs:", (site / "README.md").read_text("utf8"))
 
     def test_clip_urls_use_forward_slashes_on_windows(self):

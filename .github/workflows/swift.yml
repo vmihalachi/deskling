@@ -2,8 +2,8 @@ name: Swift
 
 # Builds and tests the Swift package (the reference implementation) and checks that the committed
 # conformance vectors are current. macOS minutes bill at 10x, so the paths stay narrow. The linux job builds the
-# pure products (DesklingCore, DesklingCompanion, DesklingTesting) without Apple frameworks and runs
-# DesklingCoreTests and DesklingCompanionTests there; the other test targets are macOS-only and build empty.
+# pure products (LachingCore, LachingCompanion, LachingTesting) without Apple frameworks and runs
+# LachingCoreTests and LachingCompanionTests there; the other test targets are macOS-only and build empty.
 on:
   push:
     branches:
@@ -65,11 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build DesklingCore, DesklingCompanion, DesklingTesting
+      - name: Build LachingCore, LachingCompanion, LachingTesting
         run: |
-          swift build --product DesklingCore
-          swift build --product DesklingCompanion
-          swift build --product DesklingTesting
+          swift build --product LachingCore
+          swift build --product LachingCompanion
+          swift build --product LachingTesting
 
-      - name: Test DesklingCoreTests, DesklingCompanionTests, DesklingTestingTests
-        run: swift test --filter 'DesklingCoreTests|DesklingCompanionTests|DesklingTestingTests'
+      - name: Test LachingCoreTests, LachingCompanionTests, LachingTestingTests
+        run: swift test --filter 'LachingCoreTests|LachingCompanionTests|LachingTestingTests'

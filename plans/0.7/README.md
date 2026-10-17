@@ -1,4 +1,4 @@
-# Deskling 0.7: the companion shell
+# Laching 0.7: the companion shell
 
 > The design for the 0.7.0 release, written 2026-10-12 from a measurement of what sunnysays and Mister Pagliacci
 > still repeat on top of 0.6. The sequences in this folder are self-contained briefs, one per working session:
@@ -12,7 +12,7 @@
 
 ## Why
 
-0.5 moved the mechanism under the character into `DesklingCompanion`: the apps' pure cores are now content only (a
+0.5 moved the mechanism under the character into `LachingCompanion`: the apps' pure cores are now content only (a
 bank, flavors, defaults, keys, skins, generated art). The layer above it was left in the apps on purpose ("the brand
 kit stays until 0.6"), and a second app has now been built on it. Measured on 2026-10-12 with app and character names
 normalized, non-blank lines, `difflib` matching blocks:
@@ -45,24 +45,24 @@ Half of the repetition is the look and should stay duplicated. The other half is
 | The look | **Stays in the apps:** `HomeView`, `OnboardingView`, the panel's layout, `Palette`, the font names, the button and chip styles (`SunButtonStyle`, `LeafChipStyle` / `PrimaryButtonStyle`, `ChipToggleStyle`, `TileToggleStyle`), the title and label views, the sticker card / card surface, `Windowsill` / `GelStage`, the landing's `main.js` and `style.css`. Only chrome that is byte-identical in both apps moves (`WindowInset`, `ActionBar`, `PanelRowStyle`, `Pointer`, the window root modifier). |
 | Mechanism | **Moves, and is the same bytes afterwards.** Both apps' content vectors stay byte-identical, their screenshots pixel-identical, their test counts accounted for. A diff is a bug. |
 | Compatibility | **Additive.** 0.7.0 adds types and functions; nothing from 0.6 changes meaning or signature. The app migrations are deletions. (`DeliveryPerformer` gains one optional callback.) |
-| Where | `DesklingCompanionUI` gains `Shell/`, `Settings/`, `Support/`, `Screenshots/`; `DesklingShell` gains `FontRegistration`; `DesklingTesting` gains the standard cases and `CompanionVectors`; `Deskling.Testing` gains `CompanionReplay`; `tools/` gains `landing/` and `store/`. No new product, no new NuGet package. |
-| Landing | `tools/landing/` is an npm package (`@deskling/landing`, TypeScript sources, not published) that each app's `landing/package.json` takes as `file:../deskling/tools/landing` through the submodule (but see the note under *`tools/landing`*: the landing pages are now public repositories of their own). The app's `vite.config.ts` keeps its data and brand hooks. |
+| Where | `LachingCompanionUI` gains `Shell/`, `Settings/`, `Support/`, `Screenshots/`; `LachingShell` gains `FontRegistration`; `LachingTesting` gains the standard cases and `CompanionVectors`; `Laching.Testing` gains `CompanionReplay`; `tools/` gains `landing/` and `store/`. No new product, no new NuGet package. |
+| Landing | `tools/landing/` is an npm package (`@laching/landing`, TypeScript sources, not published) that each app's `landing/package.json` takes as `file:../laching/tools/landing` through the submodule (but see the note under *`tools/landing`*: the landing pages are now public repositories of their own). The app's `vite.config.ts` keeps its data and brand hooks. |
 | Store | `tools/store/{check,push,import}.py` read a new `store` section of `companion.json`; the apps keep two-line wrappers at today's paths. sunnysays' `push.py` (the review part, `--status`, IAP creation) and mybackhurts' (previews, `test_push.py`) are merged, with both repos' "App Information languages first" fix. |
-| mybackhurts | Adopts the tools only (`l10n.py`, the hook, `store/`, `landing`), keeps its own `conformance.sh`, `verify.sh` and screenshots, and stays on Deskling 0.4.0 for code. Droppable (sequence 6). |
+| mybackhurts | Adopts the tools only (`l10n.py`, the hook, `store/`, `landing`), keeps its own `conformance.sh`, `verify.sh` and screenshots, and stays on Laching 0.4.0 for code. Droppable (sequence 6). |
 | Timing | After Pagliacci's M3 lands and, if the dates allow, after its M5 ships: no session may be editing either app's `AppModel` or `SettingsView` while 5.4 dry-runs the migration. The brief of each migration says the same. |
 
 ## Products after 0.7.0
 
 | Product | Gains |
 |---|---|
-| `DesklingShell` | `FontRegistration` (registers the app's bundled `.ttf` files once; `isAvailable(names:)`). `DeliveryPerformer` is in CompanionUI, see below. |
-| `DesklingCompanionUI` | `Shell/`: `CompanionAppModel<Window>` (the 20 s tick, the channels, the status item, the desktop presence, the windows, the hotkey, the store, the bubble, mute and undo, previews, the status line), `CompanionAppDelegate<Window>`, `CompanionMenus` + `ActionItem`, `WindowRoles`, the copy structs (`StatusCopy`, `DesktopCopy`, `MenuCopy`), `CompanionNotifying`. `Settings/`: `ActiveHoursEditor`, `QuietHoursEditor`, `ShortcutRecorder`, `LaunchAtLoginToggle`, `LanguageRow`, `NotificationPermissionNote`, `SettingsFooter`, bindings on `CompanionSettings`. `Support/`: `SupportWindow`, `SupportCopy`, `SupportProducts`. `Screenshots/`: `ScreenshotScript`, `ScreenshotCapture.SampleEnvironment`. `Theme/`: `WindowInset`, `windowPadding`, `ActionBar`, `PanelRowStyle`, `Pointer`, `companionWindowRoot`, `DisplayWeight`. `Phrase+Localized` (`localizedParts`, `localizedText`, `localize`). `DesktopCompanion.stand(...)` and `bubblePreview(...)`, the views it draws, for screenshot sheets. `DeliveryPerformer.onVoicingChanged`. |
-| `DesklingTesting` | `QuietTimeline.standardCases(base:dst:)`, `PickerVector.standardCases(...)`, `CompanionVectors`, `ConformanceSuite.companion(_:root:regenerateHint:)`. |
-| `Deskling.Testing` | `Conformance/Companion/CompanionReplay.cs`: one call per vector kind over a root, so an app's replay test is theories only. |
-| `tools/` | `landing/` (`@deskling/landing`: the locale plugin, legal pages, hreflang and sitemap, the CSP `_headers`, the OG and icon renderer, the rollup inputs), `store/` (`check.py`, `push.py`, `import.py`, tests), `companion.schema.json` `store` section, `character` and `conformance` optional, `verify.sh` runs `store/check.py` for `store-listing/*.md`. |
+| `LachingShell` | `FontRegistration` (registers the app's bundled `.ttf` files once; `isAvailable(names:)`). `DeliveryPerformer` is in CompanionUI, see below. |
+| `LachingCompanionUI` | `Shell/`: `CompanionAppModel<Window>` (the 20 s tick, the channels, the status item, the desktop presence, the windows, the hotkey, the store, the bubble, mute and undo, previews, the status line), `CompanionAppDelegate<Window>`, `CompanionMenus` + `ActionItem`, `WindowRoles`, the copy structs (`StatusCopy`, `DesktopCopy`, `MenuCopy`), `CompanionNotifying`. `Settings/`: `ActiveHoursEditor`, `QuietHoursEditor`, `ShortcutRecorder`, `LaunchAtLoginToggle`, `LanguageRow`, `NotificationPermissionNote`, `SettingsFooter`, bindings on `CompanionSettings`. `Support/`: `SupportWindow`, `SupportCopy`, `SupportProducts`. `Screenshots/`: `ScreenshotScript`, `ScreenshotCapture.SampleEnvironment`. `Theme/`: `WindowInset`, `windowPadding`, `ActionBar`, `PanelRowStyle`, `Pointer`, `companionWindowRoot`, `DisplayWeight`. `Phrase+Localized` (`localizedParts`, `localizedText`, `localize`). `DesktopCompanion.stand(...)` and `bubblePreview(...)`, the views it draws, for screenshot sheets. `DeliveryPerformer.onVoicingChanged`. |
+| `LachingTesting` | `QuietTimeline.standardCases(base:dst:)`, `PickerVector.standardCases(...)`, `CompanionVectors`, `ConformanceSuite.companion(_:root:regenerateHint:)`. |
+| `Laching.Testing` | `Conformance/Companion/CompanionReplay.cs`: one call per vector kind over a root, so an app's replay test is theories only. |
+| `tools/` | `landing/` (`@laching/landing`: the locale plugin, legal pages, hreflang and sitemap, the CSP `_headers`, the OG and icon renderer, the rollup inputs), `store/` (`check.py`, `push.py`, `import.py`, tests), `companion.schema.json` `store` section, `character` and `conformance` optional, `verify.sh` runs `store/check.py` for `store-listing/*.md`. |
 
-Test targets: `DesklingCompanionUITests` gains `CompanionAppModelTests` (the generic third of the apps' `AppModelTests`,
-over a fixture subclass and the fixture bank), `SupportWindowTests`, `SettingsRowsTests`; `DesklingCompanionTests`
+Test targets: `LachingCompanionUITests` gains `CompanionAppModelTests` (the generic third of the apps' `AppModelTests`,
+over a fixture subclass and the fixture bank), `SupportWindowTests`, `SettingsRowsTests`; `LachingCompanionTests`
 gains `StandardCasesTests` (the standard lists reproduce `conformance/companion/{picker,quiet}` over the fixtures);
 `tools/tests/test_store.py` (from mybackhurts' `test_push.py`), `tools/landing/test/` (vitest; `tools.yml` gains a node
 job).
@@ -184,7 +184,7 @@ The Settings Support card stays in the app (its surface is the brand).
   `ActionBar`; `PanelRowStyle` (hover fill = the palette's `accentSoft`); `Pointer(color:lineWidth:headLength:)` (sunnysays strokes 2 pt with an 11 pt head, Pagliacci 1.5 pt with 10);
   `View.companionWindowRoot(palette:displayFont:tint:bodySize:)` (what `SunnyWindowRoot` / `PagliacciWindowRoot` do);
   `DisplayWeight`.
-- `FontRegistration` (`DesklingShell`): `register(bundle:subdirectory:)` once, `isAvailable(_ names: [String], size:)`. The
+- `FontRegistration` (`LachingShell`): `register(bundle:subdirectory:)` once, `isAvailable(_ names: [String], size:)`. The
   apps keep their font names and `Font.display`.
 - `Phrase+Localized.swift`: `localizedParts(bundle:)` (`PAG/App/JokeText.swift`'s `parts`, the superset), `localizedText`,
   `static localize(_:_:bundle:)`.
@@ -202,7 +202,7 @@ The Settings Support card stays in the app (its surface is the brand).
 - `QuietTimeline.standardCases(base: QuietTimeline.Settings, dst: (name: String, timeZone: String)) -> [Case]`: the 17
   timelines of `../sunnysays/macos/SunnySaysCore/Tests/SunnySaysCoreTests/Conformance/QuietVectors.swift`, names, starts,
   seeds and steps verbatim, over the app's `base` (its defaults with the frequency it chose) and the app's DST city
-  (`evening-bucharest-dst-end`, `evening-rome-dst-end`). `Tests/DesklingCompanionTests/Conformance/CompanionCases.swift`
+  (`evening-bucharest-dst-end`, `evening-rome-dst-end`). `Tests/LachingCompanionTests/Conformance/CompanionCases.swift`
   uses it too (plus its own `sequence-delivered`, `italian-afternoon`).
 - `PickerVector.standardCases(bank:skin:language:single: (name: String, flavors: Set<FlavorID>), pair: (name:flavors:)) -> [Case]`:
   the cases both apps share (dayparts, recents, events, excluded, the two flavor cases by the app's names); the app
@@ -214,14 +214,14 @@ The Settings Support card stays in the app (its surface is the brand).
   `Quiet(path, bank, defaults)`, `Character(path, characters)`, each returning the problems list; `Files(folder)` as
   `ConformanceRoot.Files`.
 
-### `tools/landing` (`@deskling/landing`)
+### `tools/landing` (`@laching/landing`)
 
 > **Since 2026-10-12 each app's landing page is its own public repository** (`vmihalachi/mybackhurts.app`,
 > `sunnysays.app`, `pagliacci.app`), mounted in the app at `landing/` as a submodule, and it builds and deploys from its
 > own CI without the app around it (app data comes through a committed `app-data/` snapshot that a build inside the
-> app rewrites). So `file:../deskling/tools/landing` through the app's `deskling/` submodule doesn't resolve there:
-> `@deskling/landing` needs another route (publish it to npm, a git dependency on a package-only repository, or a
-> `deskling` submodule in each landing repository). Decide that before sequence 4; the rest of this section stands.
+> app rewrites). So `file:../laching/tools/landing` through the app's `laching/` submodule doesn't resolve there:
+> `@laching/landing` needs another route (publish it to npm, a git dependency on a package-only repository, or a
+> `laching` submodule in each landing repository). Decide that before sequence 4; the rest of this section stands.
 
 From `../sunnysays/landing/vite.config.ts` (512 lines; Pagliacci's and mybackhurts' are the same file with other
 data). `companionLanding(options)` returns `{ plugins, build }` for `defineConfig`:
@@ -246,7 +246,7 @@ export function companionLanding(options: {
 Inside: `locales.ts` (flattenKeys, readPath, assertSameLocaleKeys), `html.ts` (escapes, the switcher, the redirect
 script, hreflang, the store button, `renderTemplate`), `legal.ts`, `sitemap.ts`, `hosting.ts` (the CSP hashes and
 `_headers`), `og.ts` (`socialAssetsPlugin` with the font family and the resvg `f` workaround as options), `inputs.ts`.
-`package.json`: `"name": "@deskling/landing"`, `"type": "module"`, `"exports": { ".": "./src/index.ts" }`,
+`package.json`: `"name": "@laching/landing"`, `"type": "module"`, `"exports": { ".": "./src/index.ts" }`,
 `peerDependencies`: `vite-plus`, `@resvg/resvg-js`. Tests with vitest over a two-language fixture site.
 
 ### `tools/store`
@@ -278,14 +278,14 @@ script, hreflang, the store button, `renderTemplate`), `legal.ts`, `sitemap.ts`,
 `Windowsill` / `GelStage` / `Gel`, the Settings sections and their headers, the Support card, `AppSettings`,
 `NotificationAction` and `Notifier` (over `CompanionNotifier`, now `CompanionNotifying`), the window enum, the sheets
 (`CharacterSheet`, `DesktopSheet`), the flavor titles and samples, Pagliacci's two-part bubble, gel and skin logic,
-sunnysays' voice picker and `waveFromHome`, the test fakes (`FakeSpeaker`, `FakeChime`, `FakeNotifier`: `DesklingTesting`
-can't depend on `DesklingShell`), the workflows, the landing's `main.js`, `style.css`, `voice.ts`, `jokes.json`.
+sunnysays' voice picker and `waveFromHome`, the test fakes (`FakeSpeaker`, `FakeChime`, `FakeNotifier`: `LachingTesting`
+can't depend on `LachingShell`), the workflows, the landing's `main.js`, `style.css`, `voice.ts`, `jokes.json`.
 
 ## The 0.7.0 changelog, in advance
 
-**Added**: `DesklingCompanionUI` `Shell/` (`CompanionAppModel`, `CompanionAppDelegate`, `CompanionMenus`, `WindowRoles`,
+**Added**: `LachingCompanionUI` `Shell/` (`CompanionAppModel`, `CompanionAppDelegate`, `CompanionMenus`, `WindowRoles`,
 the copy structs), `Settings/` rows and editors, `SupportWindow`, `ScreenshotScript`, the chrome, `Phrase+Localized`,
-`DesktopCompanion.stand`; `DeliveryPerformer.onVoicingChanged`; `DesklingShell.FontRegistration`; `DesklingTesting`
-standard cases and `CompanionVectors`; `Deskling.Testing.CompanionReplay`; `tools/landing`, `tools/store`,
+`DesktopCompanion.stand`; `DeliveryPerformer.onVoicingChanged`; `LachingShell.FontRegistration`; `LachingTesting`
+standard cases and `CompanionVectors`; `Laching.Testing.CompanionReplay`; `tools/landing`, `tools/store`,
 `companion.json` `store`. **Changed**: `companion.json` no longer requires `character` or `conformance`.
 **Migration**: none required; an app on 0.6 builds unchanged. To shed its copies, follow sunnysays' M10 brief.

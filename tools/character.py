@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compiles a companion's character art and rig into the data both cores draw from.
 
-    python3 deskling/tools/character.py [--skin NAME …] [--check]   # an app's skins, from companion.json
+    python3 laching/tools/character.py [--skin NAME …] [--check]   # an app's skins, from companion.json
     python3 tools/character.py --design DIR --skin NAME --out JSON [--swift-out FILE --module NAME] [--mode vector|raster]
                                [--assets DIR --windows-assets DIR] [--palette FILE] [--moods a,b,…] [--check]
     python3 tools/character.py preview --design DIR --skin NAME OUT.svg [--mode raster] [--png]   # the review sheet
@@ -1142,7 +1142,7 @@ def app_runs(config: companion.Config, skins: list[str] | None, check: bool) -> 
         runs.append(argparse.Namespace(
             design=design, skin=skin, mode=mode, palette=config.path("characters.paletteFile"),
             moods=config.get("characters.moods", MOODS), out=characters / f"{skin}.json",
-            swift_out=swift_out / f"{name[0].upper()}{name[1:]}Art.swift" if swift_out else None, module="DesklingCompanion",
+            swift_out=swift_out / f"{name[0].upper()}{name[1:]}Art.swift" if swift_out else None, module="LachingCompanion",
             assets=config.path("characters.assets") if mode == "raster" else None,
             windows_assets=config.path("characters.windowsAssets") if mode == "raster" else None, check=check))
     return runs
@@ -1167,7 +1167,7 @@ def main(argv=None) -> int:
     _common(parser)
     parser.add_argument("--out", type=Path, required=True, help="the art as JSON (conformance/…/characters/<skin>.json)")
     parser.add_argument("--swift-out", type=Path, help="the art as a Swift source file")
-    parser.add_argument("--module", default="DesklingCompanion", help="the module the Swift file imports ('' for none)")
+    parser.add_argument("--module", default="LachingCompanion", help="the module the Swift file imports ('' for none)")
     parser.add_argument("--assets", type=Path, help="raster: an asset catalog folder to get an imageset per layer")
     parser.add_argument("--windows-assets", type=Path, help="raster: a folder to get the scale-200/300 PNGs")
     parser.add_argument("--check", action="store_true", help="write nothing; exit 1 if an output is stale")

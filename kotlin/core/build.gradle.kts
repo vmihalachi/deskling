@@ -1,4 +1,4 @@
-// deskling.core: the scheduler, the random source, localization keys and plural rules, the settings store, the purchase
+// laching.core: the scheduler, the random source, localization keys and plural rules, the settings store, the purchase
 // store and the drawing math. Pure JVM, so it tests on any machine and the Android module stays thin.
 plugins {
     alias(libs.plugins.kotlin.jvm)

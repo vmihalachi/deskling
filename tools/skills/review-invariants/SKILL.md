@@ -1,6 +1,6 @@
 ---
 name: review-invariants
-description: "Review a diff in a Deskling companion app against the rules tests don't catch: privacy (no camera or microphone, no network, nothing persisted beyond settings), stable identifiers, pure logic staying pure, localized text, palette tokens, Windows parity, generated files, concurrency, plus the app's own appendix. Use before committing a change to the Mac app, the Windows port or the landing page, or when asked to review against the project rules. Read-only; returns findings with file:line."
+description: "Review a diff in a Laching companion app against the rules tests don't catch: privacy (no camera or microphone, no network, nothing persisted beyond settings), stable identifiers, pure logic staying pure, localized text, palette tokens, Windows parity, generated files, concurrency, plus the app's own appendix. Use before committing a change to the Mac app, the Windows port or the landing page, or when asked to review against the project rules. Read-only; returns findings with file:line."
 ---
 
 # Review against the invariants
@@ -19,7 +19,7 @@ other sessions may share this checkout. Paths and names come from `companion.jso
 2. Get the diff for the scope. Default: `git diff HEAD --stat` and `git ls-files --others --exclude-standard` (new
    files), then `git diff HEAD -- <path>` per file, and Read new code files. For a range: `git diff <range>`. Never
    read `*.xcstrings`, `*.resw` or `project.pbxproj` (a hook blocks it): `--stat` tells you they changed; for strings
-   run `python3 deskling/tools/l10n.py check`.
+   run `python3 laching/tools/l10n.py check`.
 3. Go through every item the changed paths could touch, with the checks the items name (grep the added lines, read
    the surrounding code). An added line is only a finding if it breaks the rule in context: `Date()` in a view is
    fine, in the core package it isn't.

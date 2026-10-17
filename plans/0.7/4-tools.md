@@ -4,7 +4,7 @@
 > python3 and node 24.
 >
 > The landing pages moved to public repositories of their own on 2026-10-12 (submodules at `landing/`): read the
-> note under *`tools/landing`* in `README.md` before touching `@deskling/landing` or a landing `package.json`.
+> note under *`tools/landing`* in `README.md` before touching `@laching/landing` or a landing `package.json`.
 
 ## Read only these
 
@@ -23,7 +23,7 @@
 
 | Step | Commit | What |
 |---|---|---|
-| 4.1 | `tools: @deskling/landing` | `tools/landing/` (`package.json`, `src/index.ts` exporting `companionLanding` with the README's options, `src/{locales,html,legal,sitemap,hosting,og,inputs}.ts`, `README.md`), a `test/` with vitest over `test/fixture-site/` (two languages, one legal page, one inline script): the rendered pages carry the right canonical, hreflang and `og:locale` tags, the redirect script only on the default page, the sitemap lists every page, `_headers` has one hash per inline script and `connect-src 'none'`, the OG PNG renders in the given font. `tools.yml` gains a `landing` job (`npm ci && npx vp test` in `tools/landing`). `setup-linux.sh` installs its dependencies when the app's `landing/package.json` references it. |
+| 4.1 | `tools: @laching/landing` | `tools/landing/` (`package.json`, `src/index.ts` exporting `companionLanding` with the README's options, `src/{locales,html,legal,sitemap,hosting,og,inputs}.ts`, `README.md`), a `test/` with vitest over `test/fixture-site/` (two languages, one legal page, one inline script): the rendered pages carry the right canonical, hreflang and `og:locale` tags, the redirect script only on the default page, the sitemap lists every page, `_headers` has one hash per inline script and `connect-src 'none'`, the OG PNG renders in the given font. `tools.yml` gains a `landing` job (`npm ci && npx vp test` in `tools/landing`). `setup-linux.sh` installs its dependencies when the app's `landing/package.json` references it. |
 | 4.2 | `tools: store/check.py, push.py, import.py` | `tools/store/check.py` (sunnysays', `LANGS` from `languages.all`, `DIR` from `store.dir`), `tools/store/push.py` (the union: sunnysays' `review` part, `--status`, IAP creation with `baseTerritory`; mybackhurts' `previews`; `APP_ID`, `COPYRIGHT`, `LOCALE`, `EXTRA_LOCALES`, `IAPS`, the review screenshot settings from `store.apple`), `tools/store/import.py` (mybackhurts'), `tools/tests/test_store.py` (mybackhurts' `test_push.py` over the fixture app, plus `check.py` over a fixture listing). `companion.schema.json`: the `store` section as the README shows; `character` and `conformance` optional, and `companion.py`'s `phrases_file`, `characters` and friends `None` when absent (`l10n.py`: no scoped keys without a `phrases.json`; `phrases.py`, `character.py`, `conformance.sh`, `verify.sh`'s vector checks: a clear "this app has no conformance section" error). `verify.sh`: `store-listing/*.md` touched → `store/check.py`. |
 | 4.3 | `tools: substitution checks in l10n.py` | From mybackhurts' `macos/scripts/l10n.py`: `english_substitutions` and `substitution_issues` (`%#@name@` plural substitutions must exist in every category of every language), wired into `check` and `status`; a test over a fixture catalog entry with a substitution. Generic, so it lands here before mybackhurts adopts the tool. |
 | 4.4 | `docs: tools 0.7` | `tools/README.md` (the two new tools, the `store` section, the landing package and its `file:` dependency, what an app without `character`/`conformance` can run), `AGENTS.md` (`tools/` row), CHANGELOG *Unreleased*. |
@@ -37,11 +37,11 @@ them as they are). Hand to 5: the exact `store` keys `push.py` reads, so the mig
 ## Outcome (2026-10-12)
 
 Done in one session after 1–3. **The landing route is npm** (the owner's choice, since the landing pages became their
-own public repositories): `@deskling/landing` is TypeScript compiled to `dist/` (Node won't strip types inside
+own public repositories): `@laching/landing` is TypeScript compiled to `dist/` (Node won't strip types inside
 `node_modules`), `release.yml`'s `landing` job tests and packs it at the tag's version and `publish` pushes it to npm
-when the repository variable `NPM_PUBLISH` is `true`. **Before 0.7.0: the owner creates the `@deskling` npm scope**
+when the repository variable `NPM_PUBLISH` is `true`. **Before 0.7.0: the owner creates the `@laching` npm scope**
 (an organization on npmjs.com) and adds an `NPM_TOKEN` secret for the first publish; after it, a trusted publisher on
-npmjs.com (repository `vmihalachi/deskling`, workflow `release.yml`) replaces the token. Without them the tarball is
+npmjs.com (repository `vmihalachi/laching`, workflow `release.yml`) replaces the token. Without them the tarball is
 still on the GitHub release. **Superseded before 0.7.0 (2026-10-12):** no token at all. An `npm` job stages the
 package through trusted publishing and an owner approves it with 2FA (npm's staged publishing); the one-time setup is
 in `tools/landing/README.md`.
@@ -50,8 +50,8 @@ in `tools/landing/README.md`.
   `dist/` byte for byte the same as before and pass `vp check`. sunnysays' `vite.config.ts` keeps its lines, voice
   switch, runtime JSON and JSON-LD (521 → about 180 lines); Pagliacci's keeps its jokes, portrait, inline switcher
   (`languageSwitcher: "inline"`) and its own store button (`storeButton` with the exported `appleIcon`). In the
-  landing repos: `"@deskling/landing": "0.7.0"` in `devDependencies`, `import { companionLanding, … } from
-  "@deskling/landing"`, then `defineConfig({ ...landing, fmt, lint })`. `og/render.ts` goes (the package's
+  landing repos: `"@laching/landing": "0.7.0"` in `devDependencies`, `import { companionLanding, … } from
+  "@laching/landing"`, then `defineConfig({ ...landing, fmt, lint })`. `og/render.ts` goes (the package's
   `og: { dir, iconPath, fontFamily, iconBackground, breakFLigatures, copy }`: sunnysays `"Fredoka"`, `#FFF8E7`,
   `breakFLigatures: true`; Pagliacci `"Bodoni Moda"`, `#B8321D`).
 - The options beyond the README: `localeProblems` (Pagliacci's jokes check), `languageSwitcherLabel`, `headers` (extra
@@ -68,4 +68,4 @@ in `tools/landing/README.md`.
   App Store Connect key, so M10 compares it there.
 - `l10n.py` gained the substitution **checks** (status and check); mybackhurts' export and apply of substitutions are
   still its fork's: sequence 6 ports them if its `status -v` / `check` comparison needs it.
-- `setup-linux.sh` needs nothing new: a landing repository installs `@deskling/landing` from npm like any dependency.
+- `setup-linux.sh` needs nothing new: a landing repository installs `@laching/landing` from npm like any dependency.

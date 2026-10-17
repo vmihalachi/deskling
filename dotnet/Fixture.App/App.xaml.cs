@@ -1,27 +1,27 @@
-using Deskling.Companion.Settings;
-using Deskling.Companion.Shell.App;
-using Deskling.Companion.Shell.Screenshots;
-using Deskling.Companion.Shell.Signals;
-using Deskling.Core.Settings;
-using Deskling.Core.Store;
-using Deskling.Testing.Fixtures;
-using Deskling.Windows.Companion.Screenshots;
-using Deskling.Windows.Companion.Shell;
-using Deskling.Windows.Companion.Signals;
-using Deskling.Windows.Companion.Speech;
-using Deskling.Windows.Companion.Views;
-using Deskling.Windows.Shell.Localization;
-using Deskling.Windows.System;
+using Laching.Companion.Settings;
+using Laching.Companion.Shell.App;
+using Laching.Companion.Shell.Screenshots;
+using Laching.Companion.Shell.Signals;
+using Laching.Core.Settings;
+using Laching.Core.Store;
+using Laching.Testing.Fixtures;
+using Laching.Windows.Companion.Screenshots;
+using Laching.Windows.Companion.Shell;
+using Laching.Windows.Companion.Signals;
+using Laching.Windows.Companion.Speech;
+using Laching.Windows.Companion.Views;
+using Laching.Windows.Shell.Localization;
+using Laching.Windows.System;
 using FixtureApp.Views;
-using Shot = Deskling.Windows.Companion.Screenshots.ScreenshotScript<FixtureApp.FixtureWindow, Deskling.Companion.Settings.CompanionSettings>.Shot;
+using Shot = Laching.Windows.Companion.Screenshots.ScreenshotScript<FixtureApp.FixtureWindow, Laching.Companion.Settings.CompanionSettings>.Shot;
 
 namespace FixtureApp;
 
 /// <summary>
-/// The fixture app's <c>App.xaml</c>: Deskling's <see cref="CompanionApp"/> makes one copy run and launches the model.
+/// The fixture app's <c>App.xaml</c>: Laching's <see cref="CompanionApp"/> makes one copy run and launches the model.
 /// Settings live in memory, so every launch starts fresh: onboarding done, unless <c>--first-run</c>. Only the language
 /// picked in Settings outlives a launch, in a file as an unpackaged app keeps it (<see cref="Program"/>). With
-/// <c>DESKLING_SCREENSHOT_MODE</c> set (<c>scripts/fixture-screenshots.ps1</c>), it shoots its windows instead.
+/// <c>LACHING_SCREENSHOT_MODE</c> set (<c>scripts/fixture-screenshots.ps1</c>), it shoots its windows instead.
 /// </summary>
 public partial class App : CompanionApp
 {
@@ -61,7 +61,7 @@ public partial class App : CompanionApp
             idle,
             busy,
             new SystemAudioOutput(),
-            new SystemScreenLock("Deskling.Fixture.SessionLock"),
+            new SystemScreenLock("Laching.Fixture.SessionLock"),
             new SystemPowerSource(),
             new SystemAppearance(),
             host.Timers

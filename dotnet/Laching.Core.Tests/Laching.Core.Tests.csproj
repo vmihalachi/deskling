@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- The mocks and conformance helpers apps use too (Laching.Testing). -->
+    <Using Include="Laching.Testing" />
+    <Using Include="Laching.Testing.Conformance" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Laching.Core\Laching.Core.csproj" />
+    <ProjectReference Include="..\Laching.Testing\Laching.Testing.csproj" />
+  </ItemGroup>
+</Project>

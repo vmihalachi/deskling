@@ -5,12 +5,12 @@
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- One version for every package, set by the release workflow from the tag (vX.Y.Z). -->
-    <DesklingVersion Condition="'$(DesklingVersion)' == ''">0.12.6</DesklingVersion>
-    <Version>$(DesklingVersion)</Version>
+    <LachingVersion Condition="'$(LachingVersion)' == ''">0.12.6</LachingVersion>
+    <Version>$(LachingVersion)</Version>
     <Authors>Vlad Mihalachi</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/vmihalachi/deskling</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/vmihalachi/deskling</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/vmihalachi/laching</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vmihalachi/laching</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>tray;menubar;desktop;idle;busy;scheduler;winui</PackageTags>

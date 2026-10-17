@@ -1,6 +1,6 @@
 ---
 name: release-mac
-description: Ship a new build of a Deskling companion's Mac app to App Store Connect (bump CFBundleVersion, verify, archive, upload, attach to the version, tag). Use when asked to publish, release, upload or submit a new macOS version or build, including a new build for a version already in review.
+description: Ship a new build of a Laching companion's Mac app to App Store Connect (bump CFBundleVersion, verify, archive, upload, attach to the version, tag). Use when asked to publish, release, upload or submit a new macOS version or build, including a new build for a version already in review.
 ---
 
 # Release the Mac app (App Store)
@@ -18,10 +18,10 @@ ids, the App Store Connect record and where release notes are kept are in the ap
 ## 2. Preflight (don't upload a build that fails these)
 
 ```sh
-scripts/verify.sh --all          # includes the Deskling pin check (submodule = SwiftPM = XcodeGen = NuGet)
-deskling/tools/conformance.sh && git diff --exit-code <conformance.dir>   # vectors current
-python3 deskling/tools/l10n.py check
-python3 deskling/tools/voice.py check
+scripts/verify.sh --all          # includes the Laching pin check (submodule = SwiftPM = XcodeGen = NuGet)
+laching/tools/conformance.sh && git diff --exit-code <conformance.dir>   # vectors current
+python3 laching/tools/l10n.py check
+python3 laching/tools/voice.py check
 ```
 
 Also confirm: every user-visible Mac change is ported to Windows (or says why not), README, landing and store-listing

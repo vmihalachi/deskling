@@ -5,13 +5,13 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
 - **Public API is deliberate.** Every public type gets a doc comment saying what it does, what it needs and what it
   never does (for example "never prompts for a permission"). Keep type names that mybackhurts already uses
   (`ReminderScheduler`, `SchedulerConfig`, `Clock`, `BusyStateProvider`…) so adopting the package is an import swap.
-- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+, iOS 17+ (Swift), Windows 10+ (.NET), Android 8+ (Kotlin), no dependencies. `DesklingCore` stays Foundation-only and `DesklingCompanion`
+- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+, iOS 17+ (Swift), Windows 10+ (.NET), Android 8+ (Kotlin), no dependencies. `LachingCore` stays Foundation-only and `LachingCompanion`
   Foundation and Observation only (both build on Linux); anything that imports AppKit, SwiftUI, CoreAudio, AVFoundation,
-  IOKit or Carbon goes in `DesklingSystem`, `DesklingShell` or `DesklingCompanionUI`.
+  IOKit or Carbon goes in `LachingSystem`, `LachingShell` or `LachingCompanionUI`.
 - **Package code never names an app.** No app's skins, phrase bank, product ids, palette or voices, and no app name in
   a doc comment or a fixture: apps inject their bank, defaults, skins, palette and voices. The same goes for `tools/`,
   which reads everything app-specific from the app's `companion.json`.
-- **A view or model in the package takes its words from the app.** `DesklingCompanionUI`'s shell, Settings rows,
+- **A view or model in the package takes its words from the app.** `LachingCompanionUI`'s shell, Settings rows,
   Support window and menus get every label as a `Text`, a string or a copy struct (`StatusCopy`, `MenuCopy`,
   `SupportCopy`…), never a default; the app's String Catalog and its `l10n.py` workflow are untouched. The look (the
   app's buttons, chips, titles, cards) comes in as styles or views; only chrome that is the same in every app lives
@@ -23,17 +23,17 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
   (`cd dotnet && dotnet test` tells you what to port). New fields in a companion vector are optional and omitted at
   their default, so the apps' committed vectors stay byte-identical; the C# loaders read an absent field as the default.
 - **`conformance/companion` pins mechanism, over fixtures.** The picker, cadence, quiet rules, coordinator, desktop
-  presence and rig are pinned here over `DesklingTesting`'s fixture bank, defaults and skins; each app pins its own
+  presence and rig are pinned here over `LachingTesting`'s fixture bank, defaults and skins; each app pins its own
   content (bank, defaults, picks, poses) with the same generators and replays.
 - **Rasters never shear.** A character's transforms are rotation, translation and uniform scale only, so an image part
   draws under the same `affine` as a vector one. Pose vectors pin each layer's name, the six affine numbers and the
   content kind, never pixels; the menu bar glyph stays a vector line drawing for every skin.
-- **C# mirrors Swift** folder for folder and file for file (`Sources/DesklingCore/Scheduling/ReminderScheduler.swift` ↔
-  `dotnet/Deskling.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Localization/`, `Settings/`; Companion folders:
-  `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`. `DesklingSystem`
-  and `DesklingShell` map onto `Deskling.Windows/System/` and `Deskling.Windows/Shell/`. Where the C# side deviates, the
-  row in `docs/layout.md` says so: the store lives under `dotnet/Deskling.Core/Store/`, `Deskling.Testing` has a layout
-  of its own, and the companion shell (`Deskling.Companion.Shell`, `Deskling.Windows.Companion`) is mirrored by role, not
+- **C# mirrors Swift** folder for folder and file for file (`Sources/LachingCore/Scheduling/ReminderScheduler.swift` ↔
+  `dotnet/Laching.Core/Scheduling/ReminderScheduler.cs`). Core folders: `Scheduling/`, `Random/`, `Localization/`, `Settings/`; Companion folders:
+  `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Coordination/`, `Desktop/`, `Figures/`, `Skins/`. `LachingSystem`
+  and `LachingShell` map onto `Laching.Windows/System/` and `Laching.Windows/Shell/`. Where the C# side deviates, the
+  row in `docs/layout.md` says so: the store lives under `dotnet/Laching.Core/Store/`, `Laching.Testing` has a layout
+  of its own, and the companion shell (`Laching.Companion.Shell`, `Laching.Windows.Companion`) is mirrored by role, not
   file for file, because the Swift files mix logic and AppKit, so the C# side splits them, keeping the type and member
   names (`plans/0.8/README.md` maps every Swift file). Tests mirror the same folders, with `Conformance/` in each Core
   and Companion test project.
@@ -42,9 +42,9 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
 - **Versioning:** SemVer, one `vX.Y.Z` tag for every side; `CHANGELOG.md` gets a line per user-visible change under
   *Unreleased*, with `**Breaking.**` in a breaking one. A change never bumps the version or tags: on every push to
   `master`, `release.yml` runs `scripts/release.sh`, which gives the *Unreleased* entries the next version (a patch, or
-  a minor while 0.x for a breaking one), moves them under it and puts it in all five places: `Deskling.version`
-  (`Sources/DesklingCore/Deskling.swift`), `DesklingInfo.Version` (`dotnet/Deskling.Core/DesklingInfo.cs`),
-  the `DesklingVersion` default in `dotnet/Directory.Build.props`, `site/index.html` (the `vX.Y.Z` label in the
+  a minor while 0.x for a breaking one), moves them under it and puts it in all five places: `Laching.version`
+  (`Sources/LachingCore/Laching.swift`), `LachingInfo.Version` (`dotnet/Laching.Core/LachingInfo.cs`),
+  the `LachingVersion` default in `dotnet/Directory.Build.props`, `site/index.html` (the `vX.Y.Z` label in the
   header and both `exact:` install snippets) and `README.md` (the `exact:` install pin and the `git tag` example under
   *Releases*); then it commits, tags and publishes. `scripts/verify.sh` fails when these disagree. The `release`
   skill has the manual ways, for a number the rule gets wrong.

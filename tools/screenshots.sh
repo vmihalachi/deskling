@@ -1,7 +1,7 @@
 #!/bin/sh
 # Renders the Mac app's windows in light and dark to PNGs, with sample state and throwaway settings: a Debug build run
-# in screenshot mode (Deskling's ScreenshotCapture, started by `mac.screenshotEnv`). Your real settings aren't touched.
-# Usage: deskling/tools/screenshots.sh [--only name,name] [--hidden|--front] [--no-build] [output-dir] [language]
+# in screenshot mode (Laching's ScreenshotCapture, started by `mac.screenshotEnv`). Your real settings aren't touched.
+# Usage: laching/tools/screenshots.sh [--only name,name] [--hidden|--front] [--no-build] [output-dir] [language]
 #        (defaults: screenshots.out, the source language)
 #   --only      just the shots whose file names start with one of the names, for checking a change: the app renders
 #               those, and only those are copied. Pair it with a scratch output-dir so the committed screenshots stay as
@@ -46,7 +46,7 @@ if [ -n "$BUILD" ]; then
 fi
 [ -n "$RUN" ] || exit 0
 # A sandboxed app renders into its container's temp folder and prints that path last.
-SRC=$(env "$ENV_NAME=${ONLY:-all}" DESKLING_SCREENSHOT_HIDDEN="$HIDDEN" "$DERIVED/Build/Products/Debug/$APP.app/Contents/MacOS/$APP" \
+SRC=$(env "$ENV_NAME=${ONLY:-all}" LACHING_SCREENSHOT_HIDDEN="$HIDDEN" "$DERIVED/Build/Products/Debug/$APP.app/Contents/MacOS/$APP" \
   -AppleLanguages "($LANG_CODE)" -AppleLocale "$LANG_CODE" | tail -1)
 [ -d "$SRC" ] || { echo "No screenshots were rendered" >&2; exit 1; }
 mkdir -p "$OUT"
@@ -74,8 +74,8 @@ if [ -s "$SRC/problems.txt" ]; then
   PROBLEMS=$(sed 's/^/  /' "$SRC/problems.txt")
   cp "$SRC/problems.txt" "$OUT/problems.txt"
 fi
-# Each run renders into a folder of its own in the app's temporary folder; one named by DESKLING_SCREENSHOT_DIR stays.
-[ -n "$DESKLING_SCREENSHOT_DIR" ] || rm -rf "$SRC"
+# Each run renders into a folder of its own in the app's temporary folder; one named by LACHING_SCREENSHOT_DIR stays.
+[ -n "$LACHING_SCREENSHOT_DIR" ] || rm -rf "$SRC"
 if [ -n "$PROBLEMS" ]; then
   printf 'Problems (%s):\n%s\n' "$LANG_CODE" "$PROBLEMS" >&2
   exit 1

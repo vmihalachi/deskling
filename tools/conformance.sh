@@ -2,7 +2,7 @@
 # Regenerates the app's conformance vectors from its Swift core package: the app's ConformanceTests write them when
 # `conformance.writeFlag` is set (SwiftPM tests aren't sandboxed). The core is platform-neutral, so this runs on
 # Linux too. Names come from companion.json.
-# Usage: deskling/tools/conformance.sh
+# Usage: laching/tools/conformance.sh
 set -eu
 TOOLS=$(cd "$(dirname "$0")" && pwd)
 get() { python3 "$TOOLS/companion.py" get "$1"; }

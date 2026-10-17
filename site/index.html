@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deskling: building blocks for menu bar and tray apps</title>
-<meta name="description" content="Deskling is an MIT Swift package and .NET packages with the parts every menu bar or tray app needs: a reminder scheduler, permission-free system signals, app-shell plumbing, an App Store / Microsoft Store purchase store, and the core of a desk companion.">
+<title>Laching: building blocks for menu bar and tray apps</title>
+<meta name="description" content="Laching is an MIT Swift package and .NET packages with the parts every menu bar or tray app needs: a reminder scheduler, permission-free system signals, app-shell plumbing, an App Store / Microsoft Store purchase store, and the core of a desk companion.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="Deskling">
+<meta property="og:title" content="Laching">
 <meta property="og:description" content="Building blocks for menu bar and tray apps. Swift for macOS, .NET for Windows. MIT.">
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -20,9 +20,9 @@
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="./" aria-label="Deskling home">
+    <a class="brand" href="./" aria-label="Laching home">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/><rect x="7" y="9" width="18" height="3" rx="1.5" fill="var(--bg)"/><circle cx="21.5" cy="19.5" r="3.5" fill="var(--accent-on-mark)"/></svg>
-      <span>Deskling</span>
+      <span>Laching</span>
     </a>
     <nav aria-label="Primary">
       <ul>
@@ -30,7 +30,7 @@
         <li><a href="#signals">Signals</a></li>
         <li><a href="#conformance">Conformance</a></li>
         <li><a href="#install">Install</a></li>
-        <li><a class="gh" href="https://github.com/vmihalachi/deskling"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a></li>
+        <li><a class="gh" href="https://github.com/vmihalachi/laching"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a></li>
       </ul>
     </nav>
   </div>
@@ -41,7 +41,7 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="version"><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">v0.12.6</a><span>Swift · .NET · MIT</span></p>
+      <p class="version"><a href="https://github.com/vmihalachi/laching/blob/master/CHANGELOG.md">v0.12.6</a><span>Swift · .NET · MIT</span></p>
       <h1>Building blocks for menu bar and tray apps</h1>
       <p class="lede">The parts every little desktop app needs and nobody wants to write twice: a reminder scheduler, permission-free system signals, app-shell plumbing and, for a desk companion, a character that talks and knows when to be quiet. Swift for macOS, .NET for Windows.</p>
 
@@ -51,17 +51,17 @@
           <button role="tab" id="i-net" aria-selected="false" aria-controls="ip-net" tabindex="-1">.NET</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-swift" aria-labelledby="i-swift">
-          <code>.package(url: "https://github.com/vmihalachi/deskling", exact: "0.12.6")</code>
+          <code>.package(url: "https://github.com/vmihalachi/laching", exact: "0.12.6")</code>
           <button class="copy" type="button" aria-label="Copy the Swift package line">Copy</button>
         </div>
         <div class="install-line" role="tabpanel" id="ip-net" aria-labelledby="i-net" hidden>
-          <code>dotnet add package Deskling.Core</code>
+          <code>dotnet add package Laching.Core</code>
           <button class="copy" type="button" aria-label="Copy the dotnet command">Copy</button>
         </div>
       </div>
 
       <div class="actions">
-        <a class="btn primary" href="https://github.com/vmihalachi/deskling">View on GitHub</a>
+        <a class="btn primary" href="https://github.com/vmihalachi/laching">View on GitHub</a>
         <a class="btn" href="#parts">What's inside</a>
       </div>
     </div>
@@ -74,8 +74,8 @@
         </div>
         <span class="code-file">same scheduler, same decisions</span>
       </div>
-<pre role="tabpanel" id="cp-swift" aria-labelledby="c-swift" tabindex="0"><code><span class="k">import</span> DesklingCore
-<span class="k">import</span> DesklingSystem
+<pre role="tabpanel" id="cp-swift" aria-labelledby="c-swift" tabindex="0"><code><span class="k">import</span> LachingCore
+<span class="k">import</span> LachingSystem
 
 <span class="k">let</span> scheduler = <span class="t">ReminderScheduler</span>(
     config: <span class="t">SchedulerConfig</span>(
@@ -92,8 +92,8 @@
 <span class="k">if</span> scheduler.tick() == .remind {
     showBreak()
 }</code></pre>
-<pre role="tabpanel" id="cp-cs" aria-labelledby="c-cs" tabindex="0" hidden><code><span class="k">using</span> Deskling.Core.Scheduling;
-<span class="k">using</span> Deskling.Windows.System;
+<pre role="tabpanel" id="cp-cs" aria-labelledby="c-cs" tabindex="0" hidden><code><span class="k">using</span> Laching.Core.Scheduling;
+<span class="k">using</span> Laching.Windows.System;
 
 <span class="k">var</span> scheduler = <span class="k">new</span> <span class="t">ReminderScheduler</span>(
     <span class="k">new</span> <span class="t">SchedulerConfig</span> {
@@ -144,8 +144,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingCore</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Core</code></div>
+        <div role="cell" class="pkg"><code>LachingCore</code></div>
+        <div role="cell" class="pkg"><code>Laching.Core</code></div>
         <div role="cell">
           <h3>Scheduling and pure logic</h3>
           <p>An interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. Runs on an injected clock, so it builds and tests anywhere Swift or .NET runs.</p>
@@ -154,8 +154,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingCompanion</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Companion</code></div>
+        <div role="cell" class="pkg"><code>LachingCompanion</code></div>
+        <div role="cell" class="pkg"><code>Laching.Companion</code></div>
         <div role="cell">
           <h3>A desk companion's core</h3>
           <p>A phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence, quiet rules and mood, write-through settings your app extends, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or painted-layer character art. Your app brings the lines, skins and palette. Pure, so it builds and tests anywhere.</p>
@@ -164,8 +164,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingSystem</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
+        <div role="cell" class="pkg"><code>LachingSystem</code></div>
+        <div role="cell" class="pkg"><code>Laching.Windows</code></div>
         <div role="cell">
           <h3>System signals</h3>
           <p>Idle time since the last input. Whether another app is using the camera or microphone. Full-screen apps, power source and battery level, output muted and route, screen locked, light and dark appearance. Each exposes a current value and a change callback.</p>
@@ -174,8 +174,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingShell</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Windows</code></div>
+        <div role="cell" class="pkg"><code>LachingShell</code></div>
+        <div role="cell" class="pkg"><code>Laching.Windows</code></div>
         <div role="cell">
           <h3>App shell</h3>
           <p>A window manager that shows the Dock icon only while a window is open, a login item toggle and "was I launched at login?", notifications with categories and actions, a floating desktop window for a pet or a sticky note, a native tray icon and menu, single-instance startup, and drawing helpers for SVG paths, keyframes and a hand-drawn wobble. On the Mac also a status item with a popover and an animated glyph, and speech: the system voice or recorded clips, jokes told in beats, chimes. On Windows those come with the companion shell, below.</p>
@@ -184,8 +184,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingCompanionUI</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Companion<wbr>.Shell</code> + <code>Deskling.Windows<wbr>.Companion</code></div>
+        <div role="cell" class="pkg"><code>LachingCompanionUI</code></div>
+        <div role="cell" class="pkg"><code>Laching.Companion<wbr>.Shell</code> + <code>Laching.Windows<wbr>.Companion</code></div>
         <div role="cell">
           <h3>The companion on screen</h3>
           <p>The character view (vector and image parts), the character and its speech bubble on the desktop, the menu bar or tray glyph, delivery through bubble, voice, chime and notification, the system signals gathered into one snapshot, a palette your app sets, and a screenshot mode. And the shell your app subclasses: the model that runs the day, its delegate and menus, the Settings rows, the Support window and a screenshot script, every word passed in by your app. On Windows the logic is its own package, tested on any OS, and the WinUI 3 half draws it.</p>
@@ -194,8 +194,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingStore</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Core</code> + <code>Deskling.Windows</code></div>
+        <div role="cell" class="pkg"><code>LachingStore</code></div>
+        <div role="cell" class="pkg"><code>Laching.Core</code> + <code>Laching.Windows</code></div>
         <div role="cell">
           <h3>Purchases</h3>
           <p>A store for one-time unlockables and tips, on StoreKit 2 on the Mac and the Microsoft Store on Windows, with the backend behind a protocol so your tests use a mock.</p>
@@ -204,8 +204,8 @@
       </div>
 
       <div class="parts-row" role="row">
-        <div role="cell" class="pkg"><code>DesklingTesting</code></div>
-        <div role="cell" class="pkg"><code>Deskling.Testing</code></div>
+        <div role="cell" class="pkg"><code>LachingTesting</code></div>
+        <div role="cell" class="pkg"><code>Laching.Testing</code></div>
         <div role="cell">
           <h3>Fakes, fixtures and vectors for your tests</h3>
           <p>A fake for every protocol, a fixture phrase bank and skins, and the conformance generators and replays: your app's Swift tests write its own companion vectors from the standard case lists plus its own, its .NET tests replay them.</p>
@@ -215,7 +215,7 @@
     </div>
 
     <p class="footnote">The package ships no strings, product ids or window lists. Your app passes them in, already localized.</p>
-    <p class="footnote">Building a companion? <a href="https://github.com/vmihalachi/deskling/tree/master/tools"><code>tools/</code></a> has the scripts and agent skills that go with it: localization, phrase sync, recorded voices, character art, sounds, screenshots, the store listing and checks, and <code>@deskling/landing</code> on npm for the landing page. You vendor them as a submodule and run them on your machine; none of them ship in your app.</p>
+    <p class="footnote">Building a companion? <a href="https://github.com/vmihalachi/laching/tree/master/tools"><code>tools/</code></a> has the scripts and agent skills that go with it: localization, phrase sync, recorded voices, character art, sounds, screenshots, the store listing and checks, and <code>@laching/landing</code> on npm for the landing page. You vendor them as a submodule and run them on your machine; none of them ship in your app.</p>
   </div>
 </section>
 
@@ -223,7 +223,7 @@
   <div class="wrap split">
     <div class="split-copy">
       <h2>Knows you're on a call. Never asks.</h2>
-      <p>A break reminder that pops up mid-meeting gets uninstalled. Deskling holds a due reminder while another app is using the camera or the microphone, and it finds out without ever opening a device, so there is no permission dialog and nothing for a reviewer to question.</p>
+      <p>A break reminder that pops up mid-meeting gets uninstalled. Laching holds a due reminder while another app is using the camera or the microphone, and it finds out without ever opening a device, so there is no permission dialog and nothing for a reviewer to question.</p>
       <p>If a device can't be read, it reads as not busy. Your app never blocks on a signal.</p>
     </div>
     <dl class="sources">
@@ -295,28 +295,28 @@
   <div class="wrap">
     <div class="section-head">
       <h2>Install</h2>
-      <p>One tag versions both sides. Deskling is <code>0.x</code> until the second app has settled the API, so pin an exact version: minor releases may change public types.</p>
+      <p>One tag versions both sides. Laching is <code>0.x</code> until the second app has settled the API, so pin an exact version: minor releases may change public types.</p>
     </div>
     <div class="install-grid">
       <div class="install-card">
         <h3>Swift Package Manager</h3>
         <p class="req">macOS 14+, Swift 6 language mode, no dependencies</p>
 <pre tabindex="0"><code><span class="c">// Package.swift</span>
-.package(url: <span class="s">"https://github.com/vmihalachi/deskling"</span>, exact: <span class="s">"0.12.6"</span>)
+.package(url: <span class="s">"https://github.com/vmihalachi/laching"</span>, exact: <span class="s">"0.12.6"</span>)
 
 <span class="c">// then, per target</span>
-.product(name: <span class="s">"DesklingCore"</span>, package: <span class="s">"deskling"</span>)</code></pre>
+.product(name: <span class="s">"LachingCore"</span>, package: <span class="s">"laching"</span>)</code></pre>
         <p>Or in Xcode: File › Add Package Dependencies, paste the repository URL, pick <em>Exact Version</em>.</p>
       </div>
       <div class="install-card">
         <h3>NuGet</h3>
         <p class="req">.NET 10; every package an app ships is Native AOT compatible</p>
-<pre tabindex="0"><code>dotnet add package Deskling.Core
-dotnet add package Deskling.Companion <span class="c"># a desk companion</span>
-dotnet add package Deskling.Windows   <span class="c"># Windows 11</span>
-dotnet add package Deskling.Windows.Companion <span class="c"># WinUI 3</span>
-dotnet add package Deskling.Testing   <span class="c"># test projects</span></code></pre>
-        <p><code>Deskling.Core</code>, <code>Deskling.Companion</code> and <code>Deskling.Companion.Shell</code> build anywhere .NET runs. <code>Deskling.Windows</code> adds the tray, idle and busy services, and <code>Deskling.Windows.Companion</code> a companion app's whole shell on WinUI 3, with <code>Deskling.Companion.Shell</code> under it. Those two need Windows 11 (<code>net10.0-windows10.0.22000.0</code>).</p>
+<pre tabindex="0"><code>dotnet add package Laching.Core
+dotnet add package Laching.Companion <span class="c"># a desk companion</span>
+dotnet add package Laching.Windows   <span class="c"># Windows 11</span>
+dotnet add package Laching.Windows.Companion <span class="c"># WinUI 3</span>
+dotnet add package Laching.Testing   <span class="c"># test projects</span></code></pre>
+        <p><code>Laching.Core</code>, <code>Laching.Companion</code> and <code>Laching.Companion.Shell</code> build anywhere .NET runs. <code>Laching.Windows</code> adds the tray, idle and busy services, and <code>Laching.Windows.Companion</code> a companion app's whole shell on WinUI 3, with <code>Laching.Companion.Shell</code> under it. Those two need Windows 11 (<code>net10.0-windows10.0.22000.0</code>).</p>
       </div>
     </div>
   </div>
@@ -326,13 +326,13 @@ dotnet add package Deskling.Testing   <span class="c"># test projects</span></co
   <div class="wrap">
     <div class="section-head">
       <h2>Used by</h2>
-      <p>Deskling was extracted from mybackhurts, which ships it, and sunnysays, in development, whose character skeleton became the companion layer. Mister Pagliacci is the second companion built on that layer.</p>
+      <p>Laching was extracted from mybackhurts, which ships it, and sunnysays, in development, whose character skeleton became the companion layer. Mister Pagliacci is the second companion built on that layer.</p>
     </div>
     <div class="install-grid three">
       <div class="install-card">
         <h3><a href="https://mybackhurts.app">mybackhurts</a></h3>
         <p class="req">A break reminder for the menu bar</p>
-        <p>The first app to use Deskling. Its scheduler, system signals and shell plumbing were generalized into the package, and its 37 scheduler vectors are the first ones in the conformance suite.</p>
+        <p>The first app to use Laching. Its scheduler, system signals and shell plumbing were generalized into the package, and its 37 scheduler vectors are the first ones in the conformance suite.</p>
       </div>
       <div class="install-card">
         <h3><a href="https://sunnysays.app">sunnysays</a></h3>
@@ -342,11 +342,11 @@ dotnet add package Deskling.Testing   <span class="c"># test projects</span></co
       <div class="install-card">
         <h3><a href="https://pagliacci.app">Mister Pagliacci</a></h3>
         <p class="req">A clown who tells jokes</p>
-        <p>The second companion app, and the first built on the companion layer from the start: his jokes, skins and recorded voice are his own, the mechanism is Deskling's. In design.</p>
+        <p>The second companion app, and the first built on the companion layer from the start: his jokes, skins and recorded voice are his own, the mechanism is Laching's. In design.</p>
       </div>
     </div>
     <div class="actions">
-      <a class="btn primary" href="https://github.com/vmihalachi/deskling">Star it on GitHub</a>
+      <a class="btn primary" href="https://github.com/vmihalachi/laching">Star it on GitHub</a>
     </div>
   </div>
 </section>
@@ -357,10 +357,10 @@ dotnet add package Deskling.Testing   <span class="c"># test projects</span></co
   <div class="wrap footer-inner">
     <p>MIT licensed. © 2026 Vlad Mihalachi.</p>
     <ul>
-      <li><a href="https://github.com/vmihalachi/deskling">Source</a></li>
-      <li><a href="https://github.com/vmihalachi/deskling/blob/master/CHANGELOG.md">Changelog</a></li>
-      <li><a href="https://www.nuget.org/packages/Deskling.Core">NuGet</a></li>
-      <li><a href="https://github.com/vmihalachi/deskling/blob/master/LICENSE">License</a></li>
+      <li><a href="https://github.com/vmihalachi/laching">Source</a></li>
+      <li><a href="https://github.com/vmihalachi/laching/blob/master/CHANGELOG.md">Changelog</a></li>
+      <li><a href="https://www.nuget.org/packages/Laching.Core">NuGet</a></li>
+      <li><a href="https://github.com/vmihalachi/laching/blob/master/LICENSE">License</a></li>
     </ul>
   </div>
 </footer>

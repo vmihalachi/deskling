@@ -3,42 +3,42 @@ r"""Builds and checks a companion app's Windows side in a Parallels Windows VM o
 (uncommitted changes included), so the WinUI app is built and looked at in the same session as the change instead of
 in the app's Windows workflow. `vm.sh` runs this file.
 
-    deskling/tools/windows/vm.sh status                         # can the VM run commands? One line; exit 0 when it can
-    deskling/tools/windows/vm.sh sync                           # mirror the working tree (and a linked Deskling)
-    deskling/tools/windows/vm.sh build [x64|ARM64…] [-- ARGS]   # the WinUI app (windows.app), Debug; both platforms
-    deskling/tools/windows/vm.sh test [-- ARGS]                 # windows.coreTests and windows.appTests
-    deskling/tools/windows/vm.sh screenshots DIR [-- ARGS]      # the screenshot script; the PNGs land in DIR on the Mac
-    deskling/tools/windows/vm.sh check-layout [LANG…] [-- ARGS] # check-layout.ps1: one build, the languages side by side;
+    laching/tools/windows/vm.sh status                         # can the VM run commands? One line; exit 0 when it can
+    laching/tools/windows/vm.sh sync                           # mirror the working tree (and a linked Laching)
+    laching/tools/windows/vm.sh build [x64|ARM64…] [-- ARGS]   # the WinUI app (windows.app), Debug; both platforms
+    laching/tools/windows/vm.sh test [-- ARGS]                 # windows.coreTests and windows.appTests
+    laching/tools/windows/vm.sh screenshots DIR [-- ARGS]      # the screenshot script; the PNGs land in DIR on the Mac
+    laching/tools/windows/vm.sh check-layout [LANG…] [-- ARGS] # check-layout.ps1: one build, the languages side by side;
                                                                 # the PNGs land in <windows.dir>/build/layout-check/<LANG>
-    deskling/tools/windows/vm.sh smoke [x64|ARM64] [-- ARGS]    # publish the MSIX (Native AOT), then smoke-package.ps1
-    deskling/tools/windows/vm.sh run -- COMMAND…                # a PowerShell command in the VM's copy
+    laching/tools/windows/vm.sh smoke [x64|ARM64] [-- ARGS]    # publish the MSIX (Native AOT), then smoke-package.ps1
+    laching/tools/windows/vm.sh run -- COMMAND…                # a PowerShell command in the VM's copy
 
 ARGS go as they are, in PowerShell syntax, to `dotnet build`, `dotnet test`, the screenshot script (`-Language fr`,
 `-Only home,settings`), check-layout.ps1 (`-Only home,settings`, `-Jobs 2`) or smoke-package.ps1 (`-SideBySide`). Those
 three scripts are the app's own (`<windows.dir>/scripts/screenshots.ps1`, `check-layout.ps1`, `smoke-package.ps1`) when
-it has them, else Deskling's beside this file. `screenshots`, `check-layout` and `smoke` run for the VM's own platform
+it has them, else Laching's beside this file. `screenshots`, `check-layout` and `smoke` run for the VM's own platform
 unless `-Platform` / a platform is given. `check-layout` runs every language in companion.json's `languages.all` unless
 some are named, and replaces their folders' shots and problems.txt on the Mac.
 
 The copy: the files git sees (tracked and untracked but not ignored, submodules included, symlinks left out) are
-mirrored into `%USERPROFILE%\deskling-vm\<checkout>-<hash>` in the VM through the Mac's shared folders. The VM lists
+mirrored into `%USERPROFILE%\laching-vm\<checkout>-<hash>` in the VM through the Mac's shared folders. The VM lists
 the files it lacks or holds in another version (size, mtime), the Mac sends a tar of just those, and the VM unpacks
 it and deletes the files the Mac no longer has, leaving build output (bin, obj) alone so builds stay incremental. Every
 command syncs first.
 
-While the app is linked to a Deskling checkout (`companion.py link`), its Windows projects build that checkout's
-`dotnet/` projects, which they find by a relative path (`../../deskling/dotnet/`). So that checkout's files (again what
+While the app is linked to a Laching checkout (`companion.py link`), its Windows projects build that checkout's
+`dotnet/` projects, which they find by a relative path (`../../laching/dotnet/`). So that checkout's files (again what
 git sees: the projects read its README and test resources outside `dotnet/` too) are mirrored the same way, to the VM
-folder the path resolves to from the copy: `%USERPROFILE%\deskling-vm\deskling` for the usual `../deskling` beside the
-app. A link the VM can't follow (an absolute path, or one that leaves DESKLING_VM_DIR) is refused; link a checkout
+folder the path resolves to from the copy: `%USERPROFILE%\laching-vm\laching` for the usual `../laching` beside the
+app. A link the VM can't follow (an absolute path, or one that leaves LACHING_VM_DIR) is refused; link a checkout
 beside the app instead.
 
-One vm.sh run at a time per checkout, and per VM folder of a linked Deskling; others wait.
+One vm.sh run at a time per checkout, and per VM folder of a linked Laching; others wait.
 
 Environment:
-  DESKLING_VM        the VM's name in Parallels ("Windows 11")
-  DESKLING_VM_SHARE  the VM's path to the Mac's / (\\Mac\AllFiles, Parallels' "All Files" share)
-  DESKLING_VM_DIR    where the copies go in the VM (%USERPROFILE%\deskling-vm)
+  LACHING_VM        the VM's name in Parallels ("Windows 11")
+  LACHING_VM_SHARE  the VM's path to the Mac's / (\\Mac\AllFiles, Parallels' "All Files" share)
+  LACHING_VM_DIR    where the copies go in the VM (%USERPROFILE%\laching-vm)
 
 Without prlctl or the VM (Linux, a cloud session, a Mac without Parallels) every command prints one line saying so and
 exits 3, so a caller skips instead of failing. A suspended or paused VM is resumed; a stopped one is left alone.
@@ -84,15 +84,15 @@ class Usage(Exception):
 
 
 def vm_name() -> str:
-    return os.environ.get("DESKLING_VM") or "Windows 11"
+    return os.environ.get("LACHING_VM") or "Windows 11"
 
 
 def share_root() -> str:
-    return (os.environ.get("DESKLING_VM_SHARE") or r"\\Mac\AllFiles").rstrip("\\")
+    return (os.environ.get("LACHING_VM_SHARE") or r"\\Mac\AllFiles").rstrip("\\")
 
 
 def guest_base() -> str:
-    return (os.environ.get("DESKLING_VM_DIR") or r"%USERPROFILE%\deskling-vm").rstrip("\\")
+    return (os.environ.get("LACHING_VM_DIR") or r"%USERPROFILE%\laching-vm").rstrip("\\")
 
 
 def guest_path(mac_path: Path | str, share: str | None = None) -> str:
@@ -172,7 +172,7 @@ def write_tar(root: Path, names: list[str], archive: Path) -> None:
 
 @dataclass
 class Linked:
-    """The Deskling checkout the app's Windows projects build while linked, and where the VM's copy of it goes."""
+    """The Laching checkout the app's Windows projects build while linked, and where the VM's copy of it goes."""
 
     checkout: Path
     guest: str  # the VM folder the app's relative reference resolves to from the app's copy
@@ -212,14 +212,14 @@ class Context:
         return f"{folder}/{name}/{name}.csproj"
 
     def script(self, name: str) -> str:
-        """The app's own `<windows.dir>/scripts/<name>` when it has one, else Deskling's beside this file."""
+        """The app's own `<windows.dir>/scripts/<name>` when it has one, else Laching's beside this file."""
         folder = self.config.path("windows.dir")
         own = folder / "scripts" / name if folder else None
         return self.guest_tool(own if own and own.is_file() else HERE / name)
 
 
 def linked_checkout(ctx: Context) -> Linked | None:
-    """The Deskling checkout the app's Windows projects build while linked (`companion.py link`), with the VM folder
+    """The Laching checkout the app's Windows projects build while linked (`companion.py link`), with the VM folder
     their relative reference resolves to from the app's copy, as MSBuild resolves it there. None when they build the
     pinned packages, or when the checkout is inside the app's own (its copy carries it). Raises Usage when the
     reference leads nowhere the VM's copies may go."""
@@ -227,7 +227,7 @@ def linked_checkout(ctx: Context) -> Linked | None:
     windows = ctx.config.path("windows.dir")
     if reference is None or windows is None:
         return None
-    advice = "link a Deskling checkout beside the app (`companion.py unlink`, then `link`)"
+    advice = "link a Laching checkout beside the app (`companion.py unlink`, then `link`)"
     if os.path.isabs(reference):
         raise Usage(f"the Windows projects are linked to {reference}, a Mac path the VM doesn't have: {advice}")
     dotnet = (windows / reference).resolve()
@@ -294,7 +294,7 @@ def vm_state(vm: str) -> str:
     done = prlctl("status", vm)
     match = re.search(r"\bexists?\s+(\w+)", done.stdout)
     if done.returncode or not match:
-        raise Unavailable(f"Parallels has no VM named {vm!r} (set DESKLING_VM to its name)")
+        raise Unavailable(f"Parallels has no VM named {vm!r} (set LACHING_VM to its name)")
     return match.group(1)
 
 
@@ -404,11 +404,11 @@ def mirror(ctx: Context, source: Path, guest: str, stage: Path) -> str:
 
 
 def sync(ctx: Context) -> None:
-    """Mirrors the working tree into the VM's copy, then a linked Deskling checkout (see the module's docstring)."""
+    """Mirrors the working tree into the VM's copy, then a linked Laching checkout (see the module's docstring)."""
     print(f"vm.sh: {mirror(ctx, ctx.root, ctx.guest_root, ctx.stage)}", flush=True)
     if ctx.linked:
         done = mirror(ctx, ctx.linked.checkout, ctx.linked.guest, ctx.linked.stage)
-        print(f"vm.sh: {done}, the linked Deskling {ctx.linked.checkout}", flush=True)
+        print(f"vm.sh: {done}, the linked Laching {ctx.linked.checkout}", flush=True)
 
 
 def parse_platforms(words: list[str]) -> list[str]:
@@ -561,14 +561,14 @@ def main(argv: list[str]) -> int:
             raise Usage(f"unknown command {command!r} ({', '.join(COMMANDS)}; --help)")
         config = companion.load()
         key = checkout_key(config.root)
-        ctx = Context(config.root, config, vm, key, Path.home() / "Library" / "Caches" / "deskling-vm" / key)
+        ctx = Context(config.root, config, vm, key, Path.home() / "Library" / "Caches" / "laching-vm" / key)
         ctx.linked = linked_checkout(ctx)
         body = command_body(ctx, command, words, extra)
         ensure_ready(vm)
         with ExitStack() as locks:
             locks.enter_context(one_at_a_time(ctx.stage))
             if ctx.linked:
-                locks.enter_context(one_at_a_time(ctx.linked.stage, f"with the linked Deskling in {ctx.linked.guest}"))
+                locks.enter_context(one_at_a_time(ctx.linked.stage, f"with the linked Laching in {ctx.linked.guest}"))
             sync(ctx)
             if body is None:
                 return 0

@@ -2,10 +2,10 @@
 """Composes store screenshots from the captures (`screenshots.store` in companion.json): the Mac App Store's by default,
 Google Play's with --canvas.
 
-    python3 deskling/tools/store-screenshots.py [--canvas mac|android-phone|android-tablet] [captures-dir] [output-dir] [language]
+    python3 laching/tools/store-screenshots.py [--canvas mac|android-phone|android-tablet] [captures-dir] [output-dir] [language]
 
 Defaults: screenshots.out -> <store.out>/<source language> (<store.out>/<canvas>/<language> for an Android canvas),
-the source language. Needs Pillow (pip3 install pillow). deskling/tools/store-screenshots.sh [language|all] captures
+the source language. Needs Pillow (pip3 install pillow). laching/tools/store-screenshots.sh [language|all] captures
 and composes the Mac images of other languages.
 
 Each image is one capture on the paper of its appearance with a headline (`store.font`) and a short note

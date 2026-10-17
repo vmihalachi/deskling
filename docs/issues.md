@@ -2,7 +2,7 @@
 
 How issues are written and worked (moved from `AGENTS.md`).
 
-Planned work lives in [GitHub Issues](https://github.com/vmihalachi/deskling/issues), not in files: `gh issue list`,
+Planned work lives in [GitHub Issues](https://github.com/vmihalachi/laching/issues), not in files: `gh issue list`,
 `gh issue view N`. One issue per piece of work, saying what's already known (measurements, what was tried, links to the
 code or the `plans/` record), the options when there's a choice to make, and what done looks like. Labels: `windows`,
 `hand-check` (needs a person at a real machine), `decision` (the owner chooses before work starts), `performance`,

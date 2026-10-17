@@ -1,7 +1,7 @@
 name: Tools
 
 # Tests the Python tools in tools/ (standard library only, so no setup beyond the runner's python3) and the
-# @deskling/landing package (tools/landing, Node 24).
+# @laching/landing package (tools/landing, Node 24).
 on:
   push:
     branches:
@@ -66,7 +66,7 @@ jobs:
       # packs at a version above npm's latest (npm won't tag a lower one latest), so this packs at the next patch.
       - name: Pack (as the release does)
         run: |
-          npm version "$(npm view @deskling/landing version)" --no-git-tag-version --allow-same-version
+          npm version "$(npm view @laching/landing version)" --no-git-tag-version --allow-same-version
           npm version patch --no-git-tag-version
           mkdir -p "$RUNNER_TEMP/npm"
           npm pack --pack-destination "$RUNNER_TEMP/npm"

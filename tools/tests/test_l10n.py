@@ -268,7 +268,7 @@ class ExportTests(L10nTestCase):
         self.assertEqual(l10n.android_values_dir("pt-BR"), "values-pt-rBR")
         self.assertEqual(self.android[self.root / "android" / "xml" / "locales_config.xml"], (
             '<?xml version="1.0" encoding="utf-8"?>\n'
-            "<!-- Generated from macos/Fixture/Resources/Localizable.xcstrings by deskling/tools/l10n.py export-android. "
+            "<!-- Generated from macos/Fixture/Resources/Localizable.xcstrings by laching/tools/l10n.py export-android. "
             "Don't edit. -->\n"
             '<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
             '  <locale android:name="en"/>\n  <locale android:name="it"/>\n  <locale android:name="de"/>\n'
@@ -300,7 +300,7 @@ class ExportTests(L10nTestCase):
         for path, text in self.resw.items():
             names = [data.get("name") for data in ET.fromstring(text).iter("data")]
             self.assertEqual(len(names), len(set(names)), path)
-            self.assertIn("Localizable.xcstrings by deskling/tools/l10n.py", text)
+            self.assertIn("Localizable.xcstrings by laching/tools/l10n.py", text)
         self.assertEqual(l10n.resw_name("A_b é"), "_0041_005Fb_0020_00E9")
         self.assertEqual(l10n.resw_name("💪"), "_D83D_DCAA")
         self.assertNotEqual(l10n.resw_name("To").lower(), l10n.resw_name("to").lower())
@@ -312,7 +312,7 @@ class ExportTests(L10nTestCase):
             names = [el.get("name") for el in ET.fromstring(text).iter("string")]
             self.assertEqual(len(names), len(set(names)), path)
             self.assertTrue(all(re.fullmatch(r"s_[a-z0-9_]+", name) for name in names), path)
-            self.assertIn("Localizable.xcstrings by deskling/tools/l10n.py export-android", text)
+            self.assertIn("Localizable.xcstrings by laching/tools/l10n.py export-android", text)
 
     def test_po_is_valid(self):
         for path, text in self.po.items():

@@ -1,18 +1,18 @@
-using Deskling.Companion.Cadence;
-using Deskling.Companion.Desktop;
-using Deskling.Companion.Figures;
-using Deskling.Companion.Phrases;
-using Deskling.Companion.Settings;
-using Deskling.Companion.Shell.App;
-using Deskling.Companion.Shell.Desktop;
-using Deskling.Companion.Shell.Performance;
-using Deskling.Companion.Shell.Signals;
-using Deskling.Companion.Shell.Speech;
-using Deskling.Core.Scheduling;
-using Deskling.Core.Store;
-using Deskling.Testing.Fixtures;
-using Deskling.Windows.Companion.Shell;
-using Deskling.Windows.Companion.Views;
+using Laching.Companion.Cadence;
+using Laching.Companion.Desktop;
+using Laching.Companion.Figures;
+using Laching.Companion.Phrases;
+using Laching.Companion.Settings;
+using Laching.Companion.Shell.App;
+using Laching.Companion.Shell.Desktop;
+using Laching.Companion.Shell.Performance;
+using Laching.Companion.Shell.Signals;
+using Laching.Companion.Shell.Speech;
+using Laching.Core.Scheduling;
+using Laching.Core.Store;
+using Laching.Testing.Fixtures;
+using Laching.Windows.Companion.Shell;
+using Laching.Windows.Companion.Views;
 using Size = Windows.Foundation.Size;
 
 namespace FixtureApp;
@@ -27,7 +27,7 @@ public enum FixtureWindow
 }
 
 /// <summary>
-/// The fixture app's model: Deskling's fixture bank and its vector character in the tray, placeholder words, and what the
+/// The fixture app's model: Laching's fixture bank and its vector character in the tray, placeholder words, and what the
 /// hand checks need besides (a line long enough to start a call during, a clock that skips to the next line).
 /// </summary>
 public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSettings>
@@ -49,7 +49,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     };
 
     public static new readonly CompanionAppConfiguration Configuration = new(
-        StatusItemTooltip: "Deskling fixture",
+        StatusItemTooltip: "Laching fixture",
         AccessibilityLabel: "Fixture",
         Sounds: new CompanionSounds(Blip: FixtureSounds.Blip, Shh: FixtureSounds.Shh, Hello: FixtureSounds.Hello),
         Status: new StatusCopy(
@@ -215,7 +215,7 @@ public sealed class FixtureModel : CompanionAppModel<FixtureWindow, CompanionSet
     public static WindowSpec Spec(FixtureWindow id) =>
         id switch
         {
-            FixtureWindow.Home => new WindowSpec("Deskling fixture", new Size(440, 620)),
+            FixtureWindow.Home => new WindowSpec("Laching fixture", new Size(440, 620)),
             FixtureWindow.Onboarding => new WindowSpec("Welcome", new Size(420, 320), IsExclusive: true),
             FixtureWindow.Settings => new WindowSpec("Settings", new Size(420, 600)),
             FixtureWindow.Support => new WindowSpec("Support", new Size(460, 580)),

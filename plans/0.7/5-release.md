@@ -15,9 +15,9 @@
 |---|---|---|
 | 5.1 | `docs: 0.7 in README, AGENTS, site` | Root README "What's inside" rows (the companion shell, the settings rows, the Support window, the screenshot script, the standard cases, the landing and store tools); `AGENTS.md` layout and conventions (a view in the package takes its words as parameters; the `plans/` row points at `plans/0.7/`); `site/index.html` sections. |
 | 5.2 | `0.7.0: the companion shell` | CHANGELOG: move *Unreleased* under `## 0.7.0 - <date>` with the list from the README; bump the four version places; `scripts/verify.sh --all`. Do **not** tag yet. |
-| 5.3 | (sunnysays worktree, no Deskling commit) | **M10 dry run.** Never `git checkout` in `../sunnysays` (shared checkout): `git -C ../sunnysays worktree add ../sunnysays-m10 -b m10-dry-run`, point `macos/SunnySaysCore/Package.swift` and `macos/project.yml` there at `path: ../deskling` and the csproj at a local feed (`dotnet pack dotnet -o /tmp/deskling-feed` + `nuget.config`), set `landing/package.json`'s dependency to `file:../../deskling/tools/landing`, then do M10's steps 2–5 far enough to run Gate A (vectors byte-identical), Gate C (screenshots pixel-identical) and Gate D (the landing's `dist/` identical, `push.py --status` the same plan). Any API that bites gets fixed here (amend 5.2 or a fix commit). Leave the worktree for the real M10. |
-| 5.4 | (Pagliacci worktree, no Deskling commit) | **M7 dry run**, the same way (`../pagliacci-m7`, branch `m7-dry-run`), to Gate A and Gate C. Pagliacci exercises what sunnysays doesn't: the two-part bubble and gel over `showBubble`/`voicingChanged`, the skin over `glyphCharacter`, the inline language nav over `languageSwitcher`. Skip it only if Pagliacci's M3 is still uncommitted in the main checkout (its `AppModel` is then in flux): say so in the outcome and let M7 be the first run. |
-| 5.5 | tag | Owner tags `v0.7.0` (or dispatches `release.yml`). Confirm NuGet shows `Deskling.Core`, `Deskling.Companion`, `Deskling.Testing`, `Deskling.Windows` 0.7.0 and that `exact: "0.7.0"` resolves in a scratch package. |
+| 5.3 | (sunnysays worktree, no Laching commit) | **M10 dry run.** Never `git checkout` in `../sunnysays` (shared checkout): `git -C ../sunnysays worktree add ../sunnysays-m10 -b m10-dry-run`, point `macos/SunnySaysCore/Package.swift` and `macos/project.yml` there at `path: ../laching` and the csproj at a local feed (`dotnet pack dotnet -o /tmp/laching-feed` + `nuget.config`), set `landing/package.json`'s dependency to `file:../../laching/tools/landing`, then do M10's steps 2–5 far enough to run Gate A (vectors byte-identical), Gate C (screenshots pixel-identical) and Gate D (the landing's `dist/` identical, `push.py --status` the same plan). Any API that bites gets fixed here (amend 5.2 or a fix commit). Leave the worktree for the real M10. |
+| 5.4 | (Pagliacci worktree, no Laching commit) | **M7 dry run**, the same way (`../pagliacci-m7`, branch `m7-dry-run`), to Gate A and Gate C. Pagliacci exercises what sunnysays doesn't: the two-part bubble and gel over `showBubble`/`voicingChanged`, the skin over `glyphCharacter`, the inline language nav over `languageSwitcher`. Skip it only if Pagliacci's M3 is still uncommitted in the main checkout (its `AppModel` is then in flux): say so in the outcome and let M7 be the first run. |
+| 5.5 | tag | Owner tags `v0.7.0` (or dispatches `release.yml`). Confirm NuGet shows `Laching.Core`, `Laching.Companion`, `Laching.Testing`, `Laching.Windows` 0.7.0 and that `exact: "0.7.0"` resolves in a scratch package. |
 
 ## Finish
 
@@ -29,8 +29,8 @@ sequence 6 can start.
 
 5.1 and 5.2 done (`0.7.0: the companion shell`, not tagged). The dry runs are committed on local branches in worktrees,
 for M10 and M7 to reuse: `../sunnysays-m10` (`m10-dry-run`) and `../pagliacci-m7` (`m7-dry-run`, two commits: the
-unchanged app on 0.7, then the migration). In both worktrees `deskling/`, `voices/` and `landing/` are symlinks to the
-main checkouts and the pins are local (path packages to `../deskling`, a NuGet feed with `0.7.0-dryrun.1` in the
+unchanged app on 0.7, then the migration). In both worktrees `laching/`, `voices/` and `landing/` are symlinks to the
+main checkouts and the pins are local (path packages to `../laching`, a NuGet feed with `0.7.0-dryrun.1` in the
 session's scratch folder): the real migrations repin to `v0.7.0` and restore the submodules.
 
 - **What the dry runs forced**: `SupportLook.tipsHeader` (a view: sunnysays' label upper-cases its string) instead of
@@ -38,7 +38,7 @@ session's scratch folder): the real migrations repin to `v0.7.0` and restore the
   `onSun` at 80%, Pagliacci `.opacity(0.85)`) instead of `tipPriceOpacity`. And one name collides for an app on 0.6:
   its own `View.windowPadding(bottom:)` (CHANGELOG → Migration).
 - **sunnysays (5.3)**: Gate A byte-identical; Gate B 57 Windows tests; Gate C 15 app tests (34 − 19 generic ones, now in
-  Deskling), every screenshot pixel-identical except `home-*`, whose waving glyph mock (`GlyphWave`, a `TimelineView`)
+  Laching), every screenshot pixel-identical except `home-*`, whose waving glyph mock (`GlyphWave`, a `TimelineView`)
   lands on a different frame from run to run before and after the change alike; no catalog key changed. Gate D on a
   scratch copy: the landing's `dist/` identical, `check.py` prints the same. `push.py --status` needs the owner's App
   Store Connect key: M10 compares it.
@@ -50,10 +50,10 @@ session's scratch folder): the real migrations repin to `v0.7.0` and restore the
 - **The open surface as it ended**: sequence 1's outcome, unchanged by the dry runs. Pagliacci kept `tellNow`,
   `punchline`, `muteBubbleJoke`, `faceMood` and `previewChannel(_:joke:)` as one-line aliases; M7 may rename the call
   sites instead.
-- **5.5 (the owner)**: before tagging, the `@deskling` npm scope (done) and the package's one-time trusted-publisher
+- **5.5 (the owner)**: before tagging, the `@laching` npm scope (done) and the package's one-time trusted-publisher
   setup in `tools/landing/README.md` (no `NPM_TOKEN`, no `NPM_PUBLISH`: both deleted), then tag `v0.7.0`, approve the
-  staged `@deskling/landing@0.7.0` with 2FA, and check NuGet, npm and that `exact: "0.7.0"` resolves.
+  staged `@laching/landing@0.7.0` with 2FA, and check NuGet, npm and that `exact: "0.7.0"` resolves.
   **Done as 0.7.2 (2026-10-12).** v0.7.0's run failed packing the landing (no `npm/` folder), v0.7.1's staging (npm
-  read `npm/….tgz` as a GitHub repository); tags never move, so 0.7.2 is the complete one: NuGet, `@deskling/landing`
+  read `npm/….tgz` as a GitHub repository); tags never move, so 0.7.2 is the complete one: NuGet, `@laching/landing`
   staged by GitHub Actions through the trusted publisher and approved with 2FA (SLSA provenance from `v0.7.2`), the
   GitHub release. The Tools workflow now packs and dry-run stages the way the release does. The apps pin 0.7.2.

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """A headless Android emulator for the screenshot tools (screens.py's android capture, check-layout-android.py): boots
 an AVD without a window, puts the status bar in demo mode (09:41, full battery, no notifications), installs the Debug
-APK and launches the app in screenshot mode with Deskling's intent extras, then waits for the run's `done` file and
+APK and launches the app in screenshot mode with Laching's intent extras, then waits for the run's `done` file and
 copies `files/screens/` off the device. Not a command of its own.
 
-The app's side is `deskling.android.LaunchContext` and `ScreenshotRun`: `DESKLING_SCREENSHOT_MODE` marks a screenshot
-launch (the app's own mode names; "screens" when the shot's env names none), `DESKLING_SCREENS` lists the shots,
-`DESKLING_LANG` and `DESKLING_REGION` give the locale, so no reboot between languages; the app writes
+The app's side is `laching.android.LaunchContext` and `ScreenshotRun`: `LACHING_SCREENSHOT_MODE` marks a screenshot
+launch (the app's own mode names; "screens" when the shot's env names none), `LACHING_SCREENS` lists the shots,
+`LACHING_LANG` and `LACHING_REGION` give the locale, so no reboot between languages; the app writes
 `files/screens/<shot>-<theme>.png`, `problems.txt` and `done`, then finishes. The files come back through
 `adb exec-out run-as <app> cat`, which works on every debuggable build (adb pull can't read an app's private files).
 
@@ -23,10 +23,10 @@ import subprocess
 import time
 from pathlib import Path
 
-MODE = "DESKLING_SCREENSHOT_MODE"
-SCREENS = "DESKLING_SCREENS"
-LANG = "DESKLING_LANG"
-REGION = "DESKLING_REGION"
+MODE = "LACHING_SCREENSHOT_MODE"
+SCREENS = "LACHING_SCREENS"
+LANG = "LACHING_LANG"
+REGION = "LACHING_REGION"
 DEFAULT_MODE = "screens"
 BOOT_TIMEOUT = 300  # seconds for the AVD to boot
 LAUNCH_TIMEOUT = 600  # seconds for one run of the app

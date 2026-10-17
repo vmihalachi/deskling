@@ -2,8 +2,8 @@
 """Pushes the store listing (`store.dir`/<lang>.md) and the Apple uploads to App Store Connect, through its API.
 
 Usage (from the app's root):
-  python3 deskling/tools/store/push.py --version 1.0 --status        # read only: what App Store Connect has, what's missing
-  python3 deskling/tools/store/push.py --version 1.0 [--create] [--build 4] [--only text,iap,screenshots] [lang ...]
+  python3 laching/tools/store/push.py --version 1.0 --status        # read only: what App Store Connect has, what's missing
+  python3 laching/tools/store/push.py --version 1.0 [--create] [--build 4] [--only text,iap,screenshots] [lang ...]
   ... --apply        to write; without it nothing changes and the script prints what it would do.
 
 What it syncs, per language (companion.json's `store.apple` names the app, its locales and in-app purchases):
@@ -612,7 +612,7 @@ def main():
     import check
 
     if not check.run(listing, args.langs):
-        sys.exit("Fix the listing first (deskling/tools/store/check.py).")
+        sys.exit("Fix the listing first (laching/tools/store/check.py).")
 
     sync = Sync(listing, Client(), args.apply)
     if not args.apply:

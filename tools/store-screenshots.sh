@@ -1,6 +1,6 @@
 #!/bin/sh
 # Renders the Mac App Store screenshots for one language or all of them (`screenshots.store` in companion.json).
-# Usage: deskling/tools/store-screenshots.sh [language...|all]   (default: the source language)
+# Usage: laching/tools/store-screenshots.sh [language...|all]   (default: the source language)
 # Every language lands in <store.out>/<lang>/<n>-<shot>-<appearance>.png: upload them from there.
 #   source   composes the committed captures in screenshots.out (run screenshots.sh first if the windows changed).
 #   xx       captures the windows it needs in that language into build/store-captures/apple/<xx> first.

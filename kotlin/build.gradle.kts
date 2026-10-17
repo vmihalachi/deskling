@@ -6,6 +6,6 @@ plugins {
 }
 
 allprojects {
-    group = "deskling"
-    version = providers.gradleProperty("desklingVersion").get()
+    group = "laching"
+    version = providers.gradleProperty("lachingVersion").get()
 }

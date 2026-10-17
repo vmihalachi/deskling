@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Moves companion apps to Deskling X.Y.Z: `companion.py bump X.Y.Z` in each, then its `scripts/verify.sh --fast`.
+# Moves companion apps to Laching X.Y.Z: `companion.py bump X.Y.Z` in each, then its `scripts/verify.sh --fast`.
 # Commits nothing: read each app's diff and commit there (the landing page's change inside its own repository). Runs
 # this checkout's companion.py, so an app whose submodule predates `bump` moves too. The apps are the folders with a
-# companion.json next to this Deskling checkout (not a linked git worktree: its main checkout is the app), unless named.
+# companion.json next to this Laching checkout (not a linked git worktree: its main checkout is the app), unless named.
 #
-#   deskling/tools/bump-apps.sh 0.9.1                     # ../*/companion.json, next to this checkout
-#   deskling/tools/bump-apps.sh 0.9.1 ../app-a ../app-b
+#   laching/tools/bump-apps.sh 0.9.1                     # ../*/companion.json, next to this checkout
+#   laching/tools/bump-apps.sh 0.9.1 ../app-a ../app-b
 set -uo pipefail
 
 TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -56,6 +56,6 @@ for app in "${apps[@]}"; do
 done
 
 echo
-echo "Deskling $version (nothing committed):"
+echo "Laching $version (nothing committed):"
 printf '  %s\n' "${summary[@]}"
 exit "$failed"

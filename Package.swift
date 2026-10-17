@@ -1,62 +1,62 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// Deskling: building blocks for little desktop apps that live in the menu bar.
+// Laching: building blocks for little desktop apps that live in the menu bar.
 //
-//   DesklingCore     Foundation only. Interval scheduler with active hours and weekdays, quiet hours, idle reset and
+//   LachingCore     Foundation only. Interval scheduler with active hours and weekdays, quiet hours, idle reset and
 //                    busy hold; the Clock / IdleTimeProvider / BusyStateProvider protocols; a seeded random source;
 //                    LocalizedKey; the typed SettingsStore. Builds and tests anywhere Swift runs.
-//   DesklingSystem   The macOS implementations of those providers and the other system signals (camera or microphone
+//   LachingSystem   The macOS implementations of those providers and the other system signals (camera or microphone
 //                    in use, full screen, power source, output mute and route, screen lock, appearance), read from
 //                    device state through CoreAudio, CoreMediaIO, CoreGraphics and IOKit, all without permission prompts.
-//   DesklingShell    Menu bar app plumbing: window manager with the activation-policy dance, the floating desktop
+//   LachingShell    Menu bar app plumbing: window manager with the activation-policy dance, the floating desktop
 //                    window and its placement, login item, launch context, notification poster, font registration,
 //                    a layout check, drawing helpers, the status item, and speech (system voice or recorded clips,
 //                    jokes in beats) and chimes.
-//   DesklingCompanion  Foundation and Observation only. The pure core of a desk companion: the phrase bank and
+//   LachingCompanion  Foundation and Observation only. The pure core of a desk companion: the phrase bank and
 //                    picker, chatter cadence, quiet rules and mood, settings, the coordinator, desktop presence,
 //                    skins and the character rig. Builds and tests anywhere Swift runs.
-//   DesklingCompanionUI  macOS. The companion's views and shell: signals, the menu bar glyph, the character view
+//   LachingCompanionUI  macOS. The companion's views and shell: signals, the menu bar glyph, the character view
 //                    (vector and image parts), the desktop presence, delivery through speech, chime and notification,
 //                    the speech bubble and status pill over an app palette, screenshot capture, and the app shell an
 //                    app subclasses (app model, menus, Settings rows, the Support window).
-//   DesklingStore    StoreKit 2 purchase store for unlockables and tips, caching ownership in a SettingsStore.
-//   DesklingTesting  Fakes for every protocol, fixture data and conformance-vector helpers, for the apps' test targets.
+//   LachingStore    StoreKit 2 purchase store for unlockables and tips, caching ownership in a SettingsStore.
+//   LachingTesting  Fakes for every protocol, fixture data and conformance-vector helpers, for the apps' test targets.
 let package = Package(
-    name: "Deskling",
+    name: "Laching",
     platforms: [.macOS(.v14), .iOS(.v17)],
     products: [
-        .library(name: "DesklingCore", targets: ["DesklingCore"]),
-        .library(name: "DesklingSystem", targets: ["DesklingSystem"]),
-        .library(name: "DesklingShell", targets: ["DesklingShell"]),
-        .library(name: "DesklingCompanion", targets: ["DesklingCompanion"]),
-        .library(name: "DesklingCompanionUI", targets: ["DesklingCompanionUI"]),
-        .library(name: "DesklingStore", targets: ["DesklingStore"]),
-        .library(name: "DesklingTesting", targets: ["DesklingTesting"]),
+        .library(name: "LachingCore", targets: ["LachingCore"]),
+        .library(name: "LachingSystem", targets: ["LachingSystem"]),
+        .library(name: "LachingShell", targets: ["LachingShell"]),
+        .library(name: "LachingCompanion", targets: ["LachingCompanion"]),
+        .library(name: "LachingCompanionUI", targets: ["LachingCompanionUI"]),
+        .library(name: "LachingStore", targets: ["LachingStore"]),
+        .library(name: "LachingTesting", targets: ["LachingTesting"]),
     ],
     targets: [
-        .target(name: "DesklingCore"),
-        .target(name: "DesklingSystem", dependencies: ["DesklingCore"]),
-        .target(name: "DesklingShell", dependencies: ["DesklingCore"]),
-        .target(name: "DesklingCompanion", dependencies: ["DesklingCore"]),
+        .target(name: "LachingCore"),
+        .target(name: "LachingSystem", dependencies: ["LachingCore"]),
+        .target(name: "LachingShell", dependencies: ["LachingCore"]),
+        .target(name: "LachingCompanion", dependencies: ["LachingCore"]),
         .target(
-            name: "DesklingCompanionUI",
-            dependencies: ["DesklingCompanion", "DesklingCore", "DesklingSystem", "DesklingShell", "DesklingStore"]),
-        .target(name: "DesklingStore", dependencies: ["DesklingCore"]),
-        .target(name: "DesklingTesting", dependencies: ["DesklingCore", "DesklingStore", "DesklingCompanion"]),
-        .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore", "DesklingTesting"]),
+            name: "LachingCompanionUI",
+            dependencies: ["LachingCompanion", "LachingCore", "LachingSystem", "LachingShell", "LachingStore"]),
+        .target(name: "LachingStore", dependencies: ["LachingCore"]),
+        .target(name: "LachingTesting", dependencies: ["LachingCore", "LachingStore", "LachingCompanion"]),
+        .testTarget(name: "LachingCoreTests", dependencies: ["LachingCore", "LachingTesting"]),
         .testTarget(
-            name: "DesklingCompanionTests", dependencies: ["DesklingCompanion", "DesklingCore", "DesklingTesting"],
+            name: "LachingCompanionTests", dependencies: ["LachingCompanion", "LachingCore", "LachingTesting"],
             resources: [.copy("Resources")]),
         .testTarget(
-            name: "DesklingTestingTests", dependencies: ["DesklingTesting", "DesklingCore", "DesklingCompanion", "DesklingStore"]),
+            name: "LachingTestingTests", dependencies: ["LachingTesting", "LachingCore", "LachingCompanion", "LachingStore"]),
         // The ones below are macOS-only (every file is wrapped in `#if os(macOS)`), so they build empty on Linux.
-        .testTarget(name: "DesklingSystemTests", dependencies: ["DesklingSystem", "DesklingCore"]),
-        .testTarget(name: "DesklingShellTests", dependencies: ["DesklingShell", "DesklingCore"], resources: [.copy("Resources")]),
-        .testTarget(name: "DesklingStoreTests", dependencies: ["DesklingStore", "DesklingTesting"]),
+        .testTarget(name: "LachingSystemTests", dependencies: ["LachingSystem", "LachingCore"]),
+        .testTarget(name: "LachingShellTests", dependencies: ["LachingShell", "LachingCore"], resources: [.copy("Resources")]),
+        .testTarget(name: "LachingStoreTests", dependencies: ["LachingStore", "LachingTesting"]),
         .testTarget(
-            name: "DesklingCompanionUITests",
-            dependencies: ["DesklingCompanionUI", "DesklingCompanion", "DesklingShell", "DesklingCore", "DesklingTesting"],
+            name: "LachingCompanionUITests",
+            dependencies: ["LachingCompanionUI", "LachingCompanion", "LachingShell", "LachingCore", "LachingTesting"],
             // Processed, so the PNGs sit at the bundle's top level where `Image(_:bundle:)` finds them.
             resources: [.process("Resources")]),
     ]

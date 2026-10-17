@@ -2,7 +2,7 @@
 // body, so the Dev app is obvious in the Dock, Launchpad and Finder. Deterministic; rerun after AppIcon changes.
 //
 // Usage (macOS):
-//   swift deskling/tools/dev-icon.swift <Assets.xcassets> [band #RRGGBB] [text #RRGGBB]
+//   swift laching/tools/dev-icon.swift <Assets.xcassets> [band #RRGGBB] [text #RRGGBB]
 //   (defaults: a dark brown band, cream letters)
 import AppKit
 import CoreGraphics

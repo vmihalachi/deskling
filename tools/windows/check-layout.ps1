@@ -4,7 +4,7 @@ Renders the WinUI app's windows in each language and fails when one has a proble
 fails on). Longer translations are where text runs out of room, so run it after changing text or a window's layout.
 Windows only; the Mac's is check-layout.sh.
 
-Usage: deskling/tools/windows/check-layout.ps1 [-Only name,name] [-Jobs n] [-Platform x64|ARM64] [-Project path] [-Out folder]
+Usage: laching/tools/windows/check-layout.ps1 [-Only name,name] [-Jobs n] [-Platform x64|ARM64] [-Project path] [-Out folder]
                                                 [language ...]
        (default: every language in companion.json's languages.all)
 Shots go to <windows.dir>\build\layout-check\<language> (with -Project, <name>-layout-check\<language> in the temporary

@@ -1,5 +1,5 @@
 <#
-The VM's half of vm.sh (deskling/tools/windows/vm.py): every command vm.sh runs in the Windows VM dot-sources this file
+The VM's half of vm.sh (laching/tools/windows/vm.py): every command vm.sh runs in the Windows VM dot-sources this file
 from the Mac's shared folder, then calls these functions. Windows PowerShell 5.1 or PowerShell 7. Not for running by
 hand.
 
@@ -28,7 +28,7 @@ function Sync-Tree([string]$Root, [string]$Stage) {
     $archive = Join-Path $Stage 'sync.tar'
     if (Test-Path -LiteralPath $archive) {
         # A local copy first: bsdtar reads a share path slowly, and the tar is gone from the Mac once this returns.
-        $local = Join-Path ([IO.Path]::GetTempPath()) "deskling-vm-$([guid]::NewGuid().ToString('N')).tar"
+        $local = Join-Path ([IO.Path]::GetTempPath()) "laching-vm-$([guid]::NewGuid().ToString('N')).tar"
         Copy-Item -LiteralPath $archive -Destination $local
         try {
             & tar -xf $local -C $Root

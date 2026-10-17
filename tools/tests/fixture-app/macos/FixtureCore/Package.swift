@@ -7,6 +7,6 @@ let package = Package(
     name: "FixtureCore",
     platforms: [.macOS(.v14)],
     dependencies: [
-        .package(url: "https://github.com/vmihalachi/deskling", exact: "0.5.0")
+        .package(url: "https://github.com/vmihalachi/laching", exact: "0.5.0")
     ]
 )

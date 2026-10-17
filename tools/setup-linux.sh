@@ -4,7 +4,7 @@
 # ktlint, the l10n and voice checks and the landing build. Names come from companion.json. Idempotent and quiet when
 # everything is already there.
 #
-#   deskling/tools/setup-linux.sh        (the app's scripts/setup-linux.sh execs it)
+#   laching/tools/setup-linux.sh        (the app's scripts/setup-linux.sh execs it)
 #
 # Claude Code runs it at session start in cloud sessions (CLAUDE_CODE_REMOTE=true, .claude/settings.json). It never
 # touches an existing landing node_modules, so it's safe in a shared checkout.
@@ -15,8 +15,8 @@ has python3 || { echo "error: python3 is required (the tools are Python)" >&2; e
 eval "$(python3 "$TOOLS/companion.py" env)" || exit 1
 cd "$ROOT"
 
-# The Deskling tools and the recorded voices are submodules.
-git submodule update --init ${DESKLING_PATH:+"$DESKLING_PATH"} ${VOICE_DIR:+"$VOICE_DIR"} >/dev/null 2>&1 ||
+# The Laching tools and the recorded voices are submodules.
+git submodule update --init ${LACHING_PATH:+"$LACHING_PATH"} ${VOICE_DIR:+"$VOICE_DIR"} >/dev/null 2>&1 ||
   echo "warning: couldn't fetch the submodules; voice.py check won't run" >&2
 # A landing page kept in its own repository is a submodule too.
 if [ -n "$LANDING_DIR" ] && git ls-files -s -- "$LANDING_DIR" | grep -q '^160000'; then

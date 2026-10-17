@@ -19,7 +19,7 @@ from unittest import mock
 from support import BASH, NO_SHELL, REPO, TOOLS, companion, fixture_app
 
 HOOK = TOOLS / "hooks" / "hook.py"
-VALIDATE = REPO / ".claude" / "hooks" / "validate.py"  # Deskling's own Stop hook, beside the apps' hook.py
+VALIDATE = REPO / ".claude" / "hooks" / "validate.py"  # Laching's own Stop hook, beside the apps' hook.py
 
 
 def load(path):
@@ -94,7 +94,7 @@ class PreToolUse(HookTestCase):
         self.assertFalse(self.blocked("Bash", command=f"grep -n '\"Skip\"' {xcstrings}"))
         self.assertFalse(self.blocked("Bash", command=f"git diff --stat {xcstrings}"))
         self.assertFalse(self.blocked("Bash", command=f"git add {xcstrings} && git status"))
-        self.assertFalse(self.blocked("Bash", command="python3 deskling/tools/l10n.py status -v"))
+        self.assertFalse(self.blocked("Bash", command="python3 laching/tools/l10n.py status -v"))
         self.assertFalse(self.blocked("Bash", command="cat > notes.md <<'EOF'\nsee Localizable.xcstrings\nEOF"))
         self.assertFalse(self.blocked("Bash", command="cat companion.json"))
 
@@ -281,17 +281,17 @@ class StopAndParity(HookTestCase):
                 self.run_hook("post", {"session_id": session, "tool_name": "Bash", "tool_input": {"command": command}})
             return label in self.run_hook("stop", {"session_id": session}).stderr
 
-        core, app = "android/core/src/main/kotlin/deskling/A.kt", "android/app/src/main/kotlin/app/fixture/A.kt"
+        core, app = "android/core/src/main/kotlin/laching/A.kt", "android/app/src/main/kotlin/app/fixture/A.kt"
         self.assertTrue(reminded_after(core, None, "Kotlin core tests"))
         self.assertFalse(reminded_after(core, "cd android && ./gradlew :core:test", "Kotlin core tests"))
         self.assertFalse(reminded_after(core, "cd android && ./gradlew test", "Kotlin core tests"), "every module")
         self.assertTrue(reminded_after(core, "cd android && ./gradlew :app:test", "Kotlin core tests"), "another module")
-        self.assertFalse(reminded_after(core, "deskling/tools/verify.sh", "Kotlin core tests"), "the full verify")
+        self.assertFalse(reminded_after(core, "laching/tools/verify.sh", "Kotlin core tests"), "the full verify")
         self.assertTrue(reminded_after(app, None, "Android app build"))
         self.assertFalse(reminded_after(app, "cd android && ./gradlew :app:assembleDebug", "Android app build"))
         self.assertFalse(reminded_after(app, "cd android && ./gradlew build", "Android app build"))
         self.assertTrue(reminded_after(app, "cd android && ./gradlew :core:test", "Android app build"))
-        self.assertTrue(reminded_after(app, "deskling/tools/verify.sh", "Android app build"), "verify.sh builds no APK")
+        self.assertTrue(reminded_after(app, "laching/tools/verify.sh", "Android app build"), "verify.sh builds no APK")
 
     @unittest.skipIf(os.name == "nt", "the fake ktlint is a shell script")
     def test_kotlin_files_are_formatted_with_ktlint_when_it_is_installed(self):
@@ -343,12 +343,12 @@ class StopAndParity(HookTestCase):
 
         self.assertTrue(reminded_after(None))
         self.assertIn("vm.sh build", self.hook.SLOW[-1][2])
-        for command in ("deskling/tools/windows/vm.sh build", "deskling/tools/windows/vm.sh build ARM64 -- -c Release",
-                        "deskling/tools/windows/vm.sh screenshots /tmp/shots -- -Language fr",
-                        "deskling/tools/windows/vm.sh smoke", "dotnet build windows/Fixture.App -p:Platform=x64",
+        for command in ("laching/tools/windows/vm.sh build", "laching/tools/windows/vm.sh build ARM64 -- -c Release",
+                        "laching/tools/windows/vm.sh screenshots /tmp/shots -- -Language fr",
+                        "laching/tools/windows/vm.sh smoke", "dotnet build windows/Fixture.App -p:Platform=x64",
                         "dotnet publish windows/Fixture.App/Fixture.App.csproj -c Release"):
             self.assertFalse(reminded_after(command), command)
-        for command in ("deskling/tools/windows/vm.sh status", "deskling/tools/windows/vm.sh sync",
+        for command in ("laching/tools/windows/vm.sh status", "laching/tools/windows/vm.sh sync",
                         "dotnet build windows/Fixture.Core"):
             self.assertTrue(reminded_after(command), command)
 
@@ -358,7 +358,7 @@ class StopAndParity(HookTestCase):
         self.run_hook("post", edit)
         self.assertIn("Windows Core tests", self.run_hook("stop", {"session_id": "vmtest"}).stderr)
         self.run_hook("post", {"session_id": "vmtest", "tool_name": "Bash",
-                               "tool_input": {"command": "deskling/tools/windows/vm.sh test"}})
+                               "tool_input": {"command": "laching/tools/windows/vm.sh test"}})
         self.assertNotIn("Windows Core tests", self.run_hook("stop", {"session_id": "vmtest"}).stderr)
 
     def test_app_slow_checks_replace_and_add(self):
@@ -397,14 +397,14 @@ class StopAndParity(HookTestCase):
         done = self.run_hook("stop", {"session_id": "stop"})
         self.assertEqual(done.returncode, 2, done.stderr)
         self.assertIn("Not run since your last edit: conformance vectors", done.stderr)
-        # Deskling's own (the fixture has no scripts/ wrapper), wherever this checkout of it is.
+        # Laching's own (the fixture has no scripts/ wrapper), wherever this checkout of it is.
         self.assertIn("tools/verify.sh -- macos/FixtureCore/", done.stderr)
         self.run_hook("post", {"session_id": "stop", "tool_name": "Bash", "tool_input": {"command": "scripts/verify.sh"}})
         self.assertEqual(self.run_hook("stop", {"session_id": "stop"}).returncode, 0)
 
     @unittest.skipIf(BASH is None, NO_SHELL)
     def test_stop_reports_what_the_fast_checks_reject(self):
-        # The app's scripts/verify.sh wrapper, which the hook takes over Deskling's; on Windows it runs through bash.
+        # The app's scripts/verify.sh wrapper, which the hook takes over Laching's; on Windows it runs through bash.
         wrapper = self.root / "scripts" / "verify.sh"
         wrapper.parent.mkdir()
         wrapper.write_text('#!/bin/sh\necho "lint: rejected $*"\nexit 1\n', "utf8", newline="\n")
@@ -454,7 +454,7 @@ class ShellScripts(unittest.TestCase):
                 self.assertIsNone(companion.git_bash())
 
     @unittest.skipUnless(VALIDATE.is_file(), "no .claude/hooks/validate.py in this checkout")
-    def test_deskling_s_validate_hook_runs_a_shell_script_check_through_bash_on_windows(self):
+    def test_laching_s_validate_hook_runs_a_shell_script_check_through_bash_on_windows(self):
         validate = load(VALIDATE)
         script = str(REPO / "scripts" / "verify.sh")
         self.assertEqual(validate.command(script, ["--fast"], windows=False), [script, "--fast"])

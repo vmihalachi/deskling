@@ -1,5 +1,5 @@
-using Deskling.Windows.Companion.Desktop;
-using Deskling.Windows.Companion.Views;
+using Laching.Windows.Companion.Desktop;
+using Laching.Windows.Companion.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
