@@ -29,6 +29,9 @@ package and the NuGet packages together.
 - **Companion (`Snapshot.isAway` / `Snapshot.IsAway`)**: the away rule (screen locked, or idle past
   `QuietRules.awayThreshold`) as one member on both sides; the mood, the welcome back and the status line read it (#77).
   No behavior change.
+- **Testing (`ConformanceSupport`)**: `utc` (Gregorian in UTC), `monday(_:_:)` (Monday 2026-09-28 at a UTC time, the
+  day the package's unit tests start on) and `files(in:_:name:_:)` (one vector file per case, in the committed format),
+  for apps' test targets too (#81). The package's tests and generators use them; no vector changes.
 
 ## 0.13.0 - 2026-10-17
 

@@ -4,20 +4,11 @@ import LachingTesting
 import XCTest
 
 final class CompanionCoordinatorTests: XCTestCase {
-    private let calendar: Calendar = {
-        var c = Calendar(identifier: .gregorian)
-        c.timeZone = TimeZone(identifier: "UTC")!
-        return c
-    }()
+    private let calendar = ConformanceSupport.utc
     private var clock: MockClock!
     private var idle: MockIdle!
     private var busy: MockBusy!
     private var settings: CompanionSettings!
-
-    /// Monday 2026-09-28 at the given UTC time.
-    private func monday(_ hour: Int, _ minute: Int = 0) -> Date {
-        calendar.date(from: DateComponents(year: 2026, month: 9, day: 28, hour: hour, minute: minute))!
-    }
 
     private func makeCoordinator(
         start: Date, seed: UInt64 = 42, language: String = "en", configure: (CompanionSettings) -> Void = { _ in }
@@ -45,7 +36,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testAmbientChatterArrivesAroundTheInterval() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         let deliveries = run(c, minutes: 100)
         XCTAssertEqual(deliveries.count, 3)
         for (minute, delivery) in deliveries {
@@ -59,7 +50,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testPokeSaysSomethingNowAndRestartsTheInterval() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         let delivery = c.poke(snapshot: .calm)
         XCTAssertEqual(delivery?.trigger, .buttonPress)
         XCTAssertTrue(delivery?.phrase.tags.contains(.buttonPress) ?? false)
@@ -69,7 +60,7 @@ final class CompanionCoordinatorTests: XCTestCase {
 
     func testMutedAndUnavailableLinesAndFlavorsTurnedOffNeverPlay() {
         let pokes = PhraseBank.fixture.phrases(tagged: .buttonPress).map(\.id)
-        let c = makeCoordinator(start: monday(10)) { $0.mutedPhraseIDs = Set(pokes.dropFirst(2)) }
+        let c = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.mutedPhraseIDs = Set(pokes.dropFirst(2)) }
         c.unavailableIDs = [pokes[0]]
         for _ in 0..<4 {
             XCTAssertEqual(c.poke(snapshot: .calm)?.phrase.id, pokes[1])
@@ -85,10 +76,10 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testShushForAnHourThenOneLineOnWaking() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         c.shush(.hour)
         XCTAssertTrue(c.isShushed)
-        XCTAssertEqual(settings.shushedUntil, monday(11))
+        XCTAssertEqual(settings.shushedUntil, ConformanceSupport.monday(11))
         XCTAssertEqual(c.mood(snapshot: .calm), .shushed)
         XCTAssertEqual(run(c, minutes: 59).count, 0)
         let after = run(c, minutes: 2)
@@ -98,7 +89,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testWakeEndsShushEarly() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         c.shush(.untilISay)
         XCTAssertEqual(run(c, minutes: 300).count, 0)
         XCTAssertEqual(c.wake(snapshot: .calm)?.trigger, .shushEnd)
@@ -107,16 +98,17 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testShushRestOfTodayIsRestoredFromSettings() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         c.shush(.restOfToday)
-        XCTAssertEqual(settings.shushedUntil, calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: monday(10))))
+        XCTAssertEqual(
+            settings.shushedUntil, calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: ConformanceSupport.monday(10))))
         let again = CompanionCoordinator(
             settings: settings, bank: .fixture, language: "en", clock: clock, idle: idle, busy: busy, calendar: calendar, seed: 1)
         XCTAssertTrue(again.isShushed)
     }
 
     func testACallHoldsTheLineAndReleasesItAsAfterCall() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         _ = run(c, minutes: 15)
         let held = run(c, minutes: 40, snapshot: Snapshot(busy: [.call]))
         XCTAssertEqual(held.count, 0)
@@ -127,7 +119,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testFullScreenHoldsTheLineAndReleasesItAsAPlainLine() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         _ = run(c, minutes: 15)
         let held = run(c, minutes: 40, snapshot: Snapshot(busy: [.fullScreen]))
         XCTAssertEqual(held.count, 0)
@@ -138,7 +130,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testWelcomeBackAfterBeingAwayWithACooldown() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         _ = run(c, minutes: 1)
         XCTAssertEqual(run(c, minutes: 10, snapshot: Snapshot(idleSeconds: 600)).count, 0)
         let back = run(c, minutes: 1)
@@ -149,7 +141,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testEventsRespectTheSettingsAndShh() {
-        let c = makeCoordinator(start: monday(10)) { $0.commentOnPower = false }
+        let c = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.commentOnPower = false }
         XCTAssertNil(c.event(.batteryLow, snapshot: .calm))
         XCTAssertEqual(c.event(.wentDark, snapshot: .calm)?.trigger, .wentDark)
         c.shush(.hour)
@@ -157,7 +149,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testNothingOutsideActiveHours() {
-        let c = makeCoordinator(start: monday(20))
+        let c = makeCoordinator(start: ConformanceSupport.monday(20))
         XCTAssertEqual(run(c, minutes: 120).count, 0)
         XCTAssertNil(c.event(.wentDark, snapshot: .calm))
         XCTAssertEqual(c.mood(snapshot: .calm), .offHours)
@@ -165,7 +157,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testSpeakingSkipsAndMutedFallsBack() {
-        let c = makeCoordinator(start: monday(10)) { $0.channels = [.voice] }
+        let c = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.channels = [.voice] }
         XCTAssertNil(c.event(.wentLight, snapshot: Snapshot(isSpeaking: true)))
         // The button answers mid-line (a notification's Say more); the shell cuts the line being said.
         let pressed = c.poke(snapshot: Snapshot(isSpeaking: true))
@@ -176,7 +168,7 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testSettingsChangedRescheduls() {
-        let c = makeCoordinator(start: monday(10))
+        let c = makeCoordinator(start: ConformanceSupport.monday(10))
         settings.frequency = .every2Hours
         c.settingsChanged()
         XCTAssertEqual(c.scheduler.config.interval, 7200)
@@ -185,28 +177,28 @@ final class CompanionCoordinatorTests: XCTestCase {
 
     func testFullScreenCountsOnlyWhenTheSettingSays() {
         let fullScreen = Snapshot(busy: [.fullScreen])
-        let hushed = makeCoordinator(start: monday(10))
+        let hushed = makeCoordinator(start: ConformanceSupport.monday(10))
         XCTAssertEqual(run(hushed, minutes: 60, snapshot: fullScreen).count, 0)
         XCTAssertEqual(hushed.mood(snapshot: fullScreen), .hushedFullScreen)
-        let chatty = makeCoordinator(start: monday(10)) { $0.hushInFullScreen = false }
+        let chatty = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.hushInFullScreen = false }
         XCTAssertGreaterThan(run(chatty, minutes: 60, snapshot: fullScreen).count, 0)
         XCTAssertEqual(chatty.mood(snapshot: fullScreen), .awake)
         XCTAssertEqual(chatty.mood(snapshot: Snapshot(busy: [.call, .fullScreen])), .hushedForCall)
     }
 
     func testSameSeedSameDay() {
-        let a = makeCoordinator(start: monday(10)).poke(snapshot: .calm)
-        let b = makeCoordinator(start: monday(10)).poke(snapshot: .calm)
+        let a = makeCoordinator(start: ConformanceSupport.monday(10)).poke(snapshot: .calm)
+        let b = makeCoordinator(start: ConformanceSupport.monday(10)).poke(snapshot: .calm)
         XCTAssertEqual(a, b)
     }
 
     func testTheLanguageScopesThePicks() {
-        let english = makeCoordinator(start: monday(10)) { $0.channels = .quiet }
+        let english = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.channels = .quiet }
         let said = Set(run(english, minutes: 600).map(\.1.phrase.id))
         XCTAssertFalse(said.isEmpty)
         XCTAssertTrue(said.isDisjoint(with: ["it-only", "joke-it"]))
 
-        let italian = makeCoordinator(start: monday(10), language: "it") { $0.channels = .quiet }
+        let italian = makeCoordinator(start: ConformanceSupport.monday(10), language: "it") { $0.channels = .quiet }
         let saidInItalian = Set(run(italian, minutes: 600).map(\.1.phrase.id))
         XCTAssertFalse(saidInItalian.isDisjoint(with: ["it-only", "joke-it"]))
         italian.language = "en"
@@ -216,9 +208,9 @@ final class CompanionCoordinatorTests: XCTestCase {
     }
 
     func testTheSkinScopesThePicks() {
-        let c = makeCoordinator(start: monday(10)) { $0.channels = .quiet }
+        let c = makeCoordinator(start: ConformanceSupport.monday(10)) { $0.channels = .quiet }
         XCTAssertFalse(run(c, minutes: 600).contains { $0.1.phrase.id == "skin-raster-only" })
-        let raster = makeCoordinator(start: monday(10)) {
+        let raster = makeCoordinator(start: ConformanceSupport.monday(10)) {
             $0.channels = .quiet
             $0.skin = FixtureIDs.rasterSkin
         }

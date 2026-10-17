@@ -220,11 +220,7 @@ public enum QuietTimeline {
     }
 
     public static func files(cases: [Case], bank: PhraseBank, defaults: CompanionDefaults) throws -> [String: Data] {
-        var files: [String: Data] = [:]
-        for c in cases {
-            files["\(directory)/\(c.name).json"] = try ConformanceSupport.encode(vector(c, bank: bank, defaults: defaults))
-        }
-        return files
+        try ConformanceSupport.files(in: directory, cases, name: \.name) { try vector($0, bank: bank, defaults: defaults) }
     }
 
     public static func verify(_ data: Data, file: String, bank: PhraseBank, defaults: CompanionDefaults) throws -> [String] {

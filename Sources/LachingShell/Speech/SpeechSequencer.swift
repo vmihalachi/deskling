@@ -52,14 +52,12 @@
             }
         }
 
+        /// The default `Schedule`: a one-shot timer on the main run loop (`Timer.main(after:)`).
+        public static let timer: Schedule = { delay, work in _ = Timer.main(after: delay, work) }
+
         public init(speaker: any Speaking, schedule: Schedule? = nil) {
             self.speaker = speaker
-            self.schedule =
-                schedule ?? { delay, work in
-                    Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                        MainActor.assumeIsolated { work() }
-                    }
-                }
+            self.schedule = schedule ?? Self.timer
         }
 
         /// Audio is playing right now.

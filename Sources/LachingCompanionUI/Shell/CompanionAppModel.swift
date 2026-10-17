@@ -240,9 +240,7 @@
             self.statusItem = statusItem
             refreshNotificationPermission()
             Task { await purchases.start() }
-            timer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.tick() }
-            }
+            timer = Timer.main(after: 20, repeats: true) { [weak self] in self?.tick() }
             refreshStatus()
             if !settings.hasCompletedOnboarding {
                 windows.show(roles.onboarding)
@@ -262,13 +260,17 @@
         /// Every 20 s: the scheduler decides, the rules judge, and a line is delivered or not.
         public func tick() {
             let snapshot = signals.snapshot()
-            if let delivery = coordinator.tick(snapshot: snapshot) { perform(delivery) }
-            refreshStatus(snapshot: snapshot)
+            deliver(coordinator.tick(snapshot: snapshot), snapshot: snapshot)
         }
 
         private func handleEvent(_ trigger: Trigger) {
-            if let delivery = coordinator.event(trigger, snapshot: signals.snapshot()) { perform(delivery) }
-            refreshStatus()
+            deliver(coordinator.event(trigger, snapshot: signals.snapshot()))
+        }
+
+        /// Performs `delivery`, if any, then refreshes the status from `snapshot` (a fresh one when nil).
+        private func deliver(_ delivery: Delivery?, snapshot: Snapshot? = nil) {
+            if let delivery { perform(delivery) }
+            refreshStatus(snapshot: snapshot)
         }
 
         private func perform(_ delivery: Delivery) {
@@ -344,8 +346,7 @@
 
         /// Ends Shh early; the character says one line about it.
         public func wake() {
-            if let delivery = coordinator.wake(snapshot: signals.snapshot()) { perform(delivery) }
-            refreshStatus()
+            deliver(coordinator.wake(snapshot: signals.snapshot()))
         }
 
         /// "Don't say that again" on the speech bubble: the line leaves the picks for good (Settings can bring muted
@@ -355,9 +356,7 @@
             settings.mutedPhraseIDs.insert(id)
             justMuted = id
             undoTimer?.invalidate()
-            undoTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.justMuted = nil }
-            }
+            undoTimer = Timer.main(after: 8) { [weak self] in self?.justMuted = nil }
         }
 
         public func undoMute() {
@@ -522,12 +521,10 @@
 
         private func timingSettingsChanged() {
             settingsDebounce?.invalidate()
-            settingsDebounce = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.coordinator.settingsChanged()
-                    self.refreshStatus()
-                }
+            settingsDebounce = Timer.main(after: 0.3) { [weak self] in
+                guard let self else { return }
+                self.coordinator.settingsChanged()
+                self.refreshStatus()
             }
         }
 
@@ -631,11 +628,16 @@
         }
 
         public func dismissDesktopBubble() {
+            clearDesktopBubble()
+            desktop?.hideBubble(animated: !reduceMotion)
+        }
+
+        /// Drops the bubble's words, its countdown and its timer; the window follows on its next update.
+        private func clearDesktopBubble() {
             bubbleTimer?.invalidate()
             bubbleTimer = nil
             desktopBubble = nil
             desktopCountdown = nil
-            desktop?.hideBubble(animated: !reduceMotion)
         }
 
         /// The panel row's words while the character is off the desktop for a while.
@@ -661,9 +663,7 @@
             let seconds = DesktopPresence.bubbleSeconds(for: text)
             desktopCountdown = BubbleCountdown(start: Date(), seconds: seconds)
             desktop?.setCountdown(desktopCountdown)
-            bubbleTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.dismissDesktopBubble() }
-            }
+            bubbleTimer = Timer.main(after: seconds) { [weak self] in self?.dismissDesktopBubble() }
         }
 
         /// Every poll of the busy watch: a change refreshes everything; while busy, the presence learns the moment, so
@@ -680,12 +680,7 @@
             let shown = presence.update(enabled: settings.showOnDesktop, snapshot: snapshot, now: clock.now)
             if isOnDesktop != shown { isOnDesktop = shown }
             if desktopHiddenUntil != presence.hiddenUntil { desktopHiddenUntil = presence.hiddenUntil }
-            if !shown, desktopBubble != nil {
-                bubbleTimer?.invalidate()
-                bubbleTimer = nil
-                desktopBubble = nil
-                desktopCountdown = nil
-            }
+            if !shown, desktopBubble != nil { clearDesktopBubble() }
             signals.watchForDesktop(isLaunched && settings.showOnDesktop && presence.hiddenUntil == nil)
             scheduleDesktopRecheck()
             updateDesktopWindow()
@@ -700,9 +695,7 @@
             let now = clock.now
             let moments = [presence.hiddenUntil, presence.lastBusy?.addingTimeInterval(DesktopPresence.reappearDelay)]
             guard let next = moments.compactMap({ $0 }).filter({ $0 > now }).min() else { return }
-            desktopRecheck = Timer.scheduledTimer(withTimeInterval: next.timeIntervalSince(now) + 0.1, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.refreshStatus() }
-            }
+            desktopRecheck = Timer.main(after: next.timeIntervalSince(now) + 0.1) { [weak self] in self?.refreshStatus() }
         }
 
         private var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }

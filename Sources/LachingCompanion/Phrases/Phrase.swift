@@ -87,22 +87,10 @@ public struct Phrase: Equatable, Sendable, Identifiable {
 
     /// The catalog keys whose text is spoken, in order: `phrase.<id>` for a line, `phrase.<id>.1`, `.2`, … for a
     /// sequence, none for a tune.
-    public var catalogKeys: [String] {
-        switch kind {
-        case .line: [catalogKey]
-        case .tune: []
-        case .sequence(let parts): (1...parts.count).map { "\(catalogKey).\($0)" }
-        }
-    }
+    public var catalogKeys: [String] { numbered(catalogKey) }
 
     /// The ids of its recorded clips, in order: `<id>` for a line, `<id>.1`, `<id>.2`, … for a sequence, none for a tune.
-    public var clipIDs: [String] {
-        switch kind {
-        case .line: [id]
-        case .tune: []
-        case .sequence(let parts): (1...parts.count).map { "\(id).\($0)" }
-        }
-    }
+    public var clipIDs: [String] { numbered(id) }
 
     public var isTune: Bool {
         if case .tune = kind { return true }
@@ -122,5 +110,14 @@ public struct Phrase: Equatable, Sendable, Identifiable {
     /// The base of a BCP-47 code, lowercased: "pt-BR" and "pt_BR" → "pt".
     public static func baseLanguage(_ code: String) -> String {
         String(code.prefix { $0 != "-" && $0 != "_" }).lowercased()
+    }
+
+    /// `stem` for a line, `stem.1`, `stem.2`, … for a sequence, none for a tune.
+    private func numbered(_ stem: String) -> [String] {
+        switch kind {
+        case .line: [stem]
+        case .tune: []
+        case .sequence(let parts): (1...parts.count).map { "\(stem).\($0)" }
+        }
     }
 }

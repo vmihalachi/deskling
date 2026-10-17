@@ -26,6 +26,17 @@ public enum ConformanceSupport {
         try JSONDecoder().decode(type, from: data)
     }
 
+    /// One file per case, `<directory>/<name>.json`: the case's vector, built by `vector`, in the committed format.
+    public static func files<Case, Vector: Encodable>(
+        in directory: String, _ cases: [Case], name: KeyPath<Case, String>, _ vector: (Case) throws -> Vector
+    ) throws -> [String: Data] {
+        var files: [String: Data] = [:]
+        for c in cases {
+            files["\(directory)/\(c[keyPath: name]).json"] = try encode(vector(c))
+        }
+        return files
+    }
+
     // MARK: Time
 
     /// An IANA time zone such as "UTC" or "Europe/Bucharest".
@@ -39,6 +50,18 @@ public enum ConformanceSupport {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try timeZone(timeZoneID)
         return calendar
+    }
+
+    /// Gregorian in UTC: the calendar of the unit tests' fixed dates (`monday(_:_:)`).
+    public static let utc: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }()
+
+    /// Monday 2026-09-28 at `hour`:`minute` UTC, inside the default active hours: the day the unit tests start on.
+    public static func monday(_ hour: Int, _ minute: Int = 0) -> Date {
+        local(utc, 2026, 9, 28, hour, minute)
     }
 
     /// Parses ISO 8601 with an offset, with or without fractional seconds.

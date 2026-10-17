@@ -131,19 +131,10 @@ enum SchedulerVectors {
 
     // MARK: Reference evaluation
 
-    static func busyName(_ reason: BusyReason) -> String {
-        switch reason {
-        case .call: "call"
-        case .fullScreen: "fullScreen"
-        }
-    }
-
+    /// `SnapshotData.busyReason(_:)`, throwing on a name the vectors don't know.
     static func busyReason(_ name: String) throws -> BusyReason {
-        switch name {
-        case "call": return .call
-        case "fullScreen": return .fullScreen
-        default: throw ConformanceSupport.VectorError("unknown busy reason \(name)")
-        }
+        guard let reason = SnapshotData.busyReason(name) else { throw ConformanceSupport.VectorError("unknown busy reason \(name)") }
+        return reason
     }
 
     static func decisionName(_ d: SchedulerDecision) -> String {
@@ -173,7 +164,7 @@ enum SchedulerVectors {
             case .paused(let until): status = Status(type: "paused", date: iso(until))
             case .outsideActiveHours: status = Status(type: "outsideActiveHours")
             case .away: status = Status(type: "away")
-            case .postponed(let r): status = Status(type: "postponed", reason: busyName(r))
+            case .postponed(let r): status = Status(type: "postponed", reason: SnapshotData.name(r))
             }
             return State(
                 now: iso(clock.now)!, status: status, nextFireDate: iso(scheduler.nextFireDate),
@@ -258,7 +249,7 @@ enum SchedulerVectors {
             steps.append(
                 Step(
                     op: "ticks", count: count, everySeconds: seconds, idleSeconds: idle,
-                    busy: busy.map(busyName).sorted()))
+                    busy: busy.map(SnapshotData.name).sorted()))
         }
 
         /// One tick without moving the clock.

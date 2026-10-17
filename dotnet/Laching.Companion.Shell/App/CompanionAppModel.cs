@@ -751,10 +751,16 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
 
     public void DismissDesktopBubble()
     {
+        ClearDesktopBubble();
+        desktop?.HideBubble(animated: !host.ReduceMotion);
+    }
+
+    /// <summary>Drops the bubble's words, its countdown and its timer; the window follows on its next update.</summary>
+    private void ClearDesktopBubble()
+    {
         CancelBubbleTimer();
         DesktopBubble = null;
         DesktopCountdown = null;
-        desktop?.HideBubble(animated: !host.ReduceMotion);
     }
 
     /// <summary>The panel row's words while the character is off the desktop for a while.</summary>
@@ -814,11 +820,7 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         IsOnDesktop = shown;
         DesktopHiddenUntil = presence.HiddenUntil;
         if (!shown && DesktopBubble is not null)
-        {
-            CancelBubbleTimer();
-            DesktopBubble = null;
-            DesktopCountdown = null;
-        }
+            ClearDesktopBubble();
         Signals.WatchForDesktop(IsLaunched && Settings.ShowOnDesktop && presence.HiddenUntil is null);
         ScheduleDesktopRecheck();
         UpdateDesktopWindow();

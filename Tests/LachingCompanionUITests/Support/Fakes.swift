@@ -11,6 +11,8 @@
         private(set) var stops = 0
         var isSpeaking = false
         var onFinished: (() -> Void)?
+        /// What the playing clip reports as its time; the test sets it.
+        var clipTime: TimeInterval?
 
         func speak(_ text: String, clip: URL?, voiceIdentifier: String?, rate: Double, volume: Double) {
             spoken.append(text)

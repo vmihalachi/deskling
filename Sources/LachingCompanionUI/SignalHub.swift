@@ -2,6 +2,7 @@
     import Foundation
     import LachingCompanion
     import LachingCore
+    import LachingShell
     import LachingSystem
 
     /// Builds the companion's `Snapshot` from Laching's permission-free system signals, and raises the events the shell
@@ -89,9 +90,7 @@
             if watchingSpeech || watchingDesktop {
                 guard busyWatch == nil else { return }
                 lastBusy = []
-                let timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-                    MainActor.assumeIsolated { self?.pollBusy() }
-                }
+                let timer = Timer.main(after: 1, repeats: true) { [weak self] in self?.pollBusy() }
                 timer.tolerance = 0.25
                 busyWatch = timer
             } else {
