@@ -103,9 +103,7 @@ public final class ReminderScheduler {
         }
 
         // Busy: a call or full-screen app isn't a break, so idle doesn't reset the timer.
-        var watched = config.postponeReasons
-        if isAfterCallArmed { watched.insert(.call) }
-        let reasons = busy.currentBusyReasons().intersection(watched)
+        let reasons = busy.currentBusyReasons().intersection(watchedBusyReasons)
         if !reasons.isEmpty {
             lastBusyAt = now
             lastBusyReason = reasons.contains(.call) ? .call : .fullScreen
@@ -133,6 +131,25 @@ public final class ReminderScheduler {
             return fireReminder(at: now)
         }
         return .none
+    }
+
+    /// Between ticks, while a reminder is held: `reasons` (what a busy poll just read) still include one `tick()`
+    /// watches, so the grace counts from now. A shell that polls the busy state every second calls it, so a held
+    /// reminder comes `busyGrace` after the busy ended rather than after the last tick that saw it. Never fires or
+    /// postpones anything itself, and does nothing while no reminder is held.
+    public func noteBusy(_ reasons: Set<BusyReason>) {
+        guard isHolding else { return }
+        let watched = reasons.intersection(watchedBusyReasons)
+        guard !watched.isEmpty else { return }
+        lastBusyAt = clock.now
+        lastBusyReason = watched.contains(.call) ? .call : .fullScreen
+    }
+
+    /// The busy reasons that hold a reminder: the configured ones, and calls while "after this call" is on.
+    private var watchedBusyReasons: Set<BusyReason> {
+        var watched = config.postponeReasons
+        if isAfterCallArmed { watched.insert(.call) }
+        return watched
     }
 
     private func fireReminder(at now: Date) -> SchedulerDecision {

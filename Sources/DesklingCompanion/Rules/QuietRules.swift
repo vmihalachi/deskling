@@ -6,7 +6,7 @@ public enum Trigger: String, CaseIterable, Codable, Sendable {
     case due
     /// The user pressed Say something.
     case buttonPress
-    /// A line held during a call is released.
+    /// A line held during a call is released (one held for full screen comes back as `due`).
     case afterCall
     case welcomeBack
     case shushEnd

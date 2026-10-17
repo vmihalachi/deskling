@@ -163,6 +163,9 @@ public sealed class SchedulerVectorsTests
                 case "restore":
                     scheduler.Restore(ConformanceSupport.Date(step.GetProperty("time").GetString()!));
                     break;
+                case "noteBusy":
+                    NoteBusy(step);
+                    break;
                 case "isWithinActiveHours":
                     var asked = ConformanceSupport.Date(step.GetProperty("time").GetString()!);
                     Assert.Equal(expect.GetProperty("result").GetBoolean(), scheduler.IsWithinActiveHours(asked));
@@ -213,6 +216,19 @@ public sealed class SchedulerVectorsTests
                     decisions.Add(new TickDecision(tick, DecisionName(decision)));
             }
             return decisions.ToArray();
+        }
+
+        /// <summary>Runs a "noteBusy" step: the busy polls between ticks.</summary>
+        private void NoteBusy(JsonElement step)
+        {
+            var reasons = OptionalStrings(step, "busy").Select(ParseBusy).ToHashSet();
+            var count = step.GetProperty("count").GetInt32();
+            var every = OptionalInt(step, "everySeconds", 0);
+            for (var poll = 1; poll <= count; poll++)
+            {
+                clock.Now = clock.Now.AddSeconds(every);
+                scheduler.NoteBusy(reasons);
+            }
         }
 
         private string Iso(DateTimeOffset date) => ConformanceSupport.Iso(date, tz);

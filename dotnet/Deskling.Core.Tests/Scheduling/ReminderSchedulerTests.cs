@@ -238,6 +238,65 @@ public sealed class ReminderSchedulerTests
     }
 
     [Fact]
+    public void TestNotedBusyEndStartsTheGraceWhenTheCallEnds()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        _ = Run(scheduler, 40);
+        busy.Reasons = [BusyReason.Call];
+        Assert.Empty(Run(scheduler, 6)); // due at 45, held since the tick at 45
+        // A 1 s busy poll between ticks: the call goes on for 17 s more, then ends.
+        for (var n = 0; n < 17; n++)
+        {
+            clock.AdvanceSeconds(1);
+            scheduler.NoteBusy(new HashSet<BusyReason> { BusyReason.Call });
+        }
+        busy.Reasons = [];
+        for (var n = 0; n < 3; n++)
+        {
+            clock.AdvanceSeconds(1);
+            scheduler.NoteBusy(new HashSet<BusyReason>());
+        }
+        // The call ended 3 s ago: +20 s is 23 s after it (still in the grace), +40 s is 43 s after it.
+        Assert.Equal([SchedulerDecision.Postpone, SchedulerDecision.Remind], Tick(scheduler, 40));
+    }
+
+    [Fact]
+    public void TestWithoutNotedBusyTheGraceCountsFromTheLastBusyTick()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        _ = Run(scheduler, 40);
+        busy.Reasons = [BusyReason.Call];
+        Assert.Empty(Run(scheduler, 6));
+        clock.AdvanceSeconds(20); // the call ends between ticks, 20 s after the last busy one
+        busy.Reasons = [];
+        Assert.Equal([SchedulerDecision.Remind], Tick(scheduler, 20)); // 40 s after that tick, only 20 s after the call ended
+    }
+
+    [Fact]
+    public void TestNoteBusyDoesNothingWithoutAHeldReminder()
+    {
+        var scheduler = MakeScheduler(Monday(10));
+        _ = Run(scheduler, 40);
+        scheduler.NoteBusy(new HashSet<BusyReason> { BusyReason.Call });
+        Assert.Equal(new SchedulerStatus.Scheduled(Monday(10, 45)), scheduler.Status);
+        Assert.Equal([5], Run(scheduler, 5)); // due at 45 as before: NoteBusy held nothing
+    }
+
+    [Fact]
+    public void TestNoteBusyIgnoresReasonsThatDontHold()
+    {
+        var scheduler = MakeScheduler(Monday(10), new SchedulerConfig { PostponeDuringFullScreen = false });
+        _ = Run(scheduler, 40);
+        busy.Reasons = [BusyReason.Call];
+        Assert.Empty(Run(scheduler, 6));
+        busy.Reasons = [];
+        clock.AdvanceSeconds(19);
+        // Full screen doesn't hold with this config: the grace still counts from the last tick.
+        scheduler.NoteBusy(new HashSet<BusyReason> { BusyReason.FullScreen });
+        Assert.Equal([SchedulerDecision.Remind], Tick(scheduler, 20)); // 39 s after the last busy tick; counted, it would be 20 s
+    }
+
+    [Fact]
     public void TestBusyBeforeDueDoesNotChangeTheSchedule()
     {
         var scheduler = MakeScheduler(Monday(10));

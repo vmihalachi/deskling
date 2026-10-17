@@ -127,6 +127,19 @@ public sealed class CompanionCoordinatorTests
     }
 
     [Fact]
+    public void FullScreenHoldsTheLineAndReleasesItAsAPlainLine()
+    {
+        var c = Make(Monday(10));
+        Run(c, 15);
+        var fullScreen = new Snapshot { Busy = new HashSet<BusyReason> { BusyReason.FullScreen } };
+        Assert.Empty(Run(c, 40, fullScreen));
+        Assert.Equal(new SchedulerStatus.Postponed(BusyReason.FullScreen), c.Scheduler.Status);
+        var released = Run(c, 3);
+        Assert.Equal([Trigger.Due], released.Select(d => d.Delivery.Trigger));
+        Assert.False(released[0].Delivery.Phrase.HasEventTag);
+    }
+
+    [Fact]
     public void ACallHoldsTheLineAndReleasesItAsAfterCall()
     {
         var c = Make(Monday(10));

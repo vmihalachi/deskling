@@ -102,6 +102,8 @@ enum SchedulerVectors {
     ///   "pauseUntilEndOfToday", "resume", "sessionCompleted", "updateConfig" (`config`),
     ///   "restore" (`time`, the next fire date an earlier run scheduled), "reminderDelivered".
     /// - "isWithinActiveHours": query `time`; `expect.result` is the answer.
+    /// - "noteBusy": `count` times, advance the clock by `everySeconds`, then note the `busy` reasons a busy poll read
+    ///   between ticks (`noteBusy(_:)`).
     struct Step: Codable, Equatable {
         var op: String
         var count: Int?
@@ -223,6 +225,12 @@ enum SchedulerVectors {
                 scheduler.restore(nextFireDate: try ConformanceSupport.date(try required(step.time, "time", step.op)))
             case "reminderDelivered":
                 scheduler.reminderDelivered()
+            case "noteBusy":
+                let reasons = Set(try (step.busy ?? []).map(busyReason))
+                for _ in 1...(try required(step.count, "count", step.op)) {
+                    clock.now = clock.now.addingTimeInterval(TimeInterval(step.everySeconds ?? 0))
+                    scheduler.noteBusy(reasons)
+                }
             case "isWithinActiveHours":
                 expect.result = scheduler.isWithinActiveHours(try ConformanceSupport.date(try required(step.time, "time", step.op)))
             default:
@@ -276,6 +284,10 @@ enum SchedulerVectors {
         mutating func reminderDelivered() { steps.append(Step(op: "reminderDelivered")) }
         mutating func restore(_ date: Date) { steps.append(Step(op: "restore", time: iso(date))) }
         mutating func isWithinActiveHours(_ date: Date) { steps.append(Step(op: "isWithinActiveHours", time: iso(date))) }
+        /// A busy poll between ticks: `count` polls `every` seconds, reading the current `busy`.
+        mutating func noteBusy(_ count: Int, every seconds: Int) {
+            steps.append(Step(op: "noteBusy", count: count, everySeconds: seconds, busy: busy.map(busyName).sorted()))
+        }
     }
 
     struct Case: Sendable {
@@ -455,6 +467,21 @@ enum SchedulerVectors {
             s.run(minutes: 20)
             s.tickNow()
             s.busy = []
+            s.ticks(2, every: 20)
+            s.run(minutes: 46)
+        },
+        Case(
+            name: "noted-busy-end-starts-the-grace",
+            description:
+                "A 1 s busy poll notes the call going on after the last tick: the held reminder comes the grace after the call ended.",
+            start: { $0.monday(10) }
+        ) { s in
+            s.run(minutes: 40)
+            s.busy = [.call]
+            s.run(minutes: 6)
+            s.noteBusy(17, every: 1)
+            s.busy = []
+            s.noteBusy(3, every: 1)
             s.ticks(2, every: 20)
             s.run(minutes: 46)
         },

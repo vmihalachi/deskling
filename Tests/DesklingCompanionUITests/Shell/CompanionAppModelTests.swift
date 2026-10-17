@@ -267,6 +267,25 @@
             XCTAssertFalse(model.isVoicing)
         }
 
+        func testAHeldLineWatchesTheBusyStateAndItsGraceCountsFromThePoll() {
+            let model = makeModel()
+            busy.reasons = [.call]
+            for _ in 0..<180 where !model.coordinator.scheduler.isHolding {
+                run(model, minutes: 1)
+            }
+            XCTAssertTrue(model.coordinator.scheduler.isHolding)
+            XCTAssertTrue(model.signals.isWatchingBusy)
+            // The call goes on for 50 s after the tick that held the line, then ends.
+            clock.now = clock.now.addingTimeInterval(50)
+            model.signals.pollBusy()
+            busy.reasons = []
+            // A tick 10 s after the call: still in the 30 s grace, though 60 s after the last tick that saw the call.
+            clock.now = clock.now.addingTimeInterval(10)
+            model.tick()
+            XCTAssertTrue(speaker.spoken.isEmpty)
+            XCTAssertTrue(model.coordinator.scheduler.isHolding)
+        }
+
         func testShhCutsTheCurrentLine() {
             let model = makeModel()
             model.sayNow()

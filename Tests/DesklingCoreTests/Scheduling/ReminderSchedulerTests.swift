@@ -222,6 +222,56 @@ final class ReminderSchedulerTests: XCTestCase {
         XCTAssertEqual(run(s, minutes: 46), [45])
     }
 
+    func testNotedBusyEndStartsTheGraceWhenTheCallEnds() {
+        let s = makeScheduler(start: monday(10))
+        _ = run(s, minutes: 40)
+        busy.reasons = [.call]
+        XCTAssertEqual(run(s, minutes: 6), [])  // due at 45, held since the tick at 45
+        // A 1 s busy poll between ticks: the call goes on for 17 s more, then ends.
+        for _ in 1...17 {
+            clock.now = clock.now.addingTimeInterval(1)
+            s.noteBusy([.call])
+        }
+        busy.reasons = []
+        for _ in 1...3 {
+            clock.now = clock.now.addingTimeInterval(1)
+            s.noteBusy([])
+        }
+        // The call ended 3 s ago: +20 s is 23 s after it (still in the grace), +40 s is 43 s after it.
+        XCTAssertEqual(tick(s, seconds: 40), [.postpone, .remind])
+    }
+
+    func testWithoutNotedBusyTheGraceCountsFromTheLastBusyTick() {
+        let s = makeScheduler(start: monday(10))
+        _ = run(s, minutes: 40)
+        busy.reasons = [.call]
+        XCTAssertEqual(run(s, minutes: 6), [])
+        clock.now = clock.now.addingTimeInterval(20)  // the call ends between ticks, 20 s after the last busy one
+        busy.reasons = []
+        XCTAssertEqual(tick(s, seconds: 20), [.remind])  // 40 s after that tick, only 20 s after the call ended
+    }
+
+    func testNoteBusyDoesNothingWithoutAHeldReminder() {
+        let s = makeScheduler(start: monday(10))
+        _ = run(s, minutes: 40)
+        s.noteBusy([.call])
+        XCTAssertEqual(s.status, .scheduled(monday(10, 45)))
+        XCTAssertEqual(run(s, minutes: 5), [5])  // due at 45 as before: noteBusy held nothing
+    }
+
+    func testNoteBusyIgnoresReasonsThatDontHold() {
+        var config = SchedulerConfig()
+        config.postponeDuringFullScreen = false
+        let s = makeScheduler(start: monday(10), config: config)
+        _ = run(s, minutes: 40)
+        busy.reasons = [.call]
+        XCTAssertEqual(run(s, minutes: 6), [])
+        busy.reasons = []
+        clock.now = clock.now.addingTimeInterval(19)
+        s.noteBusy([.fullScreen])  // full screen doesn't hold with this config: the grace still counts from the last tick
+        XCTAssertEqual(tick(s, seconds: 20), [.remind])  // 39 s after the last busy tick; counted, it would be 20 s
+    }
+
     func testBusyBeforeDueDoesNotChangeTheSchedule() {
         let s = makeScheduler(start: monday(10))
         busy.reasons = [.fullScreen]

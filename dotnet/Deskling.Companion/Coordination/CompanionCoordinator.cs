@@ -98,7 +98,8 @@ public sealed class CompanionCoordinator
         var now = clock.Now;
         // The stored pause, not IsShushed: the clock may already be past the end before this tick clears it.
         var wasShushed = Scheduler.PausedUntil is not null;
-        var wasHolding = Scheduler.IsHolding;
+        // A line held for a call comes back as the after-call line; one held for full screen, as a plain due line.
+        var heldForCall = Scheduler.Status is SchedulerStatus.Postponed { Reason: BusyReason.Call };
         var cameBack = CameBack(lastSnapshot, heeded);
         lastSnapshot = heeded;
 
@@ -109,7 +110,7 @@ public sealed class CompanionCoordinator
         switch (decision)
         {
             case SchedulerDecision.Remind:
-                return Deliver(wasHolding ? Trigger.AfterCall : Trigger.Due, heeded, now);
+                return Deliver(heldForCall ? Trigger.AfterCall : Trigger.Due, heeded, now);
             case SchedulerDecision.Postpone:
                 return null;
         }

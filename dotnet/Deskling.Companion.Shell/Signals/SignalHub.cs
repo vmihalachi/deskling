@@ -7,8 +7,9 @@ namespace Deskling.Companion.Shell.Signals;
 /// <summary>
 /// The system signals a companion reacts to, in one place: the <see cref="Snapshot"/> the coordinator reads on every
 /// tick (busy reasons, idle time, the lock, output mute, speech, notification permission), events the character may
-/// comment on (unplugged, charging, battery low, light and dark), and a 1 s busy watch while a line is spoken or the
-/// character stands on the desktop, so a call that starts mid-line stops it and the desktop character steps aside.
+/// comment on (unplugged, charging, battery low, light and dark), and a 1 s busy watch while a line is spoken, the
+/// character stands on the desktop or the scheduler holds a line, so a call that starts mid-line stops it, the desktop
+/// character steps aside and a held line's grace counts from when the busy ended.
 /// Reads device and window state only; never opens a device or prompts. UI thread only.
 /// </summary>
 public sealed class SignalHub
@@ -23,6 +24,7 @@ public sealed class SignalHub
     private IDisposable? busyWatch;
     private bool watchingSpeech;
     private bool watchingDesktop;
+    private bool watchingHold;
     private IReadOnlySet<BusyReason> lastBusy = new HashSet<BusyReason>();
 
     public SignalHub(
@@ -102,6 +104,18 @@ public sealed class SignalHub
         UpdateBusyWatch();
     }
 
+    /// <summary>
+    /// The scheduler holds a line until the user is free: watch, so the scheduler learns when the busy ends
+    /// (<c>ReminderScheduler.NoteBusy</c>, through <see cref="OnBusyPoll"/>).
+    /// </summary>
+    public void WatchForHold(bool on)
+    {
+        if (on == watchingHold)
+            return;
+        watchingHold = on;
+        UpdateBusyWatch();
+    }
+
     public bool IsWatchingBusy => busyWatch is not null;
 
     /// <summary>One poll of the 1 s watch: a call that just started cuts the line, and the busy reasons are reported.</summary>
@@ -120,7 +134,7 @@ public sealed class SignalHub
 
     private void UpdateBusyWatch()
     {
-        if (watchingSpeech || watchingDesktop)
+        if (watchingSpeech || watchingDesktop || watchingHold)
         {
             if (busyWatch is not null)
                 return;

@@ -122,9 +122,7 @@ public class ReminderScheduler(
             nextFireDate = now.plusSeconds(nextInterval())
             return SchedulerDecision.NONE
         }
-        val watched = config.postponeReasons.toMutableSet()
-        if (isAfterCallArmed) watched.add(BusyReason.CALL)
-        val reasons = busy.currentBusyReasons().intersect(watched)
+        val reasons = busy.currentBusyReasons().intersect(watchedBusyReasons())
         if (reasons.isNotEmpty()) {
             lastBusyAt = now
             lastBusyReason = if (BusyReason.CALL in reasons) BusyReason.CALL else BusyReason.FULL_SCREEN
@@ -203,6 +201,27 @@ public class ReminderScheduler(
     /** The app showed the reminder; a snooze now counts as answering it. */
     public fun reminderDelivered() {
         hasUnansweredReminder = true
+    }
+
+    /**
+     * Between ticks, while a reminder is held: [reasons] (what a busy poll just read) still include one [tick] watches,
+     * so the grace counts from now. A shell that polls the busy state every second calls it, so a held reminder comes
+     * the grace after the busy ended rather than after the last tick that saw it. Never fires or postpones anything
+     * itself, and does nothing while no reminder is held.
+     */
+    public fun noteBusy(reasons: Set<BusyReason>) {
+        if (!isHolding) return
+        val noted = reasons.intersect(watchedBusyReasons())
+        if (noted.isEmpty()) return
+        lastBusyAt = clock.now
+        lastBusyReason = if (BusyReason.CALL in noted) BusyReason.CALL else BusyReason.FULL_SCREEN
+    }
+
+    /** The busy reasons that hold a reminder: the configured ones, and calls while "after this call" is on. */
+    private fun watchedBusyReasons(): Set<BusyReason> {
+        val watched = config.postponeReasons.toMutableSet()
+        if (isAfterCallArmed) watched.add(BusyReason.CALL)
+        return watched
     }
 
     /**
