@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Kotlin (`deskling.core`)**: `ReminderScheduler.upcomingReminders(from, until, limit)`, the Swift projection an
+  app that doesn't run between reminders schedules ahead from (vmihalachi/mybackhurts#51): the dates `tick()` would
+  fire with no idle or busy input, through quiet hours, inactive hours and days and a pause that ends in the range,
+  leaving the scheduler as it was. `UpcomingRemindersTests` ports the Swift cases.
+
 ## 0.12.3 - 2026-10-17
 
 - **Shell (`LayoutCheck`)**: on iOS, `overflows(in:)` counts a screen's safe area once. A hosting controller takes its
