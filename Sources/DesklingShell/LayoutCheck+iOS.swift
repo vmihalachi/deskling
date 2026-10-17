@@ -87,12 +87,18 @@
         /// skipped: their content is meant to be taller.
         public static func overflows(in window: UIWindow) -> [Overflow] {
             screens(in: window).compactMap { host -> Overflow? in
-                let room = host.view.bounds.inset(by: host.view.safeAreaInsets).size
+                let insets = host.view.safeAreaInsets
+                let room = host.view.bounds.inset(by: insets).size
                 guard let host = host as? HostingMeasurable, room.width > 0, room.height > 0, !scrolls(host.view)
                 else { return nil }
-                let needed = host.sizeThatFits(in: CGSize(width: room.width, height: .infinity)).height
+                // A hosting controller takes its safe area off the size it's offered and adds it back to the size it
+                // answers, so it's offered its whole width (offered the room, a sheet beside the closed iPhone Duo's
+                // status bar lost its side inset twice) and its answer loses the insets above and below.
+                let width = host.view.bounds.width
+                let vertical = insets.top + insets.bottom
+                let needed = host.sizeThatFits(in: CGSize(width: width, height: .infinity)).height - vertical
                 if ProcessInfo.processInfo.environment["DESKLING_LAYOUT_DEBUG"] == "1" {
-                    let compressed = host.sizeThatFits(in: CGSize(width: room.width, height: 0)).height
+                    let compressed = host.sizeThatFits(in: CGSize(width: width, height: 0)).height - vertical
                     print("LAYOUT \(type(of: host)) room \(room) needed \(needed) compressed \(compressed)")
                 }
                 return needed > room.height + slack ? Overflow(needed: needed, available: room.height) : nil

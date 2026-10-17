@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Shell (`LayoutCheck`)**: on iOS, `overflows(in:)` counts a screen's safe area once. A hosting controller takes its
+  safe area off the size it's offered and adds the insets above and below back to its answer, and the check offered it
+  the room already inside the safe area: a screen with side insets (a sheet beside the closed iPhone Duo's status bar)
+  was measured too narrow, and every screen as taller than it is by those insets.
+
 ## 0.12.2 - 2026-10-17
 
 - **Kotlin (`kotlin/`)**: the third implementation, for Android (vmihalachi/mybackhurts#54): a Gradle build of its
