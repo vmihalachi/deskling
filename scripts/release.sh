@@ -10,6 +10,7 @@
 #        scripts/release.sh nuget X.Y.Z    `ship (why)` or `skip (why)`: the NuGet packages ship in X.Y.Z when
 #                                   dotnet/Directory.Build.props or a packable project's folder changed since
 #                                   v<LachingVersion> (or LachingVersion is X.Y.Z already: after bump).
+#        scripts/release.sh projects       the NuGet packages: dotnet/'s packable projects, one per line.
 #        scripts/release.sh landing        `yes (why)` or `no (why)`: @laching/landing ships when tools/landing changed
 #                                   since the version npm has.
 #        scripts/release.sh bump X.Y.Z     puts X.Y.Z in the strings that carry the tag (Laching.swift,
@@ -19,10 +20,12 @@
 set -eu
 cd "$(dirname "$0")/.."
 
-usage() { sed -n 's/^# \{0,1\}//; 2,18p' "$0" >&2; exit 2; }
+usage() { sed -n 's/^# \{0,1\}//; 2,19p' "$0" >&2; exit 2; }
 die() { echo "release.sh: $*" >&2; exit 1; }
 by_version() { sort -t. -k1,1n -k2,2n -k3,3n; }
 current() { sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/LachingCore/Laching.swift; }
+# The NuGet packages: the projects in dotnet/ with <IsPackable>true</IsPackable>, one name per line.
+projects() { grep -l '<IsPackable>true</IsPackable>' dotnet/*/*.csproj | sed 's#^dotnet/\([^/]*\)/.*#\1#'; }
 nuget_version() { sed -n 's/.*<LachingVersion[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props; }
 tagged() { git rev-parse -q --verify "refs/tags/v$1" >/dev/null; }
 
@@ -77,9 +80,8 @@ nuget() {
   [ -n "$at" ] || die "dotnet/Directory.Build.props has no LachingVersion"
   [ "$at" != "$1" ] || { echo "ship (LachingVersion is $1 already)"; return; }
   tagged "$at" || die "LachingVersion is $at, which has no tag v$at here: fetch the tags"
-  # The packable projects' folders: the six NuGet packages. Their tests, Fixture.App and the README don't count.
-  folders=$(grep -l '<IsPackable>true</IsPackable>' dotnet/*/*.csproj | sed 's#/[^/]*$#/#')
-  if git diff --quiet "v$at" HEAD -- dotnet/Directory.Build.props $folders; then
+  # The packages' folders; their tests, Fixture.App and the README don't count.
+  if git diff --quiet "v$at" HEAD -- dotnet/Directory.Build.props $(projects | sed 's#^#dotnet/#; s#$#/#'); then
     echo "skip (the packages are unchanged since $at, their version on NuGet)"
   else
     echo "ship (the packages changed since $at, their version on NuGet)"
@@ -130,8 +132,9 @@ case "${1:-}" in
       *) usage ;;
     esac ;;
   nuget) [ $# -eq 2 ] || usage; nuget "$2" ;;
+  projects) [ $# -eq 1 ] || usage; projects ;;
   landing) [ $# -eq 1 ] || usage; landing ;;
   bump) [ $# -eq 2 ] || usage; bump "$2" ;;
-  -h | --help) sed -n 's/^# \{0,1\}//; 2,18p' "$0"; exit 0 ;;
+  -h | --help) sed -n 's/^# \{0,1\}//; 2,19p' "$0"; exit 0 ;;
   *) usage ;;
 esac

@@ -45,7 +45,8 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
 ## Adopting the tools in an app
 
-1. **Submodule, pinned to the release.** Vendor Laching at the tag the app pins in SwiftPM and NuGet:
+1. **Submodule, pinned to the release.** Vendor Laching at the tag the app pins in SwiftPM (NuGet takes that release's
+   `LachingVersion`, which can trail the tag):
 
    ```sh
    git submodule add https://github.com/vmihalachi/laching laching

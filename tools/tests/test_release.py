@@ -15,11 +15,12 @@ from pathlib import Path
 
 from support import NO_SHEBANG, REPO, WINDOWS
 
+WORKFLOW = REPO / ".github/workflows/release.yml"
 COPIED = ("scripts/release.sh", "scripts/verify.sh", "Sources/LachingCore/Laching.swift", "kotlin/gradle.properties",
           "README.md", "site/index.html", "dotnet/Directory.Build.props", "tools/landing/package.json")
 # gh api repos/…/commits/<sha>/pulls --jq …: the lines the --jq makes, from $FAKE_PULLS/<sha> ("number<tab>labels");
 # "Bad credentials" without that folder. `gh workflow run` is logged.
-GH = ('[ "$1" = workflow ] && { echo "$*" >> "$FAKE_PULLS.log"; exit 0; }\n'
+GH = ('[ "$1" = workflow ] && { echo "$*" >> "$FAKE_PULLS.log"; exit "${FAKE_GH_WORKFLOW_STATUS:-0}"; }\n'
       '[ -d "$FAKE_PULLS" ] || { echo "HTTP 401: Bad credentials" >&2; exit 1; }\n'
       'sha=$(echo "$2" | cut -d/ -f5); [ ! -f "$FAKE_PULLS/$sha" ] || cat "$FAKE_PULLS/$sha"\n')
 
@@ -159,21 +160,38 @@ class ReleaseTests(unittest.TestCase):
         self.change("tools/landing/src/index.ts")
         self.assertEqual(self.out("landing"), "yes (tools/landing changed since 0.13.0, the version on npm)")
 
-    def plan_step(self, **env: str) -> tuple[subprocess.CompletedProcess, dict[str, str], str]:
-        """release.yml's plan step, its script as the workflow has it, against the origin here: the result, the step's
-        outputs and its summary."""
-        lines = (REPO / ".github/workflows/release.yml").read_text("utf8").splitlines()
-        start = lines.index("        name: Plan, then bump and tag (a dry run stops after the plan)")
-        start = lines.index("        run: |", start) + 1
-        end = next(n for n in range(start, len(lines)) if lines[n].strip() and not lines[n].startswith(" " * 10))
+    def step(self, name: str, cwd: Path | None = None, **env: str) -> tuple[subprocess.CompletedProcess, dict[str, str]]:
+        """The release.yml step called `name`, its script as the workflow has it, run in `cwd` (the checkout here) with
+        the origin here: the result and the step's outputs."""
+        lines = WORKFLOW.read_text("utf8").splitlines()
+        start = next(n for n, line in enumerate(lines) if line.endswith(f"name: {name}"))
+        indent = lines[start].index("name:")
+        start = lines.index(" " * indent + "run: |", start) + 1
+        end = next(n for n in range(start, len(lines)) if lines[n].strip() and not lines[n].startswith(" " * (indent + 2)))
         output, summary = self.tmp / "output", self.tmp / "summary"
         output.write_text("", "utf8")
-        summary.write_text("", "utf8")
         variables = self.env(GITHUB_REPOSITORY="vmihalachi/laching", GITHUB_REF="refs/heads/master", BUMP="auto",
                              DRY_RUN="false", GITHUB_OUTPUT=str(output), GITHUB_STEP_SUMMARY=str(summary))
-        result = subprocess.run(["bash", "-e", "-c", "\n".join(line[10:] for line in lines[start:end])], cwd=self.root,
-                                env={**variables, **env}, capture_output=True, text=True)
-        return result, dict(line.split("=", 1) for line in output.read_text("utf8").splitlines()), summary.read_text("utf8")
+        script = "\n".join(line[indent + 2:] for line in lines[start:end])
+        result = subprocess.run(["bash", "-e", "-c", script], cwd=cwd or self.root, env={**variables, **env},
+                                capture_output=True, text=True)
+        return result, dict(line.split("=", 1) for line in output.read_text("utf8").splitlines())
+
+    def plan(self, **env: str) -> tuple[subprocess.CompletedProcess, dict[str, str], str]:
+        summary = self.tmp / "summary"
+        summary.write_text("", "utf8")
+        result, outputs = self.step("Plan (a dry run stops here)", **env)
+        self.git("reset", "-q", "--hard")  # the runner's bump goes with the runner
+        return result, outputs, summary.read_text("utf8")
+
+    def checkout(self, origin: Path, commit: str) -> Path:
+        """A fresh checkout of `commit`, as a later job of the run makes."""
+        folder = self.tmp / f"job-{commit[:7]}-{len(list(self.tmp.glob('job-*')))}"
+        subprocess.run(["git", "clone", "-q", str(origin), str(folder)], check=True)
+        subprocess.run(["git", "-C", str(folder), "checkout", "-q", commit], check=True)
+        for name in ("user.name", "user.email"):
+            subprocess.run(["git", "-C", str(folder), "config", name, "fixture"], check=True)
+        return folder
 
     def origin(self) -> Path:
         origin = self.tmp / "origin.git"
@@ -185,63 +203,88 @@ class ReleaseTests(unittest.TestCase):
     def remote(self, origin: Path, *args: str) -> str:
         return subprocess.run(["git", "-C", str(origin), *args], capture_output=True, text=True).stdout.strip()
 
-    def test_the_workflows_plan_step_dry_runs_then_releases(self):
+    def test_a_dry_run_writes_nothing_and_a_release_runs_on_master(self):
         origin = self.origin()
         self.change("dotnet/Laching.Windows/Tray.cs", pr=110)
         self.git("push", "-q", "origin", "HEAD:refs/heads/master")
         head = self.git("rev-parse", "HEAD")
-
-        result, outputs, summary = self.plan_step(DRY_RUN="true")
+        result, outputs, summary = self.plan(DRY_RUN="true")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(outputs, {"release": "false"})
         for line in ("Plan: release 0.13.1 (patch:", "NuGet: ship (", "@laching/landing: no (", "Dry run: nothing"):
             self.assertIn(line, summary)
-        self.assertEqual((self.git("rev-parse", "HEAD"), self.git("status", "--porcelain")), (head, ""))
+        self.assertEqual(self.remote(origin, "rev-parse", "master"), head)
         self.assertEqual(self.remote(origin, "tag", "--list", "v0.13.1"), "")
-
-        refused, _, _ = self.plan_step(GITHUB_REF="refs/heads/feature")
+        refused, _, _ = self.plan(GITHUB_REF="refs/heads/feature")
         self.assertEqual(refused.returncode, 1)
         self.assertIn("A release runs on master", refused.stdout)
 
-        result, outputs, _ = self.plan_step()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual({key: outputs[key] for key in ("release", "version", "previous", "nuget", "landing")},
-                         {"release": "true", "version": "0.13.1", "previous": "0.13.0", "nuget": "true", "landing": "false"})
-        self.assertEqual(self.remote(origin, "log", "-1", "--format=%s", "master"), "0.13.1: release")
-        self.assertEqual(self.remote(origin, "rev-parse", "v0.13.1^{commit}"), outputs["ref"])
-        self.assertEqual(self.remote(origin, "rev-parse", "master"), outputs["ref"])
-        self.assertIn("workflow run pages.yml --ref master", (self.tmp / "pulls.log").read_text("utf8"))
+    def test_the_tag_is_pushed_only_after_the_builds_with_the_tree_they_tested(self):
+        # Nothing before the tag job writes to the repository, and the tag job waits for every build to pass.
+        jobs = WORKFLOW.read_text("utf8").split("\n  tag:\n")
+        self.assertNotIn("contents: write", jobs[0])
+        self.assertIn("needs: [plan, core, windows, landing]", jobs[1].split("\n  npm:\n")[0])
+        for job in ("core", "windows", "landing"):
+            self.assertIn(f"(needs.{job}.result == 'success' || needs.{job}.result == 'skipped')", jobs[1])
 
-        result, outputs, summary = self.plan_step()
-        self.assertEqual(outputs, {"release": "false"})
+        origin = self.origin()
+        self.change("dotnet/Laching.Core/Clock.cs", pr=110)
+        self.git("push", "-q", "origin", "HEAD:refs/heads/master")
+        head = self.git("rev-parse", "HEAD")
+        result, plan, _ = self.plan()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual({key: plan[key] for key in ("release", "version", "previous", "base", "nuget", "landing")},
+                         {"release": "true", "version": "0.13.1", "previous": "0.13.0", "base": head, "nuget": "true",
+                          "landing": "false"})
+        self.assertEqual(self.remote(origin, "rev-parse", "master"), head, "the plan pushes nothing")
+        self.assertEqual(self.remote(origin, "tag", "--list", "v0.13.1"), "")
+
+        jobs = {"VERSION": plan["version"], "TREE": plan["tree"], "BASE": plan["base"]}
+        build, _ = self.step("Bump, as the release commit will be", self.checkout(origin, head), **jobs)
+        self.assertEqual(build.returncode, 0, "a build job bumps to the planned tree: " + build.stdout + build.stderr)
+
+        # A failing pages dispatch strands nothing: the tag is out and the step's output written.
+        result, tag = self.step("Commit the bump and tag it, in one push", self.checkout(origin, head),
+                                FAKE_GH_WORKFLOW_STATUS="1", **jobs)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.remote(origin, "log", "-1", "--format=%s", "master"), "0.13.1: release")
+        self.assertEqual(self.remote(origin, "rev-parse", "v0.13.1^{commit}"), tag["ref"])
+        self.assertEqual(self.remote(origin, "rev-parse", "master"), tag["ref"])
+        self.assertIn("workflow run pages.yml --ref master", (self.tmp / "pulls.log").read_text("utf8"))
+        self.assertIn(">0.13.1</LachingVersion>", self.remote(origin, "show", "v0.13.1:dotnet/Directory.Build.props"))
+
+        self.git("pull", "-q", "--tags", "origin", "master")
+        result, outputs, summary = self.plan()
+        self.assertEqual(outputs, {"release": "false"}, result.stdout + result.stderr)
         self.assertIn("Nothing to release: none (no commits since v0.13.1)", summary)
 
-    def test_the_workflows_plan_step_plans_again_when_master_moved(self):
+    def test_the_tag_job_pushes_nothing_when_master_moved_since_the_plan(self):
         origin = self.origin()
         self.change("docs/a.md", pr=110)
         self.git("push", "-q", "origin", "HEAD:refs/heads/master")
-        self.change("dotnet/Laching.Core/Clock.cs", pr=111, labels=("breaking",))
-        self.git("push", "-q", "origin", "HEAD:refs/heads/master")
-        self.git("reset", "-q", "--hard", "HEAD~1")  # the run checked out master before #111 landed
-        result, outputs, summary = self.plan_step()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("Plan: release 0.13.1", summary)
-        self.assertIn("NuGet: skip", summary)
-        self.assertEqual((outputs["version"], outputs["nuget"]), ("0.14.0", "true"))
-        self.assertEqual(self.remote(origin, "rev-parse", "v0.14.0^{commit}"), self.remote(origin, "rev-parse", "master"))
-        self.assertEqual(self.remote(origin, "tag", "--list", "v0.13.1"), "", "the rejected push took its tag back")
+        head = self.git("rev-parse", "HEAD")
+        _, plan, _ = self.plan()
+        self.change("docs/b.md", pr=111)
+        self.git("push", "-q", "origin", "HEAD:refs/heads/master")  # merged while the builds ran
+        moved = self.git("rev-parse", "HEAD")
+        result, outputs = self.step("Commit the bump and tag it, in one push", self.checkout(origin, head),
+                                    VERSION=plan["version"], TREE=plan["tree"], BASE=plan["base"])
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("master moved since the plan: nothing was pushed; dispatch the release again", result.stdout)
+        self.assertEqual((self.remote(origin, "rev-parse", "master"), self.remote(origin, "tag", "--list", "v0.13.1")),
+                         (moved, ""))
+        self.assertEqual(outputs, {})
 
-    def test_the_workflows_plan_step_never_moves_a_tag(self):
+    def test_the_plan_never_moves_a_tag(self):
         origin = self.origin()
         self.change("docs/a.md", pr=111)
         self.git("push", "-q", "origin", "HEAD:refs/heads/master")
         self.git("tag", "v0.13.1", "HEAD~1")
         self.git("push", "-q", "origin", "v0.13.1")
         self.git("tag", "-d", "v0.13.1")
-        result, outputs, _ = self.plan_step()
+        result, outputs, _ = self.plan()
         self.assertEqual(result.returncode, 1)
         self.assertIn("v0.13.1 already exists on origin", result.stdout)
-        self.assertEqual(self.remote(origin, "log", "-1", "--format=%s", "master"), "change docs/a.md")
         self.assertNotIn("release", outputs)
 
 

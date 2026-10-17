@@ -44,10 +44,10 @@ Released from Laching's `release.yml` on each `vX.Y.Z` tag that changes `tools/l
 the tag's version (the `version` here is a placeholder), so its versions skip the Laching releases that leave it alone:
 its `npm` job publishes the tarball to npm through trusted publishing (no stored token; provenance attached). The
 release's dispatch is the human gate: nothing is published without someone running `release.yml`. The trusted
-publisher on npmjs.com is repository `vmihalachi/laching`, workflow `release.yml`, environment `npm`; the package's
-publishing access is "Require two-factor authentication and disallow tokens". npm attaches a trusted publisher only to
-a package that exists, so the package is created once by hand, then `npm trust github @laching/landing --repo
-vmihalachi/laching --file release.yml --env npm` adds the publisher.
+publisher on npmjs.com is repository `vmihalachi/laching`, workflow `release.yml`, environment `npm`, allowed to
+`npm publish`; the package's publishing access is "Require two-factor authentication and disallow tokens". npm attaches
+a trusted publisher only to a package that exists, so the package is created once by hand, then `npm trust github
+@laching/landing --repo vmihalachi/laching --file release.yml --env npm` adds the publisher.
 
 Peer dependencies: `vite-plus` and `@resvg/resvg-js`. Develop with `npm ci`, `npx vp test run`,
 `npx vp check` and `npx tsc --noEmit`.
