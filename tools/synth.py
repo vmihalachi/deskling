@@ -16,6 +16,7 @@ library only.
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import io
 import math
@@ -100,26 +101,23 @@ def render(recipes: ModuleType) -> dict[str, bytes]:
 
 
 def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 when a committed file differs")
+    check = parser.parse_args(argv).check
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import companion
 
     config = companion.load()
     out = config.require_path("sounds.out")
     recipes = load_recipes(config.require_path("sounds.recipes"))
-    check = "--check" in argv
-    stale = []
-    out.mkdir(parents=True, exist_ok=True)
-    for name, data in render(recipes).items():
-        path = out / f"{name}.wav"
+    files = {f"{name}.wav": data for name, data in render(recipes).items()}
+    changed = companion.write_outputs(files, check, out)
+    for path in changed:
         if check:
-            if not path.exists() or path.read_bytes() != data:
-                stale.append(path.relative_to(config.root).as_posix())
+            print(f"stale: {companion.rel(path, config.root)} (run laching/tools/synth.py)")
         else:
-            path.write_bytes(data)
-            print(f"wrote {path.relative_to(config.root).as_posix()} ({(len(data) - 44) / 2 / RATE:.2f} s)")
-    for path in stale:
-        print(f"stale: {path} (run laching/tools/synth.py)")
-    return 1 if stale else 0
+            print(f"wrote {companion.rel(path, config.root)} ({(len(files[path.name]) - 44) / 2 / RATE:.2f} s)")
+    return 1 if changed and check else 0
 
 
 if __name__ == "__main__":

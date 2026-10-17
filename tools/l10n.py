@@ -45,7 +45,6 @@ writes the files in the same format Xcode and the repo use, so diffs stay small.
 from __future__ import annotations
 
 import argparse
-import collections
 import glob
 import hashlib
 import json
@@ -56,6 +55,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import companion  # noqa: E402
+from companion import base_language, fail, git  # noqa: E402
 
 # Set by `configure` from the app's companion.json (tests point them elsewhere).
 CONFIG: companion.Config
@@ -133,11 +133,6 @@ def configure(config: companion.Config | None = None) -> None:
     SCOPED = scoped_keys(CONFIG.phrases_file)
 
 
-def base_language(code: str) -> str:
-    """"pt-BR" and "pt_BR" → "pt", as `Phrase.baseLanguage` compares them."""
-    return re.split(r"[-_]", code, maxsplit=1)[0].lower()
-
-
 def scoped_keys(phrases_file: Path | None) -> dict[str, set[str]]:
     """The catalog keys of phrases that exist in some languages only, with those languages (none without a bank)."""
     if phrases_file is None or not phrases_file.exists():
@@ -164,16 +159,11 @@ TAG_RE = re.compile(r"</?[A-Za-z][^>]*>")
 INT_SPEC_RE = re.compile(r"%(?:\d+\$)?(?:ll|l|q|z)?[diu]")
 
 
-def fail(message: str) -> None:
-    print(f"error: {message}", file=sys.stderr)
-    sys.exit(2)
-
-
 # ---------------------------------------------------------------------------------------------- I/O
 
 
 def load_catalog(path: Path) -> dict:
-    return json.loads(path.read_text("utf8"), object_pairs_hook=collections.OrderedDict)
+    return json.loads(path.read_text("utf8"))
 
 
 def dump_catalog(path: Path, data: dict) -> None:
@@ -186,7 +176,7 @@ def dump_catalog(path: Path, data: dict) -> None:
 
 def load_landing(code: str) -> dict:
     assert LANDING_I18N is not None
-    return json.loads((LANDING_I18N / f"{code}.json").read_text("utf8"), object_pairs_hook=collections.OrderedDict)
+    return json.loads((LANDING_I18N / f"{code}.json").read_text("utf8"))
 
 
 def dump_landing(code: str, data: dict) -> None:
@@ -207,7 +197,7 @@ def landing_languages() -> list[str]:
 
 
 def flatten(tree: dict, prefix: str = "") -> dict[str, object]:
-    out: dict[str, object] = collections.OrderedDict()
+    out: dict[str, object] = {}
     for key, value in tree.items():
         path = f"{prefix}.{key}" if prefix else key
         if isinstance(value, dict):
@@ -224,7 +214,7 @@ def set_path(tree: dict, dotted: str, value: object, reference: dict) -> None:
     for part in parts[:-1]:
         ref = ref.get(part, {}) if isinstance(ref, dict) else {}
         if part not in node or not isinstance(node[part], dict):
-            node[part] = collections.OrderedDict()
+            node[part] = {}
         node = node[part]
     node[parts[-1]] = value
     # Keep keys in the English file's order so the diff only shows the new line.
@@ -233,13 +223,6 @@ def set_path(tree: dict, dotted: str, value: object, reference: dict) -> None:
         items = [(key, node[key]) for key in order]
         node.clear()
         node.update(items)
-
-
-def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
-    # Without the GIT_DIR… a git hook exports, so `-C` picks the repository, a submodule's own (companion.git_env).
-    # UTF-8 as git writes it, whatever the locale (cp1252 on a Western Windows).
-    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, encoding="utf8",
-                          env=companion.git_env())
 
 
 def git_repository(folder: Path) -> Path | None:
@@ -464,6 +447,19 @@ def stale_keys() -> dict[str, list[str]]:
 
 
 def cmd_status(args) -> int:
+    return report(args, strict=False)
+
+
+def cmd_check(args) -> int:
+    result = report(args, strict=True)
+    stale = stale_exports()
+    for path in stale:
+        print(f"stale export: {path.relative_to(ROOT).as_posix()} (run `export-windows` / `export-linux` / `export-android`)")
+    return 1 if stale else result
+
+
+def report(args, strict: bool) -> int:
+    """The gaps per language (one line per problem with `args.verbose`) and the stale keys; with `strict`, 1 on any."""
     report = collect(args.since)
     total = 0
     for lang, sections in report.items():
@@ -482,16 +478,7 @@ def cmd_status(args) -> int:
             if args.verbose:
                 for key in keys:
                     print(f"  {key!r}")
-    return 1 if total and args.strict else 0
-
-
-def cmd_check(args) -> int:
-    args.strict = True
-    result = cmd_status(args)
-    stale = stale_exports()
-    for path in stale:
-        print(f"stale export: {path.relative_to(ROOT).as_posix()} (run `export-windows` / `export-linux` / `export-android`)")
-    return 1 if stale else result
+    return 1 if total and strict else 0
 
 
 def glossary_keys() -> list[str]:
@@ -506,7 +493,7 @@ def glossary_keys() -> list[str]:
 
 def glossary(strings: dict, lang: str) -> dict[str, str]:
     """The glossary terms (`glossary_keys`) and their current translations."""
-    out = collections.OrderedDict()
+    out = {}
     for name in glossary_keys():
         value, _ = translation_of(strings.get(name, {}), lang)
         if isinstance(value, str) and value:
@@ -524,76 +511,68 @@ def cmd_export(args) -> int:
     for lang in langs:
         if lang not in report:
             fail(f"unknown language {lang!r}; known: {', '.join(report)}")
-        work = collections.OrderedDict(lang=lang, rules=RULES, glossary=glossary(catalogs["app"], lang))
-        count = 0
+        work = {"lang": lang, "rules": RULES, "glossary": glossary(catalogs["app"], lang)}
         for section in CATALOGS:
-            items = collections.OrderedDict()
-            for key in report[lang][section]:
-                entry = catalogs[section][key]
-                english = english_of(key, entry)
-                current, _ = translation_of(entry, lang)
-                item = collections.OrderedDict(en=english)
-                if entry.get("comment"):
-                    item["comment"] = entry["comment"]
-                if isinstance(english, dict):
-                    item["categories"] = categories_for(lang)
-                elif isinstance(english, str) and INT_SPEC_RE.search(english) and not current:
-                    # New keys with a count: the English plural variants may still need creating.
-                    item["en_plural"] = {"one": "", "other": english}
-                    item["categories"] = categories_for(lang)
-                if subs := english_substitutions(entry):
-                    item.pop("en_plural", None)
-                    item.pop("categories", None)
-                    item["substitutions"] = collections.OrderedDict(
-                        (name, collections.OrderedDict(
-                            en=sub["plural"],
-                            categories=categories_for(lang),
-                            value={cat: "" for cat in categories_for(lang)},
-                        ))
-                        for name, sub in subs.items()
-                    )
-                if current:
-                    item["current"] = current
-                item["issues"] = report[lang][section][key]
-                item["value"] = {cat: "" for cat in categories_for(lang)} if isinstance(english, dict) else ""
-                items[key] = item
-            work[section] = items
-            count += len(items)
-        landing_current = (
-            flatten(load_landing(lang)) if LANDING_I18N is not None and (LANDING_I18N / f"{lang}.json").exists() else {}
-        )
-        items = collections.OrderedDict()
-        for key, issues in report[lang]["landing"].items():
-            if key not in landing_en:
-                continue  # extra keys are reported by status; nothing to translate
-            item = collections.OrderedDict(en=landing_en[key])
-            if landing_current.get(key):
-                item["current"] = landing_current[key]
-            item["issues"] = issues
-            item["value"] = ""
-            items[key] = item
-        work["landing"] = items
-        count += len(items)
+            work[section] = {key: work_item(key, catalogs[section][key], lang, issues)
+                             for key, issues in report[lang][section].items()}
+        work["landing"] = landing_work_items(lang, report[lang]["landing"], landing_en)
+        count = sum(len(work[section]) for section in [*CATALOGS, "landing"])
         if not count:
             continue
         path = Path(args.out) / f"{lang}.json" if args.out else WORK_DIR / f"{lang}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(work, indent=2, ensure_ascii=False) + "\n", "utf8")
-        written.append(f"{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path} ({count})")
+        written.append(f"{companion.rel(path, ROOT)} ({count})")
     print("\n".join(written) if written else "nothing to translate")
     return 0
 
 
+def work_item(key: str, entry: dict, lang: str, issues: list[str]) -> dict:
+    """A catalog key's item in a work file: its English and comment, the plural categories and substitutions to fill,
+    the current translation, the issues and an empty `value`."""
+    english = english_of(key, entry)
+    current, _ = translation_of(entry, lang)
+    categories = categories_for(lang)
+    item = {"en": english}
+    if entry.get("comment"):
+        item["comment"] = entry["comment"]
+    if subs := english_substitutions(entry):
+        item["substitutions"] = {
+            name: {"en": sub["plural"], "categories": categories, "value": {cat: "" for cat in categories}}
+            for name, sub in subs.items()
+        }
+    elif isinstance(english, dict):
+        item["categories"] = categories
+    elif isinstance(english, str) and INT_SPEC_RE.search(english) and not current:
+        # New keys with a count: the English plural variants may still need creating.
+        item["en_plural"] = {"one": "", "other": english}
+        item["categories"] = categories
+    if current:
+        item["current"] = current
+    item["issues"] = issues
+    item["value"] = {cat: "" for cat in categories} if isinstance(english, dict) else ""
+    return item
+
+
+def landing_work_items(lang: str, report: dict[str, list[str]], landing_en: dict[str, object]) -> dict[str, dict]:
+    """The landing page's items in a work file (extra keys are reported by status; nothing to translate)."""
+    exists = LANDING_I18N is not None and (LANDING_I18N / f"{lang}.json").exists()
+    current = flatten(load_landing(lang)) if exists else {}
+    items = {}
+    for key, issues in report.items():
+        if key in landing_en:
+            items[key] = {"en": landing_en[key], **({"current": current[key]} if current.get(key) else {}),
+                          "issues": issues, "value": ""}
+    return items
+
+
 def set_catalog_value(entry: dict, lang: str, value) -> None:
-    localizations = entry.setdefault("localizations", collections.OrderedDict())
+    localizations = entry.setdefault("localizations", {})
     if isinstance(value, dict):
-        plural = collections.OrderedDict(
-            (cat, {"stringUnit": collections.OrderedDict(state="translated", value=value[cat])})
-            for cat in sorted(value)
-        )
+        plural = {cat: {"stringUnit": {"state": "translated", "value": value[cat]}} for cat in sorted(value)}
         localizations[lang] = {"variations": {"plural": plural}}
     else:
-        localizations[lang] = {"stringUnit": collections.OrderedDict(state="translated", value=value)}
+        localizations[lang] = {"stringUnit": {"state": "translated", "value": value}}
     ordered = sorted(localizations.items())
     localizations.clear()
     localizations.update(ordered)
@@ -603,7 +582,6 @@ def cmd_apply(args) -> int:
     files = [Path(p) for pattern in args.files for p in (glob.glob(pattern) or [pattern])]
     catalogs = {section: load_catalog(path) for section, path in CATALOGS.items()}
     landing_en_tree = load_landing(SOURCE) if landing_languages() else {}
-    landing_en = flatten(landing_en_tree)
     landing_trees: dict[str, dict] = {}
     errors, applied, skipped = [], 0, 0
     dirty = set()
@@ -616,76 +594,16 @@ def cmd_apply(args) -> int:
                 value = item.get("value")
                 if value in ("", None) or (isinstance(value, dict) and not any(value.values())):
                     skipped += 1
-                    continue
-                if key not in strings:
+                elif key not in strings:
                     errors.append(f"{file.name} [{section}] {key!r}: key no longer in catalog")
-                    continue
-                en_plural = item.get("en_plural") or {}
-                if en_plural.get("one") and isinstance(value, dict):
-                    if problem := token_problem(key, en_plural["one"]):
-                        errors.append(f"{file.name} [{section}] {key!r}: en_plural.one: {problem}")
-                        continue
-                    set_catalog_value(strings[key], SOURCE, {"one": en_plural["one"], "other": en_plural.get("other") or key})
-                    dirty.add(section)
-                english = english_of(key, strings[key])
-                if isinstance(english, dict):
-                    if not isinstance(value, dict):
-                        errors.append(f"{file.name} [{section}] {key!r}: plural needs an object value")
-                        continue
-                    missing = [cat for cat in categories_for(lang) if not value.get(cat)]
-                    if missing:
-                        errors.append(f"{file.name} [{section}] {key!r}: missing plural {', '.join(missing)}")
-                        continue
-                    reference = english.get("other", next(iter(english.values())))
-                    problems = [f"{cat}: {p}" for cat, text in value.items() if (p := token_problem(reference, text))]
-                else:
-                    problems = [p] if isinstance(value, str) and (p := token_problem(english, value)) else []
-                    if not isinstance(value, str):
-                        problems = ["value must be a string"]
-                english_subs = english_substitutions(strings[key])
-                given = item.get("substitutions") or {}
-                for name in english_subs:
-                    sub_value = (given.get(name) or {}).get("value") or {}
-                    missing = [cat for cat in categories_for(lang) if not sub_value.get(cat)]
-                    if missing:
-                        problems.append(f"substitution {name}: missing {', '.join(missing)}")
-                    problems += [
-                        f"substitution {name} {cat}: needs %arg"
-                        for cat, text in sub_value.items() if text and "%arg" not in text
-                    ]
-                if problems:
+                elif problems := validate_item(key, item, strings[key], lang):
                     errors.append(f"{file.name} [{section}] {key!r}: {'; '.join(problems)}")
-                    continue
-                set_catalog_value(strings[key], lang, value)
-                if english_subs:
-                    strings[key]["localizations"][lang]["substitutions"] = collections.OrderedDict(
-                        (name, collections.OrderedDict(
-                            argNum=sub["argNum"],
-                            formatSpecifier=sub["formatSpecifier"],
-                            variations={"plural": collections.OrderedDict(
-                                (cat, {"stringUnit": collections.OrderedDict(
-                                    state="translated", value=given[name]["value"][cat])})
-                                for cat in sorted(categories_for(lang))
-                            )},
-                        ))
-                        for name, sub in english_subs.items()
-                    )
-                dirty.add(section)
-                applied += 1
-        for key, item in work.get("landing", {}).items():
-            value = item.get("value")
-            if not value:
-                skipped += 1
-                continue
-            if key not in landing_en:
-                errors.append(f"{file.name} [landing] {key!r}: key not in en.json")
-                continue
-            if problem := token_problem(str(landing_en[key]), str(value)):
-                errors.append(f"{file.name} [landing] {key!r}: {problem}")
-                continue
-            tree = landing_trees.setdefault(lang, load_landing(lang))
-            set_path(tree, key, value, landing_en_tree)
-            applied += 1
+                else:
+                    apply_item(strings[key], key, item, lang)
+                    dirty.add(section)
+                    applied += 1
+        landing_applied, landing_skipped = apply_landing(work, file.name, landing_en_tree, landing_trees, errors)
+        applied, skipped = applied + landing_applied, skipped + landing_skipped
     for section in dirty:
         dump_catalog(CATALOGS[section], catalogs[section])
     for lang, tree in landing_trees.items():
@@ -696,13 +614,96 @@ def cmd_apply(args) -> int:
     return 1 if errors else 0
 
 
+def promoted_plural(key: str, item: dict) -> dict | None:
+    """The English plural a work item fills in (`en_plural.one`, for a count that needs singular and plural forms),
+    which becomes the key's English when its translation goes in; None without one."""
+    en_plural = item.get("en_plural") or {}
+    if en_plural.get("one") and isinstance(item.get("value"), dict):
+        return {"one": en_plural["one"], "other": en_plural.get("other") or key}
+    return None
+
+
+def validate_item(key: str, item: dict, entry: dict, lang: str) -> list[str]:
+    """Why a filled work item can't go into its catalog `entry` in `lang`: none when it can."""
+    value = item["value"]
+    english, english_subs = english_of(key, entry), english_substitutions(entry)
+    if promoted := promoted_plural(key, item):
+        if problem := token_problem(key, promoted["one"]):
+            return [f"en_plural.one: {problem}"]
+        english, english_subs = promoted, {}  # the source becomes a plain plural, as apply_item writes it
+    if isinstance(english, dict):
+        if not isinstance(value, dict):
+            return ["plural needs an object value"]
+        if missing := [cat for cat in categories_for(lang) if not value.get(cat)]:
+            return [f"missing plural {', '.join(missing)}"]
+        reference = english.get("other", next(iter(english.values())))
+        problems = [f"{cat}: {p}" for cat, text in value.items() if (p := token_problem(reference, text))]
+    elif not isinstance(value, str):
+        problems = ["value must be a string"]
+    else:
+        problems = [p] if (p := token_problem(english, value)) else []
+    given = item.get("substitutions") or {}
+    for name in english_subs:
+        sub_value = (given.get(name) or {}).get("value") or {}
+        if missing := [cat for cat in categories_for(lang) if not sub_value.get(cat)]:
+            problems.append(f"substitution {name}: missing {', '.join(missing)}")
+        problems += [f"substitution {name} {cat}: needs %arg" for cat, text in sub_value.items() if text and "%arg" not in text]
+    return problems
+
+
+def apply_item(entry: dict, key: str, item: dict, lang: str) -> None:
+    """Writes a validated work item into its catalog `entry`: the English plural it fills in, the translation and its
+    substitutions' plural forms."""
+    if promoted := promoted_plural(key, item):
+        set_catalog_value(entry, SOURCE, promoted)
+    english_subs = english_substitutions(entry)
+    set_catalog_value(entry, lang, item["value"])
+    if english_subs:
+        given = item["substitutions"]
+        entry["localizations"][lang]["substitutions"] = {
+            name: {
+                "argNum": sub["argNum"],
+                "formatSpecifier": sub["formatSpecifier"],
+                "variations": {"plural": {
+                    cat: {"stringUnit": {"state": "translated", "value": given[name]["value"][cat]}}
+                    for cat in sorted(categories_for(lang))
+                }},
+            }
+            for name, sub in english_subs.items()
+        }
+
+
+def apply_landing(work: dict, name: str, english_tree: dict, trees: dict[str, dict], errors: list[str]) -> tuple[int, int]:
+    """Validates a work file's landing items and sets the good ones in `trees` (per language, loaded on first use),
+    adding the problems to `errors`; how many went in and how many were empty."""
+    english = flatten(english_tree)
+    applied = skipped = 0
+    for key, item in work.get("landing", {}).items():
+        value = item.get("value")
+        if not value:
+            skipped += 1
+        elif key not in english:
+            errors.append(f"{name} [landing] {key!r}: key not in en.json")
+        elif problem := token_problem(str(english[key]), str(value)):
+            errors.append(f"{name} [landing] {key!r}: {problem}")
+        else:
+            set_path(trees.setdefault(work["lang"], load_landing(work["lang"])), key, value, english_tree)
+            applied += 1
+    return applied, skipped
+
+
 def cmd_add(args) -> int:
-    """Adds strings that only the Windows/Linux ports use. Xcode never extracts them, so they are
-    `manual` entries: `sync` keeps them and `prune` leaves them alone."""
+    """Adds strings that only the Windows/Linux ports use (`add_strings`), from a JSON file, and prints what it did."""
+    return print_added(*add_strings(json.loads(Path(args.file).read_text("utf8"))))
+
+
+def add_strings(new: dict) -> tuple[list[str], list[str]]:
+    """Adds strings that only the Windows/Linux ports use. Xcode never extracts them, so they are `manual` entries:
+    `sync` keeps them and `prune` leaves them alone. `new` maps a key to {"comment", "en"} or {"comment", "plural"}; a
+    key already in the catalog with the same English is left alone. The keys added and the problems."""
     path = CATALOGS["app"]
     data = load_catalog(path)
     strings = data["strings"]
-    new = json.loads(Path(args.file).read_text("utf8"))
     added, errors = [], []
     for key, item in new.items():
         english = item.get("plural") or item.get("en") or key
@@ -714,18 +715,19 @@ def cmd_add(args) -> int:
         if problem := token_problem(key, reference):
             errors.append(f"{key!r}: {problem}")
             continue
-        entry = collections.OrderedDict()
-        if item.get("comment"):
-            entry["comment"] = item["comment"]
+        entry = {"comment": item["comment"]} if item.get("comment") else {}
         entry["extractionState"] = "manual"
         set_catalog_value(entry, SOURCE, english)
         strings[key] = entry
         added.append(key)
     if added:
-        ordered = sorted(strings.items(), key=lambda kv: kv[0])
-        strings.clear()
-        strings.update(ordered)
+        data["strings"] = dict(sorted(strings.items()))
         dump_catalog(path, data)
+    return added, errors
+
+
+def print_added(added: list[str], errors: list[str]) -> int:
+    """`add_strings`' result for people; 1 when something was rejected."""
     print(f"added {len(added)}, rejected {len(errors)}")
     for key in added:
         print(f"  + {key!r}")
@@ -1148,24 +1150,16 @@ def stale_exports() -> list[Path]:
     if ANDROID_STRINGS:  # the Gradle project's folder, or four up from <app>/src/main/res without `android.dir`
         ports.append((ANDROID_DIR or ANDROID_STRINGS.parents[min(3, len(ANDROID_STRINGS.parents) - 1)], android_files))
     for folder, files in ports:
-        if not folder.exists():
-            continue
-        for path, text in files().items():
-            if not path.exists() or path.read_text("utf8") != text:
-                stale.append(path)
+        if folder.exists():
+            stale += companion.write_outputs(files(), check=True)
     return stale
 
 
 def write_export(files: dict[Path, str], dry_run: bool) -> int:
-    for path, text in files.items():
-        if dry_run:
-            print(f"would write {path} ({len(text.encode('utf8'))} bytes)")
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # LF on every OS: the exports are committed as-is (-text) and CI diffs them byte for byte.
-        with open(path, "w", encoding="utf8", newline="\n") as f:  # write_text(newline=) needs Python 3.10
-            f.write(text)
-        print(f"wrote {path}")
+    """Writes the files that differ from the catalog (LF on every OS: the exports are committed as-is, -text, and CI
+    diffs them byte for byte); with `dry_run`, lists them."""
+    for path in companion.write_outputs(files, check=dry_run):
+        print(f"would write {path} ({len(files[path].encode('utf8'))} bytes)" if dry_run else f"wrote {path}")
     return 0
 
 
@@ -1197,7 +1191,6 @@ def main() -> int:
         cmd.add_argument("-v", "--verbose", action="store_true", help="list every problem")
         cmd.add_argument("--since", metavar="REF", help="also flag strings whose English changed since a git ref "
                          "(the app's; a submodule at the commit it records)")
-        cmd.add_argument("--strict", action="store_true", help=argparse.SUPPRESS)
         cmd.set_defaults(func=func)
 
     export = sub.add_parser("export", help="write per-language work files with only the strings to translate")

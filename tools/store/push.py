@@ -497,7 +497,7 @@ class Sync:
                 folder = root / lang
                 files = sorted(folder.glob("*.png"))
                 if not files:
-                    self.problems.append(f"{lang}: no screenshots in {folder} (the app's store-screenshots.sh)")
+                    self.problems.append(f"{lang}: no screenshots in {folder} (store-screenshots.py, or the app's own script)")
                     continue
                 self.media(localization, locale, files, "appScreenshotSets", "screenshotDisplayType", display_type,
                            "appScreenshots")

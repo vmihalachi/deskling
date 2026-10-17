@@ -5,15 +5,12 @@ language-scoped phrases and the phrase sync."""
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
-import subprocess
 import sys
 import unittest
 import xml.etree.ElementTree as ET
-from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -22,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
 import l10n  # noqa: E402
 import phrases  # noqa: E402
-from support import fixture_app  # noqa: E402
+from support import FixtureAppTestCase, git, quiet  # noqa: E402
 
 APPLE_SPEC_RE = re.compile(r"%(?:\d+\$)?(?:ll|l|q|z)?[@diu]|%#@|%arg")
 NET_ARG_RE = re.compile(r"(?<!\{)\{(\d+)\}(?!\})")
@@ -104,21 +101,10 @@ def eval_plural(expr: str, n: int) -> int:
     return result
 
 
-def quiet(function, *args):
-    out = io.StringIO()
-    with redirect_stdout(out):
-        result = function(*args)
-    return result, out.getvalue()
-
-
-class L10nTestCase(unittest.TestCase):
+class L10nTestCase(FixtureAppTestCase):
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         l10n.configure(companion.load())
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def args(self, **values):
         defaults = {"since": None, "verbose": True, "strict": False, "lang": None, "out": None, "dry_run": False}
@@ -373,13 +359,6 @@ class ExportTests(L10nTestCase):
 class SinceTests(L10nTestCase):
     """`--since REF` over a landing page kept in its own repository: a submodule, or a nested checkout the app ignores."""
 
-    def git(self, cwd: Path, *args: str) -> str:
-        return subprocess.run(
-            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false",
-             "-c", "protocol.file.allow=always", *args],
-            cwd=cwd, env=companion.git_env(), capture_output=True, text=True, check=True,
-        ).stdout.strip()
-
     def write_title(self, title: str, landing: Path | None = None) -> None:
         en = (landing or self.root / "landing") / "src" / "i18n" / "en.json"
         en.write_text(json.dumps({"hero": {"title": title, "body": "Move"}}), "utf8")
@@ -390,9 +369,9 @@ class SinceTests(L10nTestCase):
         (i18n / "languages.ts").write_text('export const languages = [{ code: "en" }, { code: "it" }];\n', "utf8")
         (i18n / "it.json").write_text(json.dumps({"hero": {"title": "Siediti meno", "body": "Muoviti"}}), "utf8")
         self.write_title("Sit less", landing)
-        self.git(landing, "init", "-q")
-        self.git(landing, "add", "-A")
-        self.git(landing, "commit", "-q", "-m", "landing")
+        git(landing, "init", "-q")
+        git(landing, "add", "-A")
+        git(landing, "commit", "-q", "-m", "landing")
 
     def commit_app(self, landing: str) -> None:
         """The fixture app as a repository whose landing/ is a `submodule` or a `nested` checkout it ignores."""
@@ -400,16 +379,16 @@ class SinceTests(L10nTestCase):
         data = json.loads(config.read_text("utf8"))
         data["l10n"]["landing"] = "landing/src/i18n"
         config.write_text(json.dumps(data), "utf8")
-        self.git(self.root, "init", "-q")
+        git(self.root, "init", "-q")
         if landing == "submodule":
             source = self.root.parent / "landing-source"
             self.landing_repository(source)
-            self.git(self.root, "submodule", "add", "-q", str(source), "landing")
+            git(self.root, "submodule", "add", "-q", str(source), "landing")
         else:
             self.landing_repository(self.root / "landing")
             (self.root / ".gitignore").write_text("landing/\n", "utf8")
-        self.git(self.root, "add", "-A")
-        self.git(self.root, "commit", "-q", "-m", "app")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-q", "-m", "app")
         l10n.configure(companion.load())
 
     def test_a_submodule_is_read_at_the_commit_the_app_records(self):
@@ -417,18 +396,18 @@ class SinceTests(L10nTestCase):
         self.assertEqual(l10n.git_show("HEAD", l10n.CATALOGS["app"]), l10n.CATALOGS["app"].read_text("utf8"),
                          "the app's own files come from the app's repository")
         self.write_title("Sit less, really")
-        self.git(self.root / "landing", "commit", "-q", "-am", "New title")
+        git(self.root / "landing", "commit", "-q", "-am", "New title")
         self.assertEqual(l10n.changed_landing_keys("HEAD"), {"hero.title"},
                          "the app's HEAD still records the submodule's first commit")
         self.assertEqual(l10n.collect("HEAD")["it"]["landing"], {"hero.title": ["English changed since HEAD"]})
         with mock.patch.dict(os.environ, {"GIT_DIR": str(self.root / ".git")}):
             self.assertEqual(l10n.changed_landing_keys("HEAD"), {"hero.title"}, "under a git hook too")
-        self.git(self.root, "commit", "-q", "-am", "Landing: new title")
+        git(self.root, "commit", "-q", "-am", "Landing: new title")
         self.assertEqual(l10n.changed_landing_keys("HEAD"), set())
         self.assertEqual(l10n.changed_landing_keys("HEAD~1"), {"hero.title"})
         # The app records a commit the submodule hasn't fetched: the submodule's own HEAD instead.
-        self.git(self.root, "update-index", "--cacheinfo", f"160000,{'1' * 40},landing")
-        self.git(self.root, "commit", "-q", "-m", "Landing: elsewhere")
+        git(self.root, "update-index", "--cacheinfo", f"160000,{'1' * 40},landing")
+        git(self.root, "commit", "-q", "-m", "Landing: elsewhere")
         self.assertEqual(l10n.changed_landing_keys("HEAD"), set())
         self.write_title("Sit less, please")
         self.assertEqual(l10n.changed_landing_keys("HEAD"), {"hero.title"})

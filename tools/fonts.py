@@ -22,6 +22,7 @@ everything else is the standard library.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import io
 import sys
@@ -233,8 +234,11 @@ def check(plan: Plan) -> int:
 
 
 def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 when a committed file lacks a glyph")
+    args = parser.parse_args(argv)
     plan = Plan(companion.load())
-    if "--check" in argv:
+    if args.check:
         return check(plan)
     plan.out.mkdir(parents=True, exist_ok=True)
     for face in plan.faces:

@@ -16,6 +16,7 @@ Reads 8-bit RGB or RGBA PNGs, not interlaced; downsamples by halving, then by ar
 
 from __future__ import annotations
 
+import argparse
 import struct
 import sys
 import zlib
@@ -270,7 +271,9 @@ def ico(icon: Image, cache: dict[int, Image]) -> bytes:
 
 
 def main(argv: list[str]) -> int:
-    check = "--check" in argv
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 when a committed image differs")
+    check = parser.parse_args(argv).check
     config = companion.load()
     source = config.path("windows.assets.source")
     out = config.path("windows.assets.out")
@@ -280,22 +283,12 @@ def main(argv: list[str]) -> int:
     files = images(source)
     if (dev := config.path("windows.assets.devSource")) is not None:
         files["Dev/AppIcon.ico"] = ico(trim(read_png(dev)), {})
-    stale = []
-    for name, data in files.items():
-        path = out / name
-        if check:
-            if not path.is_file() or path.read_bytes() != data:
-                stale.append(name)
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(data)
-    if check:
-        if stale:
-            print(f"{len(stale)} Windows images differ from the icon (run laching/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
-            return 1
-        print(f"ok: {len(files)} Windows images match the icon")
-        return 0
-    print(f"wrote {len(files)} images to {out.relative_to(config.root).as_posix()}")
+    stale = [companion.rel(path, out) for path in companion.write_outputs(files, check, out)]
+    if check and stale:
+        print(f"{len(stale)} Windows images differ from the icon (run laching/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
+        return 1
+    print(f"ok: {len(files)} Windows images match the icon" if check else
+          f"wrote {len(stale)} of {len(files)} images to {companion.rel(out, config.root)}")
     return 0
 
 

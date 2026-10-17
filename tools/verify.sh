@@ -81,29 +81,13 @@ touched() {
 
 darwin=0; [ "$(uname)" = Darwin ] && darwin=1
 windows=0; case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) windows=1 ;; esac
-has() { command -v "$1" >/dev/null 2>&1; }
+# shellcheck source=verify-lib.sh
+. "$TOOLS/verify-lib.sh"
 # The landing tool from PATH, or the one its node_modules brings (CI, cloud containers: setup-linux.sh).
 landing_tool="$LANDING_TOOL"
 if [ -n "$landing_tool" ] && ! has "$landing_tool" && [ -x "$ROOT/$LANDING_DIR/node_modules/.bin/$landing_tool" ]; then
   landing_tool="$ROOT/$LANDING_DIR/node_modules/.bin/$landing_tool"
 fi
-logdir="$(mktemp -d "${TMPDIR:-/tmp}/verify.XXXXXX")"
-failed=() notes=()
-
-# check <name> <command...>: runs quietly, prints ok/FAIL, keeps the log.
-check() {
-  local name="$1"; shift
-  local log="$logdir/${name//[^A-Za-z0-9]/_}.log"
-  if "$@" >"$log" 2>&1; then
-    printf 'ok    %s\n' "$name"
-  else
-    printf 'FAIL  %s\n' "$name"
-    tail -n 30 "$log" | sed 's/^/      /'
-    failed+=("$name")
-  fi
-}
-skip() { notes+=("$1"); }
-
 xcodegen_in_sync() {
   (cd "$MAC_DIR" && xcodegen generate --quiet) || return 1
   if ! git diff --quiet -- "$MAC_DIR/$MAC_PROJECT"; then
@@ -150,14 +134,10 @@ voices_pointer_pushed() {
   fi
 }
 
-resw_current() {
-  python3 "$TOOLS/l10n.py" export-windows --out "$logdir/resw" >/dev/null &&
-    diff -r --strip-trailing-cr "$logdir/resw" "$WINDOWS_STRINGS"
-}
-
-android_strings_current() {
-  python3 "$TOOLS/l10n.py" export-android --out "$logdir/android" >/dev/null &&
-    diff -r --strip-trailing-cr "$logdir/android" "$ANDROID_STRINGS"
+# export_current <windows|android> <folder>: l10n.py export-<kind> into the logs matches the committed folder.
+export_current() {
+  python3 "$TOOLS/l10n.py" "export-$1" --out "$logdir/$1" >/dev/null &&
+    diff -r --strip-trailing-cr "$logdir/$1" "$2"
 }
 
 # Kotlin style (ktlint_official, the Android project's .editorconfig) of the changed Kotlin files, or all of them.
@@ -167,8 +147,8 @@ kotlin_lint() {
     (cd "$ANDROID_DIR" && ktlint "**/*.kt" "**/*.kts" "!**/build/**")
     return
   fi
-  local files=()
-  while read -r f; do [ -f "$f" ] && files+=("$f"); done < <(printf '%s\n' "$changed" | grep -E "$RE_KOTLIN")
+  local files
+  changed_files "$RE_KOTLIN"
   [ ${#files[@]} -gt 0 ] || return 0
   ktlint "${files[@]}"
 }
@@ -183,10 +163,9 @@ swift_format() {
     return
   fi
   local files
-  files="$(printf '%s\n' "$changed" | grep -E "^$MAC_DIR/.*\.swift$" | while read -r f; do [ -f "$f" ] && echo "$f"; done)"
-  [ -n "$files" ] || return 0
-  # shellcheck disable=SC2086
-  xcrun swift-format lint --strict --configuration "$config" $files
+  changed_files "^$MAC_DIR/.*\.swift$"
+  [ ${#files[@]} -gt 0 ] || return 0
+  xcrun swift-format lint --strict --configuration "$config" "${files[@]}"
 }
 
 # The WinUI traps (untyped XAML casts under Native AOT, XAML compiler crashes) in the changed app files, or all of them.
@@ -195,19 +174,19 @@ winui_check() {
     python3 "$TOOLS/windows/check-winui.py"
     return
   fi
-  local files=()
-  while read -r f; do [ -f "$f" ] && files+=("$f"); done < <(printf '%s\n' "$changed" | grep -E "$RE_WINDOWS_APP" | grep -E '\.(cs|xaml)$')
+  local files
+  changed_files "$RE_WINDOWS_APP" '\.(cs|xaml)$'
   [ ${#files[@]} -gt 0 ] || return 0
   python3 "$TOOLS/windows/check-winui.py" "${files[@]}"
 }
 
 csharp_format() {
-  local files=()
-  while read -r f; do [ -f "$f" ] && files+=("${f#"$WINDOWS_DIR"/}"); done < <(printf '%s\n' "$changed" | grep -E "$RE_CSHARP")
+  local files
+  changed_files "$RE_CSHARP"
   if [ "$all" = 1 ]; then
     dotnet format whitespace "$WINDOWS_DIR" --folder --verify-no-changes
   elif [ ${#files[@]} -gt 0 ]; then
-    dotnet format whitespace "$WINDOWS_DIR" --folder --verify-no-changes --include "${files[@]}"
+    dotnet format whitespace "$WINDOWS_DIR" --folder --verify-no-changes --include "${files[@]#"$WINDOWS_DIR"/}"
   fi
 }
 
@@ -242,10 +221,10 @@ if [ -n "$VOICE_DIR" ]; then
   fi
 fi
 if [ -n "$WINDOWS_STRINGS" ] && [ -d "$WINDOWS_STRINGS" ] && touched "\.xcstrings$|^$WINDOWS_STRINGS/"; then
-  check ".resw files match the catalog" resw_current
+  check ".resw files match the catalog" export_current windows "$WINDOWS_STRINGS"
 fi
 if [ -n "$ANDROID_STRINGS" ] && [ -d "$ANDROID_STRINGS" ] && touched "\.xcstrings$|^$ANDROID_STRINGS/"; then
-  check "Android strings match the catalog" android_strings_current
+  check "Android strings match the catalog" export_current android "$ANDROID_STRINGS"
 fi
 
 if touched "$RE_KOTLIN"; then
@@ -323,11 +302,5 @@ if [ "$fast" = 0 ]; then
   fi
 fi
 
-for n in "${notes[@]+"${notes[@]}"}"; do printf 'skip  %s\n' "$n"; done
-if [ -z "$changed" ] && [ "$all" = 0 ]; then echo "No changed paths."; fi
-rm -rf "$logdir"
-if [ ${#failed[@]} -gt 0 ]; then
-  echo "${#failed[@]} check(s) failed."
-  exit 1
-fi
-exit 0
+summary
+finish

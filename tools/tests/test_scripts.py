@@ -21,7 +21,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
 import fonts  # noqa: E402
-from support import BASH, HERE, NO_SHELL, TOOLS, WINDOWS, fixture_app, search_path, shell  # noqa: E402
+from support import (  # noqa: E402
+    BASH, HERE, NO_SHELL, TOOLS, WINDOWS, FixtureAppTestCase, fixture_app, git, search_path, shell,
+)
 
 
 def png(path: Path, size: int, rgba=(255, 200, 0, 255)) -> None:
@@ -36,16 +38,12 @@ def png(path: Path, size: int, rgba=(255, 200, 0, 255)) -> None:
         + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-class ScriptTests(unittest.TestCase):
+class ScriptTests(FixtureAppTestCase):
     def setUp(self):
-        self.app = fixture_app()
-        self.root = self.app.__enter__()
+        super().setUp()
         self.bin = self.root / "fake-bin"
         self.bin.mkdir()
         self.log = self.root / "calls.log"
-
-    def tearDown(self):
-        self.app.__exit__(None, None, None)
 
     def fake(self, name: str, body: str) -> None:
         path = self.bin / name
@@ -159,9 +157,12 @@ chmod +x "$app/Fixture"
         fake_simctl = self.root / "fake_simctl.py"
         # The Simulator in a JSON file: one runtime with an SE and an iPad, made and cloned devices, and an app that
         # writes a shot (plus problems.txt in German) and prints its folder with the pty's \r, as the real one does.
-        fake_simctl.write_text(f"""import json, os, sys, tempfile
+        fake_simctl.write_text(f"""import fcntl, json, os, sys, tempfile
 from pathlib import Path
 state = Path({str(state)!r})
+# The clones boot side by side: one simctl at a time reads and writes the state.
+lock = open(str(state) + ".lock", "w")
+fcntl.flock(lock, fcntl.LOCK_EX)
 data = json.loads(state.read_text()) if state.exists() else {{"devices": [], "next": 1}}
 args = sys.argv[2:]
 with open({str(self.log)!r}, "a") as log:
@@ -175,7 +176,7 @@ def new(name):
     save()
     print(udid)
 command = args[0]
-if command == "list" and args[2] == "runtimes":
+if command == "list" and "runtimes" in args:
     types = [{{"identifier": "com.apple.CoreSimulator.SimDeviceType." + t}}
              for t in ("iPhone-SE-3rd-generation", "iPad-Pro-13-inch-M5-12GB")]
     print(json.dumps({{"runtimes": [{{"identifier": "iOS-27-0", "name": "iOS 27.0", "version": "27.0",
@@ -192,9 +193,10 @@ elif command == "delete":
 elif command == "launch":
     out = Path(tempfile.mkdtemp())
     (out / "home-light.png").write_bytes(b"png")
-    language = args[args.index("-AppleLocale") + 1]
+    language = args[args.index("-AppleLanguages") + 1].strip("()")
+    locale = args[args.index("-AppleLocale") + 1]
     with open({str(self.log)!r}, "a") as log:
-        log.write(f"run {{language}} {{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_MODE')}} "
+        log.write(f"run {{language}} {{locale}} {{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_MODE')}} "
                   f"{{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_ORIENTATION', '-')}}\\n")
     if language == "de":
         (out / "problems.txt").write_text("home-light.png: “Wiederholungen” is cut short\\n")
@@ -215,7 +217,8 @@ elif command == "launch":
         self.assertTrue((checked / "ios-ipad-landscape" / "en" / "home-light.png").exists())
         self.assertTrue((checked / "ios-se" / "de" / "problems.txt").exists())
         runs = sorted(line for line in self.log.read_text().splitlines() if line.startswith("run "))
-        self.assertEqual(runs, ["run de all -", "run de all landscape", "run en all -", "run en all landscape"])
+        self.assertEqual(runs, ["run de de_DE all -", "run de de_DE all landscape", "run en en_US all -",
+                                "run en en_US all landscape"])
         names = [d["name"] for d in json.loads(state.read_text())["devices"]]
         self.assertEqual(sorted(names), ["fixture layout: iPad-Pro-13-inch-M5-12GB", "fixture layout: iPhone-SE-3rd-generation"],
                          "the templates stay, the clones go")
@@ -225,7 +228,7 @@ elif command == "launch":
         self.assertEqual(passing.returncode, 0, passing.stderr)
         self.assertIn("Every screen fits on se in: en", passing.stdout)
         self.assertNotIn("create", self.log.read_text().split(), "the template is made once")
-        self.assertIn("run en home -", self.log.read_text())
+        self.assertIn("run en en_US home -", self.log.read_text())
 
     def android_config(self, extra_shot: bool = True) -> None:
         """The fixture app with an Android side: `android/` and a `droid` platform captured on the AVD Pixel_8."""
@@ -406,23 +409,17 @@ elif command == "shell":
         self.assertIn("ok    Laching pins agree", result.stdout, result.stderr)
         self.assertEqual(store_line(result), [], "no store section: --all has no store check to run")
 
-    def git(self, cwd: Path, *args: str) -> str:
-        return subprocess.run(
-            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", *args],
-            cwd=cwd, env=companion.git_env(), capture_output=True, text=True, check=True,
-        ).stdout.strip()
-
     def commit_app(self) -> None:
         """The fixture app as a repository, with laching/ a checkout of its own on the pinned tag."""
         laching = self.root / "laching"
         laching.mkdir()
-        self.git(laching, "init", "-q")
-        self.git(laching, "commit", "-q", "--allow-empty", "-m", "release")
-        self.git(laching, "tag", "v0.5.0")
-        self.git(self.root, "init", "-q")
+        git(laching, "init", "-q")
+        git(laching, "commit", "-q", "--allow-empty", "-m", "release")
+        git(laching, "tag", "v0.5.0")
+        git(self.root, "init", "-q")
         (self.root / ".gitignore").write_text("laching/\nfake-bin/\ncalls.log\n", "utf8")
-        self.git(self.root, "add", "-A")
-        self.git(self.root, "commit", "-q", "-m", "app")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-q", "-m", "app")
 
     @unittest.skipUnless(WINDOWS, "Windows builds the WinUI app itself; elsewhere it's the VM's")
     def test_verify_builds_the_winui_app_itself_on_windows(self):
@@ -469,7 +466,7 @@ case "$1" in status) echo "VM $2 exist running" ;; exec) [ "$3" = --current-user
         self.fake("xcrun", "exit 0\n")
         spec = self.root / "macos" / "project.yml"
         spec.write_text(spec.read_text("utf8") + "\n", "utf8")
-        self.git(self.root, "add", "macos/project.yml")
+        git(self.root, "add", "macos/project.yml")
         result = self.run_script("verify.sh", "--fast", "--staged")
         self.assertIn("FAIL  xcodegen (project.pbxproj in sync)", result.stdout, result.stderr)
         self.assertIn("named after this checkout's folder (app)", result.stdout)
@@ -523,11 +520,13 @@ class FontsPlanTests(unittest.TestCase):
                 fonts.Plan(companion.load())
 
 
-ARIAL = Path("/System/Library/Fonts/Supplemental/Arial.ttf")
+# A font every Mac has, else the one most Linux machines have.
+FONT = next((font for font in (Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+                               Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) if font.exists()), None)
 
 
 class StoreScreenshotTests(unittest.TestCase):
-    @unittest.skipUnless(shutil.which("python3") and ARIAL.exists(), "needs a Mac font")
+    @unittest.skipUnless(shutil.which("python3") and FONT, "needs Arial or DejaVu Sans")
     def test_composes_a_store_image(self):
         try:
             import PIL  # noqa: F401
@@ -535,14 +534,28 @@ class StoreScreenshotTests(unittest.TestCase):
             self.skipTest("needs Pillow (pip3 install pillow)")
         with fixture_app() as root:
             data = json.loads((root / "companion.json").read_text("utf8"))
-            data["screenshots"]["store"] = {"captions": "captions.json", "out": "store", "size": [1440, 900], "font": str(ARIAL)}
+            data["screenshots"]["store"] = {"captions": "captions.json", "out": "store", "size": [1440, 900], "font": str(FONT)}
             (root / "companion.json").write_text(json.dumps(data), "utf8")
             (root / "captions.json").write_text(json.dumps(
-                {"en": [{"shot": "panel", "appearance": "dark", "headline": ["Fixy says hi"], "note": "A fixture."}]}), "utf8")
+                {"en": [{"shot": "panel", "appearance": "dark", "headline": ["Fixy says hi"], "note": "A fixture."}],
+                 "it": [{"shot": "panel", "appearance": "dark", "headline": ["Ciao da Fixy"], "note": "Una prova."}]}), "utf8")
             png(root / "screenshots" / "macos" / "panel-dark.png", 200)
             result = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py")], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((root / "store" / "en" / "1-panel-dark.png").exists())
+
+            # Another language from captures given; a captures folder is one language's; a language needs captions.
+            italian = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "it",
+                                      str(root / "screenshots" / "macos")], cwd=root, capture_output=True, text=True)
+            self.assertEqual(italian.returncode, 0, italian.stderr)
+            self.assertEqual(italian.stdout.split(), ["store/it/1-panel-dark.png"])
+            both = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "all",
+                                   str(root / "screenshots" / "macos")], cwd=root, capture_output=True, text=True)
+            self.assertEqual(both.returncode, 2)
+            self.assertIn("a captures folder is one language's", both.stderr)
+            unknown = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "fr"], cwd=root,
+                                     capture_output=True, text=True)
+            self.assertIn("no captions for fr in store.captions (it has en, it)", unknown.stderr)
 
             # The Android canvases from a phone's captures: the phone image is portrait, with Play's limits checked.
             from PIL import Image
@@ -552,10 +565,10 @@ class StoreScreenshotTests(unittest.TestCase):
                                    cwd=root, capture_output=True, text=True)
             self.assertEqual(phone.returncode, 0, phone.stderr)
             self.assertEqual(Image.open(root / "store" / "android-phone" / "en" / "1-panel-dark.png").size, (1080, 1920))
-            tablet = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-tablet", captures,
-                                     str(root / "tablet"), "en"], cwd=root, capture_output=True, text=True)
+            tablet = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-tablet",
+                                     "--out", str(root / "tablet"), captures], cwd=root, capture_output=True, text=True)
             self.assertEqual(tablet.returncode, 0, tablet.stderr)
-            self.assertEqual(Image.open(root / "tablet" / "1-panel-dark.png").size, (2560, 1600))
+            self.assertEqual(Image.open(root / "tablet" / "en" / "1-panel-dark.png").size, (2560, 1600))
             data["screenshots"]["store"]["canvases"] = {"android-phone": [1080, 2400]}
             (root / "companion.json").write_text(json.dumps(data), "utf8")
             tall = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-phone", captures],

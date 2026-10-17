@@ -32,13 +32,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import avd  # noqa: E402
 import companion  # noqa: E402
 import screens  # noqa: E402
-
-PRINT_LOCK = threading.Lock()
-
-
-def log(message: str) -> None:
-    with PRINT_LOCK:
-        print(message, file=sys.stderr, flush=True)
+import sim  # noqa: E402
+from layoutcheck import log, report  # noqa: E402
 
 
 def build(config: companion.Config) -> Path:
@@ -143,7 +138,7 @@ def main() -> int:
                     problems: list[str] = []
                     for number, (extras, shots, _) in enumerate(plan[device]):
                         try:
-                            emulator.run(app_id, component, language, screens.region(language).partition("_")[2], shots,
+                            emulator.run(app_id, component, language, sim.region(language).partition("_")[2], shots,
                                          extras, out, clear=number == 0)
                         except (RuntimeError, OSError) as error:
                             problems.append(f"the run failed ({error})")
@@ -163,21 +158,7 @@ def main() -> int:
     for thread in threads:
         thread.join()
 
-    failed = []
-    for device in devices:
-        for language in languages:
-            problems = results.get((device, language), ["not run"])
-            print(f"== android-{device} {language}")
-            for problem in problems:
-                print(f"  {problem}")
-            if problems:
-                failed.append(f"android-{device}/{language}")
-    minutes = (time.monotonic() - started) / 60
-    if failed:
-        print(f"Layout problems in: {' '.join(failed)} (shots in {out_root}, {minutes:.1f} min)", file=sys.stderr)
-        return 1
-    print(f"Every screen fits on {', '.join(devices)} in: {' '.join(languages)} ({minutes:.1f} min)")
-    return 0
+    return report(results, "android", devices, languages, out_root, started)
 
 
 if __name__ == "__main__":

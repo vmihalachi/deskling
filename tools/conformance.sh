@@ -5,14 +5,12 @@
 # Usage: laching/tools/conformance.sh
 set -eu
 TOOLS=$(cd "$(dirname "$0")" && pwd)
-get() { python3 "$TOOLS/companion.py" get "$1"; }
-ROOT=$(python3 "$TOOLS/companion.py" root)
-if ! get conformance.dir >/dev/null; then
+env_file=$(python3 "$TOOLS/companion.py" env)
+eval "$env_file"
+if [ -z "$CONFORMANCE_DIR" ]; then
   echo "companion.json has no conformance section: this app has no vectors to regenerate" >&2
   exit 1
 fi
-FLAG=$(get conformance.writeFlag)
-PACKAGE=$(get conformance.corePackagePath)
 cd "$ROOT"
-env "$FLAG=1" swift test --package-path "$PACKAGE" --filter 'ConformanceTests/testWriteVectors'
-echo "Updated $(get conformance.dir)/ from $PACKAGE"
+env "$CONFORMANCE_FLAG=1" swift test --package-path "$CORE_PACKAGE" --filter 'ConformanceTests/testWriteVectors'
+echo "Updated $CONFORMANCE_DIR/ from $CORE_PACKAGE"

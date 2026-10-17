@@ -77,12 +77,8 @@ export function langRedirectScript(
       [other.code, ...(other.aliases ?? [])].map((tag) => [tag.toLowerCase(), other.path]),
     ),
   );
+  // An empty skip list costs ~20 bytes of inline script and keeps one template.
   const skip = others.flatMap((other) => other.notFor ?? []);
-  if (!skip.length) {
-    return `<script>try { if (!localStorage.getItem("lang")) { const paths = ${JSON.stringify(
-      paths,
-    )}; const wanted = (navigator.languages?.[0] || navigator.language || "").toLowerCase(); const base = wanted.split("-")[0]; const path = paths[wanted] || paths[base] || Object.entries(paths).find(([code]) => code.split("-")[0] === base)?.[1]; if (path) location.replace(path + location.hash); } } catch {}</script>`;
-  }
   return `<script>try { if (!localStorage.getItem("lang")) { const paths = ${JSON.stringify(
     paths,
   )}; const skip = ${JSON.stringify(

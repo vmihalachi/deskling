@@ -36,21 +36,9 @@ esac
 changed="$(printf '%s\n' "$changed" | sed '/^$/d' | sort -u)"
 touched() { [ "$all" = 1 ] || printf '%s\n' "$changed" | grep -Eq "$1"; }
 darwin=0; [ "$(uname)" = Darwin ] && darwin=1
-has() { command -v "$1" >/dev/null 2>&1; }
-logdir="$(mktemp -d "${TMPDIR:-/tmp}/verify.XXXXXX")"
-failed=() notes=()
-check() {
-  local name="$1"; shift
-  local log="$logdir/${name//[^A-Za-z0-9]/_}.log"
-  if "$@" >"$log" 2>&1; then printf 'ok    %s\n' "$name"
-  else printf 'FAIL  %s\n' "$name"; tail -n 30 "$log" | sed 's/^/      /'; failed+=("$name"); fi
-}
-skip() { notes+=("$1"); }
-finish() {
-  rm -rf "$logdir"
-  if [ ${#failed[@]} -gt 0 ]; then echo "${#failed[@]} check(s) failed."; exit 1; fi
-  exit 0
-}
+# check, skip, summary, finish: the harness tools/verify.sh uses too.
+# shellcheck source=../tools/verify-lib.sh
+. tools/verify-lib.sh
 
 swift='^Package\.swift$|^Sources/|^Tests/|^\.swift-format$'
 dotnet='^dotnet/|^conformance/|^Tests/LachingCompanionTests/Resources/|^Tests/LachingShellTests/Resources/'
@@ -153,6 +141,5 @@ if [ "$fast" = 0 ]; then
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
 fi
-for n in "${notes[@]+"${notes[@]}"}"; do printf 'skip  %s\n' "$n"; done
-[ -z "$changed" ] && [ "$all" = 0 ] && echo "No changed paths."
+summary
 finish

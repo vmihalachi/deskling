@@ -123,14 +123,11 @@ def list_files(root: Path, prefix: str = "") -> list[tuple[str, int, int]]:
     untracked ones that aren't ignored, in every checked-out submodule too. Symlinks, deleted files and paths with a
     tab or a line break are left out."""
 
-    def git(*args: str) -> bytes:
-        return subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=True,
-                              env=companion.git_env()).stdout
-
-    submodules = {os.fsdecode(entry.split(b"\t", 1)[1]) for entry in git("ls-files", "-z", "--stage").split(b"\0")
-                  if entry.startswith(b"160000 ")}
+    staged = companion.git(root, "ls-files", "-z", "--stage", check=True, text=False).stdout
+    submodules = {os.fsdecode(entry.split(b"\t", 1)[1]) for entry in staged.split(b"\0") if entry.startswith(b"160000 ")}
+    seen = companion.git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", check=True, text=False)
     found: dict[str, tuple[str, int, int]] = {}
-    for raw in git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split(b"\0"):
+    for raw in seen.stdout.split(b"\0"):
         name = os.fsdecode(raw)
         if not name or name in found or "\t" in name or "\n" in name or "\r" in name:
             continue

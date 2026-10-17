@@ -3,8 +3,8 @@
 
 The bank (in the app's Swift core) is the only place a line is written; its source text reaches the catalog through
 the generated `<conformance.dir>/phrases.json`, so regenerate the vectors first (`laching/tools/conformance.sh`). The
-app looks these keys up by name and Xcode never extracts them, so they're `manual` catalog entries added through
-`l10n.py add`.
+app looks these keys up by name and Xcode never extracts them, so they're `manual` catalog entries added the way
+`l10n.py add` adds them.
 
     python3 laching/tools/phrases.py sync     # add missing keys, update changed text, drop retired lines
     python3 laching/tools/phrases.py check    # exit 1 when a key is missing, stale or orphaned, or a weight is under 1
@@ -22,12 +22,9 @@ the app's `Phrase` traps on such a weight before the character says a word.
 
 from __future__ import annotations
 
-import collections
+import argparse
 import json
-import os
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -53,7 +50,7 @@ def underweight(bank: list[dict]) -> list[dict]:
 
 def load_bank(config: companion.Config) -> dict[str, dict]:
     """Catalog key → {"source": the key's text, "phrase": its phrase, "part": (n, count) or None}."""
-    out: dict[str, dict] = collections.OrderedDict()
+    out: dict[str, dict] = {}
     for phrase in read_bank(config):
         if phrase["kind"] == "line":
             out[phrase["key"]] = {"source": phrase["english"], "phrase": phrase, "part": None}
@@ -104,18 +101,9 @@ def cmd_sync(config: companion.Config) -> int:
     missing, stale, orphans = diff(config)
     if missing:
         payload = {k: {"comment": comment_for(config, item), "en": item["source"]} for k, item in missing.items()}
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-            temp = f.name
-        try:
-            result = subprocess.run(
-                [sys.executable, str(Path(l10n.__file__)), "add", temp], check=False, cwd=config.root,
-                env={**os.environ, "COMPANION_ROOT": str(config.root)},
-            )
-        finally:
-            Path(temp).unlink(missing_ok=True)
-        if result.returncode:
-            return result.returncode
+        l10n.configure(config)
+        if result := l10n.print_added(*l10n.add_strings(payload)):
+            return result
     else:
         print("added 0")
     bank = load_bank(config)
@@ -125,7 +113,7 @@ def cmd_sync(config: companion.Config) -> int:
     source = data.get("sourceLanguage", config.source_language)
     for key in stale:
         entry = strings[key]
-        entry["localizations"] = collections.OrderedDict()
+        entry["localizations"] = {}
         l10n.set_catalog_value(entry, source, bank[key]["source"])
         print(f"  ~ {key!r}: source text updated, translations dropped (re-export them)")
     for key in orphans:
@@ -156,13 +144,14 @@ def cmd_check(config: companion.Config) -> int:
     return 1 if light or missing or stale or orphans else 0
 
 
-def main() -> int:
-    if len(sys.argv) != 2 or sys.argv[1] not in {"sync", "check"}:
-        print(__doc__)
-        return 2
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=__doc__.split("\n\n", 1)[1])
+    parser.add_argument("command", choices=("sync", "check"))
+    command = parser.parse_args(argv).command
     config = companion.load()
-    return cmd_sync(config) if sys.argv[1] == "sync" else cmd_check(config)
+    return cmd_sync(config) if command == "sync" else cmd_check(config)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
