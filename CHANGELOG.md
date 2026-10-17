@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.6 - 2026-10-17
+
 - **Companion (`CompanionCoordinator`)**: a held line comes back as `afterCall` only when it was held for a call; one
   held for full screen comes back as a plain `due` line (#35). `conformance/companion/quiet/full-screen-hushed` changes
   to match.
