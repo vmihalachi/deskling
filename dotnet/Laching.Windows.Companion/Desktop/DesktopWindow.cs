@@ -15,6 +15,7 @@ using FigurePoint = Laching.Companion.Figures.Point;
 using FigureRect = Laching.Companion.Figures.Rect;
 using FigureSize = Laching.Companion.Figures.Size;
 using ShellNative = Laching.Windows.Companion.Shell.NativeMethods;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 using XamlPoint = Windows.Foundation.Point;
 
 namespace Laching.Windows.Companion.Desktop;
@@ -130,13 +131,12 @@ public sealed class DesktopWindow : IDisposable
         window.AppWindow.SetPresenter(presenter);
         window.AppWindow.IsShownInSwitchers = false;
         Hwnd = Win32Interop.GetWindowFromWindowId(window.AppWindow.Id);
-        var ex = DesktopNative.GetWindowLongPtr(Hwnd, DesktopNative.GWL_EXSTYLE);
-        ex |= (nint)(DesktopNative.WS_EX_LAYERED | DesktopNative.WS_EX_TOOLWINDOW | DesktopNative.WS_EX_NOACTIVATE);
-        ex &= ~(nint)DesktopNative.WS_EX_APPWINDOW;
-        DesktopNative.SetWindowLongPtr(Hwnd, DesktopNative.GWL_EXSTYLE, ex);
+        var ex = ShellNative.GetWindowLongPtr(Hwnd, ShellNative.GWL_EXSTYLE);
+        ex |= (nint)(ShellNative.WS_EX_LAYERED | ShellNative.WS_EX_TOOLWINDOW | ShellNative.WS_EX_NOACTIVATE);
+        ex &= ~(nint)ShellNative.WS_EX_APPWINDOW;
+        ShellNative.SetWindowLongPtr(Hwnd, ShellNative.GWL_EXSTYLE, ex);
         // No Windows 11 rounded corners or accent border around a character.
-        DesktopNative.DwmSetWindowAttribute(Hwnd, DesktopNative.DWMWA_WINDOW_CORNER_PREFERENCE, DesktopNative.DWMWCP_DONOTROUND, sizeof(uint));
-        DesktopNative.DwmSetWindowAttribute(Hwnd, DesktopNative.DWMWA_BORDER_COLOR, DesktopNative.DWMWA_COLOR_NONE, sizeof(uint));
+        ShellNative.SquareCorners(Hwnd);
         SetClickThrough(true);
 
         root.PointerPressed += OnPressed;
@@ -243,7 +243,7 @@ public sealed class DesktopWindow : IDisposable
     {
         get
         {
-            DesktopNative.GetWindowRect(Hwnd, out var r);
+            Win32.GetWindowRect(Hwnd, out var r);
             return new RectInt32(r.Left, r.Top, r.Right - r.Left, r.Bottom - r.Top);
         }
     }
@@ -293,7 +293,7 @@ public sealed class DesktopWindow : IDisposable
     public void AttachTo(DesktopWindow owner)
     {
         parent = owner;
-        DesktopNative.SetWindowLongPtr(Hwnd, DesktopNative.GWLP_HWNDPARENT, owner.Hwnd);
+        ShellNative.SetWindowLongPtr(Hwnd, ShellNative.GWLP_HWNDPARENT, owner.Hwnd);
     }
 
     /// <summary>Shows the window without activating it, fading in unless <paramref name="animated"/> is false.</summary>
@@ -394,8 +394,8 @@ public sealed class DesktopWindow : IDisposable
 
     private void Poll()
     {
-        DesktopNative.GetCursorPos(out var point);
-        DesktopNative.GetWindowRect(Hwnd, out var rect);
+        Win32.GetCursorPos(out var point);
+        Win32.GetWindowRect(Hwnd, out var rect);
         var inside = point.X >= rect.Left && point.X < rect.Right && point.Y >= rect.Top && point.Y < rect.Bottom;
         var near =
             point.X >= rect.Left - NearPixels && point.X < rect.Right + NearPixels && point.Y >= rect.Top - NearPixels && point.Y < rect.Bottom + NearPixels;
@@ -425,8 +425,8 @@ public sealed class DesktopWindow : IDisposable
     {
         if (!IsShown)
             return;
-        DesktopNative.GetCursorPos(out var point);
-        DesktopNative.GetWindowRect(Hwnd, out var rect);
+        Win32.GetCursorPos(out var point);
+        Win32.GetWindowRect(Hwnd, out var rect);
         var inside = point.X >= rect.Left && point.X < rect.Right && point.Y >= rect.Top && point.Y < rect.Bottom;
         var scale = Scale;
         var local = new XamlPoint((point.X - rect.Left) / scale, (point.Y - rect.Top) / scale);
@@ -451,16 +451,16 @@ public sealed class DesktopWindow : IDisposable
         }
         if (boxes.SequenceEqual(region))
             return;
-        var shape = DesktopNative.CreateRectRgn(0, 0, 0, 0);
+        var shape = ShellNative.CreateRectRgn(0, 0, 0, 0);
         foreach (var box in boxes)
         {
-            var part = DesktopNative.CreateRectRgn(box.X, box.Y, box.X + box.Width, box.Y + box.Height);
-            DesktopNative.CombineRgn(shape, shape, part, DesktopNative.RGN_OR);
-            DesktopNative.DeleteObject(part);
+            var part = ShellNative.CreateRectRgn(box.X, box.Y, box.X + box.Width, box.Y + box.Height);
+            ShellNative.CombineRgn(shape, shape, part, ShellNative.RGN_OR);
+            ShellNative.DeleteObject(part);
         }
-        if (DesktopNative.SetWindowRgn(Hwnd, shape, true) == 0)
+        if (ShellNative.SetWindowRgn(Hwnd, shape, true) == 0)
         {
-            DesktopNative.DeleteObject(shape);
+            ShellNative.DeleteObject(shape);
             return;
         }
         region = boxes;
@@ -471,7 +471,7 @@ public sealed class DesktopWindow : IDisposable
     {
         if (region.Count == 0)
             return;
-        DesktopNative.SetWindowRgn(Hwnd, 0, true);
+        ShellNative.SetWindowRgn(Hwnd, 0, true);
         region = [];
     }
 
@@ -489,12 +489,12 @@ public sealed class DesktopWindow : IDisposable
         if (on == clickThrough && on == HasTransparentStyle())
             return;
         clickThrough = on;
-        var ex = DesktopNative.GetWindowLongPtr(Hwnd, DesktopNative.GWL_EXSTYLE);
-        ex = on ? ex | (nint)DesktopNative.WS_EX_TRANSPARENT : ex & ~(nint)DesktopNative.WS_EX_TRANSPARENT;
-        DesktopNative.SetWindowLongPtr(Hwnd, DesktopNative.GWL_EXSTYLE, ex);
+        var ex = ShellNative.GetWindowLongPtr(Hwnd, ShellNative.GWL_EXSTYLE);
+        ex = on ? ex | (nint)ShellNative.WS_EX_TRANSPARENT : ex & ~(nint)ShellNative.WS_EX_TRANSPARENT;
+        ShellNative.SetWindowLongPtr(Hwnd, ShellNative.GWL_EXSTYLE, ex);
     }
 
-    private bool HasTransparentStyle() => (DesktopNative.GetWindowLongPtr(Hwnd, DesktopNative.GWL_EXSTYLE) & (nint)DesktopNative.WS_EX_TRANSPARENT) != 0;
+    private bool HasTransparentStyle() => (ShellNative.GetWindowLongPtr(Hwnd, ShellNative.GWL_EXSTYLE) & (nint)ShellNative.WS_EX_TRANSPARENT) != 0;
 
     // Pointer: clicks, drags, the menu, pinches
 
@@ -879,8 +879,8 @@ internal sealed partial class TransparentBackdrop : SystemBackdrop
             if (global::Windows.System.DispatcherQueue.GetForCurrentThread() is null)
             {
                 // The current thread (DQTYPE_THREAD_CURRENT), single-threaded apartment (DQTAT_COM_STA).
-                var options = new DesktopNative.DispatcherQueueOptions { dwSize = 12, threadType = 2, apartmentType = 2 };
-                DesktopNative.CreateDispatcherQueueController(options, out _);
+                var options = new ShellNative.DispatcherQueueOptions { dwSize = 12, threadType = 2, apartmentType = 2 };
+                ShellNative.CreateDispatcherQueueController(options, out _);
             }
             compositor = new global::Windows.UI.Composition.Compositor();
         }

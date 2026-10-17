@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.Graphics;
 using Windows.System;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 using XamlSize = Windows.Foundation.Size;
 
 namespace Laching.Windows.Companion.Shell;
@@ -77,7 +78,7 @@ internal sealed class TrayPanel(Func<UIElement> makeContent, Func<RectInt32?> ic
             : FocusState.Pointer;
         made.Activate();
         // The click on the icon lets this process take the foreground.
-        NativeMethods.SetForegroundWindow(Win32Interop.GetWindowFromWindowId(made.AppWindow.Id));
+        Win32.SetForegroundWindow(Win32Interop.GetWindowFromWindowId(made.AppWindow.Id));
     }
 
     public void Close() => window?.AppWindow.Hide();

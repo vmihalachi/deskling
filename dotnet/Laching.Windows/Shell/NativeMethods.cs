@@ -2,7 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace Laching.Windows.Shell;
 
-/// <summary>Win32 calls the Windows App SDK doesn't wrap. Internal: the services above are the API.</summary>
+/// <summary>
+/// Win32 calls the Windows App SDK doesn't wrap. Internal: the services above are the API. Laching.Windows.Companion
+/// sees it too (<c>InternalsVisibleTo</c>) and adds its own calls in its <c>NativeMethods</c>, over these structs and calls.
+/// </summary>
 internal static partial class NativeMethods
 {
     // MARK: Idle
@@ -127,6 +130,21 @@ internal static partial class NativeMethods
 
     [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
     public static partial nint GetModuleHandleW(string? moduleName);
+
+    // MARK: Windows and displays on screen (for Laching.Windows.Companion: its desktop window, scale and screenshots)
+
+    // Here, not there, because they take POINT or RECT: a source-generated P/Invoke marshals a struct from another
+    // assembly only with runtime marshalling disabled.
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetWindowRect(nint hwnd, out RECT rect);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint MonitorFromPoint(POINT point, uint flags);
+
+    [LibraryImport("dwmapi.dll")]
+    public static partial int DwmGetWindowAttribute(nint hwnd, uint attribute, out RECT value, int size);
 
     // MARK: Session lock
 

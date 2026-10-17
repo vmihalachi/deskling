@@ -19,6 +19,7 @@ using FigurePoint = Laching.Companion.Figures.Point;
 using FigureRect = Laching.Companion.Figures.Rect;
 using FigureSize = Laching.Companion.Figures.Size;
 using ShellNative = Laching.Windows.Companion.Shell.NativeMethods;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 using XamlPoint = Windows.Foundation.Point;
 using XamlSize = Windows.Foundation.Size;
 
@@ -284,7 +285,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         if (Menu?.Invoke() is not { Count: > 0 } items)
             return false;
         menuHost.SetMenu(MenuConversion.ToTray(items));
-        var before = DesktopNative.GetForegroundWindow();
+        var before = Win32.GetForegroundWindow();
         menuHost.ShowMenu(at);
         // The menu took the foreground for its hidden window. Give it back after the chosen command (queued after the
         // menu) has run, unless that command opened a window of its own.
@@ -292,9 +293,9 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
             DispatcherQueuePriority.Low,
             () =>
             {
-                var now = DesktopNative.GetForegroundWindow();
-                if (before != 0 && now != before && !DesktopNative.IsWindowVisible(now))
-                    DesktopNative.SetForegroundWindow(before);
+                var now = Win32.GetForegroundWindow();
+                if (before != 0 && now != before && !ShellNative.IsWindowVisible(now))
+                    Win32.SetForegroundWindow(before);
             }
         );
         return true;
