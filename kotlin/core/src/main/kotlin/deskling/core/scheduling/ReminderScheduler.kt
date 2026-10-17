@@ -205,6 +205,100 @@ public class ReminderScheduler(
         hasUnansweredReminder = true
     }
 
+    /**
+     * Up to [limit] reminder dates in `(from, until]`, as [tick] would fire them with no idle and no busy input:
+     * the next one as it stands (or one interval from [from] when none is set or it has passed), then one interval
+     * after each, skipping ahead over quiet hours, inactive hours and days, and a [pausedUntil] that ends in the
+     * range. The scheduler is left as it was, except that a jittered config draws the intervals from its random
+     * source. An app that doesn't run between reminders (a phone) schedules them ahead from this, and reports what
+     * the system delivered with [reminderDelivered].
+     */
+    public fun upcomingReminders(
+        from: Instant,
+        until: Instant,
+        limit: Int = 64,
+    ): List<Instant> {
+        if (limit <= 0 || until <= from || config.intervalSeconds <= 0 ||
+            config.activeWeekdays.isEmpty()
+        ) {
+            return emptyList()
+        }
+        var cursor = from
+        var paused = pausedUntil
+        var fire: Instant? = if (paused == null && isWithinActiveHours(from)) nextFireDate else null
+        if (fire != null && fire <= from) {
+            fire = from.plusSeconds(nextInterval())
+        } else if (fire == null && paused == null && isWithinActiveHours(from)) {
+            fire = from.plusSeconds(nextInterval())
+        }
+
+        val results = ArrayList<Instant>(min(limit, 64))
+        while (results.size < limit && cursor <= until) {
+            val pause = paused
+            if (pause != null) {
+                if (cursor < pause) {
+                    if (pause > until) break
+                    cursor = pause
+                }
+                paused = null
+                fire = if (isWithinActiveHours(cursor)) cursor.plusSeconds(nextInterval()) else null
+                continue
+            }
+
+            if (!isWithinActiveHours(cursor)) {
+                fire = null
+                val nextActive = nextActiveDate(cursor, until) ?: break
+                cursor = nextActive
+                fire = cursor.plusSeconds(nextInterval())
+                continue
+            }
+
+            val target = fire ?: cursor.plusSeconds(nextInterval())
+            fire = target
+
+            val inactive = firstInactiveDate(cursor, minOf(target, until))
+            if (inactive != null) {
+                fire = null
+                cursor = inactive
+                continue
+            }
+
+            if (target > until) break
+            results.add(target)
+            cursor = target
+            fire = target.plusSeconds(nextInterval())
+        }
+        return results
+    }
+
+    /** The first whole minute after [date]. */
+    private fun nextMinuteBoundary(date: Instant): Instant = Instant.ofEpochSecond((date.epochSecond / 60 + 1) * 60)
+
+    private fun nextActiveDate(
+        after: Instant,
+        until: Instant,
+    ): Instant? {
+        var probe = nextMinuteBoundary(after)
+        while (probe <= until) {
+            if (isWithinActiveHours(probe)) return probe
+            probe = probe.plusSeconds(60)
+        }
+        return null
+    }
+
+    private fun firstInactiveDate(
+        after: Instant,
+        upTo: Instant,
+    ): Instant? {
+        var probe = nextMinuteBoundary(after)
+        while (probe <= upTo) {
+            if (!isWithinActiveHours(probe)) return probe
+            probe = probe.plusSeconds(60)
+        }
+        if (!isWithinActiveHours(upTo)) return upTo
+        return null
+    }
+
     private fun fireReminder(now: Instant): SchedulerDecision {
         clearBusyState()
         hasUnansweredReminder = true
