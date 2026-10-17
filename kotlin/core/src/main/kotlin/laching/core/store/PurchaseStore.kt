@@ -100,10 +100,10 @@ public class PurchaseStore(
                 changed()
                 return
             }
-        val missing = (ids.toSet() - loaded.map { it.id }.toSet()).sorted()
+        // The first of a repeated id wins; the backend's order is kept.
+        val byId = loaded.distinctBy { it.id }.associateBy { it.id }
+        val missing = (ids.toSet() - byId.keys).sorted()
         log("Loaded ${loaded.size}/${ids.size} products; missing: ${missing.joinToString(", ")}")
-        val byId = LinkedHashMap<String, StoreProduct>()
-        for (product in loaded) byId.putIfAbsent(product.id, product)
         products = byId
         val complete =
             if (catalog.unlockables.isEmpty()) byId.isNotEmpty() else catalog.unlockables.all { it in byId }

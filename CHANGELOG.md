@@ -21,6 +21,8 @@ package and the NuGet packages together.
   the signal fakes `FakePower`, `FakeAppearance` and `FakeScreenLock`, and `VectorSupport.OptionalDouble`, `OptionalInt`,
   `OptionalUInt64` and `OptionalStrings` (#87). Laching's own test projects and the fixture app use them instead of
   their copies; the fixture app's status pill now reads "Next in about N min" like the tests' model.
+- **Kotlin core (`laching.core.scheduling`)**: `Instant.plusSeconds(Double)`, the scheduler's rounding of fractional
+  seconds to the nanosecond, is public next to `Clock`; `laching.testing.MockClock` advances with it (#90).
 
 ## 0.13.0 - 2026-10-17
 

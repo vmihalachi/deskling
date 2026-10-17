@@ -1,17 +1,16 @@
 package laching.core.scheduling
 
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
 import laching.core.random.SplitMix64
 import laching.testing.ConformanceRoot
 import laching.testing.ConformanceSupport
@@ -44,12 +43,7 @@ class SchedulerConformanceTests {
         val clock = MockClock(ConformanceSupport.date(vector.string("start")))
         val idle = MockIdle()
         val busy = MockBusy()
-        val seed =
-            vector["seed"]
-                ?.takeUnless { it is JsonNull }
-                ?.jsonPrimitive
-                ?.long
-                ?.toULong() ?: 0uL
+        val seed = vector["seed"]?.jsonPrimitive?.longOrNull?.toULong() ?: 0uL
         val scheduler =
             ReminderScheduler(
                 config = config(vector["config"]!!.jsonObject),
@@ -217,8 +211,7 @@ class SchedulerConformanceTests {
             postponeDuringFullScreen = json["postponeDuringFullScreen"]!!.jsonPrimitive.boolean,
             busyGraceSeconds = json["busyGraceSeconds"]!!.jsonPrimitive.double,
             afterCallFallbackSeconds = json["afterCallFallbackSeconds"]!!.jsonPrimitive.double,
-            intervalJitterSeconds =
-                json["intervalJitterSeconds"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.double ?: 0.0,
+            intervalJitterSeconds = json["intervalJitterSeconds"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
         )
 
     private fun decisionName(decision: SchedulerDecision): String =
@@ -229,6 +222,4 @@ class SchedulerConformanceTests {
         }
 
     private fun JsonObject.string(key: String): String = this[key]!!.jsonPrimitive.content
-
-    private fun JsonArray?.orEmpty(): List<JsonElement> = this ?: emptyList()
 }

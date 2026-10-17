@@ -2,8 +2,6 @@ package laching.android
 
 import android.app.Activity
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -49,12 +47,10 @@ public class PlayBillingBackend(
     ) : Exception("$message (code $code)")
 
     private val preferences = context.getSharedPreferences("laching.billing", Context.MODE_PRIVATE)
-    private val main = Handler(Looper.getMainLooper())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val details = HashMap<String, ProductDetails>()
     private var onUpdate: ((TransactionUpdate) -> Unit)? = null
-    private var inFlight: CompletableDeferred<PurchaseOutcome>? = null
-    private var inFlightProduct: String? = null
+    private var inFlight: Pair<String, CompletableDeferred<PurchaseOutcome>>? = null
     private var connecting: CompletableDeferred<Unit>? = null
 
     private val client: BillingClient =
@@ -102,14 +98,7 @@ public class PlayBillingBackend(
                 log("Reading purchases failed, using the cache: ${e.message}")
                 return cachedOwned()
             }
-        val owned = HashSet<String>()
-        for (purchase in purchases) {
-            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) continue
-            for (id in purchase.products) if (catalog.isUnlockable(id)) owned += id
-            settle(purchase)
-        }
-        preferences.edit().putStringSet(OWNED_KEY, owned).apply()
-        return owned
+        return syncOwned(purchases)
     }
 
     override suspend fun purchase(id: String): PurchaseOutcome {
@@ -124,14 +113,9 @@ public class PlayBillingBackend(
             )
         val activity =
             activity() ?: throw BillingException(BillingClient.BillingResponseCode.ERROR, "No activity to buy from")
-        if (inFlight !=
-            null
-        ) {
+        if (inFlight != null) {
             throw BillingException(BillingClient.BillingResponseCode.ERROR, "A purchase is already under way")
         }
-        val outcome = CompletableDeferred<PurchaseOutcome>()
-        inFlight = outcome
-        inFlightProduct = id
         val params =
             BillingFlowParams
                 .newBuilder()
@@ -143,35 +127,23 @@ public class PlayBillingBackend(
                             .build(),
                     ),
                 ).build()
-        val launched = client.launchBillingFlow(activity, params)
-        if (launched.responseCode != BillingClient.BillingResponseCode.OK) {
-            inFlight = null
-            inFlightProduct = null
-            if (launched.responseCode ==
-                BillingClient.BillingResponseCode.USER_CANCELED
-            ) {
-                return PurchaseOutcome.CANCELLED
+        val outcome = CompletableDeferred<PurchaseOutcome>()
+        inFlight = id to outcome
+        try {
+            val launched = client.launchBillingFlow(activity, params)
+            return when (launched.responseCode) {
+                BillingClient.BillingResponseCode.OK -> outcome.await()
+                BillingClient.BillingResponseCode.USER_CANCELED -> PurchaseOutcome.CANCELLED
+                else -> throw launched.toException("Starting the purchase failed")
             }
-            throw launched.toException("Starting the purchase failed")
-        }
-        return try {
-            outcome.await()
         } finally {
             inFlight = null
-            inFlightProduct = null
         }
     }
 
     override suspend fun restore() {
         connect()
-        val purchases = queryPurchases()
-        val owned = HashSet<String>()
-        for (purchase in purchases) {
-            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) continue
-            for (id in purchase.products) if (catalog.isUnlockable(id)) owned += id
-            settle(purchase)
-        }
-        preferences.edit().putStringSet(OWNED_KEY, owned).apply()
+        syncOwned(queryPurchases())
     }
 
     override fun observeTransactions(onUpdate: (TransactionUpdate) -> Unit) {
@@ -214,9 +186,19 @@ public class PlayBillingBackend(
             }
         }
 
-    /** Acknowledges a bought unlockable, consumes a tip, so Play doesn't refund it after three days. */
+    /** Settles every bought purchase and caches the unlockables they hold as what the user owns, replacing the cache. */
+    private fun syncOwned(purchases: List<Purchase>): Set<String> {
+        val bought = purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+        bought.forEach(::settle)
+        val owned = bought.flatMap(::unlockables).toSet()
+        preferences.edit().putStringSet(OWNED_KEY, owned).apply()
+        return owned
+    }
+
+    private fun unlockables(purchase: Purchase): List<String> = purchase.products.filter(catalog::isUnlockable)
+
+    /** Acknowledges a bought unlockable, consumes a tip, so Play doesn't refund it after three days. Bought ones only. */
     private fun settle(purchase: Purchase) {
-        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
         val token = purchase.purchaseToken
         if (purchase.products.any(catalog::isTip)) {
             val params = ConsumeParams.newBuilder().setPurchaseToken(token).build()
@@ -243,18 +225,16 @@ public class PlayBillingBackend(
         result: BillingResult,
         purchases: List<Purchase>?,
     ) {
-        main.post {
-            val waiting = inFlight
-            val waitingFor = inFlightProduct
+        scope.launch {
+            val waitingFor = inFlight?.first
+            val waiting = inFlight?.second
             when (result.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
                     for (purchase in purchases.orEmpty()) {
                         val state = purchase.purchaseState
                         if (state == Purchase.PurchaseState.PURCHASED) {
                             settle(purchase)
-                            val owned = cachedOwned().toMutableSet()
-                            for (id in purchase.products) if (catalog.isUnlockable(id)) owned += id
-                            preferences.edit().putStringSet(OWNED_KEY, owned).apply()
+                            preferences.edit().putStringSet(OWNED_KEY, cachedOwned() + unlockables(purchase)).apply()
                         }
                         for (id in purchase.products) {
                             if (waiting != null && id == waitingFor) {

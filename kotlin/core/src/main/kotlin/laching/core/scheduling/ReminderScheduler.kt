@@ -9,7 +9,6 @@ import java.time.ZoneId
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToLong
 
 /**
  * Decides when to remind, from the clock, the idle time and the busy state the app injects. Pure: no timers, no UI;
@@ -171,7 +170,7 @@ public class ReminderScheduler(
         nextFireDate = clock.now.plusSeconds(config.afterCallFallbackSeconds)
     }
 
-    public fun pauseFor(seconds: Long): Unit = pauseUntil(clock.now.plusSeconds(seconds.toDouble()))
+    public fun pauseFor(seconds: Long): Unit = pauseUntil(clock.now.plusSeconds(seconds))
 
     public fun pauseUntil(date: Instant) {
         pausedUntil = date
@@ -342,6 +341,3 @@ public class ReminderScheduler(
         days: Long,
     ): Instant = atLocal(date.atZone(timeZone).toLocalDateTime().plusDays(days))
 }
-
-/** [Instant.plusSeconds] for a fractional number of seconds, rounded to the nanosecond. */
-internal fun Instant.plusSeconds(seconds: Double): Instant = plusNanos((seconds * 1_000_000_000).roundToLong())

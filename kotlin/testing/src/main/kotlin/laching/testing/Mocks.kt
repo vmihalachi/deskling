@@ -5,15 +5,15 @@ import laching.core.scheduling.BusyReason
 import laching.core.scheduling.BusyStateProvider
 import laching.core.scheduling.Clock
 import laching.core.scheduling.IdleTimeProvider
+import laching.core.scheduling.plusSeconds
 import java.time.Instant
-import kotlin.math.roundToLong
 
 /** A clock the test moves. */
 public class MockClock(
     override var now: Instant,
 ) : Clock {
     public fun advanceSeconds(seconds: Double) {
-        now = now.plusNanos((seconds * 1_000_000_000).roundToLong())
+        now = now.plusSeconds(seconds)
     }
 
     public fun advanceMinutes(minutes: Double): Unit = advanceSeconds(minutes * 60)
