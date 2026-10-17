@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.14.0 - 2026-10-17
+
 - **Kotlin core (`laching.core.scheduling`)**: `Instant.plusSeconds(Double)`, the scheduler's rounding of fractional
   seconds to the nanosecond, is public next to `Clock`; `laching.testing.MockClock` advances with it (#90).
 - **Companion (`RigGroup`, `Blink`, `BubbleAnchor`, `MoodRig`)**: `Decodable`, with the `characters/<skin>.json` keys;
