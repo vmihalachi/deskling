@@ -6,6 +6,11 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Companion (`CharacterArt.Parse`)**: reads `characters/<skin>.json` through a source-generated `JsonSerializerContext`
+  instead of walking a `JsonDocument` by hand (#85). Art that parsed before parses to the same values; a missing member
+  (or a null where a value belongs) now fails with the serializer's message, which names the member, instead of
+  `missing 'x'`, still as an `InvalidDataException` starting `not character art JSON:`.
+
 ## 0.13.0 - 2026-10-17
 
 - **Breaking.** Rename the project and all packages to Laching.
