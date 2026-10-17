@@ -148,6 +148,9 @@ def derived(config: Config) -> dict[str, str]:
     win_app_tests = config.get("windows.appTests", "")
     landing, landing_i18n = rel("landing.dir"), rel("l10n.landing")
     store = rel("store.dir")
+    android = rel("android.dir")
+    android_core = config.get("android.core", "core") if android else ""
+    android_app = config.get("android.app", "app") if android else ""
     values = {
         "ROOT": str(config.root),
         "TOOLS": str(Path(__file__).resolve().parent),
@@ -174,6 +177,13 @@ def derived(config: Config) -> dict[str, str]:
         "WINDOWS_APP_TESTS": win_app_tests,
         "WINDOWS_ASSETS": rel("windows.assets.out"),
         "WINDOWS_STRINGS": rel("windows.strings"),
+        "ANDROID_DIR": android,
+        "ANDROID_CORE": android_core,
+        "ANDROID_APP": android_app,
+        "ANDROID_APP_ID": (config.get("android.applicationId") or config.get("bundleId", "")) if android else "",
+        "ANDROID_DEV_APP_ID": (config.get("android.devApplicationId") or config.get("devBundleId", "")) if android else "",
+        # `android.strings`, or the older `l10n.androidStrings` it replaced.
+        "ANDROID_STRINGS": rel("android.strings") or rel("l10n.androidStrings"),
         "CONFORMANCE_DIR": conformance,
         "VOICE_DIR": rel("voice.dir"),
         "DESKLING_PATH": rel("deskling.path"),
@@ -210,6 +220,9 @@ def derived(config: Config) -> dict[str, str]:
         "|".join([f"^{ere(source)}$" for source in asset_sources] + [f"^{ere(values['WINDOWS_ASSETS'])}/"])
         if values["WINDOWS_ASSETS"] else never
     )
+    values["RE_KOTLIN"] = f"^{ere(android)}/.*\\.kts?$" if android else never
+    values["RE_ANDROID_CORE"] = f"^{ere(android)}/{ere(android_core)}/|^{ere(conformance)}/" if android else never
+    values["RE_ANDROID_APP"] = f"^{ere(android)}/{ere(android_app)}/" if android else never
     values["RE_LANDING"] = (
         f"^{ere(landing)}/|^{ere(conformance)}/(phrases|settings)\\.json$|Localizable\\.xcstrings$" if landing else never
     )
@@ -342,6 +355,9 @@ def _resolved_files(config: Config) -> list[Path]:
     return [file for file in (core / "Package.resolved" if core else None, _project_resolved(config)) if file]
 
 
+_GRADLE_VERSION = re.compile(r"^desklingVersion=(\S+)\s*$", re.M)
+
+
 def _submodule(config: Config) -> Path | None:
     submodule = config.path("deskling.path")
     return submodule if submodule and (submodule / ".git").exists() else None
@@ -353,8 +369,9 @@ def _submodule_tag(submodule: Path) -> str:
 
 def pin_sites(config: Config) -> list[Pin]:
     """Every place the Deskling release is pinned: the submodule's tag, companion.json's `deskling.tag`, the `exact:` of
-    the core package's Package.swift, the `exactVersion`/`exact` of the XcodeGen spec and every `Deskling.*` NuGet
-    reference under the Windows folder. A place the app doesn't have is left out."""
+    the core package's Package.swift, the `exactVersion`/`exact` of the XcodeGen spec, every `Deskling.*` NuGet
+    reference under the Windows folder and, for an app with an Android side, the `desklingVersion` of the submodule's
+    `kotlin/gradle.properties` (the Gradle build the app includes). A place the app doesn't have is left out."""
     found: list[Pin] = []
     if submodule := _submodule(config):
         found.append(Pin(f"{config.get('deskling.path')} (submodule tag)", _submodule_tag(submodule) or "(not on a tag)"))
@@ -370,7 +387,17 @@ def pin_sites(config: Config) -> list[Pin]:
         for file in sorted([*windows.rglob("*.csproj"), *windows.rglob("Directory.Packages.props")]):
             for match in _NUGET.finditer(read_text(file)):
                 found.append(Pin(f"{_rel(config, file)} {match.group(1)}", match.group(2), file, match.span(2)))
+    if config.get("android") and (gradle := _kotlin_properties(config)) and gradle.is_file():
+        match = _GRADLE_VERSION.search(read_text(gradle))
+        # No file of its own to rewrite: `bump` moves the submodule and this moves with it.
+        found.append(Pin(f"{_rel(config, gradle)} desklingVersion", match.group(1) if match else "(no desklingVersion)"))
     return found
+
+
+def _kotlin_properties(config: Config) -> Path | None:
+    """The submodule's `kotlin/gradle.properties`, None without a `deskling.path`."""
+    deskling = config.path("deskling.path")
+    return deskling / "kotlin" / "gradle.properties" if deskling else None
 
 
 def pins(config: Config) -> list[tuple[str, str]]:
@@ -655,6 +682,10 @@ def linked_to(config: Config) -> str | None:
     targets = windows / "Directory.Build.targets" if windows else None
     if targets and targets.is_file() and LINK_MARKER in read_text(targets):
         return "a Deskling checkout (Directory.Build.targets)"
+    android = config.path("android.dir")
+    properties = android / "local.properties" if android else None
+    if properties and properties.is_file() and LINK_MARKER in read_text(properties):
+        return "a Deskling checkout (local.properties)"
     return None
 
 
@@ -704,10 +735,20 @@ def _link_msbuild(deskling: Path, windows: Path) -> str:
     )
 
 
+def _link_properties(deskling: Path, android: Path) -> str:
+    """The local.properties lines that point the Android build's `includeBuild` at the checkout's `kotlin/`: the app's
+    settings.gradle.kts reads `deskling.kotlin.dir` from there before falling back to the submodule's."""
+    return (
+        f"# {LINK_MARKER}: Deskling's Kotlin build is this checkout, not the pinned release, until `companion.py unlink`\n"
+        f"deskling.kotlin.dir={_link_path(deskling / 'kotlin', android)}\n"
+    )
+
+
 def link(config: Config, checkout: Path | None = None) -> int:
     """Switches the app from the pinned release to a Deskling checkout (`../deskling` next to the app by default): the
-    XcodeGen spec's and the core package's Deskling become `path:` packages (the project regenerated), and the Windows
-    projects build Deskling's projects instead of its NuGet packages. The pins fail until `unlink`."""
+    XcodeGen spec's and the core package's Deskling become `path:` packages (the project regenerated), the Windows
+    projects build Deskling's projects instead of its NuGet packages, and the Android build includes the checkout's
+    `kotlin/` (`deskling.kotlin.dir` in its git-ignored local.properties). The pins fail until `unlink`."""
     deskling = (checkout or config.root.parent / "deskling").expanduser().resolve()
     manifest = deskling / "Package.swift"
     if not manifest.is_file() or 'name: "Deskling"' not in read_text(manifest):
@@ -742,6 +783,12 @@ def link(config: Config, checkout: Path | None = None) -> int:
             edits.append(_LinkEdit(targets, at, at, block.replace("\n", "\r\n") if "\r\n" in text else block))
         else:
             edits.append(_LinkEdit(targets, 0, 0, f"<Project>\n{block}</Project>\n"))
+    android = config.path("android.dir")
+    if android and android.is_dir() and (deskling / "kotlin" / "settings.gradle.kts").is_file():
+        properties = android / "local.properties"
+        text = read_text(properties) if properties.is_file() else ""
+        lead = "" if not text or text.endswith("\n") else "\n"
+        edits.append(_LinkEdit(properties, len(text), len(text), lead + _link_properties(deskling, android)))
     if not edits:
         raise PinError("nothing here pins Deskling to link")
 

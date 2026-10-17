@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Prepares a fresh Linux container (Claude Code on the web, Copilot's coding agent, a dev container) to run what a
-# companion app can run off a Mac: the Windows Core tests (`dotnet test`), C# formatting, the l10n and voice checks and
-# the landing build. Names come from companion.json. Idempotent and quiet when everything is already there.
+# companion app can run off a Mac: the Windows Core tests (`dotnet test`), C# formatting, the Kotlin core tests and
+# ktlint, the l10n and voice checks and the landing build. Names come from companion.json. Idempotent and quiet when
+# everything is already there.
 #
 #   deskling/tools/setup-linux.sh        (the app's scripts/setup-linux.sh execs it)
 #
@@ -43,6 +44,32 @@ if [ -n "$WINDOWS_DIR" ]; then
   [ -n "$WINDOWS_CORE_TESTS" ] && [ -f "$tests" ] && has dotnet && dotnet restore "$tests" -v q --nologo >/dev/null 2>&1
 fi
 
+# JDK 17 and ktlint, for `./gradlew :<android.core>:test` and the Kotlin style check. The app module itself needs the
+# Android SDK: it builds on a Mac or in CI (kotlin.yml), not here.
+if [ -n "$ANDROID_DIR" ]; then
+  as_root() { if [ "$(id -u)" = 0 ]; then "$@"; else sudo -n "$@"; fi; }
+  if ! has java || ! java -version 2>&1 | grep -q 'version "17'; then
+    if has apt-get; then
+      echo "Installing OpenJDK 17"
+      { as_root apt-get install -y -qq openjdk-17-jdk-headless ||
+        { as_root apt-get update -qq && as_root apt-get install -y -qq openjdk-17-jdk-headless; }; } >/dev/null 2>&1 ||
+        echo "warning: JDK 17 install failed; gradlew :$ANDROID_CORE:test won't run" >&2
+    else
+      echo "warning: no JDK 17 and no apt-get; gradlew :$ANDROID_CORE:test won't run" >&2
+    fi
+  fi
+  if ! has ktlint && [ ! -x "$HOME/.local/bin/ktlint" ]; then
+    echo "Installing ktlint into ~/.local/bin"
+    mkdir -p "$HOME/.local/bin" &&
+      curl -fsSL "https://github.com/pinterest/ktlint/releases/download/1.8.0/ktlint" -o "$HOME/.local/bin/ktlint" &&
+      chmod +x "$HOME/.local/bin/ktlint" || echo "warning: ktlint install failed; the Kotlin style check won't run" >&2
+  fi
+  if ! has ktlint && [ -x "$HOME/.local/bin/ktlint" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+    [ -n "${CLAUDE_ENV_FILE:-}" ] && echo "export PATH=\"$HOME/.local/bin:\$PATH\"" >>"$CLAUDE_ENV_FILE"
+  fi
+fi
+
 # Node 24 and the landing dependencies, which bring its build tool.
 if [ -n "$LANDING_DIR" ] && [ -d "$LANDING_DIR" ]; then
   if ! has node; then
@@ -56,4 +83,5 @@ if [ -n "$LANDING_DIR" ] && [ -d "$LANDING_DIR" ]; then
   fi
 fi
 
-echo "Linux setup done: $(has dotnet && dotnet --version || echo 'no dotnet'), node $(node -v 2>/dev/null || echo none)"
+echo "Linux setup done: $(has dotnet && dotnet --version || echo 'no dotnet'), node $(node -v 2>/dev/null || echo none)\
+${ANDROID_DIR:+, java $(java -version 2>&1 | sed -n 's/.*version "\([^"]*\)".*/\1/p' | grep . || echo none)}"

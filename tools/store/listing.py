@@ -47,13 +47,27 @@ MICROSOFT_LIMITS = {
     "ms.captions": 200,
     "ms.copyright": 200,
 }
+# Google Play (`store.google`): the main store listing's fields, and each in-app product's name and description
+# (`google.iap.<reference>.name`, the Apple product's field ids with the prefix swapped).
+GOOGLE_LIMITS = {
+    "google.title": 30,
+    "google.short": 80,
+    "google.full": 4000,
+}
+GOOGLE_IAP_NAME_LIMIT = 55
+GOOGLE_IAP_DESCRIPTION_LIMIT = 200
 # Fields a file may leave out: What's New only exists from the second version on.
 OPTIONAL = {"apple.whatsnew", "ios.whatsnew"}
 # list fields: one entry per line, at most this many lines
 MAX_LINES = {"ms.features": 20, "ms.search": 7, "ms.captions": 10}
-MULTI_LINE = {"apple.description", "apple.whatsnew", "ios.description", "ios.whatsnew", "ms.description"}
+MULTI_LINE = {"apple.description", "apple.whatsnew", "ios.description", "ios.whatsnew", "ms.description", "google.full"}
 # Keyword fields: comma-separated, counted in bytes, never repeating a word of the name or subtitle.
 KEYWORDS = {"apple.keywords", "ios.keywords"}
+
+
+def google_field(apple_field: str) -> str:
+    """The Google Play twin of an in-app purchase's field id: `apple.iap.supporter.name` -> `google.iap.supporter.name`."""
+    return "google." + apple_field.removeprefix("apple.")
 
 
 def parse(path: Path) -> dict[str, str]:
@@ -108,6 +122,7 @@ class Listing:
         self.iphone_screenshots = self.dir / ios.get("iphoneScreenshots", "apple/iphone")
         self.ipad_screenshots = self.dir / ios.get("ipadScreenshots", "apple/ipad")
         self.microsoft = config.get("store.microsoft")
+        self.google = config.get("store.google")
 
     def site(self, lang: str) -> str:
         """The landing page for a language: the site's root for the source language, `/<lang>/` for the others."""
@@ -126,6 +141,11 @@ class Listing:
             limits.update(IOS_LIMITS)
         if self.microsoft is not None:
             limits.update(MICROSOFT_LIMITS)
+        if self.google is not None:
+            limits.update(GOOGLE_LIMITS)
+            for spec in self.iaps.values():
+                limits[google_field(spec["name"])] = GOOGLE_IAP_NAME_LIMIT
+                limits[google_field(spec["description"])] = GOOGLE_IAP_DESCRIPTION_LIMIT
         return limits
 
     @property

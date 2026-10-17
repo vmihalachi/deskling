@@ -1,8 +1,9 @@
 name: Copilot setup steps
 
 # Prepares GitHub Copilot's cloud coding agent (Ubuntu): the .NET 10 SDK and the restored test projects, so
-# `dotnet test` works once the agent's firewall is up. Swift needs macOS; the agent verifies it through swift.yml
-# (see AGENTS.md). Also runs when edited, so a broken setup shows up in the PR.
+# `dotnet test` works once the agent's firewall is up, and a JDK 17 with the Kotlin build's Gradle caches warm, so
+# `./gradlew :core:test` does too. Swift needs macOS; the agent verifies it through swift.yml (see AGENTS.md). Also
+# runs when edited, so a broken setup shows up in the PR.
 on:
   workflow_dispatch:
   push:
@@ -36,3 +37,13 @@ jobs:
           dotnet restore dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj
           dotnet restore dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj
           dotnet restore dotnet/Deskling.Testing.Tests/Deskling.Testing.Tests.csproj
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Warm the Kotlin build's caches
+        working-directory: kotlin
+        run: ./gradlew :core:testClasses :testing:testClasses --console=plain

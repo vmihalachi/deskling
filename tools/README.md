@@ -15,15 +15,16 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `character.py` | Compiles the app's skins (vector or raster; `characters` in `companion.json`) to the JSON and Swift both cores draw from; `--check`. |
 | `synth.py` | The sound engine; the app's recipes module defines `sounds(engine)`. |
 | `fonts.py` | Builds the display faces from pinned variable fonts (`fonts`, plus `fonts.faces` for an upright beside an italic; needs fontTools). |
-| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images (needs Pillow). |
+| `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images, and Google Play's from the Android captures (`--canvas android-phone` 1080 × 1920 with the caption above the screen, `android-tablet` 2560 × 1600; Play's size limits checked) (needs Pillow). |
 | `check-layout.sh` | `screenshots.sh` in every language (or the ones named), side by side and hidden, naming the languages whose windows don't fit. |
+| `check-layout-android.py`, `avd.py` | The Android app's screens in light and dark (`ScreenshotRun` in `deskling.android`), in every language (or the ones named) on the AVDs of the `screens.platforms` entries captured on android (or `--devices`): each AVD boots once, headless (`avd.py`: `emulator -no-window`, the status bar in demo mode at 09:41), installs the Debug APK (built once, or `--apk`) and runs every language on it, one launch per distinct shot env in screenshot mode with Deskling's intent extras (`DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`, `DESKLING_LANG`, `DESKLING_REGION`), naming the AVD and language of each screen that doesn't fit; `--jobs` emulators at a time (`LAYOUT_JOBS`), `--font-scale 2.0` for the largest text. |
 | `check-layout-ios.py` | The iPhone and iPad app's screens in light and dark (`ScreenshotCapture` on iOS), in every language (or the ones named) on iPhone SE, the largest iPhone, iPad Pro 13" upright, turned and in a Split View third, and the iPhone Duo closed: one launch per language on cloned Simulators side by side (`--jobs`, `LAYOUT_JOBS`), naming the device and language of each screen that doesn't fit (content taller than the screen, text cut short or pushed off it). `--text-size` for Dynamic Type. |
-| `screens.py` | The same screens on the Mac, Windows and iOS in any languages, from one manifest (`screens` in `companion.json`: each canonical screen's shot on each platform): `capture` builds each platform once and runs them side by side (the Mac hidden, `--jobs` languages at a time; Windows in the Parallels VM through `vm.sh check-layout`; iOS on simulators of its own on the newest runtime that runs each device, each language one launch of the app in screenshot mode, as `check-layout-ios.py` runs it) into `build/screens/<platform>/<lang>/<screen>-<theme>.png`, with every platform's problems in one `problems.txt`; `compare` makes one sheet per screen, language and theme (desktops on top, devices below, one height per row) and an `index.html` to flip through them; `diff --against NAME` and `accept NAME` keep a perceptual hash per image, so a review looks only at what changed. Needs Pillow (re-runs under `/usr/bin/python3` when this Python lacks it). |
+| `screens.py` | The same screens on the Mac, Windows, iOS and Android in any languages, from one manifest (`screens` in `companion.json`: each canonical screen's shot on each platform): `capture` builds each platform once and runs them side by side (the Mac hidden, `--jobs` languages at a time; Windows in the Parallels VM through `vm.sh check-layout`; iOS on simulators of its own on the newest runtime that runs each device, each language one launch of the app in screenshot mode, as `check-layout-ios.py` runs it; Android on a headless emulator per platform (its `avd`), as `check-layout-android.py` runs it, a shot's `camera` giving the emulator the host's webcam) into `build/screens/<platform>/<lang>/<screen>-<theme>.png`, with every platform's problems in one `problems.txt`; `compare` makes one sheet per screen, language and theme (desktops on top, devices below, one height per row) and an `index.html` to flip through them; `diff --against NAME` and `accept NAME` keep a perceptual hash per image, so a review looks only at what changed. Needs Pillow (re-runs under `/usr/bin/python3` when this Python lacks it). |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
 | `conformance.sh` | Regenerates the app's vectors from its Swift core. |
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
-| `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies. |
-| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too); App Store Connect (text, in-app purchases, screenshots, previews, review notes, and a universal app's iOS page and iPhone and iPad screenshots; `--status` reads only); a Partner Center import folder. |
+| `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies, and for an app with an `android` section a JDK 17 and ktlint. |
+| `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too; with `store.google`, Google Play's `google.*` fields: title 30, short description 80, full description 4000, each product's name 55 and description 200; no Google side in `push.py`); App Store Connect (text, in-app purchases, screenshots, previews, review notes, and a universal app's iOS page and iPhone and iPad screenshots; `--status` reads only); a Partner Center import folder. |
 | `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
 | `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. `-Only` runs hidden (cloaked windows, shot as soon as they have drawn), so the PC stays usable, with `-Front` for active windows, and copies only the shots it names. A Debug build that is packaged (`WindowsPackageType` MSIX, for an app that needs package identity) is registered from its build output as a development package (Developer Mode) and started in it, its settings passed as `DESKLING_SCREENSHOT_…=value` arguments (`ScreenshotCapture.Setting`). |
@@ -32,7 +33,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
 | `windows/assets.py` | The MSIX logos and `AppIcon.ico` (and the Debug build's) from the app icon; `--check`. |
 | `windows/vm.sh` | On a Mac, the WinUI app built and checked in a Parallels Windows VM from the working tree as it is (uncommitted changes too): `build` (x64 and ARM64), `test`, `screenshots <folder>` (the PNGs back on the Mac), `check-layout [lang…]` (`check-layout.ps1`, the shots back in `<windows.dir>/build/layout-check`), `smoke`, `run -- <command>`, `status`. Without prlctl or the VM it says so in one line and exits 3. |
-| `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks, the Windows parity reminder. |
+| `hooks/hook.py` | Agent guardrails: generated files, the stop-time checks (ktlint over the Kotlin files an agent edits), the Windows and Android parity reminders. |
 | `skills/` | `localization`, `add-phrase`, `add-setting`, `conformance`, `voice`, `windows-port`, `release-mac`, `review-invariants`. |
 
 Tests: `python3 tools/tests/run.py` (over `tools/tests/fixture-app`, a minimal app; `tools.yml` runs them), and for
@@ -51,9 +52,11 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    git -C deskling checkout vX.Y.Z && git add deskling
    ```
 
-   The submodule is tools and skills only; the code still comes from the package registries. `scripts/verify.sh`
+   The submodule is tools and skills only; the Swift and .NET code still comes from the package registries (the
+   Kotlin build is the exception: an Android app includes it from the submodule, see step 7). `scripts/verify.sh`
    fails whenever the submodule's tag, `deskling.tag`, the core `Package.swift`'s `exact:`, the XcodeGen spec's
-   `exactVersion` and the `Deskling.*` NuGet versions disagree (`python3 deskling/tools/companion.py pins` shows them;
+   `exactVersion`, the `Deskling.*` NuGet versions and, with an `android` section, the submodule's
+   `kotlin/gradle.properties` `desklingVersion` disagree (`python3 deskling/tools/companion.py pins` shows them;
    `companion.py bump` moves them all).
 
 2. **`companion.json`** at the app's root, every section the app has (see the schema and the drafts in
@@ -114,10 +117,39 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    direction (`voice.config`, `voice.direction`), the sounds recipes (`sounds.recipes`), the store captions, the
    character design folder (`characters.design`).
 
+7. **Android apps.** The Kotlin side (`kotlin/`: `:core`, the pure scheduler and insights mirror that replays the
+   conformance vectors; `:android`, the app plumbing; `:testing`) is not published to a Maven repository: the app's
+   Gradle build includes it from the submodule, and `companion.py link` points it at a checkout instead through
+   `local.properties`. In the app's `settings.gradle.kts`:
+
+   ```kotlin
+   val localProperties = java.util.Properties().apply {
+       val file = rootDir.resolve("local.properties")
+       if (file.isFile) file.inputStream().use { load(it) }
+   }
+   val desklingKotlin = localProperties.getProperty("deskling.kotlin.dir") ?: "../deskling/kotlin"
+   includeBuild(desklingKotlin) {
+       dependencySubstitution {
+           substitute(module("deskling:core")).using(project(":core"))
+           substitute(module("deskling:android")).using(project(":android"))
+           substitute(module("deskling:testing")).using(project(":testing"))
+       }
+   }
+   ```
+
+   and `implementation("deskling:core")`, `implementation("deskling:android")`, `testImplementation("deskling:testing")`
+   in the modules that use them. `companion.json` gets an `android` section (`dir`, `core`, `app`, `applicationId`,
+   `devApplicationId`, `strings`, the `.xml` folder `l10n.py export-android` writes); the hook then runs ktlint over the
+   Kotlin files an agent edits (`brew install ktlint`, or `setup-linux.sh` on Linux, which also installs a JDK 17) and
+   reminds it about Android parity, `verify.sh` lints the changed Kotlin files and, when `:core` or the vectors change,
+   runs `./gradlew :<android.core>:test` (JDK 17 and `ANDROID_HOME` inside the command, never in a shell profile), and
+   `screens.py`, `check-layout-android.py` and `store-screenshots.py --canvas android-…` cover the screens.
+
 ## Moving to a release, or trying one first
 
 **`bump`** moves an app to a release in one go: every pin `pins` lists (`deskling.tag`, the core package's `exact:`, the
-XcodeGen spec's `exactVersion`, each `Deskling.*` NuGet version), the committed `Package.resolved` files, the submodule
+XcodeGen spec's `exactVersion`, each `Deskling.*` NuGet version; the Kotlin build's `desklingVersion` is the submodule's
+own, so it follows the submodule), the committed `Package.resolved` files, the submodule
 (checked out at the tag) and the landing page's `@deskling/landing`; it regenerates the Xcode project and prints `pins`.
 It refuses a tag origin doesn't have, and changes nothing when the app is already there.
 
@@ -151,6 +183,9 @@ python3 deskling/tools/companion.py unlink   # before committing
   `Deskling.*` PackageReference for a ProjectReference to the checkout's `dotnet/<Package>/<Package>.csproj`: no feed,
   no version, nothing to pack, and every build compiles the checkout as it is. The WinUI packages build on Windows
   only, as before.
+- **Kotlin:** `link` writes `deskling.kotlin.dir=<checkout>/kotlin` into the Android folder's git-ignored
+  `local.properties` (the line the `settings.gradle.kts` above reads), so the included build is the checkout; `unlink`
+  takes the line out again.
 - **While linked, `pins` fails**, and with it `verify.sh` and the pre-commit hook, so a linked app can't be committed;
   `bump` refuses too.
 - **`unlink`** puts back every file `link` changed, byte for byte, and the `Package.resolved` files and the project the

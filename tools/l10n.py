@@ -69,6 +69,8 @@ SOURCE = "en"
 LANGUAGES: list[str] = []
 WINDOWS_STRINGS: Path | None = None
 LINUX_PO: Path | None = None
+ANDROID_STRINGS: Path | None = None  # the app module's res/ folder: values*/strings.xml and xml/locales_config.xml
+ANDROID_DIR: Path | None = None
 GLOSSARY_KEYS: list[str] = []
 # (source file, pattern with one group): more glossary terms, read from the app's code (`l10n.glossarySources`).
 GLOSSARY_SOURCES: list[tuple[Path, re.Pattern]] = []
@@ -99,6 +101,7 @@ BASE_RULES = (
 def configure(config: companion.Config | None = None) -> None:
     """Points the module at an app: its catalogs, languages, rules and export folders."""
     global CONFIG, ROOT, MACOS, LANDING_I18N, WORK_DIR, DERIVED, SOURCE, LANGUAGES, WINDOWS_STRINGS, LINUX_PO, ANDROID_STRINGS
+    global ANDROID_DIR
     global GLOSSARY_KEYS, GLOSSARY_SOURCES, RULES, PLURAL_CATEGORIES, SCOPED
     CONFIG = config or companion.load()
     ROOT = CONFIG.root
@@ -114,7 +117,9 @@ def configure(config: companion.Config | None = None) -> None:
     LANGUAGES = CONFIG.languages
     WINDOWS_STRINGS = CONFIG.path("windows.strings")
     LINUX_PO = CONFIG.path("l10n.linuxPo")
-    ANDROID_STRINGS = CONFIG.path("l10n.androidStrings")
+    # `android.strings`, or `l10n.androidStrings`, the name it had before the Android section.
+    ANDROID_STRINGS = CONFIG.path("android.strings") or CONFIG.path("l10n.androidStrings")
+    ANDROID_DIR = CONFIG.path("android.dir")
     GLOSSARY_KEYS = list(CONFIG.get("l10n.glossaryKeys", []))
     GLOSSARY_SOURCES = [
         (ROOT / source["file"], re.compile(source["pattern"])) for source in CONFIG.get("l10n.glossarySources", [])
@@ -485,7 +490,7 @@ def cmd_check(args) -> int:
     result = cmd_status(args)
     stale = stale_exports()
     for path in stale:
-        print(f"stale export: {path.relative_to(ROOT).as_posix()} (run `export-windows` / `export-linux`)")
+        print(f"stale export: {path.relative_to(ROOT).as_posix()} (run `export-windows` / `export-linux` / `export-android`)")
     return 1 if stale else result
 
 
@@ -1053,6 +1058,12 @@ def android_name(key: str) -> str:
     return "s_" + resw_name(key).lower()
 
 
+def android_locale(lang: str) -> str:
+    """The locale tag `locales_config.xml` lists for a catalog language: what the language's values folder says
+    (zh-Hans → zh-CN, as `values-zh-rCN`), the rest as they are."""
+    return "zh-CN" if lang == "zh-Hans" else lang
+
+
 def android_values_dir(lang: str) -> str:
     if lang == SOURCE:
         return "values"
@@ -1105,12 +1116,28 @@ def android_text(lang: str, categories: dict[str, list[str]] | None = None) -> s
     return "".join(lines)
 
 
+def android_locales_text() -> str:
+    """`res/xml/locales_config.xml` (the manifest's `android:localeConfig`): the languages the system's per-app language
+    setting offers, one per exported language, so the list never drifts from the values folders."""
+    lines = [
+        '<?xml version="1.0" encoding="utf-8"?>\n',
+        f"<!-- Generated from {catalog_label()} by deskling/tools/l10n.py export-android. Don't edit. -->\n",
+        '<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n',
+    ]
+    lines += [f'  <locale android:name="{android_locale(lang)}"/>\n' for lang in export_languages()]
+    lines.append("</locale-config>\n")
+    return "".join(lines)
+
+
 def android_files(root: Path | None = None) -> dict[Path, str]:
+    """`values*/strings.xml` per language and `xml/locales_config.xml`, under the app module's res folder."""
     root = root or ANDROID_STRINGS
     if root is None:
-        fail("companion.json has no l10n.androidStrings: pass --out")
+        fail("companion.json has no android.strings: pass --out")
     categories = plural_categories()
-    return {root / android_values_dir(lang) / "strings.xml": android_text(lang, categories) for lang in export_languages()}
+    files = {root / android_values_dir(lang) / "strings.xml": android_text(lang, categories) for lang in export_languages()}
+    files[root / "xml" / "locales_config.xml"] = android_locales_text()
+    return files
 
 
 def stale_exports() -> list[Path]:
@@ -1118,7 +1145,8 @@ def stale_exports() -> list[Path]:
     stale = []
     ports = [(WINDOWS_STRINGS.parents[1], windows_files)] if WINDOWS_STRINGS else []
     ports += [(LINUX_PO.parent, linux_files)] if LINUX_PO else []
-    ports += [(ANDROID_STRINGS.parents[3], android_files)] if ANDROID_STRINGS else []
+    if ANDROID_STRINGS:  # the Gradle project's folder, or four up from <app>/src/main/res without `android.dir`
+        ports.append((ANDROID_DIR or ANDROID_STRINGS.parents[min(3, len(ANDROID_STRINGS.parents) - 1)], android_files))
     for folder, files in ports:
         if not folder.exists():
             continue
@@ -1193,7 +1221,8 @@ def main() -> int:
     for name, func, default, help_text in (
         ("export-windows", cmd_export_windows, "windows.strings", "write .resw files for the Windows port"),
         ("export-linux", cmd_export_linux, "l10n.linuxPo", "write .po files for the Linux port"),
-        ("export-android", cmd_export_android, "l10n.androidStrings", "write values*/strings.xml files for the Android port"),
+        ("export-android", cmd_export_android, "android.strings",
+         "write values*/strings.xml and xml/locales_config.xml for the Android app"),
     ):
         cmd = sub.add_parser(name, help=help_text)
         cmd.add_argument("--out", help=f"output directory (default: {default} in companion.json)")

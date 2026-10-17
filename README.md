@@ -1,7 +1,7 @@
 # Deskling
 
-Building blocks for little desktop apps that live in the menu bar or the tray: the parts every such app needs
-and nobody wants to write twice. Swift for macOS, .NET for Windows. MIT.
+Building blocks for little companion apps that live in the menu bar, the tray or your pocket: the parts every such
+app needs and nobody wants to write twice. Swift for macOS and iOS, .NET for Windows, Kotlin for Android. MIT.
 
 Deskling grew out of [mybackhurts](https://mybackhurts.app), which ships it, and [sunnysays](https://sunnysays.app), a
 desk companion in development whose character became the companion layer. [Mister Pagliacci](https://pagliacci.app), a
@@ -16,7 +16,7 @@ others aren't monitored, and releases follow what the apps need.
 
 | Swift product | .NET package | What it does |
 |---|---|---|
-| `DesklingCore` | `Deskling.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. No OS or UI dependencies, so it builds anywhere Swift or .NET runs. |
+| `DesklingCore` | `Deskling.Core` | Pure logic. `ReminderScheduler`: an interval timer with active hours and weekdays, quiet hours, an idle reset ("you were away, the timer restarts"), a hold while the user is busy with a grace period after, snooze, "after my next call" and pause. `Clock`, `IdleTimeProvider` and `BusyStateProvider` protocols so it runs on an injected clock. A seeded `SplitMix64` random source for deterministic jitter. No OS or UI dependencies, so it builds anywhere Swift, .NET or Kotlin runs. |
 | `DesklingCompanion` | `Deskling.Companion` | The pure core of a desk companion: a phrase bank and picker (lines, jokes told in beats, tunes; scoped by skin, flavor and language), chatter cadence presets, quiet rules and mood, write-through settings an app subclasses, a coordinator that replays a whole day from a seed, desktop presence, skins, and a rig that animates vector or raster character art. The app injects its lines, defaults, skins and palette; the .NET side loads them from the JSON the Swift side writes (`PhraseBank.Parse`, `CharacterArt.Parse`). |
 | `DesklingSystem` | `Deskling.Windows` | The real providers. Idle time from the last input event. **Call detection without permissions:** whether another app is using the camera or the microphone, read from device state (CoreAudio's process list on macOS, the capability consent store on Windows), never by opening a device. Full-screen detection. Power source (battery, charging, level). Output muted and route. Screen locked. Appearance changes. |
 | `DesklingShell` | `Deskling.Windows` | Menu bar / tray app plumbing. A status item with a popover panel, a right-click menu and an animated glyph the app draws. Speech: a speaker (the system voice or a recorded clip), a sequencer that tells a joke in beats, a library of recorded voices that knows which clips are current, a chime player. A window manager that shows the Dock icon only while a window is open, a login item toggle, "was I launched at login?", a notification poster with categories and actions, a floating desktop window (macOS), a raw `Shell_NotifyIcon` tray icon host with a native menu, single-instance startup, a `.resw` lookup, drawing helpers (SVG path sampling, keyframes, a hand-drawn wobble). |
@@ -24,6 +24,11 @@ others aren't monitored, and releases follow what the apps need.
 | `DesklingStore` | `Deskling.Core` (`Store/`) + `Deskling.Windows` (`StoreContextBackend`) | A purchase store for one-time unlockables and tips (StoreKit 2 on the Mac, the Microsoft Store on Windows), with the backend behind a protocol so tests use a mock. |
 | `DesklingTesting` | `Deskling.Testing` | Fakes for every protocol, fixtures (a phrase bank, defaults, a vector and a raster skin) and the shared conformance vectors' helpers for the apps' own test targets: Swift generates an app's companion vectors, .NET replays them (each check returns its problems, so neither side needs a particular test framework). The standard picker and quiet case lists, `CompanionVectors` and `ConformanceSuite.companion` build an app's whole suite; `CompanionReplay` replays it. On .NET also the companion shell's fakes (`FakeHost`, `ManualTimers`, `FakeSpeaker`…), for testing an app model without a screen. |
 | `tools/` | `tools/` | Not a package: Python tools, shell scripts and agent skills for companion apps, which vendor this repo as a `deskling/` git submodule pinned to the release. Localization, phrase sync, recorded voices, character art compiling, sounds, fonts, screenshots, verification (including a check that every Deskling pin agrees), the store listing tools (field limits, App Store Connect, Partner Center) and agent hooks, all driven by the app's `companion.json`; and `@deskling/landing`, the landing page's plumbing as Vite plugins, published to npm. See [`tools/README.md`](tools/README.md). |
+
+Kotlin, for Android (`kotlin/`, a Gradle build an app includes from the submodule; `tools/README.md`): `deskling.core`
+mirrors `DesklingCore` (the scheduler, the random source, plurals, settings, the store, the drawing math),
+`deskling.android` is the phone-side plumbing (Play Billing, alarms, notifications, reduce motion, the screenshot run)
+and `deskling.testing` the fakes. No companion in Kotlin yet.
 
 Everything in `DesklingSystem` reads state and never prompts. None of it talks to the network.
 
@@ -155,11 +160,11 @@ under Native AOT, and the MSIX images from the app icon ([`tools/README.md`](too
 model free of WinUI and its words behind `IStrings`, and its tests run on any OS (`Deskling.Testing`'s `ReswStrings`
 reads the app's English `.resw`).
 
-## The two implementations stay identical
+## The implementations stay identical
 
 The Swift code is the reference. `conformance/` holds JSON vectors generated from it (`scheduler/`, and `companion/`
 over the fixture bank and skins), and `dotnet/Deskling.Core.Tests` and `dotnet/Deskling.Companion.Tests` replay every
-one, so a change in behavior on one side fails the other side's tests. Apps generate their own content vectors with
+one (`kotlin/core` the scheduler's), so a change in behavior on one side fails the other sides' tests. Apps generate their own content vectors with
 `DesklingTesting` and replay them through `Deskling.Testing`. See `conformance/README.md`.
 
 ## Develop
@@ -183,7 +188,7 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions both sides, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
+One tag versions every side, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
 `release.yml`, which gives the entries under *Unreleased* the next version (`scripts/release.sh`), commits the bump and tags
 it. By hand, `git tag v0.12.1 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
 on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through

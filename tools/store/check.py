@@ -4,7 +4,8 @@
 Usage (from the app's root): python3 deskling/tools/store/check.py [lang ...]
 Exits 1 on any problem. Each field is a `### Heading `field.id`` followed by a ```text block. The fields are the App
 Store's, each in-app purchase's (`store.apple.iaps`), the iPhone and iPad version page's when the app has
-`store.apple.ios`, and the Microsoft Store's when it has `store.microsoft`.
+`store.apple.ios`, the Microsoft Store's when it has `store.microsoft`, and Google Play's (`google.*`: title 30, short
+description 80, full description 4000, each product's name 55 and description 200) when it has `store.google`.
 """
 
 from __future__ import annotations
@@ -89,6 +90,9 @@ def run(listing: Listing, langs: list[str]) -> bool:
         summary = sizes(fields, "apple", "")
         if listing.ios is not None:
             summary += ", " + sizes(fields, "ios", "iOS ")
+        if listing.google is not None:
+            summary += (f", Play title {len(fields.get('google.title', ''))}/30"
+                        f", short {len(fields.get('google.short', ''))}/80")
         if problems:
             ok = False
             print(f"{lang}: {len(problems)} problem(s) ({summary})")
