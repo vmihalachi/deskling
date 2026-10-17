@@ -280,22 +280,12 @@ def main(argv: list[str]) -> int:
     files = images(source)
     if (dev := config.path("windows.assets.devSource")) is not None:
         files["Dev/AppIcon.ico"] = ico(trim(read_png(dev)), {})
-    stale = []
-    for name, data in files.items():
-        path = out / name
-        if check:
-            if not path.is_file() or path.read_bytes() != data:
-                stale.append(name)
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(data)
-    if check:
-        if stale:
-            print(f"{len(stale)} Windows images differ from the icon (run laching/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
-            return 1
-        print(f"ok: {len(files)} Windows images match the icon")
-        return 0
-    print(f"wrote {len(files)} images to {out.relative_to(config.root).as_posix()}")
+    stale = [companion.rel(path, out) for path in companion.write_outputs(files, check, out)]
+    if check and stale:
+        print(f"{len(stale)} Windows images differ from the icon (run laching/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
+        return 1
+    print(f"ok: {len(files)} Windows images match the icon" if check else
+          f"wrote {len(stale)} of {len(files)} images to {companion.rel(out, config.root)}")
     return 0
 
 

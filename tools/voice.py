@@ -64,6 +64,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import companion  # noqa: E402
+from companion import base_language, fail  # noqa: E402
 
 API = "https://api.elevenlabs.io"
 FORMAT = 1
@@ -120,21 +121,8 @@ def configure(config: companion.Config | None = None) -> None:
     )
 
 
-def base_language(code: str) -> str:
-    return code.replace("_", "-").split("-")[0].lower()
-
-
-
-def fail(message: str) -> None:
-    print(f"error: {message}", file=sys.stderr)
-    sys.exit(2)
-
-
 def rel(path: Path) -> str:
-    try:
-        return str(path.relative_to(ROOT))
-    except ValueError:
-        return str(path)
+    return companion.rel(path, ROOT)
 
 
 # ---------------------------------------------------------------------------------------------- inputs
@@ -911,21 +899,21 @@ def site_files(config: dict, manifest: dict) -> dict[Path, str]:
 def stale_site(config: dict, manifest: dict) -> list[Path]:
     """Site files that differ from what `site_files` would write (missing ones included), and old language pages."""
     files = site_files(config, manifest)
-    stale = [p for p, text in files.items() if not p.exists() or p.read_text("utf8") != text]
-    return stale + [p for p in sorted(VOICE.parent.glob("review/*.html")) if p not in files]
+    return companion.write_outputs(files, check=True) + old_site_pages(files)
 
 
 def sync_site(config: dict, manifest: dict) -> list[Path]:
     """Bring the friends' site in line with the clips; returns what changed."""
     files = site_files(config, manifest)
-    changed = stale_site(config, manifest)
-    for path in changed:
-        if path in files:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(files[path], "utf8")
-        else:
-            path.unlink()
-    return changed
+    old = old_site_pages(files)
+    for path in old:
+        path.unlink()
+    return companion.write_outputs(files, check=False) + old
+
+
+def old_site_pages(files: dict[Path, str]) -> list[Path]:
+    """The review pages of languages the site no longer has."""
+    return [p for p in sorted(VOICE.parent.glob("review/*.html")) if p not in files]
 
 
 def cmd_review(args) -> int:
@@ -958,20 +946,15 @@ def cmd_site(args) -> int:
 
 
 def git(*cmd: str, cwd: Path | None = None) -> str:
-    cwd = cwd or ROOT
-    # In the voices repository, without the GIT_DIR… a git hook exports for the app's (companion.git_env).
-    env = None if cwd == ROOT else companion.git_env()
-    # UTF-8 as git writes it (a commit's subject), whatever the locale (cp1252 on a Western Windows).
-    result = subprocess.run(["git", "-C", str(cwd), *cmd], capture_output=True, text=True, encoding="utf8", env=env)
-    if result.returncode != 0:
-        fail(f"git {cmd[0]} failed in {rel(cwd)}: {result.stderr.strip()[-800:]}")
+    """git's stdout in `cwd` (the app's root), failing with its stderr."""
+    if (result := companion.git(cwd or ROOT, *cmd)).returncode != 0:
+        fail(f"git {cmd[0]} failed in {rel(cwd or ROOT)}: {result.stderr.strip()[-800:]}")
     return result.stdout.strip()
 
 
 def default_branch(site: Path) -> str:
     """The voices repository's default branch on `origin` (`main`, `master`…), which publish pushes to."""
-    found = subprocess.run(["git", "-C", str(site), "ls-remote", "--symref", "origin", "HEAD"],
-                           capture_output=True, text=True, env=companion.git_env())
+    found = companion.git(site, "ls-remote", "--symref", "origin", "HEAD")
     for line in found.stdout.splitlines():
         if line.startswith("ref: refs/heads/") and line.endswith("\tHEAD"):
             return line[len("ref: refs/heads/"):-len("\tHEAD")]
@@ -997,8 +980,7 @@ def cmd_publish(args) -> int:
     # By refspec: `git submodule update` leaves the checkout detached, and a plain `push origin HEAD` refuses that.
     # If another machine published first, this fails as a non-fast-forward instead of overwriting its clips.
     branch = default_branch(site)
-    pushed = subprocess.run(["git", "-C", str(site), "push", "-q", "origin", f"HEAD:refs/heads/{branch}"],
-                            capture_output=True, text=True, env=companion.git_env())
+    pushed = companion.git(site, "push", "-q", "origin", f"HEAD:refs/heads/{branch}")
     if pushed.returncode != 0:
         fail(f"push failed: {pushed.stderr.strip()[-600:]}\nIf the voices repo moved on elsewhere: "
              f"`git -C {rel(site)} pull --rebase origin {branch}`, then voice.py site and publish again.")

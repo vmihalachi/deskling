@@ -127,6 +127,59 @@ class Config:
         return path
 
 
+# MARK: Helpers the tools share
+
+
+def fail(message: str) -> None:
+    """Prints `error: message` and exits 2, the tools' usage-or-setup error."""
+    print(f"error: {message}", file=sys.stderr)
+    sys.exit(2)
+
+
+def rel(path: Path | str, root: Path) -> str:
+    """`path` from `root` with forward slashes on every OS (so the path patterns match on Windows too); a path outside
+    `root` as given, with forward slashes."""
+    try:  # resolved: a relative path, `..`, a symlink (macOS's /var is /private/var)
+        return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
+    except (ValueError, OSError):
+        return str(path).replace("\\", "/")
+
+
+def base_language(code: str) -> str:
+    """"pt-BR" and "pt_BR" → "pt", as `Phrase.baseLanguage` compares them."""
+    return re.split(r"[-_]", code, maxsplit=1)[0].lower()
+
+
+def git(folder: Path, *args: str, check: bool = False, text: bool = True,
+        timeout: float | None = None) -> subprocess.CompletedProcess:
+    """git in `folder`'s repository, whichever repository a hook exported (`git_env`), output captured. As text it's
+    UTF-8 whatever the locale (cp1252 on a Western Windows); `text=False` gives bytes. `check` raises on a failure, as
+    `subprocess.run` does."""
+    return subprocess.run(["git", "-C", str(folder), *args], capture_output=True, check=check, timeout=timeout,
+                          encoding="utf8" if text else None, env=git_env())
+
+
+def write_outputs(files: dict[Path, bytes | str], check: bool, root: Path | None = None) -> list[Path]:
+    """Brings generated files in line with `files` (a path, relative to `root` when given, to its content) and returns
+    those that differed from the disk, missing ones included. With `check` it writes nothing. Text is written as UTF-8
+    with LF line endings on every OS and compared ignoring CRLFs (a Windows checkout's core.autocrlf, which git takes
+    back out on commit); bytes are written and compared as they are."""
+    stale = []
+    for name, content in files.items():
+        path = root / name if root else Path(name)
+        data = content.encode("utf8") if isinstance(content, str) else content
+        current = path.read_bytes() if path.is_file() else None
+        if current is not None and isinstance(content, str):
+            current = current.replace(b"\r\n", b"\n")
+        if current == data:
+            continue
+        stale.append(path)
+        if not check:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+    return stale
+
+
 # MARK: Derived names (verify.sh and the hook share these)
 
 
@@ -301,17 +354,6 @@ def write_text(path: Path, text: str) -> None:
     path.write_bytes(text.encode("utf8"))
 
 
-def _rel(config: Config, path: Path) -> str:
-    return path.relative_to(config.root).as_posix()
-
-
-def _git(folder: Path, *args: str) -> subprocess.CompletedProcess:
-    """git in `folder`'s repository, whichever repository a hook exported (`git_env`). Its output is UTF-8 whatever the
-    locale (cp1252 on a Western Windows)."""
-    return subprocess.run(["git", "-C", str(folder), *args], capture_output=True, text=True, encoding="utf8",
-                          env=git_env())
-
-
 def _tail(result: subprocess.CompletedProcess, lines: int = 15) -> str:
     return "\n".join((result.stdout + result.stderr).strip().splitlines()[-lines:])
 
@@ -364,7 +406,7 @@ def _submodule(config: Config) -> Path | None:
 
 
 def _submodule_tag(submodule: Path) -> str:
-    return _git(submodule, "describe", "--tags", "--exact-match").stdout.strip()
+    return git(submodule, "describe", "--tags", "--exact-match").stdout.strip()
 
 
 def pin_sites(config: Config) -> list[Pin]:
@@ -381,16 +423,16 @@ def pin_sites(config: Config) -> list[Pin]:
     for file in _swift_manifests(config):
         match = _laching_block_match(read_text(file), _PACKAGE_EXACT if file.name == "Package.swift" else _SPEC_EXACT)
         version = match.group(1) if match else "(not pinned to a version)"
-        found.append(Pin(_rel(config, file), version, file, match.span(1) if match else None))
+        found.append(Pin(rel(file, config.root), version, file, match.span(1) if match else None))
     windows = config.path("windows.dir")
     if windows and windows.is_dir():
         for file in sorted([*windows.rglob("*.csproj"), *windows.rglob("Directory.Packages.props")]):
             for match in _NUGET.finditer(read_text(file)):
-                found.append(Pin(f"{_rel(config, file)} {match.group(1)}", match.group(2), file, match.span(2)))
+                found.append(Pin(f"{rel(file, config.root)} {match.group(1)}", match.group(2), file, match.span(2)))
     if config.get("android") and (gradle := _kotlin_properties(config)) and gradle.is_file():
         match = _GRADLE_VERSION.search(read_text(gradle))
         # No file of its own to rewrite: `bump` moves the submodule and this moves with it.
-        found.append(Pin(f"{_rel(config, gradle)} lachingVersion", match.group(1) if match else "(no lachingVersion)"))
+        found.append(Pin(f"{rel(gradle, config.root)} lachingVersion", match.group(1) if match else "(no lachingVersion)"))
     return found
 
 
@@ -421,7 +463,7 @@ def landing_pin(config: Config) -> Pin | None:
     file = folder / "package.json" if folder else None
     if not file or not file.is_file() or not (match := _LANDING_DEPENDENCY.search(read_text(file))):
         return None
-    return Pin(f"{_rel(config, file)} {_LANDING_PACKAGE}", match.group(1), file, match.span(1))
+    return Pin(f"{rel(file, config.root)} {_LANDING_PACKAGE}", match.group(1), file, match.span(1))
 
 
 def print_pins(config: Config) -> int:
@@ -443,7 +485,7 @@ def _version_key(version: str) -> tuple[int, ...]:
 
 def _remote_tag(submodule: Path, tag: str) -> str:
     """The commit `tag` names on the submodule's origin; a PinError when origin has no such tag."""
-    result = _git(submodule, "ls-remote", "--tags", "origin", f"refs/tags/{tag}*")
+    result = git(submodule, "ls-remote", "--tags", "origin", f"refs/tags/{tag}*")
     if result.returncode:
         raise PinError(f"couldn't list the tags on Laching's origin:\n{_tail(result)}")
     refs = dict(reversed(line.split("\t", 1)) for line in result.stdout.splitlines() if "\t" in line)
@@ -469,7 +511,7 @@ def regenerate_project(config: Config) -> str:
     if not spec or not spec.is_file():
         return ""
     if not shutil.which("xcodegen"):
-        return f"xcodegen isn't installed: run `xcodegen generate` in {_rel(config, spec.parent)}"
+        return f"xcodegen isn't installed: run `xcodegen generate` in {rel(spec.parent, config.root)}"
     result = subprocess.run(["xcodegen", "generate", "--quiet", "--spec", str(spec)], cwd=spec.parent,
                             capture_output=True, text=True)
     if result.returncode:
@@ -510,8 +552,8 @@ def npm_versions(package: str) -> list[str]:
 
 def _modified(folder: Path) -> set[Path]:
     """The tracked files git reports changed under `folder` (none outside a repository)."""
-    top = _git(folder, "rev-parse", "--show-toplevel")
-    status = _git(folder, "status", "--porcelain", "--untracked-files=no", "--", ".")
+    top = git(folder, "rev-parse", "--show-toplevel")
+    status = git(folder, "status", "--porcelain", "--untracked-files=no", "--", ".")
     if top.returncode or status.returncode:
         return set()
     return {(Path(top.stdout.strip()) / line[3:]).resolve() for line in status.stdout.splitlines()}
@@ -535,7 +577,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     folder = pin.file.parent
     lockfile = next((folder / name for name in _LOCKFILES if (folder / name).is_file()), None)
     files = [pin.file, *([lockfile] if lockfile else [])]
-    status = _git(folder, "status", "--porcelain", "--", *(file.name for file in files))
+    status = git(folder, "status", "--porcelain", "--", *(file.name for file in files))
     dirty = status.returncode == 0 and status.stdout.strip()
     originals = {file: file.read_bytes() for file in files}
     before = _modified(folder)
@@ -543,7 +585,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     write_text(pin.file, text[: pin.span[0]] + target + text[pin.span[1]:])
     changed = [f"{pin.label}: {pin.version} → {target}"]
     tool = config.get("landing.tool")
-    where = _rel(config, folder)
+    where = rel(folder, config.root)
     found = shutil.which(tool) if tool else None
     if not found:
         return changed, [f"update the lockfile: `{tool or 'npm'} install` in {where}"]
@@ -559,7 +601,7 @@ def _bump_landing(config: Config, version: str) -> tuple[list[str], list[str]]:
     installed = _modified(folder) - before - {pin.file.resolve()}
     if lockfile and lockfile.read_bytes() != originals[lockfile]:
         installed.add(lockfile.resolve())
-    changed += [f"{_rel(config, file)} (`{tool} install`)" for file in sorted(installed)]
+    changed += [f"{rel(file, config.root)} (`{tool} install`)" for file in sorted(installed)]
     return changed, []
 
 
@@ -577,14 +619,48 @@ def bump(config: Config, version: str) -> int:
     if submodule is None:
         raise PinError(f"bump needs the Laching submodule at {config.get('laching.path') or 'laching.path'}")
     commit = _remote_tag(submodule, tag)
-    move_submodule = _submodule_tag(submodule) != tag
-    if move_submodule:
-        if _git(submodule, "status", "--porcelain").stdout.strip():
-            raise PinError(f"{_rel(config, submodule)} has uncommitted changes, which would ride along to {tag}")
-        fetch = _git(submodule, "fetch", "--quiet", "origin", "tag", tag)
-        if fetch.returncode:
-            raise PinError(f"couldn't fetch {tag} into {_rel(config, submodule)}:\n{_tail(fetch)}")
+    moved = _move_submodule(config, submodule, tag)
+    edited = _bump_pins(config, version)
+    by_xcode = (_project_resolved(config) if xcode_resolves(config) and set(edited) & set(_swift_manifests(config))
+                else None)
+    changed, notes = _bump_resolved(config, version, commit, edited, by_xcode)
+    changed = [rel(file, config.root) for file in edited] + changed + moved
+    if config.path("mac.projectSpec", "mac.dir") in edited:
+        notes.append(regenerate_project(config))
+    if by_xcode:
+        before = by_xcode.read_bytes()
+        notes.append(resolve_packages(config))
+        changed += [rel(by_xcode, config.root)] if by_xcode.read_bytes() != before else []
+        if _repin_resolved(read_text(by_xcode), version, commit) != read_text(by_xcode):
+            notes.append(f"{rel(by_xcode, config.root)} doesn't name {tag} yet: build once in Xcode")
+    landing_changed, landing_notes = _bump_landing(config, version)
+    print(f"Laching {tag}:" if changed + landing_changed else f"Laching {tag}: every pin already names it, nothing changed")
+    for line in changed + landing_changed:
+        print(f"  changed  {line}")
+    for note in filter(None, notes + landing_notes):
+        print(f"  note     {note}")
+    return print_pins(load(config.root))  # companion.json may have changed
 
+
+def _move_submodule(config: Config, submodule: Path, tag: str) -> list[str]:
+    """Fetches `tag` into the submodule and checks it out, refusing when the submodule has uncommitted changes; the
+    line for the summary, none when it's already there."""
+    where = rel(submodule, config.root)
+    if _submodule_tag(submodule) == tag:
+        return []
+    if git(submodule, "status", "--porcelain").stdout.strip():
+        raise PinError(f"{where} has uncommitted changes, which would ride along to {tag}")
+    fetch = git(submodule, "fetch", "--quiet", "origin", "tag", tag)
+    if fetch.returncode:
+        raise PinError(f"couldn't fetch {tag} into {where}:\n{_tail(fetch)}")
+    checkout = git(submodule, "checkout", "--quiet", tag)
+    if checkout.returncode:
+        raise PinError(f"couldn't check out {tag} in {where}:\n{_tail(checkout)}")
+    return [f"{where} → {tag}"]
+
+
+def _bump_pins(config: Config, version: str) -> list[Path]:
+    """Rewrites every pin `pin_sites` finds in a file to `version` (keeping a `v` prefix); the files it changed."""
     edits: dict[Path, list[tuple[tuple[int, int], str]]] = {}
     for pin in pin_sites(config):
         if pin.file is None:
@@ -594,25 +670,30 @@ def bump(config: Config, version: str) -> int:
         new = ("v" if pin.version.startswith("v") else "") + version
         if pin.version != new:
             edits.setdefault(pin.file, []).append((pin.span, new))
-    changed: list[str] = []
     for file, replacements in edits.items():
         text = read_text(file)
         for (start, end), new in sorted(replacements, reverse=True):
             text = text[:start] + new + text[end:]
         write_text(file, text)
-        changed.append(_rel(config, file))
-    notes: list[str] = []
+    return list(edits)
+
+
+def _bump_resolved(config: Config, version: str, commit: str, edited: list[Path],
+                   by_xcode: Path | None) -> tuple[list[str], list[str]]:
+    """Repins Laching in the Package.resolved files (all but `by_xcode`, which Xcode rewrites), the core package's with
+    its manifest's originHash; what changed, and notes."""
     core = config.path("mac.core", "mac.dir")
-    swift_moved = any(file in edits for file in _swift_manifests(config))
-    by_xcode = _project_resolved(config) if swift_moved and xcode_resolves(config) else None
+    swift_moved = bool(set(edited) & set(_swift_manifests(config)))
+    changed: list[str] = []
+    notes: list[str] = []
     for file in _resolved_files(config):
         if not file.is_file() or file == by_xcode:
             continue
         text = read_text(file)
         repinned = _repin_resolved(text, version, commit)
         if file == _project_resolved(config) and swift_moved:
-            notes.append(f"{_rel(config, file)}: run `xcodebuild -resolvePackageDependencies` on a Mac for its originHash")
-        if core and file == core / "Package.resolved" and core / "Package.swift" in edits:
+            notes.append(f"{rel(file, config.root)}: run `xcodebuild -resolvePackageDependencies` on a Mac for its originHash")
+        if core and file == core / "Package.resolved" and core / "Package.swift" in edited:
             # A package's originHash is the SHA-256 of its manifest. The Xcode project's also covers the checkout's
             # path, so that one is left to Xcode (resolve_packages).
             digest = hashlib.sha256((core / "Package.swift").read_bytes()).hexdigest()
@@ -620,36 +701,8 @@ def bump(config: Config, version: str) -> int:
                               repinned, count=1)
         if repinned != text:
             write_text(file, repinned)
-            changed.append(_rel(config, file))
-    if move_submodule:
-        checkout = _git(submodule, "checkout", "--quiet", tag)
-        if checkout.returncode:
-            raise PinError(f"couldn't check out {tag} in {_rel(config, submodule)}:\n{_tail(checkout)}")
-        changed.append(f"{_rel(config, submodule)} → {tag}")
-
-    spec = config.path("mac.projectSpec", "mac.dir")
-    if spec in edits:
-        notes.append(regenerate_project(config))
-    if by_xcode:
-        before = by_xcode.read_bytes()
-        notes.append(resolve_packages(config))
-        if by_xcode.read_bytes() != before:
-            changed.append(_rel(config, by_xcode))
-        if _repin_resolved(read_text(by_xcode), version, commit) != read_text(by_xcode):
-            notes.append(f"{_rel(config, by_xcode)} doesn't name {tag} yet: build once in Xcode")
-    landing_changed, landing_notes = _bump_landing(config, version)
-    changed += landing_changed
-    notes += landing_notes
-    config = load(config.root)  # companion.json may have changed
-    if changed:
-        print(f"Laching {tag}:")
-        for line in changed:
-            print(f"  changed  {line}")
-    else:
-        print(f"Laching {tag}: every pin already names it, nothing changed")
-    for note in filter(None, notes):
-        print(f"  note     {note}")
-    return print_pins(config)
+            changed.append(rel(file, config.root))
+    return changed, notes
 
 
 # The link: the files `link` changed and what they held, kept in the repository's git folder (out of the work tree, one
@@ -666,7 +719,7 @@ class _LinkEdit(NamedTuple):
 
 
 def _link_dir(config: Config) -> Path:
-    result = _git(config.root, "rev-parse", "--git-path", _LINK_DIR)
+    result = git(config.root, "rev-parse", "--git-path", _LINK_DIR)
     if result.returncode == 0 and result.stdout.strip():
         path = Path(result.stdout.strip())
         return path if path.is_absolute() else (config.root / path).resolve()
@@ -763,14 +816,14 @@ def link(config: Config, checkout: Path | None = None) -> int:
                           r"(?:exactVersion|exact|version|from|minorVersion|majorVersion):[ \t]*\S+[ \t]*(?=\r?$)",
                           read_text(spec), re.M)
         if not match:
-            raise PinError(f"{_rel(config, spec)}: no Laching package with a url and a version to switch")
+            raise PinError(f"{rel(spec, config.root)}: no Laching package with a url and a version to switch")
         edits.append(_LinkEdit(spec, *match.span(), f"{match['indent']}path: {_link_path(laching, spec.parent)}"))
     core = config.path("mac.core", "mac.dir")
     if core and (core / "Package.swift").is_file():
         match = re.search(r'\.package\(\s*url:\s*"[^"]*(?i:laching)[^"]*"\s*,\s*exact:\s*"[^"]*"\s*\)',
                           read_text(core / "Package.swift"))
         if not match:
-            raise PinError(f"{_rel(config, core / 'Package.swift')}: no Laching `.package(url:…, exact:…)` to switch")
+            raise PinError(f"{rel(core / 'Package.swift', config.root)}: no Laching `.package(url:…, exact:…)` to switch")
         edits.append(_LinkEdit(core / "Package.swift", *match.span(), f'.package(path: "{_link_path(laching, core)}")'))
     windows = config.path("windows.dir")
     if windows and any(pin.file and pin.file.is_relative_to(windows) for pin in pin_sites(config)):
@@ -779,7 +832,7 @@ def link(config: Config, checkout: Path | None = None) -> int:
         if targets.is_file():
             text = read_text(targets)
             if (at := text.rfind("</Project>")) < 0:
-                raise PinError(f"{_rel(config, targets)} has no </Project> to add the link before")
+                raise PinError(f"{rel(targets, config.root)} has no </Project> to add the link before")
             edits.append(_LinkEdit(targets, at, at, block.replace("\n", "\r\n") if "\r\n" in text else block))
         else:
             edits.append(_LinkEdit(targets, 0, 0, f"<Project>\n{block}</Project>\n"))
@@ -799,21 +852,21 @@ def link(config: Config, checkout: Path | None = None) -> int:
     entries = []
     for file in [*(edit.file for edit in edits), *derived]:
         if file.is_file():
-            saved = folder / "files" / _rel(config, file)
+            saved = folder / "files" / rel(file, config.root)
             saved.parent.mkdir(parents=True, exist_ok=True)
             saved.write_bytes(file.read_bytes())
     for edit in edits:
         text = read_text(edit.file) if edit.file.is_file() else ""
         linked = text[: edit.start] + edit.new + text[edit.end:]
-        entries.append({"path": _rel(config, edit.file), "original": text[edit.start: edit.end], "linked": edit.new,
+        entries.append({"path": rel(edit.file, config.root), "original": text[edit.start: edit.end], "linked": edit.new,
                         "linkedHash": hashlib.sha256(linked.encode("utf8")).hexdigest()})
         write_text(edit.file, linked)
-    entries += [{"path": _rel(config, file), "derived": True} for file in derived]
+    entries += [{"path": rel(file, config.root), "derived": True} for file in derived]
     (folder / "state.json").write_text(json.dumps({"path": str(laching), "files": entries}, indent=2) + "\n", "utf8")
 
     print(f"Linked to {laching}:")
     for edit in edits:
-        print(f"  changed  {_rel(config, edit.file)}")
+        print(f"  changed  {rel(edit.file, config.root)}")
     if spec and (note := regenerate_project(config)):
         print(f"  note     {note}")
     if laching.name.lower() != "laching":
@@ -867,7 +920,7 @@ def unlink(config: Config) -> int:
     for line in restored:
         print(f"  restored {line}")
     spec = config.path("mac.projectSpec", "mac.dir")
-    if spec and any(entry["path"] == _rel(config, spec) for entry in state["files"]):
+    if spec and any(entry["path"] == rel(spec, config.root) for entry in state["files"]):
         try:
             note = regenerate_project(config)
         except PinError as error:

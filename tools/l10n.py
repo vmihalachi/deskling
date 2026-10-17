@@ -56,6 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import companion  # noqa: E402
+from companion import base_language, fail, git  # noqa: E402
 
 # Set by `configure` from the app's companion.json (tests point them elsewhere).
 CONFIG: companion.Config
@@ -133,11 +134,6 @@ def configure(config: companion.Config | None = None) -> None:
     SCOPED = scoped_keys(CONFIG.phrases_file)
 
 
-def base_language(code: str) -> str:
-    """"pt-BR" and "pt_BR" → "pt", as `Phrase.baseLanguage` compares them."""
-    return re.split(r"[-_]", code, maxsplit=1)[0].lower()
-
-
 def scoped_keys(phrases_file: Path | None) -> dict[str, set[str]]:
     """The catalog keys of phrases that exist in some languages only, with those languages (none without a bank)."""
     if phrases_file is None or not phrases_file.exists():
@@ -162,11 +158,6 @@ SPEC_RE = re.compile(r"%(?:(\d+)\$)?[-+ #0]*\d*(?:\.\d+)?(?:hh|h|ll|l|q|z|t|j)?(
 BRACE_RE = re.compile(r"\{[A-Za-z_][A-Za-z0-9_]*\}")
 TAG_RE = re.compile(r"</?[A-Za-z][^>]*>")
 INT_SPEC_RE = re.compile(r"%(?:\d+\$)?(?:ll|l|q|z)?[diu]")
-
-
-def fail(message: str) -> None:
-    print(f"error: {message}", file=sys.stderr)
-    sys.exit(2)
 
 
 # ---------------------------------------------------------------------------------------------- I/O
@@ -233,13 +224,6 @@ def set_path(tree: dict, dotted: str, value: object, reference: dict) -> None:
         items = [(key, node[key]) for key in order]
         node.clear()
         node.update(items)
-
-
-def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
-    # Without the GIT_DIR… a git hook exports, so `-C` picks the repository, a submodule's own (companion.git_env).
-    # UTF-8 as git writes it, whatever the locale (cp1252 on a Western Windows).
-    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, encoding="utf8",
-                          env=companion.git_env())
 
 
 def git_repository(folder: Path) -> Path | None:
@@ -579,7 +563,7 @@ def cmd_export(args) -> int:
         path = Path(args.out) / f"{lang}.json" if args.out else WORK_DIR / f"{lang}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(work, indent=2, ensure_ascii=False) + "\n", "utf8")
-        written.append(f"{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path} ({count})")
+        written.append(f"{companion.rel(path, ROOT)} ({count})")
     print("\n".join(written) if written else "nothing to translate")
     return 0
 
@@ -1148,24 +1132,16 @@ def stale_exports() -> list[Path]:
     if ANDROID_STRINGS:  # the Gradle project's folder, or four up from <app>/src/main/res without `android.dir`
         ports.append((ANDROID_DIR or ANDROID_STRINGS.parents[min(3, len(ANDROID_STRINGS.parents) - 1)], android_files))
     for folder, files in ports:
-        if not folder.exists():
-            continue
-        for path, text in files().items():
-            if not path.exists() or path.read_text("utf8") != text:
-                stale.append(path)
+        if folder.exists():
+            stale += companion.write_outputs(files(), check=True)
     return stale
 
 
 def write_export(files: dict[Path, str], dry_run: bool) -> int:
-    for path, text in files.items():
-        if dry_run:
-            print(f"would write {path} ({len(text.encode('utf8'))} bytes)")
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # LF on every OS: the exports are committed as-is (-text) and CI diffs them byte for byte.
-        with open(path, "w", encoding="utf8", newline="\n") as f:  # write_text(newline=) needs Python 3.10
-            f.write(text)
-        print(f"wrote {path}")
+    """Writes the files that differ from the catalog (LF on every OS: the exports are committed as-is, -text, and CI
+    diffs them byte for byte); with `dry_run`, lists them."""
+    for path in companion.write_outputs(files, check=dry_run):
+        print(f"would write {path} ({len(files[path].encode('utf8'))} bytes)" if dry_run else f"wrote {path}")
     return 0
 
 

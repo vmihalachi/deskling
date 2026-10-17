@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import argparse
 import base64
-import hashlib
 import json
 import math
 import re
@@ -905,36 +904,25 @@ def imageset_contents(asset: str, scales) -> str:
     return json.dumps({"images": images, "info": {"author": "xcode", "version": 1}}, indent=2, sort_keys=True) + "\n"
 
 
-def outputs(args) -> dict[Path, bytes]:
-    """Every file one run writes, by path."""
+def outputs(args) -> dict[Path, bytes | str]:
+    """Every file one run writes, by path: text as text (`companion.write_outputs` lets a CRLF checkout match), the PNGs
+    as bytes."""
     palette = load_palette(args.palette or args.design / "palette.json", required=args.mode == "vector")
     compiled = compile_skin(args.design / args.skin, palette, args.mode, args.moods)
-    files = {args.out: dump(compiled.data).encode()}
+    files: dict[Path, bytes | str] = {args.out: dump(compiled.data)}
     if args.swift_out:
-        files[args.swift_out] = swift_source(compiled.data, args.module, args.moods).encode()
+        files[args.swift_out] = swift_source(compiled.data, args.module, args.moods)
     for part, scales in sorted(compiled.layers.items()):
         asset = compiled.data["parts"][part]["image"]
         if args.assets:
             folder = args.assets / f"{asset}.imageset"
-            files[folder / "Contents.json"] = imageset_contents(asset, sorted(scales)).encode()
+            files[folder / "Contents.json"] = imageset_contents(asset, sorted(scales))
             for scale, png in scales.items():
                 files[folder / f"{asset}@{scale}x.png"] = png.read_bytes()
         if args.windows_assets:
             for scale, png in scales.items():
                 files[args.windows_assets / f"{asset}.scale-{scale * 100}.png"] = png.read_bytes()
     return files
-
-
-def _digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def _same(path: Path, current: bytes, data: bytes) -> bool:
-    """Whether the file on disk holds `data`: a text output also when the checkout turned its LFs into CRLFs (Windows,
-    core.autocrlf), which git takes back out on commit. The PNGs compare byte for byte."""
-    if path.suffix != ".png":
-        current = current.replace(b"\r\n", b"\n")
-    return _digest(current) == _digest(data)
 
 
 # MARK: Review sheet
@@ -1184,20 +1172,13 @@ def write(args) -> int:
     except CompileError as error:
         print(f"character.py: {error}", file=sys.stderr)
         return 2
-    stale = []
-    for path, data in files.items():
-        current = path.read_bytes() if path.exists() else None
-        if current is not None and _same(path, current, data):
-            continue
+    changed = companion.write_outputs(files, args.check)
+    for path in changed:
         if args.check:
-            stale.append(path)
+            print(f"{path.as_posix()} is stale: run tools/character.py and commit the result", file=sys.stderr)
         else:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
             print(f"wrote {path.as_posix()}")
-    for path in stale:
-        print(f"{path.as_posix()} is stale: run tools/character.py and commit the result", file=sys.stderr)
-    return 1 if stale else 0
+    return 1 if changed and args.check else 0
 
 
 if __name__ == "__main__":

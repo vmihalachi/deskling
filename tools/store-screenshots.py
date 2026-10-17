@@ -233,7 +233,7 @@ def main():
         if CANVAS != "mac" and (problem := play_problem(image)):
             sys.exit(f"store-screenshots: {path.name} {problem} (store.canvases)")
         image.save(path, optimize=True)
-        print(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path)
+        print(companion.rel(path, ROOT))
 
 
 if __name__ == "__main__":

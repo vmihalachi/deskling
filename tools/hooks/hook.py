@@ -138,10 +138,7 @@ def setup(root=None):
 
 def rel(path):
     """Root-relative with forward slashes on every OS, so the path patterns match on Windows too."""
-    try:
-        return Path(path).resolve().relative_to(ROOT.resolve()).as_posix()
-    except (ValueError, OSError):
-        return str(path).replace("\\", "/")
+    return companion.rel(path, ROOT)
 
 
 def guarded(path, for_edit):
@@ -532,7 +529,7 @@ def stop_problems(event):
 def git_lines(*args):
     """A git command's stdout lines in the app's repository; none when it fails (no repository, no commit yet)."""
     try:
-        done = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=20)
+        done = companion.git(ROOT, *args, timeout=20)
     except (OSError, subprocess.TimeoutExpired):
         return []
     return done.stdout.splitlines() if done.returncode == 0 else []
