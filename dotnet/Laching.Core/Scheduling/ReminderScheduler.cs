@@ -182,8 +182,7 @@ public sealed class ReminderScheduler
         var answering = HasUnansweredReminder || IsHolding || IsAfterCallArmed;
         PausedUntil = null;
         ClearBusyState();
-        var later = NextFireDate is { } next && next > snoozed ? next : snoozed;
-        NextFireDate = answering ? snoozed : later;
+        NextFireDate = answering || !(NextFireDate > snoozed) ? snoozed : NextFireDate;
     }
 
     /// <summary>

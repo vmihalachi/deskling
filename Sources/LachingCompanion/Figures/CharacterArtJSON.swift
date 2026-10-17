@@ -307,67 +307,26 @@ public enum CharacterArtJSON {
         }
     }
 
-    private struct GroupFile: Decodable {
-        var pivot: String
-        var parts: [String]
-        var follow: Double
-
-        var group: RigGroup { RigGroup(pivot: pivot, parts: parts, follow: follow) }
-    }
-
-    private struct BlinkFile: Decodable {
-        var duration: Double
-        var intervals: [Double]
-        var closedEyes: String
-    }
-
-    private struct BubbleFile: Decodable {
-        var pivot: String
-        var tuck: Double
-    }
-
-    private struct MoodFile: Decodable {
-        var eyes: String
-        var mouth: [String]
-        var mouthRate: Double
-        var headExtras: [String]
-        var overlays: [String]
-        var blink: Bool
-        var droop: Double
-        var sink: Double
-        var sway: Double
-        var swayPeriod: Double
-        var pulse: Double
-        var restMouth: String?
-
-        var moodRig: MoodRig {
-            MoodRig(
-                eyes: eyes, mouth: mouth, mouthRate: mouthRate, headExtras: headExtras, overlays: overlays, blink: blink,
-                droop: droop, sink: sink, sway: sway, swayPeriod: swayPeriod, pulse: pulse, restMouth: restMouth)
-        }
-    }
-
     private struct RigFile: Decodable {
         var period: Double
         var stillTime: Double
         var always: [String]
-        var head: GroupFile
-        var stem: GroupFile
-        var pulse: GroupFile
-        var blink: BlinkFile
-        var moods: [String: MoodFile]
+        var head: RigGroup
+        var stem: RigGroup
+        var pulse: RigGroup
+        var blink: Blink
+        var moods: [String: MoodRig]
         var glyph: [String: [String]]
-        var bubble: BubbleFile
+        var bubble: BubbleAnchor
 
         func rig() throws -> Rig {
             var moods: [Mood: MoodRig] = [:]
-            for (name, entry) in self.moods { moods[try mood(name)] = entry.moodRig }
+            for (name, entry) in self.moods { moods[try mood(name)] = entry }
             var glyph: [Mood: [String]] = [:]
             for (name, frames) in self.glyph { glyph[try mood(name)] = frames }
             return Rig(
-                period: period, stillTime: stillTime, always: always, head: head.group, stem: stem.group, pulse: pulse.group,
-                blink: Blink(duration: blink.duration, intervals: blink.intervals, closedEyes: blink.closedEyes),
-                moods: moods, glyph: glyph, bubble: BubbleAnchor(pivot: bubble.pivot, tuck: bubble.tuck))
+                period: period, stillTime: stillTime, always: always, head: head, stem: stem, pulse: pulse, blink: blink, moods: moods,
+                glyph: glyph, bubble: bubble)
         }
     }
 

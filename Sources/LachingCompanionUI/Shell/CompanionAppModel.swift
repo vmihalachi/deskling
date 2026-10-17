@@ -584,7 +584,7 @@
             case .scheduled(let date):
                 if snapshot.busy.contains(.call) { return copy.quietCall() }
                 if snapshot.busy.contains(.fullScreen) { return copy.quietFullScreen() }
-                if snapshot.isScreenLocked || snapshot.idleSeconds >= QuietRules.awayThreshold { return copy.asleep() }
+                if snapshot.isAway { return copy.asleep() }
                 let minutes = max(1, Int((date.timeIntervalSince(now) / 60).rounded(.up)))
                 return copy.nextIn(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))
             }

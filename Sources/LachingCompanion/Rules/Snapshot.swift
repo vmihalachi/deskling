@@ -29,4 +29,8 @@ public struct Snapshot: Equatable, Sendable {
 
     /// Nobody busy, nobody away, nothing muted.
     public static let calm = Snapshot()
+
+    /// The user is away: the screen is locked, or nobody touched the mouse or keyboard for
+    /// `QuietRules.awayThreshold`. The one spelling of the rule the mood, the welcome back and the status line read.
+    public var isAway: Bool { isScreenLocked || idleSeconds >= QuietRules.awayThreshold }
 }

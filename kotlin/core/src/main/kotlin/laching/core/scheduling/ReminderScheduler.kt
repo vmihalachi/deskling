@@ -157,9 +157,7 @@ public class ReminderScheduler(
         val answering = hasUnansweredReminder || isHolding || isAfterCallArmed
         pausedUntil = null
         clearBusyState()
-        val current = nextFireDate
-        val later = if (current != null && current > snoozed) current else snoozed
-        nextFireDate = if (answering) snoozed else later
+        nextFireDate = if (answering) snoozed else maxOf(nextFireDate ?: snoozed, snoozed)
     }
 
     /** Remind when the current call ends, or after [SchedulerConfig.afterCallFallbackSeconds] if it never does. */
@@ -224,11 +222,9 @@ public class ReminderScheduler(
         }
         var cursor = from
         var paused = pausedUntil
-        var fire: Instant? = if (paused == null && isWithinActiveHours(from)) nextFireDate else null
-        if (fire != null && fire <= from) {
-            fire = from.plusSeconds(nextInterval())
-        } else if (fire == null && paused == null && isWithinActiveHours(from)) {
-            fire = from.plusSeconds(nextInterval())
+        var fire: Instant? = null
+        if (paused == null && isWithinActiveHours(from)) {
+            fire = nextFireDate?.takeIf { it > from } ?: from.plusSeconds(nextInterval())
         }
 
         val results = ArrayList<Instant>(min(limit, 64))
@@ -245,8 +241,7 @@ public class ReminderScheduler(
             }
 
             if (!isWithinActiveHours(cursor)) {
-                fire = null
-                val nextActive = nextActiveDate(cursor, until) ?: break
+                val nextActive = firstMinute(cursor, until) { isWithinActiveHours(it) } ?: break
                 cursor = nextActive
                 fire = cursor.plusSeconds(nextInterval())
                 continue
@@ -273,30 +268,25 @@ public class ReminderScheduler(
     /** The first whole minute after [date]. */
     private fun nextMinuteBoundary(date: Instant): Instant = Instant.ofEpochSecond((date.epochSecond / 60 + 1) * 60)
 
-    private fun nextActiveDate(
+    /** The first whole minute after [after], up to [upTo], where [test] holds. */
+    private fun firstMinute(
         after: Instant,
-        until: Instant,
+        upTo: Instant,
+        test: (Instant) -> Boolean,
     ): Instant? {
         var probe = nextMinuteBoundary(after)
-        while (probe <= until) {
-            if (isWithinActiveHours(probe)) return probe
+        while (probe <= upTo) {
+            if (test(probe)) return probe
             probe = probe.plusSeconds(60)
         }
         return null
     }
 
+    /** The first inactive minute after [after], or [upTo] itself when it is inactive. */
     private fun firstInactiveDate(
         after: Instant,
         upTo: Instant,
-    ): Instant? {
-        var probe = nextMinuteBoundary(after)
-        while (probe <= upTo) {
-            if (!isWithinActiveHours(probe)) return probe
-            probe = probe.plusSeconds(60)
-        }
-        if (!isWithinActiveHours(upTo)) return upTo
-        return null
-    }
+    ): Instant? = firstMinute(after, upTo) { !isWithinActiveHours(it) } ?: upTo.takeUnless { isWithinActiveHours(it) }
 
     private fun fireReminder(now: Instant): SchedulerDecision {
         clearBusyState()

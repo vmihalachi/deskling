@@ -193,9 +193,7 @@ public sealed class CompanionCoordinator
     {
         if (previous is null)
             return false;
-        var wasGone = previous.IsScreenLocked || previous.IdleSeconds >= QuietRules.AwayThresholdSeconds;
-        var isHere = !current.IsScreenLocked && current.IdleSeconds < QuietRules.AwayThresholdSeconds;
-        return wasGone && isHere;
+        return previous.IsAway && !current.IsAway;
     }
 
     private Delivery? Deliver(Trigger trigger, Snapshot snapshot, DateTimeOffset now)

@@ -29,6 +29,13 @@ public sealed record Snapshot
     /// <summary>Nobody busy, nobody away, nothing muted.</summary>
     public static Snapshot Calm { get; } = new();
 
+    /// <summary>
+    /// The user is away: the screen is locked, or nobody touched the mouse or keyboard for
+    /// <see cref="QuietRules.AwayThresholdSeconds"/>. The one spelling of the rule the mood, the welcome back and the
+    /// status line read.
+    /// </summary>
+    public bool IsAway => IsScreenLocked || IdleSeconds >= QuietRules.AwayThresholdSeconds;
+
     public bool Equals(Snapshot? other) =>
         other is not null
         && Busy.SetEquals(other.Busy)

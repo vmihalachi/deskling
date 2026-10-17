@@ -150,9 +150,7 @@ public final class CompanionCoordinator {
 
     private func cameBack(from previous: Snapshot?, to current: Snapshot) -> Bool {
         guard let previous else { return false }
-        let wasGone = previous.isScreenLocked || previous.idleSeconds >= QuietRules.awayThreshold
-        let isHere = !current.isScreenLocked && current.idleSeconds < QuietRules.awayThreshold
-        return wasGone && isHere
+        return previous.isAway && !current.isAway
     }
 
     private func deliver(_ trigger: Trigger, snapshot: Snapshot, now: Date) -> Delivery? {
