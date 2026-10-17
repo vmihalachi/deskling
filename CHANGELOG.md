@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.2 - 2026-10-17
+
 - **Kotlin (`kotlin/`)**: the third implementation, for Android (vmihalachi/mybackhurts#54): a Gradle build of its
   own (`:core`, `:android`, `:testing`; Gradle 9, AGP 9.4, Kotlin 2.4 on a JDK 17, `gradle.properties` carrying
   `desklingVersion`, ktlint for the style) that an app includes with `includeBuild` and dependency substitution
