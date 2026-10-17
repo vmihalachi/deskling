@@ -329,7 +329,6 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
         var snapshot = Signals.Snapshot();
         if (Coordinator.Tick(snapshot) is { } delivery)
             Perform(delivery);
-        Signals.WatchForHold(Coordinator.Scheduler.IsHolding);
         RefreshStatus(snapshot);
     }
 
@@ -798,13 +797,11 @@ public abstract class CompanionAppModel<TWindow, TSettings> : INotifyPropertyCha
     }
 
     /// <summary>
-    /// Every poll of the busy watch: the scheduler notes a held line's busy (its grace counts from when the busy ended),
-    /// a change refreshes everything, and while busy the presence learns the moment, so the character comes back 10 s
-    /// after the call really ended.
+    /// Every poll of the busy watch: a change refreshes everything; while busy, the presence learns the moment, so the
+    /// character comes back 10 s after the call really ended.
     /// </summary>
     private void BusyPolled(IReadOnlySet<BusyReason> reasons, bool changed)
     {
-        Coordinator.Scheduler.NoteBusy(reasons);
         if (changed)
             RefreshStatus();
         else if (reasons.Count > 0)

@@ -328,26 +328,6 @@ public sealed class CompanionAppModelTests
     }
 
     [Fact]
-    public void AHeldLineWatchesTheBusyStateAndItsGraceCountsFromThePoll()
-    {
-        var model = MakeModel();
-        busy.Reasons = [BusyReason.Call];
-        for (var i = 0; i < 180 && !model.Coordinator.Scheduler.IsHolding; i++)
-            Run(model, 1);
-        Assert.True(model.Coordinator.Scheduler.IsHolding);
-        Assert.True(model.Signals.IsWatchingBusy);
-        // The call goes on for 50 s after the tick that held the line, then ends.
-        clock.AdvanceSeconds(50);
-        model.Signals.PollBusy();
-        busy.Reasons = [];
-        // A tick 10 s after the call: still in the 30 s grace, though 60 s after the last tick that saw the call.
-        clock.AdvanceSeconds(10);
-        model.Tick();
-        Assert.Empty(speaker.Spoken);
-        Assert.True(model.Coordinator.Scheduler.IsHolding);
-    }
-
-    [Fact]
     public void ACallStartingMidLineStopsSpeech()
     {
         var model = MakeModel();

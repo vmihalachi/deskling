@@ -53,8 +53,6 @@ the code it was extracted from. The `jitter-*` vectors add the one new behavior.
     fire date an earlier run scheduled; ignored while paused, outside the active hours or when not after now),
     `reminderDelivered` (the system delivered a reminder scheduled ahead: unanswered, so `snooze` reminds in its minutes).
   - `isWithinActiveHours`: ask about `time`; the answer is `expect.result`.
-  - `noteBusy`: repeat `count` times: advance the clock by `everySeconds`, then call `noteBusy` with the `busy`
-    reasons a busy poll read between ticks (while a reminder is held, a watched reason restarts the grace from now).
 - `steps[].expect`: `decisions` (for `ticks`: the 1-based ticks that returned `remind` or `postpone`; every other
   tick returned none), `result`, and `state`: `now`, `status` (`{type: "scheduled"|"paused", date}`,
   `{type: "outsideActiveHours"|"away"}` or `{type: "postponed", reason}`), `nextFireDate`, `pausedUntil`,

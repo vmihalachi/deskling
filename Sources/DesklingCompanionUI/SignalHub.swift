@@ -5,10 +5,9 @@
     import Foundation
 
     /// Builds the companion's `Snapshot` from Deskling's permission-free system signals, and raises the events the shell
-    /// notices on its own (battery, charger, appearance). While a line is spoken, the character stands on the desktop or
-    /// the scheduler holds a line it polls the busy state every second, so speech stops the instant a call starts, the
-    /// character steps off the desktop right away and a held line's grace counts from when the busy ended. Reads device
-    /// state only; never prompts. Needs the main actor.
+    /// notices on its own (battery, charger, appearance). While a line is spoken or the character stands on the desktop it
+    /// polls the busy state every second, so speech stops the instant a call starts and the character steps off the
+    /// desktop right away. Reads device state only; never prompts. Needs the main actor.
     @MainActor
     public final class SignalHub {
         /// The battery level a "battery low" comment fires below, as it drops past it on battery.
@@ -36,7 +35,6 @@
         private var busyWatch: Timer?
         private var watchingSpeech = false
         private var watchingDesktop = false
-        private var watchingHold = false
         private var lastBusy: Set<BusyReason> = []
 
         public init(
@@ -85,18 +83,10 @@
             updateBusyWatch()
         }
 
-        /// The scheduler holds a line until the user is free: watch, so the scheduler learns when the busy ends
-        /// (`ReminderScheduler.noteBusy`, through `onBusyPoll`).
-        public func watchForHold(_ on: Bool) {
-            guard on != watchingHold else { return }
-            watchingHold = on
-            updateBusyWatch()
-        }
-
         public var isWatchingBusy: Bool { busyWatch != nil }
 
         private func updateBusyWatch() {
-            if watchingSpeech || watchingDesktop || watchingHold {
+            if watchingSpeech || watchingDesktop {
                 guard busyWatch == nil else { return }
                 lastBusy = []
                 let timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in

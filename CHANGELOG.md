@@ -6,15 +6,12 @@ package and the NuGet packages together.
 
 ## Unreleased
 
-- **Core (`ReminderScheduler.noteBusy` / `NoteBusy` / Kotlin `noteBusy`)**: a busy poll between ticks tells the
-  scheduler the user is still busy, so a held reminder's grace counts from when the call or full screen ended, not from
-  the last tick that saw it (a line came 20 to 40 s after leaving instead of at least 30 s, #35). Does nothing while no
-  reminder is held, so apps that don't call it behave as before. The `noteBusy` step op and the
-  `noted-busy-end-starts-the-grace` vector pin it on every side.
-- **CompanionUI and Companion.Shell (`SignalHub.watchForHold` / `WatchForHold`, `CompanionAppModel`)**: while the
-  scheduler holds a line the 1 s busy watch runs, and each poll calls `noteBusy`.
 - **Companion (`CompanionCoordinator`)**: a held line comes back as `afterCall` only when it was held for a call; one
-  held for full screen comes back as a plain `due` line (#35). `conformance/companion/quiet` changes to match.
+  held for full screen comes back as a plain `due` line (#35). `conformance/companion/quiet/full-screen-hushed` changes
+  to match.
+- **Core (`SchedulerConfig.busyGrace`), Companion (`ChatterCadence.busyGrace`)**: the docs say what the grace really
+  gives: it counts from the last tick that saw the user busy, so with 20 s ticks a held reminder comes 20 to 40 s after
+  the busy ended (#35). No behavior change.
 
 ## 0.12.5 - 2026-10-17
 

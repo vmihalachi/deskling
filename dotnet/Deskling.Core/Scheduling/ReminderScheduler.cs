@@ -139,7 +139,9 @@ public sealed class ReminderScheduler
         }
 
         // Busy: a call or full-screen app isn't a break, so idle doesn't reset the timer.
-        var watched = WatchedBusyReasons();
+        var watched = Config.PostponeReasons.ToHashSet();
+        if (IsAfterCallArmed)
+            watched.Add(BusyReason.Call);
         var reasons = busy.CurrentBusyReasons().Where(watched.Contains).ToHashSet();
         if (reasons.Count > 0)
         {
@@ -237,34 +239,6 @@ public sealed class ReminderScheduler
     /// answered, <see cref="Snooze"/> reminds again in its minutes, as after a reminder <see cref="Tick"/> fired.
     /// </summary>
     public void ReminderDelivered() => HasUnansweredReminder = true;
-
-    /// <summary>
-    /// Between ticks, while a reminder is held: <paramref name="reasons"/> (what a busy poll just read) still include
-    /// one <see cref="Tick"/> watches, so the grace counts from now. A shell that polls the busy state every second
-    /// calls it, so a held reminder comes <see cref="SchedulerConfig.BusyGraceSeconds"/> after the busy ended rather than
-    /// after the last tick that saw it. Never fires or postpones anything itself, and does nothing while no reminder is
-    /// held.
-    /// </summary>
-    public void NoteBusy(IReadOnlySet<BusyReason> reasons)
-    {
-        if (!IsHolding)
-            return;
-        var watched = WatchedBusyReasons();
-        var noted = reasons.Where(watched.Contains).ToHashSet();
-        if (noted.Count == 0)
-            return;
-        lastBusyAt = clock.Now;
-        lastBusyReason = noted.Contains(BusyReason.Call) ? BusyReason.Call : BusyReason.FullScreen;
-    }
-
-    /// <summary>The busy reasons that hold a reminder: the configured ones, and calls while "after this call" is on.</summary>
-    private HashSet<BusyReason> WatchedBusyReasons()
-    {
-        var watched = Config.PostponeReasons.ToHashSet();
-        if (IsAfterCallArmed)
-            watched.Add(BusyReason.Call);
-        return watched;
-    }
 
     private SchedulerDecision FireReminder(DateTimeOffset now)
     {

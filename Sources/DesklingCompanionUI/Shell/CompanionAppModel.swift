@@ -263,7 +263,6 @@
         public func tick() {
             let snapshot = signals.snapshot()
             if let delivery = coordinator.tick(snapshot: snapshot) { perform(delivery) }
-            signals.watchForHold(coordinator.scheduler.isHolding)
             refreshStatus(snapshot: snapshot)
         }
 
@@ -667,11 +666,9 @@
             }
         }
 
-        /// Every poll of the busy watch: the scheduler notes a held line's busy (its grace counts from when the busy
-        /// ended), a change refreshes everything, and while busy the presence learns the moment, so the character comes
-        /// back 10 s after the call really ended.
+        /// Every poll of the busy watch: a change refreshes everything; while busy, the presence learns the moment, so
+        /// the character comes back 10 s after the call really ended.
         private func busyPolled(_ reasons: Set<BusyReason>, changed: Bool) {
-            coordinator.scheduler.noteBusy(reasons)
             if changed {
                 refreshStatus()
             } else if !reasons.isEmpty {

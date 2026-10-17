@@ -132,20 +132,6 @@ class SchedulerConformanceTests {
                     scheduler.restore(ConformanceSupport.date(step.string("time")))
                 }
 
-                "noteBusy" -> {
-                    val reasons =
-                        step["busy"]
-                            ?.jsonArray
-                            .orEmpty()
-                            .map { ConformanceSupport.parseBusy(it.jsonPrimitive.content) }
-                            .toSet()
-                    val every = step["everySeconds"]?.jsonPrimitive?.double ?: 0.0
-                    repeat(step["count"]!!.jsonPrimitive.int) {
-                        clock.advanceSeconds(every)
-                        scheduler.noteBusy(reasons)
-                    }
-                }
-
                 "isWithinActiveHours" -> {
                     val result = scheduler.isWithinActiveHours(ConformanceSupport.date(step.string("time")))
                     assertEquals(expect["result"]!!.jsonPrimitive.boolean, result, "$where: result")
