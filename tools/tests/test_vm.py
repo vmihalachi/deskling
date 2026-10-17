@@ -248,7 +248,7 @@ class LinkedTests(unittest.TestCase):
         self.assertEqual(linked.stage, self.ctx.stage.parent / "linked-laching", "shared by every app linked there")
         self.assertEqual([name for name, _, _ in vm.list_files(linked.checkout)], [
             ".gitignore", "Package.swift", "README.md", "Tests/CoreTests/Resources/vectors.json",
-            "dotnet/Laching.Core/Laching.Core.csproj", "dotnet/Laching.Core/Draft.cs"])
+            "dotnet/Laching.Core/Draft.cs", "dotnet/Laching.Core/Laching.Core.csproj"])
         os.environ["LACHING_VM_DIR"] = "D:\\vm\\"
         try:
             self.assertEqual(vm.linked_checkout(self.ctx).guest, r"D:\vm\laching")
