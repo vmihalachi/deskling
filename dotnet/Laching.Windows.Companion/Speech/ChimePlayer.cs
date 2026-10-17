@@ -21,10 +21,7 @@ public sealed class ChimePlayer : IChimePlaying
     public ChimePlayer(string? folder = null, SynchronizationContext? ui = null)
     {
         this.folder = folder ?? Path.Combine(AppContext.BaseDirectory, "Sounds");
-        this.ui =
-            ui
-            ?? SynchronizationContext.Current
-            ?? throw new InvalidOperationException("Create the chime player on the UI thread, or pass its SynchronizationContext.");
+        this.ui = Shell.UiThread.Resolve(ui, "chime player");
     }
 
     public void Play(string sound, double volume, Action? completion)

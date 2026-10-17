@@ -89,7 +89,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         string? title = null
     )
     {
-        queue = DispatcherQueue.GetForCurrentThread() ?? throw new InvalidOperationException("Make the desktop character on the UI thread.");
+        queue = UiThread.Resolve(queue: null, "desktop character");
         this.layout = layout;
         this.size = size;
         this.position = position;

@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Laching.Core.Settings;
 using Windows.Storage;
 
@@ -94,8 +93,3 @@ public sealed class LocalSettingsStore : ISettingsStore
     private static ApplicationDataCompositeValue Composite(string type, string json) =>
         new() { [TypeField] = type, [JsonField] = json };
 }
-
-/// <summary>Source-generated JSON for the list settings, so it works under Native AOT.</summary>
-[JsonSerializable(typeof(int[]))]
-[JsonSerializable(typeof(string[]))]
-internal sealed partial class SettingsJson : JsonSerializerContext;

@@ -122,7 +122,7 @@ public sealed class DesktopWindow : IDisposable
     /// <param name="isMovable">Whether a drag moves it; off for a window riding along beside another.</param>
     public DesktopWindow(UIElement content, FigureSize size, PointInt32 anchor, bool isMovable = true)
     {
-        queue = DispatcherQueue.GetForCurrentThread() ?? throw new InvalidOperationException("Make a desktop window on the UI thread.");
+        queue = Shell.UiThread.Resolve(queue: null, "desktop window");
         timers = new Shell.DispatcherTimers(queue);
         this.size = size;
         this.anchor = anchor;

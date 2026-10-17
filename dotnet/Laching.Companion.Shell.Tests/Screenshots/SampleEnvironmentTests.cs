@@ -18,7 +18,7 @@ public sealed class SampleEnvironmentTests
     public void NothingIsBusyIdleOrReal()
     {
         var now = new DateTimeOffset(2026, 9, 29, 10, 30, 0, TimeSpan.Zero);
-        var sample = new SampleEnvironment(new Dictionary<string, string>(), new ManualTimers(), now);
+        var sample = new SampleEnvironment(new ProductCatalog([]), new Dictionary<string, string>(), new ManualTimers(), now);
         var snapshot = sample.Signals.Snapshot();
         Assert.Empty(snapshot.Busy);
         Assert.Equal(0, snapshot.IdleSeconds);
@@ -28,8 +28,8 @@ public sealed class SampleEnvironmentTests
     [Fact]
     public void TheSeedIsTheSameEveryRunAndOnEverySide()
     {
-        var first = new SampleEnvironment(new Dictionary<string, string>(), new ManualTimers());
-        var second = new SampleEnvironment(new Dictionary<string, string>(), new ManualTimers());
+        var first = new SampleEnvironment(new ProductCatalog([]), new Dictionary<string, string>(), new ManualTimers());
+        var second = new SampleEnvironment(new ProductCatalog([]), new Dictionary<string, string>(), new ManualTimers());
         Assert.Equal(first.Seed, second.Seed);
         Assert.Equal(20_261_013UL, first.Seed);  // Swift's ScreenshotCapture.SampleEnvironment.sampleSeed
     }
@@ -38,8 +38,8 @@ public sealed class SampleEnvironmentTests
     public async Task ThePricesAreFixedAndPurchasesCancelled()
     {
         var catalog = new ProductCatalog(["fixture.supporter"], ["fixture.tip"]);
-        var sample = new SampleEnvironment(new Dictionary<string, string> { ["fixture.supporter"] = "1,99 €" }, new ManualTimers());
-        var store = sample.Purchases(catalog);
+        var sample = new SampleEnvironment(catalog, new Dictionary<string, string> { ["fixture.supporter"] = "1,99 €" }, new ManualTimers());
+        var store = sample.Purchases();
         await store.LoadProductsAsync();
         Assert.Equal("1,99 €", store.Price("fixture.supporter"));
         Assert.Null(store.Price("fixture.tip"));

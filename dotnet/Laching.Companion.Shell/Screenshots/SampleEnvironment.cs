@@ -11,8 +11,8 @@ namespace Laching.Companion.Shell.Screenshots;
 /// What a screenshot run's model is built on, so the user's real settings and the store are never touched (Swift's
 /// <c>ScreenshotCapture.SampleEnvironment</c>): an in-memory settings store, a clock stopped at <see cref="Now"/> (a
 /// Tuesday at 10:30 by default, inside the default active hours), an idle time of zero, never busy, a signal hub with no
-/// system watchers, silent channels, a store with fixed prices and a fixed <see cref="Seed"/>. The capture itself is the
-/// platform's.
+/// system watchers, silent channels, a store with fixed prices (a <see cref="MockStoreBackend"/>) and a fixed
+/// <see cref="Seed"/>. The capture itself is the platform's.
 /// </summary>
 public sealed class SampleEnvironment
 {
@@ -22,15 +22,21 @@ public sealed class SampleEnvironment
     /// same, so the next line's time reads the same every run.
     /// </summary>
     public const ulong SampleSeed = 20_261_013;
-    /// <param name="prices">Display prices by product id, as the store would show them ("1,99 €").</param>
+    /// <param name="catalog">The app's products.</param>
+    /// <param name="prices">Display prices by product id, as the store would show them ("1,99 €"); a product without one isn't listed.</param>
     /// <param name="timers">The UI thread's timers (the hub's busy watch never runs: nothing is ever busy).</param>
     /// <param name="now">The moment the run shows; <see cref="SampleNow"/> by default.</param>
-    public SampleEnvironment(IReadOnlyDictionary<string, string> prices, ITimers timers, DateTimeOffset? now = null)
+    public SampleEnvironment(ProductCatalog catalog, IReadOnlyDictionary<string, string> prices, ITimers timers, DateTimeOffset? now = null)
     {
         Now = now ?? SampleNow(TimeZoneInfo.Local, DateTimeOffset.Now);
         Clock = new FixedClock(Now);
         Signals = new SignalHub(Idle, Busy, null, null, null, null, timers);
-        Backend = new FixedPriceBackend(prices);
+        Backend = new MockStoreBackend(catalog)
+        {
+            PriceOf = id => prices[id],
+            MissingProducts = [.. catalog.All.Where(id => !prices.ContainsKey(id))],
+            NextOutcome = PurchaseOutcome.Cancelled,
+        };
     }
 
     public DateTimeOffset Now { get; }
@@ -54,11 +60,14 @@ public sealed class SampleEnvironment
 
     public SilentNotifier Notifier { get; } = new();
 
-    /// <summary>The sample store; set <see cref="FixedPriceBackend.Owned"/> to shoot what a buyer sees.</summary>
-    public FixedPriceBackend Backend { get; }
+    /// <summary>
+    /// The sample store: the prices given, every purchase cancelled; set <see cref="MockStoreBackend.Owned"/> to shoot
+    /// what a buyer sees.
+    /// </summary>
+    public MockStoreBackend Backend { get; }
 
     /// <summary>A store over <see cref="Backend"/> that keeps what it learns in a throwaway settings store.</summary>
-    public PurchaseStore Purchases(ProductCatalog catalog) => new(catalog, Backend, new InMemorySettingsStore());
+    public PurchaseStore Purchases() => new(Backend.Catalog, Backend, new InMemorySettingsStore());
 
     /// <summary>
     /// The next <paramref name="weekday"/> at <paramref name="hour"/>:<paramref name="minute"/> in
@@ -107,24 +116,4 @@ public sealed class SilentNotifier : ICompanionNotifying
     public void RefreshAuthorization(Action<NotificationPermission> completion) => completion(NotificationPermission.Authorized);
 
     public void Post(string line) { }
-}
-
-/// <summary>Fixed prices without asking the store. Purchases are cancelled; <see cref="Owned"/> is what the store says is bought.</summary>
-public sealed class FixedPriceBackend(IReadOnlyDictionary<string, string> prices) : IStoreBackend
-{
-    public IReadOnlyDictionary<string, string> Prices { get; } = prices;
-
-    public HashSet<string> Owned { get; set; } = [];
-
-    public Task<IReadOnlyList<StoreProduct>> LoadProductsAsync(IReadOnlyList<string> ids) =>
-        Task.FromResult<IReadOnlyList<StoreProduct>>(
-            ids.Where(Prices.ContainsKey).Select(id => new StoreProduct(id, Prices[id])).ToArray());
-
-    public Task<IReadOnlySet<string>> EntitledProductIdsAsync() => Task.FromResult<IReadOnlySet<string>>(Owned.ToHashSet());
-
-    public Task<PurchaseOutcome> PurchaseAsync(string id) => Task.FromResult(PurchaseOutcome.Cancelled);
-
-    public Task RestoreAsync() => Task.CompletedTask;
-
-    public void ObserveTransactions(Action<TransactionUpdate> onUpdate) { }
 }

@@ -95,7 +95,7 @@ public partial class App : CompanionApp
             return false;
         Prepare();
         var host = MakeHost();
-        var sample = new SampleEnvironment(new Dictionary<string, string> { [FixtureModel.Supporter] = "€4.99", [FixtureSupport.Tip] = "€1.99" }, host.Timers);
+        var sample = new SampleEnvironment(Catalog, new Dictionary<string, string> { [FixtureModel.Supporter] = "€4.99", [FixtureSupport.Tip] = "€1.99" }, host.Timers);
         var settings = new CompanionSettings(sample.Store, FixtureModel.Defaults) { HasCompletedOnboarding = true };
         var model = made = new FixtureModel(
             settings,
@@ -110,7 +110,7 @@ public partial class App : CompanionApp
             sample.Chime,
             sample.Notifier,
             sample.Signals,
-            sample.Purchases(Catalog),
+            sample.Purchases(),
             sample.Seed
         );
         new ScreenshotScript<FixtureWindow, CompanionSettings>(model, host, sample.Backend, id => id.ToString().ToLowerInvariant()).Run(

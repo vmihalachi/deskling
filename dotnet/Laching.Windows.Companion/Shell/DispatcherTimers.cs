@@ -14,10 +14,7 @@ public sealed class DispatcherTimers : ITimers
     /// <param name="queue">The UI thread's queue; the current thread's by default.</param>
     public DispatcherTimers(DispatcherQueue? queue = null)
     {
-        this.queue =
-            queue
-            ?? DispatcherQueue.GetForCurrentThread()
-            ?? throw new InvalidOperationException("Create the timers on the UI thread, or pass its DispatcherQueue.");
+        this.queue = UiThread.Resolve(queue, "timers");
     }
 
     public IDisposable After(double seconds, Action work) => Start(seconds, repeating: false, work);
