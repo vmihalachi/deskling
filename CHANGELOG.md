@@ -10,6 +10,10 @@ package and the NuGet packages together.
   instead of walking a `JsonDocument` by hand (#85). Art that parsed before parses to the same values; a missing member
   (or a null where a value belongs) now fails with the serializer's message, which names the member, instead of
   `missing 'x'`, still as an `InvalidDataException` starting `not character art JSON:`.
+- **Core (`StringTable`), Windows (`Loc`), Testing (`ReswStrings`)**: a new public base, `Laching.Core.Localization.StringTable`,
+  holds the `.resw` lookup, plural and fallback logic (`Get`, `Localize`, `Format`, `Plural`) over an abstract
+  `Lookup(name)` (#86). `Loc` and `ReswStrings` both read through it instead of each keeping a copy, so the test double
+  can't drift from the app. No behavior change.
 
 ## 0.13.0 - 2026-10-17
 

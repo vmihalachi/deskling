@@ -6,12 +6,12 @@ using Laching.Core.Localization;
 namespace Laching.Testing;
 
 /// <summary>
-/// <see cref="IStrings"/> over an app's generated <c>Strings/&lt;language&gt;/Resources.resw</c>, read the way the
-/// Windows app's <c>Loc</c> reads it (names through <see cref="ReswName"/>, plural variants as <c>name__one</c>,
-/// <c>name__other</c>, a missing key as English from the key), so an app's model tests see its real words without
-/// Windows' resource system.
+/// <see cref="IStrings"/> over an app's generated <c>Strings/&lt;language&gt;/Resources.resw</c>, read by the same
+/// <see cref="StringTable"/> as the Windows app's <c>Loc</c> (names through <see cref="ReswName"/>, plural variants as
+/// <c>name__one</c>, <c>name__other</c>, a missing key as English from the key), so an app's model tests see its real
+/// words without Windows' resource system.
 /// </summary>
-public sealed class ReswStrings : IStrings
+public sealed class ReswStrings : StringTable, IStrings
 {
     private readonly IReadOnlyDictionary<string, string> values;
 
@@ -22,9 +22,9 @@ public sealed class ReswStrings : IStrings
         this.values = values;
     }
 
-    public string Language { get; }
+    public override string Language { get; }
 
-    public CultureInfo Culture { get; }
+    public override CultureInfo Culture { get; }
 
     /// <summary>The keys asked for that the file doesn't have, for a test that every string an app uses exists.</summary>
     public ISet<string> Missing { get; } = new SortedSet<string>(StringComparer.Ordinal);
@@ -45,24 +45,7 @@ public sealed class ReswStrings : IStrings
     /// <summary>Whether the file has <paramref name="key"/>, as a plain string or with plural variants.</summary>
     public bool Has(string key) => Lookup(ReswName.For(key)) is not null || Lookup(ReswName.For(key) + "__other") is not null;
 
-    public string Get(string key) => Lookup(ReswName.For(key)) ?? Fallback(key);
+    protected override string? Lookup(string name) => values.TryGetValue(name, out var value) ? value : null;
 
-    public string Format(string key, params object[] args) => string.Format(Culture, Get(key), args);
-
-    public string Plural(string key, int count, params object[] args)
-    {
-        var name = ReswName.For(key);
-        var text = Lookup($"{name}__{PluralRules.Category(Language, count)}") ?? Lookup($"{name}__other") ?? Fallback(key);
-        return string.Format(Culture, text, args);
-    }
-
-    public string Localize(string key, string source) => Lookup(ReswName.For(key)) ?? source;
-
-    private string? Lookup(string name) => values.TryGetValue(name, out var value) ? value : null;
-
-    private string Fallback(string key)
-    {
-        Missing.Add(key);
-        return ReswName.FallbackText(key);
-    }
+    protected override void OnMissing(string key) => Missing.Add(key);
 }

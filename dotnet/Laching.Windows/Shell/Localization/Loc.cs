@@ -14,6 +14,7 @@ namespace Laching.Windows.Shell.Localization;
 public static class Loc
 {
     private static readonly ResourceManager Manager = new();
+    private static readonly MrtTable Table = new();
     private static ResourceMap? strings;
 
     /// <summary>The language lookups resolve in, once <see cref="UseLanguage"/> chose one; else MRT's default.</summary>
@@ -63,24 +64,18 @@ public static class Loc
             global::Windows.System.UserProfile.GlobalizationPreferences.Languages
         );
 
-    public static string Get(string key) => Lookup(ReswName.For(key)) ?? Fallback(key);
+    public static string Get(string key) => Table.Get(key);
 
     /// <summary>
     /// A phrase's text: its translation under <paramref name="key"/> (<c>phrase.&lt;id&gt;</c>), else
     /// <paramref name="source"/>, the line as the bank has it. Unlike <see cref="Get(string)"/> it never shows the key.
     /// </summary>
-    public static string Localize(string key, string source) => Lookup(ReswName.For(key)) ?? source;
+    public static string Localize(string key, string source) => Table.Localize(key, source);
 
-    public static string Format(string key, params object[] args) => string.Format(Culture, Get(key), args);
+    public static string Format(string key, params object[] args) => Table.Format(key, args);
 
     /// <summary>A plural string. <paramref name="count"/> picks the variant; pass it in <paramref name="args"/> too.</summary>
-    public static string Plural(string key, int count, params object[] args)
-    {
-        var name = ReswName.For(key);
-        var category = PluralRules.Category(Language, count);
-        var text = Lookup($"{name}__{category}") ?? Lookup($"{name}__other") ?? Fallback(key);
-        return string.Format(Culture, text, args);
-    }
+    public static string Plural(string key, int count, params object[] args) => Table.Plural(key, count, args);
 
     /// <summary>
     /// Text for a key pure code returned. <see cref="LocalizedKey.ArgumentKind.Int"/> arguments are numbers (the first
@@ -115,9 +110,15 @@ public static class Loc
         return (context is null ? strings.TryGetValue(name) : strings.TryGetValue(name, context))?.ValueAsString;
     }
 
-    private static string Fallback(string key)
+    /// <summary>The shared lookup, plural and fallback logic over MRT Core.</summary>
+    private sealed class MrtTable : StringTable
     {
-        Debug.WriteLine($"Missing string: {key}");
-        return ReswName.FallbackText(key);
+        public override string Language => Loc.Language;
+
+        public override CultureInfo Culture => Loc.Culture;
+
+        protected override string? Lookup(string name) => Loc.Lookup(name);
+
+        protected override void OnMissing(string key) => Debug.WriteLine($"Missing string: {key}");
     }
 }
