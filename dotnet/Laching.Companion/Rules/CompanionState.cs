@@ -44,18 +44,7 @@ public static class Moods
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static Mood? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "awake" => Mood.Awake,
-            "talking" => Mood.Talking,
-            "shushed" => Mood.Shushed,
-            "asleep" => Mood.Asleep,
-            "hushedForCall" => Mood.HushedForCall,
-            "hushedFullScreen" => Mood.HushedFullScreen,
-            "offHours" => Mood.OffHours,
-            _ => null,
-        };
+    public static Mood? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }
 
 /// <summary>Derives the character's mood from the scheduler's status and the moment. Pure; part of <c>conformance/companion/quiet</c>.</summary>

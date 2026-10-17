@@ -99,26 +99,5 @@ public static class Tags
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static Tag? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "general" => Tag.General,
-            "morning" => Tag.Morning,
-            "afternoon" => Tag.Afternoon,
-            "evening" => Tag.Evening,
-            "night" => Tag.Night,
-            "monday" => Tag.Monday,
-            "friday" => Tag.Friday,
-            "weekend" => Tag.Weekend,
-            "welcomeBack" => Tag.WelcomeBack,
-            "afterCall" => Tag.AfterCall,
-            "shushEnd" => Tag.ShushEnd,
-            "buttonPress" => Tag.ButtonPress,
-            "batteryLow" => Tag.BatteryLow,
-            "charging" => Tag.Charging,
-            "unplugged" => Tag.Unplugged,
-            "wentDark" => Tag.WentDark,
-            "wentLight" => Tag.WentLight,
-            _ => null,
-        };
+    public static Tag? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }

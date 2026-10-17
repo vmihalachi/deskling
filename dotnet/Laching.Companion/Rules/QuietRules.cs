@@ -63,21 +63,7 @@ public static class Triggers
         };
 
     /// <summary>The inverse of <see cref="RawValue"/>: null for an unknown name.</summary>
-    public static Trigger? Parse(string? rawValue) =>
-        rawValue switch
-        {
-            "due" => Trigger.Due,
-            "buttonPress" => Trigger.ButtonPress,
-            "afterCall" => Trigger.AfterCall,
-            "welcomeBack" => Trigger.WelcomeBack,
-            "shushEnd" => Trigger.ShushEnd,
-            "batteryLow" => Trigger.BatteryLow,
-            "charging" => Trigger.Charging,
-            "unplugged" => Trigger.Unplugged,
-            "wentDark" => Trigger.WentDark,
-            "wentLight" => Trigger.WentLight,
-            _ => null,
-        };
+    public static Trigger? Parse(string? rawValue) => RawValues.Parse(All, RawValue, rawValue);
 }
 
 /// <summary>How a line is delivered. The panel's speech bubble always shows it.</summary>
