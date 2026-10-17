@@ -69,11 +69,7 @@
 
     @MainActor
     final class CompanionAppModelTests: XCTestCase {
-        private let calendar: Calendar = {
-            var calendar = Calendar(identifier: .gregorian)
-            calendar.timeZone = TimeZone(identifier: "UTC")!
-            return calendar
-        }()
+        private let calendar = ConformanceSupport.utc
         private var clock: MockClock!
         private var idle: MockIdle!
         private var busy: MockBusy!
@@ -93,13 +89,8 @@
                 return false
             })
 
-        /// Monday 2026-09-28 at the given UTC time: inside the default active hours.
-        private func monday(_ hour: Int, _ minute: Int = 0) -> Date {
-            calendar.date(from: DateComponents(year: 2026, month: 9, day: 28, hour: hour, minute: minute))!
-        }
-
         private func makeModel(bank: PhraseBank = lines, configure: (CompanionSettings) -> Void = { _ in }) -> FixtureModel {
-            clock = MockClock(monday(10))
+            clock = MockClock(ConformanceSupport.monday(10))
             idle = MockIdle()
             busy = MockBusy()
             settings = CompanionSettings(store: InMemorySettingsStore(), defaults: .fixture)
@@ -215,7 +206,7 @@
             XCTAssertEqual(model.mood, .shushed)
             XCTAssertEqual(chime.played, ["shh"])
             XCTAssertTrue(model.statusLine.hasPrefix("Shh until"), model.statusLine)
-            XCTAssertEqual(settings.shushedUntil, monday(11))
+            XCTAssertEqual(settings.shushedUntil, ConformanceSupport.monday(11))
             run(model, minutes: 59)
             XCTAssertTrue(speaker.spoken.isEmpty)
         }
@@ -225,10 +216,10 @@
             XCTAssertTrue(model.holdToShush())
             XCTAssertTrue(model.isShushed)
             XCTAssertEqual(model.mood, .shushed)
-            XCTAssertEqual(settings.shushedUntil, monday(11))
+            XCTAssertEqual(settings.shushedUntil, ConformanceSupport.monday(11))
             clock.advance(minutes: 10)
             XCTAssertFalse(model.holdToShush(), "holding while shushed does nothing")
-            XCTAssertEqual(settings.shushedUntil, monday(11))
+            XCTAssertEqual(settings.shushedUntil, ConformanceSupport.monday(11))
 
             let indefinite = makeModel()
             indefinite.shush(.untilISay)
@@ -435,7 +426,7 @@
             model.hideDesktop(.hour)
             XCTAssertFalse(model.isOnDesktop)
             XCTAssertTrue(settings.showOnDesktop)
-            XCTAssertEqual(model.desktopHiddenUntil, monday(11))
+            XCTAssertEqual(model.desktopHiddenUntil, ConformanceSupport.monday(11))
             XCTAssertTrue(model.desktopBackLine?.hasPrefix("Back at") ?? false)
             clock.advance(minutes: 59)
             model.refreshStatus()

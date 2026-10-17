@@ -125,11 +125,7 @@ public enum CadenceVector {
     }
 
     public static func files(cases: [Case]) throws -> [String: Data] {
-        var files: [String: Data] = [:]
-        for c in cases {
-            files["\(directory)/\(c.name).json"] = try ConformanceSupport.encode(vector(c))
-        }
-        return files
+        try ConformanceSupport.files(in: directory, cases, name: \.name) { try vector($0) }
     }
 
     public static func verify(_ data: Data, file: String) throws -> [String] {

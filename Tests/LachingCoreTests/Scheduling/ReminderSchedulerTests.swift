@@ -3,20 +3,11 @@ import LachingTesting
 import XCTest
 
 final class ReminderSchedulerTests: XCTestCase {
-    private var calendar: Calendar = {
-        var c = Calendar(identifier: .gregorian)
-        c.timeZone = TimeZone(identifier: "UTC")!
-        return c
-    }()
+    private let calendar = ConformanceSupport.utc
 
     private var clock: MockClock!
     private var idle: MockIdle!
     private var busy: MockBusy!
-
-    /// Monday 2026-09-28 at the given time (UTC).
-    private func monday(_ hour: Int, _ minute: Int = 0) -> Date {
-        calendar.date(from: DateComponents(year: 2026, month: 9, day: 28, hour: hour, minute: minute))!
-    }
 
     private func makeScheduler(start: Date, config: SchedulerConfig = SchedulerConfig()) -> ReminderScheduler {
         clock = MockClock(start)
@@ -44,24 +35,24 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testMondayFixtureIsAWeekday() {
-        XCTAssertEqual(calendar.component(.weekday, from: monday(10)), 2)
+        XCTAssertEqual(calendar.component(.weekday, from: ConformanceSupport.monday(10)), 2)
     }
 
     func testRemindsAfterInterval() {
-        let s = makeScheduler(start: monday(9, 30))
-        XCTAssertEqual(s.nextFireDate, monday(10, 15))
+        let s = makeScheduler(start: ConformanceSupport.monday(9, 30))
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 15))
         XCTAssertEqual(run(s, minutes: 100), [45, 90])
     }
 
     func testCustomInterval() {
         var config = SchedulerConfig()
         config.interval = 20 * 60
-        let s = makeScheduler(start: monday(10), config: config)
+        let s = makeScheduler(start: ConformanceSupport.monday(10), config: config)
         XCTAssertEqual(run(s, minutes: 60), [20, 40, 60])
     }
 
     func testIdleUserIsNotRemindedAndTimerResets() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 30)
         idle.idle = 10 * 60  // user walked away
         XCTAssertEqual(run(s, minutes: 30), [])
@@ -71,13 +62,13 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testShortIdleDoesNotCountAsAway() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         idle.idle = 2 * 60
         XCTAssertEqual(run(s, minutes: 45), [45])
     }
 
     func testNoRemindersOutsideActiveHours() {
-        let s = makeScheduler(start: monday(17, 30))
+        let s = makeScheduler(start: ConformanceSupport.monday(17, 30))
         XCTAssertEqual(run(s, minutes: 29), [])
         clock.advance(minutes: 1)
         XCTAssertEqual(s.tick(), .none)  // 18:00 – window closed
@@ -87,7 +78,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testEnteringActiveHoursStartsFreshInterval() {
-        let s = makeScheduler(start: monday(8, 0))
+        let s = makeScheduler(start: ConformanceSupport.monday(8, 0))
         XCTAssertNil(s.nextFireDate)
         // 9:00 enters the window; first reminder at 9:45.
         XCTAssertEqual(run(s, minutes: 110), [105])
@@ -105,21 +96,21 @@ final class ReminderSchedulerTests: XCTestCase {
         config.activeStartMinute = 22 * 60
         config.activeEndMinute = 6 * 60
         config.activeWeekdays = Set(1...7)
-        let s = makeScheduler(start: monday(12), config: config)
-        XCTAssertFalse(s.isWithinActiveHours(monday(12)))
-        XCTAssertTrue(s.isWithinActiveHours(monday(23)))
-        XCTAssertTrue(s.isWithinActiveHours(monday(2)))
+        let s = makeScheduler(start: ConformanceSupport.monday(12), config: config)
+        XCTAssertFalse(s.isWithinActiveHours(ConformanceSupport.monday(12)))
+        XCTAssertTrue(s.isWithinActiveHours(ConformanceSupport.monday(23)))
+        XCTAssertTrue(s.isWithinActiveHours(ConformanceSupport.monday(2)))
     }
 
     func testSnoozeDelaysByTenMinutes() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         XCTAssertEqual(run(s, minutes: 45), [45])
         s.snooze(minutes: 10)
         XCTAssertEqual(run(s, minutes: 15), [10])
     }
 
     func testSnoozeWithoutReminderNeverBringsItCloser() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         XCTAssertEqual(run(s, minutes: 20), [])
         s.snooze(minutes: 10)
         // Still due at 10:45, not 10:30.
@@ -127,7 +118,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testSnoozeAfterAnsweredReminderNeverBringsItCloser() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         XCTAssertEqual(run(s, minutes: 45), [45])
         s.sessionCompleted()
         s.snooze(minutes: 10)
@@ -135,7 +126,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testSnoozeHeldReminderRemindsInTenMinutes() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.call]
         XCTAssertEqual(run(s, minutes: 50), [])
         s.snooze(minutes: 10)
@@ -144,14 +135,14 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testSnoozeLaterThanNextReminderPushesItOut() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         XCTAssertEqual(run(s, minutes: 40), [])
         s.snooze(minutes: 10)
         XCTAssertEqual(run(s, minutes: 10), [10])
     }
 
     func testPauseSuppressesRemindersThenRestartsInterval() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         s.pause(for: 3600)
         if case .paused = s.status {} else { XCTFail("expected paused") }
         XCTAssertEqual(run(s, minutes: 60), [])
@@ -160,7 +151,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testResumeEndsPauseEarly() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         s.pause(for: 3600)
         _ = run(s, minutes: 10)
         s.resume()
@@ -168,11 +159,11 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testPauseUntilDateLastsAcrossDaysThenRestartsInterval() {
-        let s = makeScheduler(start: monday(10))
-        let wednesday = calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: monday(10)))!
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
+        let wednesday = calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: ConformanceSupport.monday(10)))!
         s.pause(until: wednesday)
         XCTAssertEqual(s.status, .paused(until: wednesday))
-        clock.now = calendar.date(byAdding: .hour, value: 30, to: monday(10))!
+        clock.now = calendar.date(byAdding: .hour, value: 30, to: ConformanceSupport.monday(10))!
         XCTAssertEqual(s.tick(), .none)
         clock.now = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: wednesday)!
         XCTAssertEqual(s.tick(), .none)
@@ -181,23 +172,23 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testEndOfTodayIsNextMidnight() {
-        let s = makeScheduler(start: monday(23, 30))
-        XCTAssertEqual(s.endOfToday, calendar.date(byAdding: .minute, value: 30, to: monday(23, 30)))
+        let s = makeScheduler(start: ConformanceSupport.monday(23, 30))
+        XCTAssertEqual(s.endOfToday, calendar.date(byAdding: .minute, value: 30, to: ConformanceSupport.monday(23, 30)))
         s.pause(until: s.endOfToday)
-        clock.now = monday(23, 59)
+        clock.now = ConformanceSupport.monday(23, 59)
         XCTAssertEqual(s.tick(), .none)
         if case .paused = s.status {} else { XCTFail("expected paused") }
     }
 
     func testSessionCompletedResetsInterval() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 40)
         s.sessionCompleted()
         XCTAssertEqual(run(s, minutes: 50), [45])
     }
 
     func testChangingIntervalReschedules() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 10)
         var config = SchedulerConfig()
         config.interval = 15 * 60
@@ -208,7 +199,7 @@ final class ReminderSchedulerTests: XCTestCase {
     // MARK: Busy
 
     func testCallPostponesDueReminderAndFiresAfterGrace() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 40)
         busy.reasons = [.call]
         XCTAssertEqual(run(s, minutes: 20), [])  // due at 45, held
@@ -223,7 +214,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testBusyBeforeDueDoesNotChangeTheSchedule() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.fullScreen]
         XCTAssertEqual(run(s, minutes: 30), [])
         if case .scheduled = s.status {} else { XCTFail("expected scheduled") }
@@ -232,7 +223,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testReturnsPostponeOnlyWhenAReminderIsHeld() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.call]
         clock.advance(minutes: 10)
         XCTAssertEqual(s.tick(), .none)
@@ -243,7 +234,7 @@ final class ReminderSchedulerTests: XCTestCase {
     func testDisabledReasonsAreIgnored() {
         var config = SchedulerConfig()
         config.postponeDuringFullScreen = false
-        let s = makeScheduler(start: monday(10), config: config)
+        let s = makeScheduler(start: ConformanceSupport.monday(10), config: config)
         busy.reasons = [.fullScreen]
         XCTAssertEqual(run(s, minutes: 45), [45])
         config.postponeDuringCalls = false
@@ -253,14 +244,14 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testCallStatusWinsOverFullScreen() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.call, .fullScreen]
         _ = run(s, minutes: 46)
         XCTAssertEqual(s.status, .postponed(.call))
     }
 
     func testIdleDuringCallIsNotABreak() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 30)
         busy.reasons = [.call]
         idle.idle = 20 * 60  // listening, hands off the keyboard
@@ -272,7 +263,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testWalkingAwayAfterCallDropsHeldReminder() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.call]
         _ = run(s, minutes: 50)
         busy.reasons = []
@@ -284,7 +275,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testHeldReminderIsDroppedWhenActiveHoursEnd() {
-        let s = makeScheduler(start: monday(17))
+        let s = makeScheduler(start: ConformanceSupport.monday(17))
         busy.reasons = [.call]
         _ = run(s, minutes: 65)  // due 17:45, held; window closes 18:00
         XCTAssertEqual(s.status, .outsideActiveHours)
@@ -294,14 +285,14 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testBusyOutsideActiveHoursDoesNothing() {
-        let s = makeScheduler(start: monday(19))
+        let s = makeScheduler(start: ConformanceSupport.monday(19))
         busy.reasons = [.call]
         XCTAssertEqual(s.tick(), .none)
         XCTAssertEqual(s.status, .outsideActiveHours)
     }
 
     func testPauseWinsOverBusy() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         busy.reasons = [.call]
         _ = run(s, minutes: 50)
         s.pause(for: 3600)
@@ -313,7 +304,7 @@ final class ReminderSchedulerTests: XCTestCase {
     // MARK: After this call
 
     func testAfterCallFiresWhenCallEnds() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 45)
         s.snoozeUntilAfterCall()
         XCTAssertTrue(s.isWaitingForCall)
@@ -327,7 +318,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testAfterCallWaitsForLongCallsPastTheFallback() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         s.snoozeUntilAfterCall()
         busy.reasons = [.call]
         XCTAssertEqual(run(s, minutes: 40), [])
@@ -336,7 +327,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testAfterCallFallsBackWhenNoCallStarts() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         s.snoozeUntilAfterCall()
         XCTAssertEqual(run(s, minutes: 20), [15])
     }
@@ -344,7 +335,7 @@ final class ReminderSchedulerTests: XCTestCase {
     func testAfterCallIgnoresFullScreen() {
         var config = SchedulerConfig()
         config.postponeDuringFullScreen = false
-        let s = makeScheduler(start: monday(10), config: config)
+        let s = makeScheduler(start: ConformanceSupport.monday(10), config: config)
         s.snoozeUntilAfterCall()
         busy.reasons = [.fullScreen]
         XCTAssertEqual(run(s, minutes: 5), [])
@@ -356,7 +347,7 @@ final class ReminderSchedulerTests: XCTestCase {
     func testAfterCallWorksEvenWhenCallPostponingIsOff() {
         var config = SchedulerConfig()
         config.postponeDuringCalls = false
-        let s = makeScheduler(start: monday(10), config: config)
+        let s = makeScheduler(start: ConformanceSupport.monday(10), config: config)
         s.snoozeUntilAfterCall()
         busy.reasons = [.call]
         XCTAssertEqual(run(s, minutes: 30), [])
@@ -368,7 +359,7 @@ final class ReminderSchedulerTests: XCTestCase {
     }
 
     func testRegularSnoozeCancelsAfterCall() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         s.snoozeUntilAfterCall()
         s.snooze(minutes: 10)
         XCTAssertFalse(s.isWaitingForCall)
@@ -378,9 +369,9 @@ final class ReminderSchedulerTests: XCTestCase {
     func testQuietHourHoldsRemindersAndRestartsAfter() {
         var config = SchedulerConfig()
         config.quietHours = [10]
-        let s = makeScheduler(start: monday(9, 30), config: config)
-        XCTAssertFalse(s.isWithinActiveHours(monday(10, 15)))
-        XCTAssertTrue(s.isWithinActiveHours(monday(11)))
+        let s = makeScheduler(start: ConformanceSupport.monday(9, 30), config: config)
+        XCTAssertFalse(s.isWithinActiveHours(ConformanceSupport.monday(10, 15)))
+        XCTAssertTrue(s.isWithinActiveHours(ConformanceSupport.monday(11)))
         // Due at 10:15, but 10:00–11:00 is quiet. A fresh 45 min starts at 11:00.
         XCTAssertEqual(run(s, minutes: 30), [])
         XCTAssertEqual(s.status, .outsideActiveHours)
@@ -391,7 +382,7 @@ final class ReminderSchedulerTests: XCTestCase {
 
     func testZeroJitterNeverConsultsTheRandomSource() {
         let random = CountingRandom(onRead: { XCTFail("the random source was read with zero jitter") })
-        clock = MockClock(monday(10))
+        clock = MockClock(ConformanceSupport.monday(10))
         idle = MockIdle()
         busy = MockBusy()
         let s = ReminderScheduler(
@@ -409,13 +400,13 @@ final class ReminderSchedulerTests: XCTestCase {
         var config = SchedulerConfig()
         config.interval = 30 * 60
         config.intervalJitter = 10 * 60
-        clock = MockClock(monday(10))
+        clock = MockClock(ConformanceSupport.monday(10))
         idle = MockIdle()
         busy = MockBusy()
         let s = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: SplitMix64(seed: 42))
         // SplitMix64(42) first draws 0.74156…: floor((0.4831… × 600) + 0.5) = 290 s past the 30 minutes.
-        XCTAssertEqual(s.nextFireDate, monday(10).addingTimeInterval(30 * 60 + 290))
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10).addingTimeInterval(30 * 60 + 290))
         // Then −408 s (10:35 + 23:12) and −266 s (10:59 + 25:34), each from the firing tick.
         XCTAssertEqual(run(s, minutes: 100), [35, 59, 85])
     }
@@ -424,90 +415,97 @@ final class ReminderSchedulerTests: XCTestCase {
         var config = SchedulerConfig()
         config.interval = 30 * 60
         config.intervalJitter = 10 * 60
-        clock = MockClock(monday(10))
+        clock = MockClock(ConformanceSupport.monday(10))
         idle = MockIdle()
         busy = MockBusy()
         let low = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0]))
-        XCTAssertEqual(low.nextFireDate, monday(10, 20))
+        XCTAssertEqual(low.nextFireDate, ConformanceSupport.monday(10, 20))
         let middle = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0.5]))
-        XCTAssertEqual(middle.nextFireDate, monday(10, 30))
+        XCTAssertEqual(middle.nextFireDate, ConformanceSupport.monday(10, 30))
         let high = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0.999_999]))
-        XCTAssertEqual(high.nextFireDate, monday(10, 40))
+        XCTAssertEqual(high.nextFireDate, ConformanceSupport.monday(10, 40))
     }
 
     func testRestoreReplacesTheFreshInterval() {
-        let s = makeScheduler(start: monday(10))
-        s.restore(nextFireDate: monday(10, 20))
-        XCTAssertEqual(s.nextFireDate, monday(10, 20))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
+        s.restore(nextFireDate: ConformanceSupport.monday(10, 20))
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 20))
         XCTAssertEqual(run(s, minutes: 70), [20, 65])
     }
 
     func testRestoreIsIgnoredForAPastDateWhilePausedAndOutsideActiveHours() {
-        let s = makeScheduler(start: monday(10))
-        s.restore(nextFireDate: monday(9, 50))
-        XCTAssertEqual(s.nextFireDate, monday(10, 45))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
+        s.restore(nextFireDate: ConformanceSupport.monday(9, 50))
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 45))
         s.pause(for: 3600)
-        s.restore(nextFireDate: monday(10, 30))
+        s.restore(nextFireDate: ConformanceSupport.monday(10, 30))
         XCTAssertNil(s.nextFireDate)
-        let outside = makeScheduler(start: monday(19))
-        outside.restore(nextFireDate: monday(19, 30))
+        let outside = makeScheduler(start: ConformanceSupport.monday(19))
+        outside.restore(nextFireDate: ConformanceSupport.monday(19, 30))
         XCTAssertNil(outside.nextFireDate)
     }
 
     func testSnoozingADeliveredReminderRemindsInItsMinutes() {
-        let s = makeScheduler(start: monday(10))
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
         _ = run(s, minutes: 20)
         s.snooze(minutes: 10)
-        XCTAssertEqual(s.nextFireDate, monday(10, 45), "nothing to answer: snooze never brings the reminder closer")
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 45), "nothing to answer: snooze never brings the reminder closer")
         s.reminderDelivered()
         s.snooze(minutes: 10)
-        XCTAssertEqual(s.nextFireDate, monday(10, 30))
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 30))
     }
 
     func testUpcomingRemindersFollowTheInterval() {
-        let s = makeScheduler(start: monday(9, 30))
+        let s = makeScheduler(start: ConformanceSupport.monday(9, 30))
         XCTAssertEqual(
-            s.upcomingReminders(from: monday(9, 30), until: monday(12)), [monday(10, 15), monday(11), monday(11, 45)])
-        XCTAssertEqual(s.upcomingReminders(from: monday(9, 30), until: monday(12), limit: 2), [monday(10, 15), monday(11)])
-        XCTAssertEqual(s.nextFireDate, monday(10, 15), "planning leaves the scheduler as it was")
+            s.upcomingReminders(from: ConformanceSupport.monday(9, 30), until: ConformanceSupport.monday(12)),
+            [ConformanceSupport.monday(10, 15), ConformanceSupport.monday(11), ConformanceSupport.monday(11, 45)])
+        XCTAssertEqual(
+            s.upcomingReminders(from: ConformanceSupport.monday(9, 30), until: ConformanceSupport.monday(12), limit: 2),
+            [ConformanceSupport.monday(10, 15), ConformanceSupport.monday(11)])
+        XCTAssertEqual(s.nextFireDate, ConformanceSupport.monday(10, 15), "planning leaves the scheduler as it was")
     }
 
     func testUpcomingRemindersSkipToTheNextActiveDay() {
-        let s = makeScheduler(start: monday(17))
-        let tuesday = { (h: Int, m: Int) in self.monday(h, m).addingTimeInterval(86_400) }
+        let s = makeScheduler(start: ConformanceSupport.monday(17))
+        let tuesday = { (h: Int, m: Int) in ConformanceSupport.monday(h, m).addingTimeInterval(86_400) }
         XCTAssertEqual(
-            s.upcomingReminders(from: monday(17), until: tuesday(11, 0)),
-            [monday(17, 45), tuesday(9, 45), tuesday(10, 30)])
+            s.upcomingReminders(from: ConformanceSupport.monday(17), until: tuesday(11, 0)),
+            [ConformanceSupport.monday(17, 45), tuesday(9, 45), tuesday(10, 30)])
     }
 
     func testUpcomingRemindersStartAfterAPause() {
-        let s = makeScheduler(start: monday(10))
-        s.pause(until: monday(11))
-        XCTAssertEqual(s.upcomingReminders(from: monday(10), until: monday(13)), [monday(11, 45), monday(12, 30)])
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
+        s.pause(until: ConformanceSupport.monday(11))
+        XCTAssertEqual(
+            s.upcomingReminders(from: ConformanceSupport.monday(10), until: ConformanceSupport.monday(13)),
+            [ConformanceSupport.monday(11, 45), ConformanceSupport.monday(12, 30)])
     }
 
     func testUpcomingRemindersFollowARestoredDate() {
-        let s = makeScheduler(start: monday(10))
-        s.restore(nextFireDate: monday(10, 5))
-        XCTAssertEqual(s.upcomingReminders(from: monday(10), until: monday(11)), [monday(10, 5), monday(10, 50)])
+        let s = makeScheduler(start: ConformanceSupport.monday(10))
+        s.restore(nextFireDate: ConformanceSupport.monday(10, 5))
+        XCTAssertEqual(
+            s.upcomingReminders(from: ConformanceSupport.monday(10), until: ConformanceSupport.monday(11)),
+            [ConformanceSupport.monday(10, 5), ConformanceSupport.monday(10, 50)])
     }
 
     func testJitterIsClampedSoTheIntervalNeverDropsBelowASecond() {
         var config = SchedulerConfig()
         config.interval = 60
         config.intervalJitter = 10 * 60
-        clock = MockClock(monday(10))
+        clock = MockClock(ConformanceSupport.monday(10))
         idle = MockIdle()
         busy = MockBusy()
         // The ±10 minutes clamp to ±59 s: floor(−59 + 0.5) = −59 at the bottom, floor(58.99… + 0.5) = 59 at the top.
         let low = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0]))
-        XCTAssertEqual(low.nextFireDate, monday(10).addingTimeInterval(1))
+        XCTAssertEqual(low.nextFireDate, ConformanceSupport.monday(10).addingTimeInterval(1))
         let high = ReminderScheduler(
             config: config, clock: clock, idle: idle, busy: busy, calendar: calendar, random: ScriptedRandom([0.999_999]))
-        XCTAssertEqual(high.nextFireDate, monday(10).addingTimeInterval(119))
+        XCTAssertEqual(high.nextFireDate, ConformanceSupport.monday(10).addingTimeInterval(119))
     }
 }

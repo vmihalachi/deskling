@@ -75,11 +75,7 @@ public enum PickerVector {
     }
 
     public static func files(cases: [Case], bank: PhraseBank) throws -> [String: Data] {
-        var files: [String: Data] = [:]
-        for c in cases {
-            files["\(directory)/\(c.name).json"] = try ConformanceSupport.encode(vector(c, bank: bank))
-        }
-        return files
+        try ConformanceSupport.files(in: directory, cases, name: \.name) { vector($0, bank: bank) }
     }
 
     public static func verify(_ data: Data, file: String, bank: PhraseBank) throws -> [String] {

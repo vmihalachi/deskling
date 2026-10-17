@@ -7,43 +7,6 @@
     import LachingTesting
     import XCTest
 
-    /// A voice that records what it says and finishes when the test says so (`SilentSpeaker` finishes at once).
-    @MainActor
-    private final class HeldSpeaker: Speaking {
-        private(set) var spoken: [(text: String, clip: URL?)] = []
-        var isSpeaking = false
-        var onFinished: (() -> Void)?
-        var clipTime: TimeInterval?
-
-        func speak(_ text: String, clip: URL?, voiceIdentifier: String?, rate: Double, volume: Double) {
-            spoken.append((text, clip))
-            isSpeaking = true
-        }
-
-        func stop() {
-            guard isSpeaking else { return }
-            isSpeaking = false
-            onFinished?()
-        }
-
-        func finish() {
-            isSpeaking = false
-            onFinished?()
-        }
-    }
-
-    @MainActor
-    private final class CountingChime: ChimePlaying {
-        private(set) var played: [String] = []
-
-        func play(_ sound: String, volume: Double, completion: (() -> Void)?) {
-            played.append(sound)
-            completion?()
-        }
-
-        func stop() {}
-    }
-
     @MainActor
     final class DeliveryPerformerTests: XCTestCase {
         private let settings = CompanionSettings(store: InMemorySettingsStore(), defaults: .fixture)
@@ -83,11 +46,11 @@
         private let punchline = "Fixture joke, punchline [phrase.joke-1.2]"
 
         func testAJokesPartsBubbleInOrderWithTheBeatBetween() {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker)
             performer.perform(delivery("joke-1", notify: true), settings: settings, voice: nil)
             XCTAssertEqual(bubbles, [setup])
-            XCTAssertEqual(speaker.spoken.map(\.text), [setup])
+            XCTAssertEqual(speaker.spoken, [setup])
             XCTAssertEqual(events, ["started"])
             speaker.finish()
             XCTAssertEqual(timers.map(\.0), [PhraseTiming.partBeat])
@@ -96,7 +59,7 @@
             XCTAssertTrue(posts.isEmpty, "the banner waits for the punchline")
             runTimer()
             XCTAssertEqual(bubbles, [setup, punchline])
-            XCTAssertEqual(speaker.spoken.map(\.text), [setup, punchline])
+            XCTAssertEqual(speaker.spoken, [setup, punchline])
             XCTAssertEqual(posts, ["\(setup)\n\(punchline)"], "one banner, both parts on two lines")
             speaker.finish()
             XCTAssertFalse(performer.isSpeaking)
@@ -113,20 +76,20 @@
         }
 
         func testStopMidBeatCancelsThePunchline() {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker)
             performer.perform(delivery("joke-1"), settings: settings, voice: nil)
             speaker.finish()
             performer.stop()
             XCTAssertFalse(performer.isSpeaking)
             runTimer()
-            XCTAssertEqual(speaker.spoken.map(\.text), [setup])
+            XCTAssertEqual(speaker.spoken, [setup])
             XCTAssertEqual(bubbles, [setup])
             XCTAssertEqual(events, ["started", "finished"])
         }
 
         func testWithoutSpeechThePartsFollowTheirBubbleTime() {
-            let performer = performer(speaker: HeldSpeaker())
+            let performer = performer(speaker: FakeSpeaker())
             performer.perform(delivery("joke-1", speak: false, notify: true), settings: settings, voice: nil)
             XCTAssertEqual(bubbles, [setup])
             XCTAssertEqual(timers.map(\.0), [DesktopPresence.bubbleSeconds(for: setup)])
@@ -138,21 +101,21 @@
         }
 
         func testALineNotifiesAtOnceAndTheBlipComesFirst() {
-            let speaker = HeldSpeaker()
-            let chime = CountingChime()
+            let speaker = FakeSpeaker()
+            let chime = FakeChime()
             let performer = performer(speaker: speaker, chime: chime)
             performer.blipSound = "blip"
             performer.perform(delivery("general-a1", chime: true, notify: true), settings: settings, voice: nil)
             let line = "Fixture line, general, flavor a, weight 1 [phrase.general-a1]"
             XCTAssertEqual(chime.played, ["blip"])
-            XCTAssertEqual(speaker.spoken.map(\.text), [line])
+            XCTAssertEqual(speaker.spoken, [line])
             XCTAssertEqual(posts, [line])
             XCTAssertTrue(timers.isEmpty)
         }
 
         func testATunePlaysOnTheChimeWithItsBubble() {
-            let speaker = HeldSpeaker()
-            let chime = CountingChime()
+            let speaker = FakeSpeaker()
+            let chime = FakeChime()
             let performer = performer(speaker: speaker, chime: chime)
             performer.perform(delivery("tune-1", chime: true), settings: settings, voice: nil)
             XCTAssertEqual(chime.played, ["tune-1"])
@@ -187,17 +150,17 @@
         }
 
         func testEachPartPlaysItsOwnClip() throws {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker, voices: try voices(["joke-1.1": setup, "joke-1.2": punchline]))
             performer.perform(delivery("joke-1"), settings: settings, voice: "male")
             speaker.finish()
             runTimer()
-            XCTAssertEqual(speaker.spoken.map { $0.clip?.lastPathComponent }, ["joke-1.1.m4a", "joke-1.2.m4a"])
+            XCTAssertEqual(speaker.clips.map { $0?.lastPathComponent }, ["joke-1.1.m4a", "joke-1.2.m4a"])
             XCTAssertFalse(performer.unavailableIDs(voice: "male").contains("joke-1"))
         }
 
         func testAJokeMissingAPartStaysUnsaid() throws {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker, voices: try voices(["joke-1.1": setup]))
             XCTAssertTrue(performer.unavailableIDs(voice: "male").contains("joke-1"))
             XCTAssertFalse(performer.unavailableIDs(voice: "male").contains("tune-1"), "tunes are sounds")
@@ -209,17 +172,17 @@
         }
 
         func testTheFallbackSaysAMissingPartWithTheSystemVoice() throws {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker, voices: try voices(["joke-1.1": setup], fallback: true))
             XCTAssertEqual(performer.unavailableIDs(voice: "male"), [])
             performer.perform(delivery("joke-1"), settings: settings, voice: "male")
             speaker.finish()
             runTimer()
-            XCTAssertEqual(speaker.spoken.map { $0.clip?.lastPathComponent }, ["joke-1.1.m4a", nil])
+            XCTAssertEqual(speaker.clips.map { $0?.lastPathComponent }, ["joke-1.1.m4a", nil])
         }
 
         func testTheMouthFollowsTheRecordedPartsEnvelope() throws {
-            let speaker = HeldSpeaker()
+            let speaker = FakeSpeaker()
             let performer = performer(speaker: speaker, voices: try voices(["joke-1.1": setup], fallback: true))
             performer.perform(delivery("joke-1"), settings: settings, voice: "male")
             speaker.clipTime = 0.1  // the manifest's "0120" at 12.5 a second: frame 1
@@ -232,8 +195,8 @@
         }
 
         func testPreviewSpeaksWithoutChimeOrBanner() {
-            let speaker = HeldSpeaker()
-            let chime = CountingChime()
+            let speaker = FakeSpeaker()
+            let chime = FakeChime()
             let performer = performer(speaker: speaker, chime: chime)
             performer.blipSound = "blip"
             performer.preview(PhraseBank.fixture["general-b1"]!, settings: settings, voice: nil)
