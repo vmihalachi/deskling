@@ -21,6 +21,9 @@ package and the NuGet packages together.
   their copies; the fixture app's status pill now reads "Next in about N min" like the tests' model.
 - **Kotlin core (`laching.core.scheduling`)**: `Instant.plusSeconds(Double)`, the scheduler's rounding of fractional
   seconds to the nanosecond, is public next to `Clock`; `laching.testing.MockClock` advances with it (#90).
+- **Companion (`RigGroup`, `Blink`, `BubbleAnchor`, `MoodRig`)**: `Decodable`, with the `characters/<skin>.json` keys;
+  `CharacterArtJSON.decode` reads the rig through them instead of private copies (#76). The files it reads and writes
+  don't change.
 
 ## 0.13.0 - 2026-10-17
 

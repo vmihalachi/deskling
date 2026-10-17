@@ -68,7 +68,7 @@ public struct Rig: Equatable, Sendable {
     }
 }
 
-public struct RigGroup: Equatable, Sendable {
+public struct RigGroup: Equatable, Sendable, Decodable {
     public let pivot: String
     public let parts: [String]
     public let follow: Double
@@ -81,7 +81,7 @@ public struct RigGroup: Equatable, Sendable {
 }
 
 /// The eyes close for `duration` seconds at the end of each interval, cycling through `intervals`.
-public struct Blink: Equatable, Sendable {
+public struct Blink: Equatable, Sendable, Decodable {
     public let duration: Double
     public let intervals: [Double]
     public let closedEyes: String
@@ -95,7 +95,7 @@ public struct Blink: Equatable, Sendable {
 
 /// Where a speech bubble aims (a pivot) and how far it tucks in past the character's empty sides, as a fraction of
 /// the character's width.
-public struct BubbleAnchor: Equatable, Sendable {
+public struct BubbleAnchor: Equatable, Sendable, Decodable {
     public let pivot: String
     public let tuck: Double
 
@@ -105,7 +105,7 @@ public struct BubbleAnchor: Equatable, Sendable {
     }
 }
 
-public struct MoodRig: Equatable, Sendable {
+public struct MoodRig: Equatable, Sendable, Decodable {
     public let eyes: String
     /// One mouth, or several that alternate `mouthRate` times a second.
     public let mouth: [String]
