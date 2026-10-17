@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.3 - 2026-10-17
+
 - **Shell (`LayoutCheck`)**: on iOS, `overflows(in:)` counts a screen's safe area once. A hosting controller takes its
   safe area off the size it's offered and adds the insets above and below back to its answer, and the check offered it
   the room already inside the safe area: a screen with side insets (a sheet beside the closed iPhone Duo's status bar)
