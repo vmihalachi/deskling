@@ -58,18 +58,15 @@ TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 import avd  # noqa: E402
 import companion  # noqa: E402
+import sim  # noqa: E402
+from sim import region  # noqa: E402,F401 (screens.region: the tools and tests name it here too)
 
 THEMES = ("light", "dark")
 KINDS = ("mac", "windows", "ios", "android")
 VM_UNAVAILABLE = 3
 DEFAULT_BASELINE = "accepted"
-LAUNCH_TIMEOUT = 600  # seconds for one iOS or Android run; a simulator under load can hang a launch for good
 # Row heights on a sheet, in pixels: desktop windows on top, devices below.
 TOP_HEIGHT, BOTTOM_HEIGHT = 760, 960
-# The language to give the simulator's region; others get <lang>_<LANG> or the region they name.
-REGIONS = {"en": "en_US", "cs": "cs_CZ", "da": "da_DK", "el": "el_GR", "he": "he_IL", "hi": "hi_IN", "ja": "ja_JP",
-           "ko": "ko_KR", "nb": "nb_NO", "sv": "sv_SE", "uk": "uk_UA", "vi": "vi_VN", "zh-Hans": "zh_CN",
-           "zh-Hant": "zh_TW"}
 
 
 def need_pillow() -> None:
@@ -386,23 +383,17 @@ class Capture:
         log.write_text("", "utf8")
         config = self.screens.config
         derived = config.mac_dir / "build" / "screens-ios.noindex"
-        if self.build:
-            self.say("ios: building")
-            code = self.sh(["xcodebuild", "-project", config.mac_dir / config.require("mac.project"), "-scheme",
-                            config.require("mac.iosScheme"), "-configuration", "Debug", "-destination",
-                            "generic/platform=iOS Simulator", "-derivedDataPath", derived, "build", "-quiet"], log)
-            if code:
-                for platform in platforms:
-                    for language in self.languages:
-                        self.problem(platform, language, f"the iOS build failed; see {log}")
-                return
-        apps = sorted((derived / "Build" / "Products" / "Debug-iphonesimulator").glob("*.app"))
-        if not apps:
+        try:
+            if self.build:
+                self.say("ios: building")
+                app = sim.build(config, derived, log)
+            elif (app := sim.built_app(config, derived)) is None:
+                raise RuntimeError(f"no iOS build in {derived}")
+        except RuntimeError as error:
             for platform in platforms:
                 for language in self.languages:
-                    self.problem(platform, language, f"no iOS build in {derived}")
+                    self.problem(platform, language, str(error))
             return
-        app = apps[0]
         bundle = plistlib.loads((app / "Info.plist").read_bytes())["CFBundleIdentifier"]
         threads = [threading.Thread(target=self.device, args=(platform, app, bundle)) for platform in platforms
                    if self.wanted(platform)]
@@ -415,74 +406,43 @@ class Capture:
         log = self.log(platform.name)
         log.write_text("", "utf8")
         try:
-            udid = simulator(f"{self.screens.config.get('name', self.screens.root.name)} screens {platform.name}",
-                             platform.settings.get("device"))
+            phone = sim.Simulator(simulator(
+                f"{self.screens.config.get('name', self.screens.root.name)} screens {platform.name}",
+                platform.settings.get("device")), log)
+            self.say(f"{platform.name}: booting {platform.settings.get('device')}")
+            phone.boot()
+            # The fit checks need accessibility on; an iPad's apps full screen, with no Stage Manager windows or
+            # Split View. Both take effect on the next boot.
+            phone.accessibility_on()
+            phone.write_default("com.apple.springboard", "SBChamoisWindowingEnabled", False)
+            phone.write_default("com.apple.springboard", "SBMedusaMultitaskingEnabled", False)
+            phone.shutdown()
+            phone.boot()
+            phone.install(app)
         except RuntimeError as error:
             for language in self.languages:
-                self.problem(platform, language, str(error))
-            return
-        simctl = lambda *args: self.sh(["xcrun", "simctl", *args], log)  # noqa: E731
-        self.say(f"{platform.name}: booting {platform.settings.get('device')}")
-        simctl("boot", udid)
-        simctl("bootstatus", udid, "-b")
-        # The fit checks read fonts from the accessibility tree, which apps build only with accessibility on; an iPad's
-        # apps full screen, with no Stage Manager windows or Split View. Both take effect on the next boot.
-        for key in ("ApplicationAccessibilityEnabled", "AccessibilityEnabled"):
-            simctl("spawn", udid, "defaults", "write", "com.apple.Accessibility", key, "-bool", "true")
-        simctl("spawn", udid, "defaults", "write", "com.apple.springboard", "SBChamoisWindowingEnabled", "-bool", "false")
-        simctl("spawn", udid, "defaults", "write", "com.apple.springboard", "SBMedusaMultitaskingEnabled", "-bool", "false")
-        simctl("shutdown", udid)
-        simctl("boot", udid)
-        simctl("bootstatus", udid, "-b")
-        if simctl("install", udid, app):
-            for language in self.languages:
-                self.problem(platform, language, f"couldn't install {app.name}; see {log}")
+                self.problem(platform, language, f"{error}; see {log}")
             return
         # One launch draws every shot asked for; a shot with an env of its own needs a launch with it.
         launches: dict[tuple, list[tuple[str, Shot]]] = {}
         for screen, shot in self.wanted(platform):
             launches.setdefault(shot.env, []).append((screen, shot))
+        mode = self.screens.config.get("mac.screenshotEnv") or "LACHING_SCREENSHOT_MODE"
         for language in self.languages:
             count = 0
             for number, (env, wanted) in enumerate(launches.items(), 1):
                 raw = self.screens.out / "raw" / platform.name / language / str(number)
-                if self.run_ios(platform, language, udid, bundle, wanted, dict(env), raw, log):
-                    count += self.collect(platform, language, raw, wanted)
+                try:
+                    phone.run(bundle, language, {mode: ",".join(dict.fromkeys(shot.name for _, shot in wanted)),
+                                                     **dict(env)}, raw)
+                except RuntimeError as error:
+                    self.problem(platform, language, f"{error}; see {log}")
+                    continue
+                self.problems_from(platform, language, raw, 0, log)
+                count += self.collect(platform, language, raw, wanted)
             self.ran.add(platform.name)
             self.say(f"{platform.name} {language}: {count} shots")
-        simctl("shutdown", udid)
-
-    def run_ios(self, platform: Platform, language: str, udid: str, bundle: str, wanted: list[tuple[str, Shot]],
-                env: dict[str, str], raw: Path, log: Path) -> bool:
-        """One launch in screenshot mode: moves the shots it drew and its problems.txt to `raw` and reports those
-        problems; False when it drew nothing."""
-        shutil.rmtree(raw, ignore_errors=True)
-        mode = self.screens.config.get("mac.screenshotEnv") or "LACHING_SCREENSHOT_MODE"
-        child = {f"SIMCTL_CHILD_{mode}": ",".join(dict.fromkeys(shot.name for _, shot in wanted)),
-                 **{f"SIMCTL_CHILD_{name}": value for name, value in env.items()}}
-        command = ["xcrun", "simctl", "launch", "--console-pty", "--terminate-running-process", udid, bundle,
-                   "-AppleLanguages", f"({language})", "-AppleLocale", region(language)]
-        with log.open("a", encoding="utf8") as out:
-            out.write(f"$ {' '.join(f'{k}={v}' for k, v in child.items())} {' '.join(command)}\n")
-        try:
-            done = subprocess.run(command, capture_output=True, text=True, env={**os.environ, **child},
-                                  timeout=LAUNCH_TIMEOUT)
-        except subprocess.TimeoutExpired:
-            self.sh(["xcrun", "simctl", "terminate", udid, bundle], log, timeout=60)
-            self.problem(platform, language, f"the run didn't finish in {LAUNCH_TIMEOUT} s; see {log}")
-            return False
-        lines = [line.strip() for line in done.stdout.replace("\r", "").splitlines()]
-        with log.open("a", encoding="utf8") as out:
-            out.write("\n".join([*lines, done.stderr.strip()]).strip() + "\n")
-        # The app draws into its container's temp folder and prints that path last.
-        folders = [Path(line) for line in lines if line.startswith("/") and Path(line).is_dir()]
-        if not folders:
-            self.problem(platform, language, f"no shots were drawn (exit {done.returncode}); see {log}")
-            return False
-        raw.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(folders[-1]), raw)
-        self.problems_from(platform, language, raw, 0, log)
-        return True
+        phone.shutdown()
 
     def android(self, platforms: list[Platform]) -> None:
         log = self.log("android")
@@ -552,37 +512,20 @@ class Capture:
             emulator.kill()
 
 
-def region(language: str) -> str:
-    if language in REGIONS:
-        return REGIONS[language]
-    if "-" in language:
-        base, _, area = language.partition("-")
-        return f"{base}_{area.upper()}"
-    return f"{language}_{language.upper()}"
-
-
 def simulator(name: str, device: str | None) -> str:
     """The UDID of the simulator called `name`, made the first time from `device` on the newest iOS runtime that runs it."""
     if not device:
         raise RuntimeError("no device in screens.platforms (a simulator device type)")
-    listing = json.loads(subprocess.run(["xcrun", "simctl", "list", "devices", "-j"], capture_output=True, text=True,
-                                        check=True).stdout)
-    for devices in listing["devices"].values():
-        for found in devices:
-            if found["name"] == name and found.get("isAvailable", True):
-                return found["udid"]
-    runtimes = json.loads(subprocess.run(["xcrun", "simctl", "list", "runtimes", "-j"], capture_output=True, text=True,
-                                         check=True).stdout)["runtimes"]
-    ios = [r for r in runtimes if r.get("platform") == "iOS" and r.get("isAvailable")
-           and any(device in (t.get("name"), t.get("identifier")) for t in r.get("supportedDeviceTypes", []))]
-    if not ios:
+    for found in sim.devices():
+        if found["name"] == name and found.get("isAvailable", True):
+            return found["udid"]
+    runtime = sim.newest_runtime(device, sim.runtimes())
+    if runtime is None:
         raise RuntimeError(f"no installed iOS simulator runtime supports {device} (Xcode → Settings → Components)")
-    newest = max(ios, key=lambda r: [int(part) for part in r["version"].split(".")])
-    made = subprocess.run(["xcrun", "simctl", "create", name, device, newest["identifier"]], capture_output=True,
-                          text=True)
-    if made.returncode:
-        raise RuntimeError(f"couldn't make a {device} simulator: {made.stderr.strip()}")
-    return made.stdout.strip()
+    try:
+        return sim.Simulator.create(name, device, runtime["identifier"]).udid
+    except RuntimeError as error:
+        raise RuntimeError(f"couldn't make a {device} simulator: {error}") from None
 
 
 def store(source: Path, target: Path, crop: bool) -> None:

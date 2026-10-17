@@ -15,7 +15,9 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import companion  # noqa: E402
+import layoutcheck  # noqa: E402
 import screens  # noqa: E402
+import sim  # noqa: E402
 from support import fixture_app  # noqa: E402
 
 try:
@@ -93,6 +95,8 @@ class ManifestTests(unittest.TestCase):
         launches = []
 
         def run(command, env=None, **_):
+            if command[2] != "launch":  # boot, defaults, install…
+                return subprocess.CompletedProcess(command, 0, "", "")
             mode = env["SIMCTL_CHILD_LACHING_SCREENSHOT_MODE"]
             launches.append((mode, env.get("SIMCTL_CHILD_FIXTURE_TWO"), command[-4:]))
             folder = drawn / str(len(launches))
@@ -104,8 +108,7 @@ class ManifestTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0, f"app.fixture: 42\r\nReady\r\n{folder}\r\n", "")
 
         with mock.patch.object(screens, "simulator", return_value="UDID"), \
-                mock.patch.object(capture, "sh", return_value=0), \
-                mock.patch.object(screens.subprocess, "run", run), redirect_stdout(io.StringIO()):
+                mock.patch.object(screens.sim.subprocess, "run", run), redirect_stdout(io.StringIO()):
             capture.device(self.phone, self.root / "Fixture.app", "app.fixture")
         self.assertEqual(launches, [("today", None, ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]),
                                     ("settings", "1", ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])])
@@ -246,6 +249,79 @@ class ManifestTests(unittest.TestCase):
                 with redirect_stderr(error), redirect_stdout(io.StringIO()):
                     self.assertEqual(screens.main(args), 2)
                 self.assertIn(words, error.getvalue())
+
+
+class SimulatorTests(unittest.TestCase):
+    def setUp(self):
+        self.context = fixture_app()
+        self.root = self.context.__enter__()
+        self.addCleanup(self.context.__exit__, None, None, None)
+
+    def test_a_run_moves_the_folder_the_app_drew_into_and_says_when_it_drew_nothing(self):
+        drawn = self.root / "container"
+        drawn.mkdir()
+        (drawn / "home-light.png").write_bytes(b"png")
+        out = self.root / "out"
+        out.mkdir()
+        (out / "old-light.png").write_bytes(b"old")
+        launches = []
+
+        def run(command, env=None, **_):
+            launches.append((command[-4:], env["SIMCTL_CHILD_LACHING_SCREENSHOT_MODE"]))
+            return subprocess.CompletedProcess(command, 0, f"app.fixture: 42\r\n{drawn}\r\n" if drawn.exists() else
+                                               "app.fixture: 42\r\nCrashed\r\n", "")
+
+        log = self.root / "phone.log"
+        phone = sim.Simulator("UDID", log)
+        with mock.patch.object(sim.subprocess, "run", run):
+            self.assertEqual(phone.run("app.fixture", "pt-BR", {"LACHING_SCREENSHOT_MODE": "home"}, out), out)
+            with self.assertRaisesRegex(RuntimeError, r"no shots were drawn \(exit 0\): app.fixture: 42\nCrashed"):
+                phone.run("app.fixture", "it", {"LACHING_SCREENSHOT_MODE": "home"}, out)
+        self.assertEqual(launches[0], (["-AppleLanguages", "(pt-BR)", "-AppleLocale", "pt_BR"], "home"))
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["home-light.png"], "the folder replaces the old shots")
+        self.assertFalse(drawn.exists(), "moved out of the app's container")
+        self.assertIn("SIMCTL_CHILD_LACHING_SCREENSHOT_MODE=home xcrun simctl launch", log.read_text("utf8"))
+
+    def test_a_run_that_hangs_is_terminated(self):
+        calls = []
+
+        def run(command, **kwargs):
+            calls.append(command)
+            if command[2] == "launch":
+                raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        with mock.patch.object(sim.subprocess, "run", run), self.assertRaisesRegex(RuntimeError, "didn't finish in 5 s"):
+            sim.Simulator("UDID").run("app.fixture", "en", {}, self.root / "out", timeout=5)
+        self.assertEqual(calls[-1], ["xcrun", "simctl", "terminate", "UDID", "app.fixture"])
+
+    def test_the_newest_runtime_that_runs_a_device_type(self):
+        runtimes = [{"version": "26.4", "supportedDeviceTypes": [{"identifier": "t.SE", "name": "iPhone SE"}]},
+                    {"version": "26.10", "supportedDeviceTypes": [{"identifier": "t.SE", "name": "iPhone SE"}]},
+                    {"version": "27.0", "supportedDeviceTypes": [{"identifier": "t.Duo", "name": "iPhone Duo"}]}]
+        self.assertEqual(sim.newest_runtime("t.SE", runtimes)["version"], "26.10", "by number, not by text")
+        self.assertEqual(sim.newest_runtime("iPhone Duo", runtimes)["version"], "27.0", "by name too")
+        self.assertIsNone(sim.newest_runtime("iPad", runtimes))
+
+
+class LayoutReportTests(unittest.TestCase):
+    def report(self, results):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = layoutcheck.report(results, "ios", ["se", "ipad"], ["en", "de"], Path("/shots"), 0.0)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_names_each_device_and_language_and_what_failed(self):
+        code, out, err = self.report({("se", "en"): [], ("se", "de"): ["home-light.png: cut short"], ("ipad", "en"): []})
+        self.assertEqual(code, 1)
+        self.assertEqual(out.splitlines(), ["== ios-se en", "== ios-se de", "  home-light.png: cut short", "== ios-ipad en",
+                                            "== ios-ipad de", "  not run"])
+        self.assertRegex(err, r"^Layout problems in: ios-se/de ios-ipad/de \(shots in /shots, [\d.]+ min\)$")
+
+    def test_says_when_every_screen_fits(self):
+        code, out, err = self.report({(d, lang): [] for d in ("se", "ipad") for lang in ("en", "de")})
+        self.assertEqual((code, err), (0, ""))
+        self.assertRegex(out.splitlines()[-1], r"^Every screen fits on se, ipad in: en de \([\d.]+ min\)$")
 
 
 @unittest.skipIf(Image is None, NO_PILLOW)

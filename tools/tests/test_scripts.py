@@ -159,9 +159,12 @@ chmod +x "$app/Fixture"
         fake_simctl = self.root / "fake_simctl.py"
         # The Simulator in a JSON file: one runtime with an SE and an iPad, made and cloned devices, and an app that
         # writes a shot (plus problems.txt in German) and prints its folder with the pty's \r, as the real one does.
-        fake_simctl.write_text(f"""import json, os, sys, tempfile
+        fake_simctl.write_text(f"""import fcntl, json, os, sys, tempfile
 from pathlib import Path
 state = Path({str(state)!r})
+# The clones boot side by side: one simctl at a time reads and writes the state.
+lock = open(str(state) + ".lock", "w")
+fcntl.flock(lock, fcntl.LOCK_EX)
 data = json.loads(state.read_text()) if state.exists() else {{"devices": [], "next": 1}}
 args = sys.argv[2:]
 with open({str(self.log)!r}, "a") as log:
@@ -175,7 +178,7 @@ def new(name):
     save()
     print(udid)
 command = args[0]
-if command == "list" and args[2] == "runtimes":
+if command == "list" and "runtimes" in args:
     types = [{{"identifier": "com.apple.CoreSimulator.SimDeviceType." + t}}
              for t in ("iPhone-SE-3rd-generation", "iPad-Pro-13-inch-M5-12GB")]
     print(json.dumps({{"runtimes": [{{"identifier": "iOS-27-0", "name": "iOS 27.0", "version": "27.0",
@@ -192,9 +195,10 @@ elif command == "delete":
 elif command == "launch":
     out = Path(tempfile.mkdtemp())
     (out / "home-light.png").write_bytes(b"png")
-    language = args[args.index("-AppleLocale") + 1]
+    language = args[args.index("-AppleLanguages") + 1].strip("()")
+    locale = args[args.index("-AppleLocale") + 1]
     with open({str(self.log)!r}, "a") as log:
-        log.write(f"run {{language}} {{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_MODE')}} "
+        log.write(f"run {{language}} {{locale}} {{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_MODE')}} "
                   f"{{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_ORIENTATION', '-')}}\\n")
     if language == "de":
         (out / "problems.txt").write_text("home-light.png: “Wiederholungen” is cut short\\n")
@@ -215,7 +219,8 @@ elif command == "launch":
         self.assertTrue((checked / "ios-ipad-landscape" / "en" / "home-light.png").exists())
         self.assertTrue((checked / "ios-se" / "de" / "problems.txt").exists())
         runs = sorted(line for line in self.log.read_text().splitlines() if line.startswith("run "))
-        self.assertEqual(runs, ["run de all -", "run de all landscape", "run en all -", "run en all landscape"])
+        self.assertEqual(runs, ["run de de_DE all -", "run de de_DE all landscape", "run en en_US all -",
+                                "run en en_US all landscape"])
         names = [d["name"] for d in json.loads(state.read_text())["devices"]]
         self.assertEqual(sorted(names), ["fixture layout: iPad-Pro-13-inch-M5-12GB", "fixture layout: iPhone-SE-3rd-generation"],
                          "the templates stay, the clones go")
@@ -225,7 +230,7 @@ elif command == "launch":
         self.assertEqual(passing.returncode, 0, passing.stderr)
         self.assertIn("Every screen fits on se in: en", passing.stdout)
         self.assertNotIn("create", self.log.read_text().split(), "the template is made once")
-        self.assertIn("run en home -", self.log.read_text())
+        self.assertIn("run en en_US home -", self.log.read_text())
 
     def android_config(self, extra_shot: bool = True) -> None:
         """The fixture app with an Android side: `android/` and a `droid` platform captured on the AVD Pixel_8."""
