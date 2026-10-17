@@ -7,49 +7,11 @@ namespace Laching.Companion.Shell.Tests.Signals;
 /// <summary>The hub's busy watch and power events (the Swift hub is covered through the app model's tests; these pin it directly).</summary>
 public sealed class SignalHubTests
 {
-    private sealed class Power : IPowerSource
-    {
-        public PowerState? State { get; set; }
-
-        public event Action? Changed;
-
-        public PowerState? CurrentPowerState() => State;
-
-        public void Set(PowerState state)
-        {
-            State = state;
-            Changed?.Invoke();
-        }
-    }
-
-    private sealed class Appearance : IAppearance
-    {
-        public bool IsDark { get; set; }
-
-        public event Action<bool>? Changed;
-
-        public void Set(bool dark)
-        {
-            IsDark = dark;
-            Changed?.Invoke(dark);
-        }
-    }
-
-    private sealed class Lock(bool locked) : IScreenLock
-    {
-        public bool IsLocked => locked;
-    }
-
-    private sealed class Mute(bool? muted) : IAudioOutputState
-    {
-        public bool? IsOutputMuted() => muted;
-    }
-
     private readonly MockIdle idle = new() { Idle = 42 };
     private readonly MockBusy busy = new();
     private readonly ManualTimers timers = new();
-    private readonly Power power = new() { State = new PowerState(IsOnBattery: false, Percent: 80) };
-    private readonly Appearance appearance = new();
+    private readonly FakePower power = new() { State = new PowerState(IsOnBattery: false, Percent: 80) };
+    private readonly FakeAppearance appearance = new();
     private readonly List<Trigger> events = [];
 
     private SignalHub Hub(IScreenLock? screenLock = null, IAudioOutputState? audio = null)
@@ -63,7 +25,7 @@ public sealed class SignalHubTests
     public void TheSnapshotReadsEverySource()
     {
         busy.Reasons = [BusyReason.FullScreen];
-        var hub = Hub(new Lock(true), new Mute(true));
+        var hub = Hub(new FakeScreenLock { IsLocked = true }, new FakeAudio { Muted = true });
         hub.IsSpeaking = () => true;
         hub.NotificationsAuthorized = true;
         var snapshot = hub.Snapshot();

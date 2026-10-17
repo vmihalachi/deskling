@@ -6,8 +6,9 @@ using Laching.Core.Scheduling;
 namespace Laching.Testing.Conformance;
 
 /// <summary>
-/// The conventions of conformance/README.md the companion replays share: busy reasons by name, the snapshot object
-/// (Swift's <c>SnapshotData</c>), optional values (null or left out both mean "no value") and JSON comparison.
+/// The conventions of conformance/README.md the replays share (the scheduler's and the companion's): busy reasons by
+/// name, the snapshot object (Swift's <c>SnapshotData</c>), optional values (null or left out both mean "no value") and
+/// JSON comparison.
 /// </summary>
 public static class VectorSupport
 {
@@ -49,6 +50,15 @@ public static class VectorSupport
         e.TryGetProperty(name, out value) && value.ValueKind != JsonValueKind.Null;
 
     public static string? OptionalString(JsonElement e, string name) => Has(e, name, out var v) ? v.GetString() : null;
+
+    public static double OptionalDouble(JsonElement e, string name, double fallback) => Has(e, name, out var v) ? v.GetDouble() : fallback;
+
+    public static int OptionalInt(JsonElement e, string name, int fallback) => Has(e, name, out var v) ? v.GetInt32() : fallback;
+
+    public static ulong OptionalUInt64(JsonElement e, string name, ulong fallback) => Has(e, name, out var v) ? v.GetUInt64() : fallback;
+
+    /// <summary>The strings array <paramref name="name"/>, or none when it is null or left out.</summary>
+    public static string[] OptionalStrings(JsonElement e, string name) => Has(e, name, out var v) ? Strings(v) : [];
 
     public static string[] Strings(JsonElement array) => array.EnumerateArray().Select(x => x.GetString()!).ToArray();
 

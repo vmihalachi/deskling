@@ -14,6 +14,11 @@ package and the NuGet packages together.
   holds the `.resw` lookup, plural and fallback logic (`Get`, `Localize`, `Format`, `Plural`) over an abstract
   `Lookup(name)` (#86). `Loc` and `ReswStrings` both read through it instead of each keeping a copy, so the test double
   can't drift from the app. No behavior change.
+- **Testing**: `Fixtures.Fixture` (the fixture bank, defaults, vector and raster art and skin catalog, loaded once),
+  `Fixtures.FixtureCopy` with `FixtureWindow` (the fixture model's roles and placeholder status, desktop and menu words),
+  the signal fakes `FakePower`, `FakeAppearance` and `FakeScreenLock`, and `VectorSupport.OptionalDouble`, `OptionalInt`,
+  `OptionalUInt64` and `OptionalStrings` (#87). Laching's own test projects and the fixture app use them instead of
+  their copies; the fixture app's status pill now reads "Next in about N min" like the tests' model.
 
 ## 0.13.0 - 2026-10-17
 
