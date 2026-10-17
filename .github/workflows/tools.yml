@@ -63,10 +63,16 @@ jobs:
         run: npx vp test run
 
       # The same pack as release.yml's landing job, into a folder of its own, so a tag never meets it first. A release
-      # packs at a version above npm's latest (npm won't tag a lower one latest), so this packs at the next patch.
+      # packs at a version above npm's latest (npm won't tag a lower one latest), so this packs at the next patch. npm
+      # has no version of a package not published yet (@laching/landing before its first release, `npm view` fails
+      # with E404), and then this packs at the next patch of package.json's, as release.yml's version job allows.
       - name: Pack (as the release does)
         run: |
-          npm version "$(npm view @laching/landing version)" --no-git-tag-version --allow-same-version
+          if published="$(npm view @laching/landing version 2>/dev/null)" && [ -n "$published" ]; then
+            npm version "$published" --no-git-tag-version --allow-same-version
+          else
+            echo "npm has no version of @laching/landing yet: packing at the next patch of package.json's"
+          fi
           npm version patch --no-git-tag-version
           mkdir -p "$RUNNER_TEMP/npm"
           npm pack --pack-destination "$RUNNER_TEMP/npm"
