@@ -5,7 +5,7 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
 - **Public API is deliberate.** Every public type gets a doc comment saying what it does, what it needs and what it
   never does (for example "never prompts for a permission"). Keep type names that mybackhurts already uses
   (`ReminderScheduler`, `SchedulerConfig`, `Clock`, `BusyStateProvider`…) so adopting the package is an import swap.
-- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+ (desktop only: no iOS), no dependencies. `DesklingCore` stays Foundation-only and `DesklingCompanion`
+- **Swift 6 language mode** (strict concurrency; public value types are `Sendable`), macOS 14+, iOS 17+ (Swift), Windows 10+ (.NET), Android 8+ (Kotlin), no dependencies. `DesklingCore` stays Foundation-only and `DesklingCompanion`
   Foundation and Observation only (both build on Linux); anything that imports AppKit, SwiftUI, CoreAudio, AVFoundation,
   IOKit or Carbon goes in `DesklingSystem`, `DesklingShell` or `DesklingCompanionUI`.
 - **Package code never names an app.** No app's skins, phrase bank, product ids, palette or voices, and no app name in
@@ -39,7 +39,7 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
   and Companion test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
-- **Versioning:** SemVer, one `vX.Y.Z` tag for both sides; `CHANGELOG.md` gets a line per user-visible change under
+- **Versioning:** SemVer, one `vX.Y.Z` tag for every side; `CHANGELOG.md` gets a line per user-visible change under
   *Unreleased*, with `**Breaking.**` in a breaking one. A change never bumps the version or tags: on every push to
   `master`, `release.yml` runs `scripts/release.sh`, which gives the *Unreleased* entries the next version (a patch, or
   a minor while 0.x for a breaking one), moves them under it and puts it in all five places: `Deskling.version`

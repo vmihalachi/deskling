@@ -6,6 +6,74 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Kotlin (`kotlin/`)**: the third implementation, for Android (vmihalachi/mybackhurts#54): a Gradle build of its
+  own (`:core`, `:android`, `:testing`; Gradle 9, AGP 9.4, Kotlin 2.4 on a JDK 17, `gradle.properties` carrying
+  `desklingVersion`, ktlint for the style) that an app includes with `includeBuild` and dependency substitution
+  (`deskling:core`, `deskling:android`, `deskling:testing`; `tools/README.md` step 7). Nothing is published. No
+  Companion in Kotlin until a companion app goes to Android (`docs/layout.md`).
+- **Kotlin (`deskling.core`)**: pure JVM (kotlinx-serialization-json): `ReminderScheduler` with `SchedulerConfig`,
+  `SchedulerState`, `Clock`, the idle and busy providers and the decisions, ported file by file from
+  `Deskling.Core/Scheduling` and checked against the Swift; `SplitMix64`; `LocalizedKey`, `PluralRules` and
+  `ResourceNames`; `SettingsStore`; `PurchaseStore`, `StoreBackend`, `ProductCatalog` and `MockStoreBackend`; the
+  drawing math (`SvgPath`, `Wobble`, `Keyframes`, `Geometry`), which returns point lists the app draws.
+- **Kotlin (`deskling.core` tests)**: `SchedulerConformanceTests` replays every `conformance/scheduler` vector
+  (walking up from the working directory to `conformance/`, as `Deskling.Testing` does); the SplitMix64, plural,
+  settings, store and drawing tests ported from the Swift and C# suites.
+- **Kotlin (`deskling.android`)**: an Android library (minSdk 26, compileSdk 36): `PlayBillingBackend` (a
+  `StoreBackend` on Play Billing), `SharedPreferencesSettingsStore`, `ReminderAlarms` (exact when allowed, else
+  inexact, both while idle), `ReminderNotifications` (channel, builder over injected copy and actions, the delete
+  intent), `ReduceMotion`, and `ScreenshotRun` with `LaunchContext`: the Android `ScreenshotCapture`, driven by the
+  intent extras `DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`, `DESKLING_LANG` and `DESKLING_REGION` (the Mac's env
+  names), drawing each screen in light and dark into `files/screens/` with `problems.txt` and `done`.
+- **Kotlin (`deskling.testing`)**: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `MockStoreBackend` and
+  `ConformanceRoot`, as `Deskling.Testing`.
+- **Tools (`companion.schema.json`)**: an `android` section (`dir`, `core`, `app`, `applicationId` defaulting to
+  `bundleId`, `devApplicationId` to `devBundleId`, `strings`: where `export-android` writes, replacing
+  `l10n.androidStrings`, kept as an alias), `hooks.androidUI`, `store.google` (`screenshotCount`, `locales`),
+  `screens.platforms[].capture: "android"` with an `avd`, a shot's `camera`, and `screenshots.store.canvases`.
+- **Tools (`l10n.py`)**: `export-android` writes `values*/strings.xml` (`s_` names, plurals as `name__<category>`
+  keys with the C# selection rule, `formatted="false"`) and `res/xml/locales_config.xml`; `check` reports a stale
+  export once `android.dir` exists.
+- **Tools (`hooks/hook.py`)**: `ktlint -F` formats the `.kt` and `.kts` files an agent edits under `android.dir` (and
+  under `kotlin/` here) when ktlint is on PATH; the "port Mac UI changes" reminder names Windows and Android when
+  `hooks.androidUI` is set.
+- **Tools (`verify.sh`)**: ktlint over the changed Kotlin files (fast); `./gradlew :<android.core>:test` and the
+  Android export check when the core or the vectors change (slow); both skip with a hint when the toolchain is
+  missing.
+- **Tools (`setup-linux.sh`)**: a JDK 17 (`openjdk-17-jdk-headless`) and ktlint for an app with an `android` section,
+  so Linux runs `:core:test` and the lint; the app module needs the SDK and stays Mac and CI only, like the WinUI
+  build.
+- **Tools (`screens.py`, `avd.py`)**: an `android` capture: `avd.py` boots the platform's AVD headless (`emulator
+  -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect`, `-camera-front webcam0` for a shot with `camera`),
+  puts the status bar in demo mode at 09:41, installs the Debug APK, starts the app in screenshot mode with the
+  extras (the app takes language and region from them, no reboot), waits for `done` and pulls `files/screens/` into
+  `build/screens/<platform>/<lang>/`, one launch per distinct shot env.
+- **Tools (`check-layout-android.py`)**: new: the Android screens on devices × languages as `check-layout-ios.py`
+  runs them (one boot per AVD, every language on it, `--jobs` emulators at a time), reading `problems.txt` and the
+  missing PNGs; `--font-scale 2.0` through `settings put system font_scale`.
+- **Tools (`store/check.py`, `store/listing.py`)**: with `store.google`, a Google Play section of
+  `store-listing/<lang>.md` (`google.title` ≤ 30, `google.short` ≤ 80, `google.full` ≤ 4000, each product's
+  `google.iap.<id>.name` ≤ 55 and `.description` ≤ 200). No Google side in `push.py`: uploading needs a Play service
+  account, so the owner uploads by hand.
+- **Tools (`store-screenshots.py`)**: `--canvas android-phone` (1080 × 1920: the capture scaled under the caption, as
+  the iPhone images; every shot of a language reserves its tallest caption's height) and `--canvas android-tablet`
+  (2560 × 1600, the landscape layout), into `<store.out>/<canvas>/<language>`; `screenshots.store.canvases` overrides
+  a size, and every Android image is checked against Play's limits (each side 320–3840 px, no side more than twice
+  the other).
+- **Tools (`companion.py`)**: `link` writes `deskling.kotlin.dir=<checkout>/kotlin` into `<android.dir>/local.properties`
+  (git-ignored; the app's `settings.gradle.kts` reads it before the submodule's build) and `unlink` removes it;
+  `pins` reads the submodule's `kotlin/gradle.properties` too.
+- **Scripts (`release.sh`, `verify.sh`)**: the version places gain `kotlin/gradle.properties` and
+  `kotlin/core/src/main/kotlin/deskling/core/Deskling.kt`.
+- **Tools (`README.md`)**: step 7, Android apps: the `includeBuild` snippet, the `local.properties` override, ktlint
+  in the hook; the Android rows of the tool table.
+- **CI (`kotlin.yml`)**: on push and PR touching `kotlin/**` or `conformance/**`: ktlint, `:core:test`,
+  `:testing:test` and `:android:assembleDebug` on `ubuntu-latest` (JDK 17, the preinstalled Android SDK).
+  `copilot-setup-steps.yml` installs the JDK and warms the Gradle caches so the cloud agent can run `:core:test`.
+- **Docs**: README's tagline and product table, `PRODUCT.md`, `docs/conventions.md` and `AGENTS.md` say menu bar, tray
+  and phone (macOS 14+, iOS 17+, Windows, Android 8+); `docs/layout.md` maps `kotlin/`; `conformance/README.md`
+  lists Kotlin as a replayer.
+
 ## 0.12.0 - 2026-10-16
 
 - **CompanionUI (`ScreenshotCapture`)**: on iOS, `DESKLING_SCREENSHOT_HOLD` names a Darwin notification: after

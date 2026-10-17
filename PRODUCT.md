@@ -13,7 +13,7 @@ tools and no dependencies, matching the package's own no-dependency rule.
 
 ## Users
 
-Indie developers building a small desktop app that lives in the macOS menu bar or the Windows tray, in Swift or .NET,
+Indie developers building a small app that lives in the macOS menu bar, the Windows tray or a phone, in Swift, .NET or Kotlin,
 evaluating whether to adopt Deskling instead of writing the same plumbing again, and those building a desk companion
 (a character that talks on a cadence and knows when to be quiet). Secondary: the maintainers of mybackhurts,
 sunnysays and Mister Pagliacci, who use it as a reference.
@@ -46,7 +46,7 @@ instance, drawing helpers; on the Mac also the status item, speech and chimes), 
 companion's views, desktop presence and delivery), `DesklingStore` / `Deskling.Core` `Store/` + `Deskling.Windows` (one-time unlockables and tips: StoreKit 2 on the Mac,
 the Microsoft Store on Windows, both since 0.3.0), `DesklingTesting` / `Deskling.Testing` (fakes, fixtures, conformance generators and replays), and `tools/` (Python
 tools, scripts and agent skills a companion app vendors as a submodule).
-macOS 14+ and Windows 11 (.NET 10); desktop only. Version 0.x: minor versions may change public types. The package ships no strings.
+macOS 14+, iOS 17+, Windows 11 (.NET 10) and Android 8+ (Kotlin); menu bar, tray and phone. Version 0.x: minor versions may change public types. The package ships no strings.
 
 ## Brand Commitments
 

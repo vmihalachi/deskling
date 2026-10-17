@@ -48,7 +48,8 @@ scripts/verify.sh                              # runs what applies to your chang
 # a Stop hook runs scripts/verify.sh --fast on the files you edited; fix what it reports before ending
 ```
 
-In a Linux container only the .NET side runs. Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
+In a Linux container only the .NET side and the Kotlin side's `:core` and `:testing` run (a JDK 17; the `:android` build
+needs the SDK, so `kotlin.yml` builds it). Verify Swift through `swift.yml` (push a branch, dispatch the workflow,
 read the failed job's log). Vectors need the Swift code to regenerate: without a Mac, dispatch `regenerate-vectors.yml`
 on your branch and pull the commit it pushes. It refuses the default branch (its first step fails there), so a vector
 change reaches `master` only through a pull request.
@@ -93,7 +94,7 @@ The short form; the full rules with their examples are in `docs/conventions.md`.
 - **C# mirrors Swift** folder for folder and file for file; the deviations (the store under `Deskling.Core/Store/`,
   `Deskling.Testing`'s own layout, the companion shell mirrored by role) are marked in `docs/layout.md`. Source-generated
   JSON only: the apps publish with Native AOT.
-- **Versioning:** SemVer, one `vX.Y.Z` tag for both sides, a CHANGELOG line per user-visible change under
+- **Versioning:** SemVer, one `vX.Y.Z` tag for every side, a CHANGELOG line per user-visible change under
   *Unreleased* (`**Breaking.**` on a breaking one). Releases are automatic: on every push to `master`, `release.yml`
   gives the entries the next version (`scripts/release.sh`), commits the bump, tags and publishes, so a change never
   bumps or tags (the `release` skill has the manual ways).
