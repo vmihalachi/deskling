@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.13.0 - 2026-10-17
+
 - **Breaking.** Rename the project and all packages to Laching.
 
 ## 0.12.6 - 2026-10-17
