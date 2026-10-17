@@ -111,10 +111,8 @@ public object SvgPath {
                 if (token is Token.Cmd) {
                     cmd = token.char
                     i++
-                    if (cmd == 'Z' || cmd == 'z') {
+                    if (cmd.equals('Z', ignoreCase = true)) {
                         line(start)
-                        lastCubicControl = null
-                        lastQuadControl = null
                         continue
                     }
                 }
@@ -132,7 +130,8 @@ public object SvgPath {
                         'A' -> arcTo(relative)
                         else -> false
                     }
-                if (!handled) skip()
+                // Skip a parameter that doesn't parse.
+                if (!handled) i++
             }
             if (current.size > 1) subpaths += current
             return subpaths
@@ -153,24 +152,18 @@ public object SvgPath {
 
         private fun lineTo(relative: Boolean): Boolean {
             line(absolute(point() ?: return false, relative))
-            lastCubicControl = null
-            lastQuadControl = null
             return true
         }
 
         private fun horizontal(relative: Boolean): Boolean {
             val x = num() ?: return false
             line(Point(if (relative) pen.x + x else x, pen.y))
-            lastCubicControl = null
-            lastQuadControl = null
             return true
         }
 
         private fun vertical(relative: Boolean): Boolean {
             val y = num() ?: return false
             line(Point(pen.x, if (relative) pen.y + y else y))
-            lastCubicControl = null
-            lastQuadControl = null
             return true
         }
 
@@ -193,7 +186,6 @@ public object SvgPath {
             val c2 = point() ?: return false
             val p = point() ?: return false
             cubic(absolute(c1, relative), absolute(c2, relative), absolute(p, relative))
-            lastQuadControl = null
             return true
         }
 
@@ -202,7 +194,6 @@ public object SvgPath {
             val p = point() ?: return false
             val c1 = lastCubicControl?.let { Point(2 * pen.x - it.x, 2 * pen.y - it.y) } ?: pen
             cubic(c1, absolute(c2, relative), absolute(p, relative))
-            lastQuadControl = null
             return true
         }
 
@@ -236,6 +227,7 @@ public object SvgPath {
             relative: Boolean,
         ): Point = if (relative) Point(pen.x + p.x, pen.y + p.y) else p
 
+        /** A straight segment, which ends any smooth curve: S and T after it reflect nothing. */
         private fun line(to: Point) {
             val n = max(1, (hypot(to.x - pen.x, to.y - pen.y) / step).toInt())
             for (k in 1..n) {
@@ -243,6 +235,8 @@ public object SvgPath {
                 current += Point(pen.x + (to.x - pen.x) * t, pen.y + (to.y - pen.y) * t)
             }
             pen = to
+            lastCubicControl = null
+            lastQuadControl = null
         }
 
         private fun cubic(
@@ -263,6 +257,7 @@ public object SvgPath {
             }
             pen = p
             lastCubicControl = c2
+            lastQuadControl = null
         }
 
         private fun quadratic(
@@ -337,11 +332,6 @@ public object SvgPath {
                 current += if (k == n) p else Point(x, y)
             }
             pen = p
-        }
-
-        /** Skips a parameter that doesn't parse. */
-        private fun skip() {
-            i++
         }
     }
 }

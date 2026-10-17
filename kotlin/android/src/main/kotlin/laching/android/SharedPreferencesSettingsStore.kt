@@ -2,6 +2,7 @@ package laching.android
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import laching.core.settings.SettingsStore
 
 /**
@@ -33,48 +34,34 @@ public class SharedPreferencesSettingsStore(
     override fun setBool(
         key: String,
         value: Boolean,
-    ) {
-        preferences.edit().putBoolean(key, value).apply()
-    }
+    ): Unit = preferences.edit { putBoolean(key, value) }
 
     override fun setInteger(
         key: String,
         value: Int,
-    ) {
-        preferences.edit().putInt(key, value).apply()
-    }
+    ): Unit = preferences.edit { putInt(key, value) }
 
     override fun setDouble(
         key: String,
         value: Double,
-    ) {
-        preferences.edit().putLong(key, java.lang.Double.doubleToRawLongBits(value)).apply()
-    }
+    ): Unit = preferences.edit { putLong(key, java.lang.Double.doubleToRawLongBits(value)) }
 
     override fun setString(
         key: String,
         value: String,
-    ) {
-        preferences.edit().putString(key, value).apply()
-    }
+    ): Unit = preferences.edit { putString(key, value) }
 
     override fun setStrings(
         key: String,
         value: List<String>,
-    ) {
-        preferences.edit().putStringSet(key, encode('s', value)).apply()
-    }
+    ): Unit = preferences.edit { putStringSet(key, encode('s', value)) }
 
     override fun setIntegers(
         key: String,
         value: List<Int>,
-    ) {
-        preferences.edit().putStringSet(key, encode('i', value.map { it.toString() })).apply()
-    }
+    ): Unit = preferences.edit { putStringSet(key, encode('i', value.map { it.toString() })) }
 
-    override fun remove(key: String) {
-        preferences.edit().remove(key).apply()
-    }
+    override fun remove(key: String): Unit = preferences.edit { remove(key) }
 
     private fun encode(
         tag: Char,
@@ -86,15 +73,15 @@ public class SharedPreferencesSettingsStore(
         tag: Char,
     ): List<String>? {
         val members = preferences.all[key] as? Set<*> ?: return null
-        val indexed = ArrayList<Pair<Int, String>>(members.size)
-        for (member in members) {
-            val text = member as? String ?: return null
-            if (text.firstOrNull() != tag) return null
-            val colon = text.indexOf(':')
-            if (colon < 2) return null
-            val index = text.substring(1, colon).toIntOrNull() ?: return null
-            indexed += index to text.substring(colon + 1)
-        }
-        return indexed.sortedBy { it.first }.map { it.second }
+        return members
+            .map { member ->
+                val text = member as? String ?: return null
+                if (text.firstOrNull() != tag) return null
+                val colon = text.indexOf(':')
+                if (colon < 2) return null
+                val index = text.substring(1, colon).toIntOrNull() ?: return null
+                index to text.substring(colon + 1)
+            }.sortedBy { it.first }
+            .map { it.second }
     }
 }
