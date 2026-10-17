@@ -171,11 +171,9 @@ public final class ReminderScheduler {
         var rng = random
         var cursor = from
         var paused = pausedUntil
-        var fire: Date? = (paused == nil && isWithinActiveHours(from)) ? nextFireDate : nil
-        if let f = fire, f <= from {
-            fire = from.addingTimeInterval(nextInterval(using: &rng))
-        } else if fire == nil, paused == nil, isWithinActiveHours(from) {
-            fire = from.addingTimeInterval(nextInterval(using: &rng))
+        var fire: Date?
+        if paused == nil && isWithinActiveHours(from) {
+            fire = nextFireDate.flatMap { $0 > from ? $0 : nil } ?? from.addingTimeInterval(nextInterval(using: &rng))
         }
 
         var results: [Date] = []
@@ -193,8 +191,7 @@ public final class ReminderScheduler {
             }
 
             if !isWithinActiveHours(cursor) {
-                fire = nil
-                guard let nextActive = nextActiveDate(after: cursor, until: until) else { break }
+                guard let nextActive = firstMinute(after: cursor, upTo: until, where: isWithinActiveHours) else { break }
                 cursor = nextActive
                 fire = cursor.addingTimeInterval(nextInterval(using: &rng))
                 continue
@@ -221,23 +218,19 @@ public final class ReminderScheduler {
         Date(timeIntervalSinceReferenceDate: (floor(date.timeIntervalSinceReferenceDate / 60) + 1) * 60)
     }
 
-    private func nextActiveDate(after date: Date, until: Date) -> Date? {
+    /// The first whole minute after `date`, up to `limit`, where `test` holds.
+    private func firstMinute(after date: Date, upTo limit: Date, where test: (Date) -> Bool) -> Date? {
         var probe = nextMinuteBoundary(after: date)
-        while probe <= until {
-            if isWithinActiveHours(probe) { return probe }
+        while probe <= limit {
+            if test(probe) { return probe }
             probe = probe.addingTimeInterval(60)
         }
         return nil
     }
 
+    /// The first inactive minute after `date`, or `limit` itself when it is inactive.
     private func firstInactiveDate(after date: Date, upTo limit: Date) -> Date? {
-        var probe = nextMinuteBoundary(after: date)
-        while probe <= limit {
-            if !isWithinActiveHours(probe) { return probe }
-            probe = probe.addingTimeInterval(60)
-        }
-        if !isWithinActiveHours(limit) { return limit }
-        return nil
+        firstMinute(after: date, upTo: limit, where: { !isWithinActiveHours($0) }) ?? (isWithinActiveHours(limit) ? nil : limit)
     }
 
     /// Answering a reminder (unanswered, held during a call, or already snoozed until after a call)
