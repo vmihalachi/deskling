@@ -1,9 +1,9 @@
 package laching.core.localization
 
-import laching.core.localization.LocalizedKey.Argument
-import laching.core.localization.LocalizedKey.ArgumentKind
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import laching.core.localization.LocalizedKey.Argument
+import laching.core.localization.LocalizedKey.ArgumentKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
