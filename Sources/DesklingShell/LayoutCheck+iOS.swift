@@ -1,5 +1,4 @@
 #if os(iOS)
-    import CoreText
     import SwiftUI
     import UIKit
 
@@ -38,31 +37,26 @@
         }
 
         /// The labels of what VoiceOver would read in `window` whose text, laid out in its own font at its element's
-        /// width, needs more lines than the element is tall: SwiftUI `Text` cut short with "…" or clipped. Reads the
-        /// font from accessibility, so it needs accessibility on, as `offScreen(in:)` does; measures text only (not a
-        /// button's title), and skips an element that combines texts in several fonts or has characters its font lacks
-        /// (Japanese in a Latin font is drawn in a fallback font). Errs towards fitting: a label
-        /// read differently from how it's drawn (upper-cased, spaced out) measures shorter. Text shrunk to fit
-        /// (`minimumScaleFactor`) may be reported.
+        /// width, needs more lines than the element is tall (`isCut(_:inputLabels:font:in:)`): SwiftUI `Text` cut short
+        /// with "…" or clipped. Reads the font from accessibility, so it needs accessibility on, as `offScreen(in:)`
+        /// does; measures text only (not a button's title), and skips an element that combines texts in several fonts
+        /// or is read as something other than what it draws: SwiftUI doesn't say what an element draws, only what it's
+        /// read as, so one that draws a short tag but reads a whole sentence says so with a concise input label
+        /// (`accessibilityInputLabels`). Errs towards fitting: a label read differently from how it's drawn
+        /// (upper-cased, spaced out) measures shorter. Text shrunk to fit (`minimumScaleFactor`) may be reported.
         public static func truncatedText(in window: UIWindow) -> [String] {
             let debug = ProcessInfo.processInfo.environment["DESKLING_LAYOUT_DEBUG"] == "1"
             var found: [String] = []
             for item in accessibleItems(in: window) {
-                // Text the font has no glyphs for (Japanese in a Latin font) is drawn in a fallback font, measured otherwise.
-                guard let font = item.font, covers(font, item.label), !found.contains(item.label) else { continue }
-                // Too narrow for a letter and "…": an icon labeled for VoiceOver, not text.
-                let least = (String(item.label.prefix(1)) + "…" as NSString).size(withAttributes: [.font: font]).width
-                guard item.frame.width >= least else { continue }
-                let needed = (item.label as NSString).boundingRect(
-                    with: CGSize(width: item.frame.width + slack, height: .greatestFiniteMagnitude),
-                    options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: font], context: nil
-                ).height
+                guard let font = item.font, !found.contains(item.label) else { continue }
+                let cut = isCut(item.label, inputLabels: item.inputLabels, font: font, in: item.frame.size)
                 if debug {
+                    let needed = textHeight(of: item.label, font: font, width: item.frame.width)
                     print(
-                        "TEXT \(Int(needed))/\(Int(item.frame.height)) w\(Int(item.frame.width)) \(font.fontName) \(font.pointSize) \(item.label)"
+                        "TEXT \(Int(needed))/\(Int(item.frame.height)) w\(Int(item.frame.width)) \(font.fontName) \(font.pointSize) \(item.label) \(item.inputLabels)\(cut ? " CUT" : "")"
                     )
                 }
-                if needed > item.frame.height + font.lineHeight / 2 { found.append(item.label) }
+                if cut { found.append(item.label) }
             }
             return found
         }
@@ -71,7 +65,9 @@
         /// outside the screen's safe area, under the status bar or the home indicator or past an edge, and not in a
         /// scroll view's content: what a screen that doesn't scroll pushes off when its content needs more room than
         /// it has, whatever its layout. Catches the screens `overflows(in:)` can't measure, such as one built on a
-        /// `GeometryReader`.
+        /// `GeometryReader`. An element inside a scroll view is scrolled to anywhere along the way that view scrolls
+        /// (`ScrollArea`), so a lazy stack's rows that report frames past the content's end before it has laid them
+        /// out don't count; one pushed past the side of a scroll view that only scrolls up and down does.
         public static func offScreen(in window: UIWindow) -> [String] {
             let safe = window.bounds.inset(by: window.safeAreaInsets).insetBy(dx: -slack, dy: -slack)
             let screen = window.bounds.insetBy(dx: -slack, dy: -slack)
@@ -79,7 +75,9 @@
             var found: [String] = []
             for item in accessibleItems(in: window) where !(item.isUIKit ? screen : safe).contains(item.frame) {
                 let center = CGPoint(x: item.frame.midX, y: item.frame.midY)
-                if !scrolled.contains(where: { $0.contains(center) }), !found.contains(item.label) { found.append(item.label) }
+                // Reached through no scroll view, an element may still lie in one's content.
+                let areas = item.scrolls.isEmpty ? scrolled.map { ScrollArea(content: $0.content) } : item.scrolls
+                if !areas.contains(where: { $0.contains(center) }), !found.contains(item.label) { found.append(item.label) }
             }
             return found
         }
@@ -142,13 +140,16 @@
 
         /// What VoiceOver would read on screen: an element's label, its frame in the window's coordinates, whether it is
         /// one of UIKit's own views (a tab bar's buttons sit partly under the home indicator) rather than SwiftUI
-        /// content, and, for text, the font its label is drawn in when it has one throughout. Buttons, images and
-        /// charts have no font here: what they draw isn't their label.
+        /// content, for text the font its label is drawn in when it has one throughout and what Voice Control users
+        /// say for it, and the scroll views it is in. Buttons, images and charts have no font here: what they draw
+        /// isn't their label.
         private struct Item {
             let label: String
             let frame: CGRect
             let isUIKit: Bool
             let font: UIFont?
+            let inputLabels: [String]
+            let scrolls: [ScrollArea]
         }
 
         /// The accessibility elements on screen in `window` with a label. Empty unless accessibility is on (the
@@ -156,7 +157,7 @@
         private static func accessibleItems(in window: UIWindow) -> [Item] {
             var found: [Item] = []
             var seen = Set<ObjectIdentifier>()
-            func visit(_ object: NSObject) {
+            func visit(_ object: NSObject, in scrolls: [ScrollArea]) {
                 guard seen.insert(ObjectIdentifier(object)).inserted else { return }
                 if let view = object as? UIView, view.isHidden || view.alpha < 0.01 { return }
                 if object.isAccessibilityElement {
@@ -165,25 +166,22 @@
                         let traits = object.accessibilityTraits
                         let isText = traits.contains(.staticText) && !traits.contains(.image)
                         found.append(
-                            Item(label: label, frame: frame, isUIKit: object is UIView, font: isText ? font(of: object) : nil))
+                            Item(
+                                label: label, frame: frame, isUIKit: object is UIView, font: isText ? font(of: object) : nil,
+                                inputLabels: isText ? object.accessibilityUserInputLabels ?? [] : [], scrolls: scrolls))
                     }
                     return
                 }
+                var scrolls = scrolls
+                if let scroll = object as? UIScrollView, scroll.bounds.height > 0 { scrolls.append(area(of: scroll, in: window)) }
                 if let elements = object.accessibilityElements as? [NSObject] {
-                    elements.forEach(visit)
+                    for element in elements { visit(element, in: scrolls) }
                 } else if let view = object as? UIView {
-                    view.subviews.forEach(visit)
+                    for subview in view.subviews { visit(subview, in: scrolls) }
                 }
             }
-            visit(window)
+            visit(window, in: [])
             return found
-        }
-
-        /// Whether `font` has a glyph for every character of `text`.
-        private static func covers(_ font: UIFont, _ text: String) -> Bool {
-            let characters = Array(text.utf16)
-            var glyphs = [CGGlyph](repeating: 0, count: characters.count)
-            return CTFontGetGlyphsForCharacters(font as CTFont, characters, &glyphs, characters.count)
         }
 
         /// The font `object`'s label is drawn in, from the attributes accessibility gives it, when one font covers all
@@ -202,20 +200,27 @@
             return UIFont(name: name, size: CGFloat(size.doubleValue))
         }
 
-        /// The content of every scroll view on screen in `window` (and the scroll view's own frame), in the window's
-        /// coordinates: what lies there is meant to be scrolled to.
-        private static func scrollAreas(in window: UIWindow) -> [CGRect] {
-            var found: [CGRect] = []
+        /// Where the content of every scroll view on screen in `window` lies (`area(of:in:)`): what lies there is meant
+        /// to be scrolled to.
+        private static func scrollAreas(in window: UIWindow) -> [ScrollArea] {
+            var found: [ScrollArea] = []
             func visit(_ view: UIView) {
                 guard !view.isHidden else { return }
-                if let scroll = view as? UIScrollView, scroll.bounds.height > 0 {
-                    let content = CGRect(origin: .zero, size: scroll.contentSize).union(scroll.bounds)
-                    found.append(scroll.convert(content, to: window))
-                }
+                if let scroll = view as? UIScrollView, scroll.bounds.height > 0 { found.append(area(of: scroll, in: window)) }
                 view.subviews.forEach(visit)
             }
             visit(window)
             return found
+        }
+
+        /// `scroll`'s content and its own frame in `window`'s coordinates, open-ended along each way it scrolls: up and
+        /// down when it bounces that way or its content is taller than it, sideways likewise.
+        private static func area(of scroll: UIScrollView, in window: UIWindow) -> ScrollArea {
+            let content = CGRect(origin: .zero, size: scroll.contentSize).union(scroll.bounds)
+            return ScrollArea(
+                content: scroll.convert(content, to: window),
+                vertical: scroll.alwaysBounceVertical || scroll.contentSize.height > scroll.bounds.height + slack,
+                horizontal: scroll.alwaysBounceHorizontal || scroll.contentSize.width > scroll.bounds.width + slack)
         }
 
         /// The hosting controllers on screen that hold no other: the screens a user sees, not the tab view or

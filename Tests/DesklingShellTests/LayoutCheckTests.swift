@@ -66,5 +66,36 @@
             XCTAssertLessThan(room.height, 500)
             XCTAssertGreaterThan(room.height, 440)
         }
+
+        /// iOS's `offScreen(in:)`: a lazy stack's row that reports a frame past the content's end is scrolled to; one
+        /// pushed past the side of a stack that only scrolls up and down isn't.
+        func testScrollAreasAreOpenAlongTheWayTheyScroll() {
+            let content = CGRect(x: 0, y: 96, width: 1032, height: 4548)
+            let list = LayoutCheck.ScrollArea(content: content, vertical: true)
+            XCTAssertTrue(list.contains(CGPoint(x: 500, y: 4000)))
+            XCTAssertTrue(list.contains(CGPoint(x: 500, y: 5838)))
+            XCTAssertFalse(list.contains(CGPoint(x: 1100, y: 400)))
+            let chips = LayoutCheck.ScrollArea(content: CGRect(x: 0, y: 100, width: 300, height: 40), horizontal: true)
+            XCTAssertTrue(chips.contains(CGPoint(x: 900, y: 120)))
+            XCTAssertFalse(chips.contains(CGPoint(x: 100, y: 200)))
+            let fixed = LayoutCheck.ScrollArea(content: content)
+            XCTAssertTrue(fixed.contains(CGPoint(x: 500, y: 4000)))
+            XCTAssertFalse(fixed.contains(CGPoint(x: 500, y: 5838)))
+        }
+
+        /// iOS's `truncatedText(in:)`: a sentence that needs more lines than its element is tall is cut short, unless
+        /// the element's input labels say it draws something else (a short tag read as the whole sentence).
+        func testTextIsCutShortUnlessItDrawsSomethingElse() {
+            let font = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+            let sentence = "Raise the camera so it sees your head too"
+            let tag = CGSize(width: 140, height: 24)  // one line
+            XCTAssertTrue(LayoutCheck.isCut(sentence, font: font, in: tag))
+            XCTAssertTrue(LayoutCheck.isCut(sentence, inputLabels: [sentence], font: font, in: tag))
+            XCTAssertFalse(LayoutCheck.isCut(sentence, inputLabels: ["Raise camera"], font: font, in: tag))
+            XCTAssertFalse(LayoutCheck.isCut("Raise camera", font: font, in: tag))
+            XCTAssertFalse(LayoutCheck.isCut(sentence, font: font, in: CGSize(width: 140, height: 80)))  // wrapped
+            XCTAssertFalse(LayoutCheck.isCut(sentence, font: font, in: CGSize(width: 6, height: 24)))  // an icon
+            XCTAssertFalse(LayoutCheck.isCut("カメラを上げて、頭も映るようにしてください", font: font, in: tag))  // a fallback font
+        }
     }
 #endif
