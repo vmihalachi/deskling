@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.12.4 - 2026-10-17
+
 - **Kotlin (`deskling.core`)**: `ReminderScheduler.upcomingReminders(from, until, limit)`, the Swift projection an
   app that doesn't run between reminders schedules ahead from (vmihalachi/mybackhurts#51): the dates `tick()` would
   fire with no idle or busy input, through quiet hours, inactive hours and days and a pause that ends in the range,
