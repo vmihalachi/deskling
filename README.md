@@ -37,7 +37,7 @@ Everything in `LachingSystem` reads state and never prompts. None of it talks to
 **Swift** (macOS 14+), in `Package.swift` or Xcode's package list, pinned to a tag:
 
 ```swift
-.package(url: "https://github.com/vmihalachi/laching", exact: "0.14.0")
+.package(url: "https://github.com/vmihalachi/laching", exact: "0.15.0")
 ```
 
 **.NET** (10), from NuGet.org. `Laching.Windows` and `Laching.Windows.Companion` need **Windows 11**: they target
@@ -191,7 +191,7 @@ Coding agents: read `AGENTS.md`.
 
 One tag versions every side, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
 `release.yml`, which gives the entries under *Unreleased* the next version (`scripts/release.sh`), commits the bump and tags
-it. By hand, `git tag v0.14.0 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
+it. By hand, `git tag v0.15.0 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
 on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through
 [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
 repository `vmihalachi/laching` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org

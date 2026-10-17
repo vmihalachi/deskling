@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.15.0 - 2026-10-17
+
 - **Breaking.** **Tools (`store-screenshots.py`)**: `store-screenshots.sh` is gone. `store-screenshots.py --lang
   LANG` (repeatable, or `all`) does what it did: the source language from the committed captures, another one by
   capturing its windows first. `--out DIR` (the images in `DIR/<lang>`) replaces the positional output folder and
