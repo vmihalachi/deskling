@@ -16,6 +16,7 @@ Reads 8-bit RGB or RGBA PNGs, not interlaced; downsamples by halving, then by ar
 
 from __future__ import annotations
 
+import argparse
 import struct
 import sys
 import zlib
@@ -270,7 +271,9 @@ def ico(icon: Image, cache: dict[int, Image]) -> bytes:
 
 
 def main(argv: list[str]) -> int:
-    check = "--check" in argv
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 when a committed image differs")
+    check = parser.parse_args(argv).check
     config = companion.load()
     source = config.path("windows.assets.source")
     out = config.path("windows.assets.out")

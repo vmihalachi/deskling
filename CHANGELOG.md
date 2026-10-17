@@ -6,6 +6,15 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Breaking.** **Tools (`store-screenshots.py`)**: `store-screenshots.sh` is gone. `store-screenshots.py --lang
+  LANG` (repeatable, or `all`) does what it did: the source language from the committed captures, another one by
+  capturing its windows first. `--out DIR` (the images in `DIR/<lang>`) replaces the positional output folder and
+  language; the captures folder stays the one positional argument. An app's `store-screenshots.sh` wrapper turns its
+  languages into `--lang` flags (#96). `companion.py env` also gives `LANGUAGES`, `SOURCE_LANGUAGE`, `MAC_APP_NAME`,
+  `SCREENSHOT_ENV`, `SCREENSHOTS_OUT`, `CONFORMANCE_FLAG` and `CORE_PACKAGE`, which `screenshots.sh`,
+  `check-layout.sh` and `conformance.sh` read once instead of starting `companion.py get` per name. `synth.py`,
+  `fonts.py`, `windows/assets.py` and `phrases.py` take `--help` and refuse an unknown flag.
+
 ## 0.14.0 - 2026-10-17
 
 - **Kotlin core (`laching.core.scheduling`)**: `Instant.plusSeconds(Double)`, the scheduler's rounding of fractional

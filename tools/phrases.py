@@ -22,6 +22,7 @@ the app's `Phrase` traps on such a weight before the character says a word.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -143,13 +144,14 @@ def cmd_check(config: companion.Config) -> int:
     return 1 if light or missing or stale or orphans else 0
 
 
-def main() -> int:
-    if len(sys.argv) != 2 or sys.argv[1] not in {"sync", "check"}:
-        print(__doc__)
-        return 2
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=__doc__.split("\n\n", 1)[1])
+    parser.add_argument("command", choices=("sync", "check"))
+    command = parser.parse_args(argv).command
     config = companion.load()
-    return cmd_sync(config) if sys.argv[1] == "sync" else cmd_check(config)
+    return cmd_sync(config) if command == "sync" else cmd_check(config)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

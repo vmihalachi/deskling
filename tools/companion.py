@@ -5,7 +5,7 @@
     python3 laching/tools/companion.py path voice.dir       # a path from the file, made absolute
     python3 laching/tools/companion.py root                 # the app's root folder
     python3 laching/tools/companion.py validate [FILE…]     # check against companion.schema.json (exit 1 on problems)
-    python3 laching/tools/companion.py env                  # paths and path patterns as shell assignments (verify.sh)
+    python3 laching/tools/companion.py env                  # names, paths and path patterns as shell assignments
     python3 laching/tools/companion.py pins                 # the Laching version everywhere it's pinned (exit 1 on a mismatch)
     python3 laching/tools/companion.py bump X.Y.Z           # every pin, the submodule and the landing page to vX.Y.Z
     python3 laching/tools/companion.py link [LACHING]      # build against a Laching checkout (../laching) until unlink
@@ -212,6 +212,11 @@ def derived(config: Config) -> dict[str, str]:
         "MAC_PROJECT": config.get("mac.project", ""),
         "MAC_SCHEME": config.get("mac.scheme", ""),
         "MAC_SPEC": rel("mac.projectSpec", "mac.dir"),
+        "MAC_APP_NAME": config.get("mac.app", ""),
+        "SCREENSHOT_ENV": config.get("mac.screenshotEnv", ""),
+        "SCREENSHOTS_OUT": rel("screenshots.out"),
+        "SOURCE_LANGUAGE": config.get("languages.source", ""),
+        "LANGUAGES": " ".join(config.get("languages.all", [])),  # space-separated: `for lang in $LANGUAGES`
         "MAC_APP": app,
         "MAC_TESTS": tests,
         "MAC_CORE": core,
@@ -238,6 +243,8 @@ def derived(config: Config) -> dict[str, str]:
         # `android.strings`, or the older `l10n.androidStrings` it replaced.
         "ANDROID_STRINGS": rel("android.strings") or rel("l10n.androidStrings"),
         "CONFORMANCE_DIR": conformance,
+        "CONFORMANCE_FLAG": config.get("conformance.writeFlag", ""),
+        "CORE_PACKAGE": config.get("conformance.corePackagePath", ""),
         "VOICE_DIR": rel("voice.dir"),
         "LACHING_PATH": rel("laching.path"),
         "LACHING_TAG": config.get("laching.tag", ""),

@@ -528,11 +528,13 @@ class FontsPlanTests(unittest.TestCase):
                 fonts.Plan(companion.load())
 
 
-ARIAL = Path("/System/Library/Fonts/Supplemental/Arial.ttf")
+# A font every Mac has, else the one most Linux machines have.
+FONT = next((font for font in (Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+                               Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) if font.exists()), None)
 
 
 class StoreScreenshotTests(unittest.TestCase):
-    @unittest.skipUnless(shutil.which("python3") and ARIAL.exists(), "needs a Mac font")
+    @unittest.skipUnless(shutil.which("python3") and FONT, "needs Arial or DejaVu Sans")
     def test_composes_a_store_image(self):
         try:
             import PIL  # noqa: F401
@@ -540,14 +542,28 @@ class StoreScreenshotTests(unittest.TestCase):
             self.skipTest("needs Pillow (pip3 install pillow)")
         with fixture_app() as root:
             data = json.loads((root / "companion.json").read_text("utf8"))
-            data["screenshots"]["store"] = {"captions": "captions.json", "out": "store", "size": [1440, 900], "font": str(ARIAL)}
+            data["screenshots"]["store"] = {"captions": "captions.json", "out": "store", "size": [1440, 900], "font": str(FONT)}
             (root / "companion.json").write_text(json.dumps(data), "utf8")
             (root / "captions.json").write_text(json.dumps(
-                {"en": [{"shot": "panel", "appearance": "dark", "headline": ["Fixy says hi"], "note": "A fixture."}]}), "utf8")
+                {"en": [{"shot": "panel", "appearance": "dark", "headline": ["Fixy says hi"], "note": "A fixture."}],
+                 "it": [{"shot": "panel", "appearance": "dark", "headline": ["Ciao da Fixy"], "note": "Una prova."}]}), "utf8")
             png(root / "screenshots" / "macos" / "panel-dark.png", 200)
             result = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py")], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((root / "store" / "en" / "1-panel-dark.png").exists())
+
+            # Another language from captures given; a captures folder is one language's; a language needs captions.
+            italian = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "it",
+                                      str(root / "screenshots" / "macos")], cwd=root, capture_output=True, text=True)
+            self.assertEqual(italian.returncode, 0, italian.stderr)
+            self.assertEqual(italian.stdout.split(), ["store/it/1-panel-dark.png"])
+            both = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "all",
+                                   str(root / "screenshots" / "macos")], cwd=root, capture_output=True, text=True)
+            self.assertEqual(both.returncode, 2)
+            self.assertIn("a captures folder is one language's", both.stderr)
+            unknown = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--lang", "fr"], cwd=root,
+                                     capture_output=True, text=True)
+            self.assertIn("no captions for fr in store.captions (it has en, it)", unknown.stderr)
 
             # The Android canvases from a phone's captures: the phone image is portrait, with Play's limits checked.
             from PIL import Image
@@ -557,10 +573,10 @@ class StoreScreenshotTests(unittest.TestCase):
                                    cwd=root, capture_output=True, text=True)
             self.assertEqual(phone.returncode, 0, phone.stderr)
             self.assertEqual(Image.open(root / "store" / "android-phone" / "en" / "1-panel-dark.png").size, (1080, 1920))
-            tablet = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-tablet", captures,
-                                     str(root / "tablet"), "en"], cwd=root, capture_output=True, text=True)
+            tablet = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-tablet",
+                                     "--out", str(root / "tablet"), captures], cwd=root, capture_output=True, text=True)
             self.assertEqual(tablet.returncode, 0, tablet.stderr)
-            self.assertEqual(Image.open(root / "tablet" / "1-panel-dark.png").size, (2560, 1600))
+            self.assertEqual(Image.open(root / "tablet" / "en" / "1-panel-dark.png").size, (2560, 1600))
             data["screenshots"]["store"]["canvases"] = {"android-phone": [1080, 2400]}
             (root / "companion.json").write_text(json.dumps(data), "utf8")
             tall = subprocess.run([sys.executable, str(TOOLS / "store-screenshots.py"), "--canvas", "android-phone", captures],

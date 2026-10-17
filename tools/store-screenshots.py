@@ -2,11 +2,16 @@
 """Composes store screenshots from the captures (`screenshots.store` in companion.json): the Mac App Store's by default,
 Google Play's with --canvas.
 
-    python3 laching/tools/store-screenshots.py [--canvas mac|android-phone|android-tablet] [captures-dir] [output-dir] [language]
+    python3 laching/tools/store-screenshots.py [--canvas mac|android-phone|android-tablet] [--lang LANG|all]…
+        [--out DIR] [captures-dir]
 
-Defaults: screenshots.out -> <store.out>/<source language> (<store.out>/<canvas>/<language> for an Android canvas),
-the source language. Needs Pillow (pip3 install pillow). laching/tools/store-screenshots.sh [language|all] captures
-and composes the Mac images of other languages.
+Each language's images land in <store.out>/<language> (<store.out>/<canvas>/<language> for an Android canvas; --out
+DIR for DIR/<language>), named <n>-<shot>-<appearance>.png in upload order: upload them from there. --lang (repeatable,
+default the source language; `all` for every language of the captions) picks the languages. The captures: the folder
+given (one language's), else for the Mac the committed captures in screenshots.out for the source language (run
+screenshots.sh first if the windows changed) and, for any other language, the windows its captions need, captured in
+that language first (`screenshots.sh --only … --front` into build/store-captures/apple/<language>); for an Android
+canvas, screenshots.out. Needs Pillow (pip3 install pillow).
 
 Each image is one capture on the paper of its appearance with a headline (`store.font`) and a short note
 (`store.noteFont`, else the same face) in the app's colors (`store.palette`: light/dark → paper, ink, accent,
@@ -21,60 +26,170 @@ shot of a language reserving its tallest caption's height so the screens line up
 side between 320 and 3840 px and no side more than twice the other, which every Android image is checked against.
 """
 
+import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+TOOLS = Path(__file__).resolve().parent
+sys.path.insert(0, str(TOOLS))
 import companion  # noqa: E402
 
 ANDROID_CANVASES = {"android-phone": (1080, 1920), "android-tablet": (2560, 1600)}
+CANVASES = ("mac", *ANDROID_CANVASES)
 # Google Play's screenshot limits: each side, and the longer side over the shorter.
 PLAY_SIDE = (320, 3840)
 PLAY_RATIO = 2
-
-CONFIG = companion.load()
-ROOT = CONFIG.root
-STORE = CONFIG.require("screenshots.store")
-SOURCE = CONFIG.source_language
-ARGS = sys.argv[1:]
-CANVAS = "mac"
-if ARGS[:1] == ["--canvas"]:
-    if len(ARGS) < 2 or ARGS[1] not in ("mac", *ANDROID_CANVASES):
-        sys.exit(f"store-screenshots: --canvas takes mac, {' or '.join(ANDROID_CANVASES)}")
-    CANVAS, ARGS = ARGS[1], ARGS[2:]
-SRC = Path(ARGS[0]) if len(ARGS) > 0 else CONFIG.require_path("screenshots.out")
-LANGUAGE = ARGS[2] if len(ARGS) > 2 else SOURCE
-if len(ARGS) > 1:
-    OUT = Path(ARGS[1])
-elif CANVAS == "mac":
-    OUT = CONFIG.require_path("screenshots.store.out") / LANGUAGE
-else:
-    OUT = CONFIG.require_path("screenshots.store.out") / CANVAS / LANGUAGE
-
-if CANVAS == "mac":
-    W, H = (int(v) for v in STORE.get("size", [2880, 1800]))
-else:
-    W, H = (int(v) for v in STORE.get("canvases", {}).get(CANVAS, ANDROID_CANVASES[CANVAS]))
-PORTRAIT = CANVAS == "android-phone"
-UNIT = W / (1080 if PORTRAIT else 2880)  # the layouts' numbers are for a 2880-wide (landscape) or 1080-wide (portrait) canvas
 DEFAULT_PALETTE = {
     "light": {"paper": "#FFFFFF", "ink": "#1D1D1F", "accent": "#0A84FF", "accentText": "#0060DF"},
     "dark": {"paper": "#1C1C1E", "ink": "#F5F5F7", "accent": "#0A84FF", "accentText": "#64B5FF"},
 }
-PALETTE = {mode: {**DEFAULT_PALETTE[mode], **STORE.get("palette", {}).get(mode, {})} for mode in DEFAULT_PALETTE}
-HEADLINE_FONT = CONFIG.require_path("screenshots.store.font")
-NOTE_FONT = CONFIG.path("screenshots.store.noteFont") or HEADLINE_FONT
 # Captures are at 2x; enlarging past this gets soft.
 MAX_SCALE = 1.8
 
-CAPTIONS = json.loads(CONFIG.require_path("screenshots.store.captions").read_text(encoding="utf-8"))
 
+class Settings:
+    """One canvas's composition for one language: its size, colors and fonts from companion.json, and where the
+    captures are read from and the images written to."""
 
-def px(value: float) -> int:
-    return round(value * UNIT)
+    def __init__(self, config: companion.Config, canvas: str, captures: Path, out: Path):
+        store = config.require("screenshots.store")
+        self.canvas, self.captures, self.out = canvas, captures, out
+        if canvas == "mac":
+            self.width, self.height = (int(v) for v in store.get("size", [2880, 1800]))
+        else:
+            self.width, self.height = (int(v) for v in store.get("canvases", {}).get(canvas, ANDROID_CANVASES[canvas]))
+        self.portrait = canvas == "android-phone"
+        # The layouts' numbers are for a 2880-wide (landscape) or 1080-wide (portrait) canvas.
+        self.unit = self.width / (1080 if self.portrait else 2880)
+        self.palette = {mode: {**DEFAULT_PALETTE[mode], **store.get("palette", {}).get(mode, {})} for mode in DEFAULT_PALETTE}
+        self.headline_font = config.require_path("screenshots.store.font")
+        self.note_font = config.path("screenshots.store.noteFont") or self.headline_font
+
+    def render(self, captions: list[dict], root: Path) -> None:
+        """Writes the language's images, printing each one's path; exits when Google Play would refuse one."""
+        self.out.mkdir(parents=True, exist_ok=True)
+        if self.portrait:
+            measure = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+            text_height = max(self.portrait_text(measure, caption)[-1] for caption in captions)
+        for i, caption in enumerate(captions, 1):
+            path = self.out / f"{i}-{caption['shot']}-{caption.get('appearance', 'light')}.png"
+            image = self.compose_portrait(caption, text_height) if self.portrait else self.compose(caption)
+            if self.canvas != "mac" and (problem := play_problem(image)):
+                sys.exit(f"store-screenshots: {path.name} {problem} (store.canvases)")
+            image.save(path, optimize=True)
+            print(companion.rel(path, root))
+
+    def px(self, value: float) -> int:
+        return round(value * self.unit)
+
+    def compose(self, caption):
+        colors = self.palette[caption.get("appearance", "light")]
+        canvas = Image.new("RGB", (self.width, self.height), colors["paper"])
+        draw = ImageDraw.Draw(canvas)
+
+        # The window on the right, with rounded corners and a soft shadow like a macOS window.
+        shot = Image.open(self.captures / f"{caption['shot']}-{caption.get('appearance', 'light')}.png").convert("RGB")
+        scale = min(self.px(1440) / shot.height, self.px(1360) / shot.width, MAX_SCALE)
+        shot = shot.resize((round(shot.width * scale), round(shot.height * scale)), Image.LANCZOS)
+        x, y = self.width - shot.width - self.px(200), (self.height - shot.height) // 2
+        radius = self.px(36)
+        shadow = Image.new("L", (self.width, self.height), 0)
+        ImageDraw.Draw(shadow).rounded_rectangle(
+            (x, y + self.px(24), x + shot.width, y + shot.height + self.px(24)), radius,
+            fill=90 if caption.get("appearance") == "dark" else 60,
+        )
+        shadow = shadow.filter(ImageFilter.GaussianBlur(self.px(40)))
+        canvas.paste(Image.new("RGB", (self.width, self.height), "#000000"), (0, 0), shadow)
+        canvas.paste(shot, (x, y), rounded(shot, radius))
+        draw.rounded_rectangle((x, y, x + shot.width - 1, y + shot.height - 1), radius, outline=colors["ink"] + "33", width=2)
+
+        # Headline and note in the left column, centered on the window.
+        left, column = self.px(200), x - self.px(200) - self.px(140)
+        size = self.px(168)
+        while True:
+            display = ImageFont.truetype(str(self.headline_font), size)
+            if max(draw.textlength(line, font=display) for line in caption["headline"]) <= column:
+                break
+            size -= 4
+        note_font = ImageFont.truetype(str(self.note_font), self.px(76))
+        leading, note_leading = round(size * 1.12), self.px(100)
+        note_lines = wrap(draw, caption["note"], note_font, column)
+        gap = round(size * 0.2)  # clears the descenders of the last headline line
+        block = len(caption["headline"]) * leading + gap + self.px(56) + len(note_lines) * note_leading
+        ty = (self.height - block) // 2
+        for line in caption["headline"]:
+            draw.text((left - display.getbbox(line)[0], ty), line, font=display, fill=colors["ink"])
+            ty += leading
+        # A short accent rule between headline and note.
+        ty += gap
+        draw.rounded_rectangle((left, ty + self.px(8), left + self.px(160), ty + self.px(26)), self.px(9), fill=colors["accent"])
+        ty += self.px(56)
+        for line in note_lines:
+            draw.text((left - note_font.getbbox(line)[0], ty), line, font=note_font, fill=colors["accentText"])
+            ty += note_leading
+        return canvas
+
+    def portrait_text(self, draw, caption):
+        """The headline's font (shrunk until its widest line fits the column), the wrapped note and the block's height."""
+        column = self.width - 2 * self.px(72)
+        size = self.px(72)
+        while True:
+            display = ImageFont.truetype(str(self.headline_font), size)
+            if max(draw.textlength(line, font=display) for line in caption["headline"]) <= column:
+                break
+            size -= 2
+        note_font = ImageFont.truetype(str(self.note_font), self.px(40))
+        note_lines = wrap(draw, caption["note"], note_font, column)
+        leading, note_leading = round(size * 1.12), self.px(52)
+        gap = round(size * 0.2)
+        height = len(caption["headline"]) * leading + gap + self.px(32) + len(note_lines) * note_leading
+        return display, leading, note_font, note_lines, note_leading, gap, height
+
+    def compose_portrait(self, caption, text_height):
+        """A phone canvas: the headline and note centered at the top, the screen below them, scaled to what is left."""
+        colors = self.palette[caption.get("appearance", "light")]
+        canvas = Image.new("RGB", (self.width, self.height), colors["paper"])
+        draw = ImageDraw.Draw(canvas)
+        display, leading, note_font, note_lines, note_leading, gap, height = self.portrait_text(draw, caption)
+
+        def centered_x(text, font):
+            left, _, right, _ = font.getbbox(text)
+            return (self.width - (right - left)) // 2 - left
+
+        top = self.px(96)
+        ty = top + (text_height - height) // 2
+        for line in caption["headline"]:
+            draw.text((centered_x(line, display), ty), line, font=display, fill=colors["ink"])
+            ty += leading
+        ty += gap
+        rule = ((self.width - self.px(72)) // 2, ty + self.px(4), (self.width + self.px(72)) // 2, ty + self.px(12))
+        draw.rounded_rectangle(rule, self.px(4), fill=colors["accent"])
+        ty += self.px(32)
+        for line in note_lines:
+            draw.text((centered_x(line, note_font), ty), line, font=note_font, fill=colors["accentText"])
+            ty += note_leading
+
+        # The screen below, with rounded corners and a soft shadow, as the Mac window.
+        shot = Image.open(self.captures / f"{caption['shot']}-{caption.get('appearance', 'light')}.png").convert("RGB")
+        sy = top + text_height + self.px(48)
+        scale = min((self.height - self.px(72) - sy) / shot.height, (self.width - 2 * self.px(72)) / shot.width, MAX_SCALE)
+        shot = shot.resize((round(shot.width * scale), round(shot.height * scale)), Image.LANCZOS)
+        x = (self.width - shot.width) // 2
+        radius = self.px(24)
+        shadow = Image.new("L", (self.width, self.height), 0)
+        ImageDraw.Draw(shadow).rounded_rectangle(
+            (x, sy + self.px(12), x + shot.width, sy + shot.height + self.px(12)), radius,
+            fill=90 if caption.get("appearance") == "dark" else 60,
+        )
+        shadow = shadow.filter(ImageFilter.GaussianBlur(self.px(24)))
+        canvas.paste(Image.new("RGB", (self.width, self.height), "#000000"), (0, 0), shadow)
+        canvas.paste(shot, (x, sy), rounded(shot, radius))
+        draw.rounded_rectangle((x, sy, x + shot.width - 1, sy + shot.height - 1), radius, outline=colors["ink"] + "33", width=2)
+        return canvas
 
 
 def wrap(draw, text, font, width):
@@ -105,113 +220,6 @@ def rounded(image, radius):
     return mask
 
 
-def compose(caption):
-    colors = PALETTE[caption.get("appearance", "light")]
-    canvas = Image.new("RGB", (W, H), colors["paper"])
-    draw = ImageDraw.Draw(canvas)
-
-    # The window on the right, with rounded corners and a soft shadow like a macOS window.
-    shot = Image.open(SRC / f"{caption['shot']}-{caption.get('appearance', 'light')}.png").convert("RGB")
-    scale = min(px(1440) / shot.height, px(1360) / shot.width, MAX_SCALE)
-    shot = shot.resize((round(shot.width * scale), round(shot.height * scale)), Image.LANCZOS)
-    x, y = W - shot.width - px(200), (H - shot.height) // 2
-    radius = px(36)
-    shadow = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (x, y + px(24), x + shot.width, y + shot.height + px(24)), radius,
-        fill=90 if caption.get("appearance") == "dark" else 60,
-    )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(px(40)))
-    canvas.paste(Image.new("RGB", (W, H), "#000000"), (0, 0), shadow)
-    canvas.paste(shot, (x, y), rounded(shot, radius))
-    draw.rounded_rectangle((x, y, x + shot.width - 1, y + shot.height - 1), radius, outline=colors["ink"] + "33", width=2)
-
-    # Headline and note in the left column, centered on the window.
-    left, column = px(200), x - px(200) - px(140)
-    size = px(168)
-    while True:
-        display = ImageFont.truetype(str(HEADLINE_FONT), size)
-        if max(draw.textlength(line, font=display) for line in caption["headline"]) <= column:
-            break
-        size -= 4
-    note_font = ImageFont.truetype(str(NOTE_FONT), px(76))
-    leading, note_leading = round(size * 1.12), px(100)
-    note_lines = wrap(draw, caption["note"], note_font, column)
-    gap = round(size * 0.2)  # clears the descenders of the last headline line
-    block = len(caption["headline"]) * leading + gap + px(56) + len(note_lines) * note_leading
-    ty = (H - block) // 2
-    for line in caption["headline"]:
-        draw.text((left - display.getbbox(line)[0], ty), line, font=display, fill=colors["ink"])
-        ty += leading
-    # A short accent rule between headline and note.
-    ty += gap
-    draw.rounded_rectangle((left, ty + px(8), left + px(160), ty + px(26)), px(9), fill=colors["accent"])
-    ty += px(56)
-    for line in note_lines:
-        draw.text((left - note_font.getbbox(line)[0], ty), line, font=note_font, fill=colors["accentText"])
-        ty += note_leading
-    return canvas
-
-
-def portrait_text(draw, caption):
-    """The headline's font (shrunk until its widest line fits the column), the wrapped note and the block's height."""
-    column = W - 2 * px(72)
-    size = px(72)
-    while True:
-        display = ImageFont.truetype(str(HEADLINE_FONT), size)
-        if max(draw.textlength(line, font=display) for line in caption["headline"]) <= column:
-            break
-        size -= 2
-    note_font = ImageFont.truetype(str(NOTE_FONT), px(40))
-    note_lines = wrap(draw, caption["note"], note_font, column)
-    leading, note_leading = round(size * 1.12), px(52)
-    gap = round(size * 0.2)
-    height = len(caption["headline"]) * leading + gap + px(32) + len(note_lines) * note_leading
-    return display, leading, note_font, note_lines, note_leading, gap, height
-
-
-def compose_portrait(caption, text_height):
-    """A phone canvas: the headline and note centered at the top, the screen below them, scaled to what is left."""
-    colors = PALETTE[caption.get("appearance", "light")]
-    canvas = Image.new("RGB", (W, H), colors["paper"])
-    draw = ImageDraw.Draw(canvas)
-    display, leading, note_font, note_lines, note_leading, gap, height = portrait_text(draw, caption)
-
-    def centered_x(text, font):
-        left, _, right, _ = font.getbbox(text)
-        return (W - (right - left)) // 2 - left
-
-    top = px(96)
-    ty = top + (text_height - height) // 2
-    for line in caption["headline"]:
-        draw.text((centered_x(line, display), ty), line, font=display, fill=colors["ink"])
-        ty += leading
-    ty += gap
-    draw.rounded_rectangle(((W - px(72)) // 2, ty + px(4), (W + px(72)) // 2, ty + px(12)), px(4), fill=colors["accent"])
-    ty += px(32)
-    for line in note_lines:
-        draw.text((centered_x(line, note_font), ty), line, font=note_font, fill=colors["accentText"])
-        ty += note_leading
-
-    # The screen below, with rounded corners and a soft shadow, as the Mac window.
-    shot = Image.open(SRC / f"{caption['shot']}-{caption.get('appearance', 'light')}.png").convert("RGB")
-    sy = top + text_height + px(48)
-    scale = min((H - px(72) - sy) / shot.height, (W - 2 * px(72)) / shot.width, MAX_SCALE)
-    shot = shot.resize((round(shot.width * scale), round(shot.height * scale)), Image.LANCZOS)
-    x = (W - shot.width) // 2
-    radius = px(24)
-    shadow = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (x, sy + px(12), x + shot.width, sy + shot.height + px(12)), radius,
-        fill=90 if caption.get("appearance") == "dark" else 60,
-    )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(px(24)))
-    canvas.paste(Image.new("RGB", (W, H), "#000000"), (0, 0), shadow)
-    canvas.paste(shot, (x, sy), rounded(shot, radius))
-    draw.rounded_rectangle((x, sy, x + shot.width - 1, sy + shot.height - 1), radius, outline=colors["ink"] + "33", width=2)
-    return canvas
-
-
 def play_problem(image):
     """What Google Play would refuse about an image's size, or None."""
     short, long = sorted(image.size)
@@ -222,19 +230,43 @@ def play_problem(image):
     return None
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
-    if PORTRAIT:
-        measure = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-        text_height = max(portrait_text(measure, caption)[-1] for caption in CAPTIONS[LANGUAGE])
-    for i, caption in enumerate(CAPTIONS[LANGUAGE], 1):
-        path = OUT / f"{i}-{caption['shot']}-{caption.get('appearance', 'light')}.png"
-        image = compose_portrait(caption, text_height) if PORTRAIT else compose(caption)
-        if CANVAS != "mac" and (problem := play_problem(image)):
-            sys.exit(f"store-screenshots: {path.name} {problem} (store.canvases)")
-        image.save(path, optimize=True)
-        print(companion.rel(path, ROOT))
+def capture(config: companion.Config, language: str, captions: list[dict]) -> Path:
+    """The Mac windows `captions` show, captured in `language` (screenshots.sh) into build/store-captures/apple."""
+    folder = config.root / "build" / "store-captures" / "apple" / language
+    shots = ",".join(dict.fromkeys(caption["shot"] for caption in captions))
+    command = companion.shell_command(TOOLS / "screenshots.sh")
+    if command is None:
+        sys.exit("store-screenshots: capturing needs bash (Git for Windows); pass a captures folder")
+    if subprocess.run([*command, "--only", shots, "--front", str(folder), language]).returncode:
+        sys.exit(f"store-screenshots: capturing the {language} windows failed")
+    return folder
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("captures", nargs="?", type=Path, help="one language's captures (default: see above)")
+    parser.add_argument("--canvas", choices=CANVASES, default="mac")
+    parser.add_argument("--lang", action="append", help="a language of the captions, or all (repeatable; default: the source)")
+    parser.add_argument("--out", type=Path, help="instead of <store.out> (<store.out>/<canvas>): the images go to DIR/<lang>")
+    args = parser.parse_args(argv)
+    config = companion.load()
+    captions = json.loads(config.require_path("screenshots.store.captions").read_text(encoding="utf-8"))
+    languages = list(captions) if "all" in (args.lang or []) else list(dict.fromkeys(args.lang or [config.source_language]))
+    if missing := [lang for lang in languages if lang not in captions]:
+        parser.error(f"no captions for {', '.join(missing)} in store.captions (it has {', '.join(captions)})")
+    if args.captures and len(languages) > 1:
+        parser.error("a captures folder is one language's: name one --lang")
+    out = args.out or config.require_path("screenshots.store.out") / ("" if args.canvas == "mac" else args.canvas)
+    for language in languages:
+        if args.captures:
+            captures = args.captures
+        elif args.canvas == "mac" and language != config.source_language:
+            captures = capture(config, language, captions[language])
+        else:
+            captures = config.require_path("screenshots.out")
+        Settings(config, args.canvas, captures, out / language).render(captions[language], config.root)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv[1:]))

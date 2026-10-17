@@ -31,17 +31,17 @@ while [ $# -gt 0 ]; do
 done
 [ "$HIDDEN" = 1 ] || HIDDEN=0
 TOOLS=$(cd "$(dirname "$0")" && pwd)
-get() { python3 "$TOOLS/companion.py" get "$1"; }
-ROOT=$(python3 "$TOOLS/companion.py" root)
-OUT="${1:-$ROOT/$(get screenshots.out)}"
-LANG_CODE="${2:-$(get languages.source)}"
-APP=$(get mac.app)
-ENV_NAME=$(get mac.screenshotEnv)
-cd "$ROOT/$(get mac.dir)"
+env_file=$(python3 "$TOOLS/companion.py" env)
+eval "$env_file"
+OUT="${1:-$ROOT/${SCREENSHOTS_OUT:?companion.json has no screenshots.out: pass an output-dir}}"
+LANG_CODE="${2:-$SOURCE_LANGUAGE}"
+APP="$MAC_APP_NAME"
+ENV_NAME="$SCREENSHOT_ENV"
+cd "$ROOT/$MAC_DIR"
 DERIVED="build/screenshots.noindex"
 
 if [ -n "$BUILD" ]; then
-  xcodebuild -project "$(get mac.project)" -scheme "$(get mac.scheme)" -configuration Debug \
+  xcodebuild -project "$MAC_PROJECT" -scheme "$MAC_SCHEME" -configuration Debug \
     -destination 'platform=macOS' -derivedDataPath "$DERIVED" build -quiet 2>&1 | grep -v 'warning:' || true
 fi
 [ -n "$RUN" ] || exit 0

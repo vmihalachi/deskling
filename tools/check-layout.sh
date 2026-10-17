@@ -7,16 +7,16 @@
 # side by side (LAYOUT_JOBS at a time, default 4) with the windows hidden (screenshots.sh --hidden): you can keep
 # working meanwhile, and the shots show the windows inactive.
 TOOLS=$(cd "$(dirname "$0")" && pwd)
-get() { python3 "$TOOLS/companion.py" get "$1"; }
-ROOT=$(python3 "$TOOLS/companion.py" root)
+env_file=$(python3 "$TOOLS/companion.py" env) || exit 2
+eval "$env_file"
 ONLY=""
 if [ "$1" = "--only" ]; then
   ONLY="$2"
   shift 2
 fi
-# shellcheck disable=SC2046
-[ $# -gt 0 ] || set -- $(get languages.all | python3 -c 'import json, sys; print(" ".join(json.load(sys.stdin)))')
-OUT="$ROOT/$(get mac.dir)/build/layout-check"
+# shellcheck disable=SC2086
+[ $# -gt 0 ] || set -- $LANGUAGES
+OUT="$ROOT/$MAC_DIR/build/layout-check"
 JOBS="${LAYOUT_JOBS:-4}"
 LOGS=$(mktemp -d)
 trap 'rm -rf "$LOGS"' EXIT

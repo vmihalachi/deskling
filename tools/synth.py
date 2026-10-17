@@ -16,6 +16,7 @@ library only.
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import io
 import math
@@ -100,13 +101,15 @@ def render(recipes: ModuleType) -> dict[str, bytes]:
 
 
 def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 when a committed file differs")
+    check = parser.parse_args(argv).check
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import companion
 
     config = companion.load()
     out = config.require_path("sounds.out")
     recipes = load_recipes(config.require_path("sounds.recipes"))
-    check = "--check" in argv
     files = {f"{name}.wav": data for name, data in render(recipes).items()}
     changed = companion.write_outputs(files, check, out)
     for path in changed:
