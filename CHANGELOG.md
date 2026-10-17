@@ -6,6 +6,17 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Store (`PurchaseStore`), Windows (`LanguageSetting`)**: the persisted defaults the 0.13.0 rename changed take over
+  what Deskling stored, once. `PurchaseStore` with the default `cacheKey` (Swift, C# and Kotlin) reads
+  `deskling.ownedProducts` when `laching.ownedProducts` holds nothing, and `LanguageSetting` (unpackaged Windows builds)
+  reads `deskling.language` when `laching.language` holds nothing; the old key is removed either way. A `cacheKey` the
+  app passes is read as it is, so an app that passes `"deskling.ownedProducts"` can keep it or go back to the default.
+  The Android names changed too and don't move, as no app ships `laching.android` yet:
+  `SharedPreferencesSettingsStore(context)`'s file is `laching` (was `deskling`; pass `name = "deskling"` to keep it),
+  `PlayBillingBackend`'s cache file `laching.billing` (was `deskling.billing`; it refills from Play) and
+  `ReminderAlarms.ACTION_REMIND` `laching.android.REMIND` (was `deskling.android.REMIND`; an alarm set before the update
+  still fires once, with the old action) (#74).
+
 ## 0.15.0 - 2026-10-17
 
 - **Breaking.** **Tools (`store-screenshots.py`)**: `store-screenshots.sh` is gone. `store-screenshots.py --lang

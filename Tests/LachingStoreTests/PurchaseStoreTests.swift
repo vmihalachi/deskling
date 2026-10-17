@@ -61,6 +61,26 @@
             XCTAssertFalse(other.isOwned(supporter))
         }
 
+        func testDefaultKeyTakesOverDesklingsCacheOnce() {
+            let settings = InMemorySettingsStore()
+            settings.set(strings: [supporter], forKey: "deskling.ownedProducts")
+            // A key the app passes reads only itself.
+            XCTAssertFalse(makeStore(makeBackend(), settings: settings).isOwned(supporter))
+            XCTAssertEqual(settings.strings(forKey: "deskling.ownedProducts"), [supporter])
+
+            XCTAssertTrue(PurchaseStore(catalog: catalog, backend: makeBackend(), settings: settings).isOwned(supporter))
+            XCTAssertEqual(settings.strings(forKey: "laching.ownedProducts"), [supporter])
+            XCTAssertNil(settings.strings(forKey: "deskling.ownedProducts"))
+
+            // What the default key holds wins, even empty, and Deskling's cache goes all the same.
+            let emptied = InMemorySettingsStore()
+            emptied.set(strings: [], forKey: "laching.ownedProducts")
+            emptied.set(strings: [supporter], forKey: "deskling.ownedProducts")
+            XCTAssertFalse(PurchaseStore(catalog: catalog, backend: makeBackend(), settings: emptied).isOwned(supporter))
+            XCTAssertEqual(emptied.strings(forKey: "laching.ownedProducts"), [])
+            XCTAssertNil(emptied.strings(forKey: "deskling.ownedProducts"))
+        }
+
         func testUserDefaultsConvenienceCachesInTheSuite() async {
             let defaults = UserDefaults(suiteName: "laching.tests.\(UUID().uuidString)")!
             let backend = makeBackend()

@@ -62,6 +62,27 @@ class PurchaseStoreTests {
         }
 
     @Test
+    fun `the default key takes over Deskling's cache once`() =
+        runTest {
+            settings.setStrings("deskling.ownedProducts", listOf(supporter))
+            // A key the app passes reads only itself.
+            assertFalse(store().isOwned(supporter))
+            assertEquals(listOf(supporter), settings.getStrings("deskling.ownedProducts"))
+
+            assertTrue(PurchaseStore(catalog, backend, settings, this).isOwned(supporter))
+            assertEquals(listOf(supporter), settings.getStrings("laching.ownedProducts"))
+            assertNull(settings.getStrings("deskling.ownedProducts"))
+
+            // What the default key holds wins, even empty, and Deskling's cache goes all the same.
+            val emptied = InMemorySettingsStore()
+            emptied.setStrings("laching.ownedProducts", emptyList())
+            emptied.setStrings("deskling.ownedProducts", listOf(supporter))
+            assertFalse(PurchaseStore(catalog, backend, emptied, this).isOwned(supporter))
+            assertEquals(emptyList(), emptied.getStrings("laching.ownedProducts"))
+            assertNull(emptied.getStrings("deskling.ownedProducts"))
+        }
+
+    @Test
     fun `a refund takes the unlockable away`() =
         runTest {
             val store = store()

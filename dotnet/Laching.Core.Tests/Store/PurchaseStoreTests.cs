@@ -61,6 +61,28 @@ public sealed class PurchaseStoreTests
     }
 
     [Fact]
+    public void DefaultKeyTakesOverDesklingsCacheOnce()
+    {
+        var settings = new InMemorySettingsStore();
+        settings.SetStrings("deskling.ownedProducts", [Supporter]);
+        // A key the app passes reads only itself.
+        Assert.False(MakeStore(MakeBackend(), settings).IsOwned(Supporter));
+        Assert.Equal([Supporter], settings.GetStrings("deskling.ownedProducts"));
+
+        Assert.True(new PurchaseStore(Catalog, MakeBackend(), settings).IsOwned(Supporter));
+        Assert.Equal([Supporter], settings.GetStrings("laching.ownedProducts"));
+        Assert.Null(settings.GetStrings("deskling.ownedProducts"));
+
+        // What the default key holds wins, even empty, and Deskling's cache goes all the same.
+        var emptied = new InMemorySettingsStore();
+        emptied.SetStrings("laching.ownedProducts", []);
+        emptied.SetStrings("deskling.ownedProducts", [Supporter]);
+        Assert.False(new PurchaseStore(Catalog, MakeBackend(), emptied).IsOwned(Supporter));
+        Assert.Equal([], emptied.GetStrings("laching.ownedProducts"));
+        Assert.Null(emptied.GetStrings("deskling.ownedProducts"));
+    }
+
+    [Fact]
     public async Task RefundLocksAgain()
     {
         var backend = MakeBackend();

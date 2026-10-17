@@ -14,19 +14,30 @@ public sealed class LanguageSetting
 {
     /// <summary>
     /// The key the tag is stored under: the package's own, beside the app's settings and out of their reset (as Windows
-    /// keeps a packaged app's pick through a reset).
+    /// keeps a packaged app's pick through a reset). Before 0.13.0 it was <c>deskling.language</c>; see the constructor.
     /// </summary>
     public const string Key = "laching.language";
 
+    private const string DesklingKey = "deskling.language";
+
     private readonly ISettingsStore store;
 
-    /// <summary>The setting in <paramref name="store"/>, for an app with <paramref name="languages"/>.</summary>
+    /// <summary>
+    /// The setting in <paramref name="store"/>, for an app with <paramref name="languages"/>. A tag Deskling stored under
+    /// <c>deskling.language</c> (before 0.13.0) moves to <see cref="Key"/> when that holds nothing, and the old key is
+    /// removed either way.
+    /// </summary>
     /// <param name="store">The app's settings, the same store its other settings live in.</param>
     /// <param name="languages">The languages the app has, as BCP-47 tags ("en", "de", "pt-BR").</param>
     public LanguageSetting(ISettingsStore store, IReadOnlyList<string> languages)
     {
         this.store = store;
         Languages = languages;
+        if (store.GetString(DesklingKey) is not { } deskling)
+            return;
+        if (store.GetString(Key) is null)
+            store.SetString(Key, deskling);
+        store.Remove(DesklingKey);
     }
 
     /// <summary>

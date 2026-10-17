@@ -48,6 +48,26 @@ public sealed class LanguageSettingTests : IDisposable
     }
 
     [Fact]
+    public void DesklingsTagMovesToThePackagesKeyOnce()
+    {
+        var store = new FileSettingsStore(File);
+        store.SetString("deskling.language", "de");
+        Assert.Equal("de", new LanguageSetting(store, App).Stored);
+
+        var reopened = new FileSettingsStore(File);
+        Assert.Equal("de", reopened.GetString(LanguageSetting.Key));
+        Assert.Null(reopened.GetString("deskling.language"));
+
+        // A tag under the package's key wins, and Deskling's goes all the same, so Windows' language picked later
+        // doesn't bring it back.
+        reopened.SetString("deskling.language", "pt-BR");
+        Assert.Equal("de", new LanguageSetting(reopened, App).Stored);
+        Assert.Null(reopened.GetString("deskling.language"));
+        new LanguageSetting(reopened, App).Store("");
+        Assert.Null(new LanguageSetting(reopened, App).Stored);
+    }
+
+    [Fact]
     public void ATagTheAppNoLongerHasIsIgnored()
     {
         var store = new InMemorySettingsStore();
