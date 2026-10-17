@@ -15,17 +15,17 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
-import laching.core.store.ProductCatalog
-import laching.core.store.PurchaseOutcome
-import laching.core.store.StoreBackend
-import laching.core.store.StoreProduct
-import laching.core.store.TransactionUpdate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import laching.core.store.ProductCatalog
+import laching.core.store.PurchaseOutcome
+import laching.core.store.StoreBackend
+import laching.core.store.StoreProduct
+import laching.core.store.TransactionUpdate
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 

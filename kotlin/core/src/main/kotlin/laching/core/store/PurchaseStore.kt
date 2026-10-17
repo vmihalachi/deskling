@@ -1,9 +1,9 @@
 package laching.core.store
 
-import laching.core.settings.SettingsStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import laching.core.settings.SettingsStore
 
 public enum class PurchaseError {
     PURCHASE_FAILED,
