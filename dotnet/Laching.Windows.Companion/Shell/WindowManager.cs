@@ -5,6 +5,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Graphics;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 
 namespace Laching.Windows.Companion.Shell;
 
@@ -212,7 +213,7 @@ public sealed class WindowManager<TWindow> : IWindowHost<TWindow>
             entry.Presenter.Restore();
         entry.Window.Activate();
         // A tray app isn't the foreground app, so Windows would only flash the taskbar button.
-        NativeMethods.SetForegroundWindow(Win32Interop.GetWindowFromWindowId(entry.Window.AppWindow.Id));
+        Win32.SetForegroundWindow(Win32Interop.GetWindowFromWindowId(entry.Window.AppWindow.Id));
     }
 
     private sealed record Entry(Window Window, OverlappedPresenter Presenter, WindowSpec Spec, Grid Root);

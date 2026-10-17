@@ -63,10 +63,7 @@ public sealed class WindowsCompanionHost<TWindow> : ICompanionHost<TWindow>, IDi
         this.views = views;
         this.trayIconId = trayIconId;
         this.trayToolTip = trayToolTip;
-        this.queue =
-            queue
-            ?? DispatcherQueue.GetForCurrentThread()
-            ?? throw new InvalidOperationException("Create the host on the UI thread, or pass its DispatcherQueue.");
+        this.queue = UiThread.Resolve(queue, "host");
         Windows = new WindowManager<TWindow>(views.WindowSpec, views.WindowContent, windowIconPath);
         Timers = new DispatcherTimers(this.queue);
     }

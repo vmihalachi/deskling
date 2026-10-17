@@ -19,6 +19,7 @@ using FigurePoint = Laching.Companion.Figures.Point;
 using FigureRect = Laching.Companion.Figures.Rect;
 using FigureSize = Laching.Companion.Figures.Size;
 using ShellNative = Laching.Windows.Companion.Shell.NativeMethods;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 using XamlPoint = Windows.Foundation.Point;
 using XamlSize = Windows.Foundation.Size;
 
@@ -88,7 +89,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         string? title = null
     )
     {
-        queue = DispatcherQueue.GetForCurrentThread() ?? throw new InvalidOperationException("Make the desktop character on the UI thread.");
+        queue = UiThread.Resolve(queue: null, "desktop character");
         this.layout = layout;
         this.size = size;
         this.position = position;
@@ -245,8 +246,8 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
     {
         if (bubbleText is null || !character.IsShown)
             return;
-        var parent = Rect(character.Frame);
-        var work = Rect(character.WorkArea);
+        var parent = ScreenRects.Rect(character.Frame);
+        var work = ScreenRects.Rect(character.WorkArea);
         var side = FloatingPlacement.SideBeside(parent, work);
         bubbleView.Tail = side == FloatingPlacement.Side.Left ? BubbleTail.Trailing : BubbleTail.Leading;
         if (measure)
@@ -257,7 +258,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
             bubbleRoot.Measure(new XamlSize(layout.BubbleMaxWidth + 2 * layout.BubbleMargin, double.PositiveInfinity));
             bubbleSize = new FigureSize(Math.Ceiling(bubbleRoot.DesiredSize.Width), Math.Ceiling(bubbleRoot.DesiredSize.Height));
         }
-        bubble.SetFrame(Int(BubbleFrame(layout, bubbleSize, parent, work, character.Scale)));
+        bubble.SetFrame(ScreenRects.Int(BubbleFrame(layout, bubbleSize, parent, work, character.Scale)));
     }
 
     /// <summary>
@@ -284,7 +285,7 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         if (Menu?.Invoke() is not { Count: > 0 } items)
             return false;
         menuHost.SetMenu(MenuConversion.ToTray(items));
-        var before = DesktopNative.GetForegroundWindow();
+        var before = Win32.GetForegroundWindow();
         menuHost.ShowMenu(at);
         // The menu took the foreground for its hidden window. Give it back after the chosen command (queued after the
         // menu) has run, unless that command opened a window of its own.
@@ -292,9 +293,9 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
             DispatcherQueuePriority.Low,
             () =>
             {
-                var now = DesktopNative.GetForegroundWindow();
-                if (before != 0 && now != before && !DesktopNative.IsWindowVisible(now))
-                    DesktopNative.SetForegroundWindow(before);
+                var now = Win32.GetForegroundWindow();
+                if (before != 0 && now != before && !ShellNative.IsWindowVisible(now))
+                    Win32.SetForegroundWindow(before);
             }
         );
         return true;
@@ -318,14 +319,9 @@ public sealed class DesktopCompanion : IDesktopCompanion, IDisposable
         var work = DisplayArea.Primary.WorkArea;
         var scale = ShellNative.Scale(work.X + work.Width / 2, work.Y + work.Height / 2);
         var pixels = new FigureSize(windowSize.Width * scale, windowSize.Height * scale);
-        var anchor = FloatingPlacement.DefaultAnchor(pixels, Rect(work), CornerInset * scale);
+        var anchor = FloatingPlacement.DefaultAnchor(pixels, ScreenRects.Rect(work), CornerInset * scale);
         return new PointInt32((int)Math.Round(anchor.X), (int)Math.Round(anchor.Y));
     }
-
-    private static FigureRect Rect(RectInt32 r) => new(r.X, r.Y, r.Width, r.Height);
-
-    private static RectInt32 Int(FigureRect r) =>
-        new((int)Math.Round(r.Origin.X), (int)Math.Round(r.Origin.Y), (int)Math.Round(r.Size.Width), (int)Math.Round(r.Size.Height));
 }
 
 /// <summary>

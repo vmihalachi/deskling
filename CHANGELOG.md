@@ -32,6 +32,11 @@ package and the NuGet packages together.
 - **Testing (`ConformanceSupport`)**: `utc` (Gregorian in UTC), `monday(_:_:)` (Monday 2026-09-28 at a UTC time, the
   day the package's unit tests start on) and `files(in:_:name:_:)` (one vector file per case, in the committed format),
   for apps' test targets too (#81). The package's tests and generators use them; no vector changes.
+- **Breaking.** **Companion.Shell (`SampleEnvironment`), Windows.Companion (`ScreenshotScript`)**: the sample store is a
+  `MockStoreBackend` (the prices given, the rest unlisted, every purchase cancelled) and `FixedPriceBackend` is gone: the
+  constructor takes the app's `ProductCatalog` first, `Purchases()` no longer takes one, and `ScreenshotScript` takes the
+  `MockStoreBackend` (#88). Apps write `new SampleEnvironment(catalog, prices, timers)` and `sample.Purchases()` when they
+  next bump.
 
 ## 0.13.0 - 2026-10-17
 

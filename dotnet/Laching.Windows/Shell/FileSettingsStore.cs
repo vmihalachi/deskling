@@ -16,6 +16,9 @@ namespace Laching.Windows.Shell;
 /// </summary>
 public sealed class FileSettingsStore : ISettingsStore
 {
+    /// <summary>The file is written indented, for a person reading it.</summary>
+    private static readonly SettingsJson Indented = new(new JsonSerializerOptions { WriteIndented = true });
+
     private readonly Dictionary<string, StoredSetting> values;
 
     public FileSettingsStore(string path)
@@ -39,23 +42,23 @@ public sealed class FileSettingsStore : ISettingsStore
     public string? GetString(string key) => Read(key, "string") is { ValueKind: JsonValueKind.String } value ? value.GetString() : null;
 
     public IReadOnlyList<string>? GetStrings(string key) =>
-        ReadArray(key, "string[]", FileSettingsJson.Default.StringArray) is { } strings && !strings.Contains(null) ? strings : null;
+        ReadArray(key, "string[]", SettingsJson.Default.StringArray) is { } strings && !strings.Contains(null) ? strings : null;
 
-    public IReadOnlyList<int>? GetIntegers(string key) => ReadArray(key, "int[]", FileSettingsJson.Default.Int32Array);
+    public IReadOnlyList<int>? GetIntegers(string key) => ReadArray(key, "int[]", SettingsJson.Default.Int32Array);
 
-    public void SetBool(string key, bool value) => Write(key, "bool", JsonSerializer.SerializeToElement(value, FileSettingsJson.Default.Boolean));
+    public void SetBool(string key, bool value) => Write(key, "bool", JsonSerializer.SerializeToElement(value, SettingsJson.Default.Boolean));
 
-    public void SetInteger(string key, int value) => Write(key, "int", JsonSerializer.SerializeToElement(value, FileSettingsJson.Default.Int32));
+    public void SetInteger(string key, int value) => Write(key, "int", JsonSerializer.SerializeToElement(value, SettingsJson.Default.Int32));
 
-    public void SetDouble(string key, double value) => Write(key, "double", JsonSerializer.SerializeToElement(value, FileSettingsJson.Default.Double));
+    public void SetDouble(string key, double value) => Write(key, "double", JsonSerializer.SerializeToElement(value, SettingsJson.Default.Double));
 
-    public void SetString(string key, string value) => Write(key, "string", JsonSerializer.SerializeToElement(value, FileSettingsJson.Default.String));
+    public void SetString(string key, string value) => Write(key, "string", JsonSerializer.SerializeToElement(value, SettingsJson.Default.String));
 
     public void SetStrings(string key, IReadOnlyList<string> value) =>
-        Write(key, "string[]", JsonSerializer.SerializeToElement(value.ToArray(), FileSettingsJson.Default.StringArray));
+        Write(key, "string[]", JsonSerializer.SerializeToElement(value.ToArray(), SettingsJson.Default.StringArray));
 
     public void SetIntegers(string key, IReadOnlyList<int> value) =>
-        Write(key, "int[]", JsonSerializer.SerializeToElement(value.ToArray(), FileSettingsJson.Default.Int32Array));
+        Write(key, "int[]", JsonSerializer.SerializeToElement(value.ToArray(), SettingsJson.Default.Int32Array));
 
     public void Remove(string key)
     {
@@ -96,7 +99,7 @@ public sealed class FileSettingsStore : ISettingsStore
     {
         Directory.CreateDirectory(global::System.IO.Path.GetDirectoryName(Path)!);
         var temporary = Path + ".tmp";
-        File.WriteAllText(temporary, JsonSerializer.Serialize(values, FileSettingsJson.Default.DictionaryStringStoredSetting));
+        File.WriteAllText(temporary, JsonSerializer.Serialize(values, Indented.DictionaryStringStoredSetting));
         File.Move(temporary, Path, overwrite: true);
     }
 
@@ -104,7 +107,7 @@ public sealed class FileSettingsStore : ISettingsStore
     {
         try
         {
-            if (File.Exists(path) && JsonSerializer.Deserialize(File.ReadAllText(path), FileSettingsJson.Default.DictionaryStringStoredSetting) is { } stored)
+            if (File.Exists(path) && JsonSerializer.Deserialize(File.ReadAllText(path), SettingsJson.Default.DictionaryStringStoredSetting) is { } stored)
                 return new Dictionary<string, StoredSetting>(stored, StringComparer.Ordinal);
         }
         catch (Exception error) when (error is JsonException or IOException or UnauthorizedAccessException)
@@ -118,8 +121,10 @@ public sealed class FileSettingsStore : ISettingsStore
 /// <summary>One setting in <see cref="FileSettingsStore"/>'s file: its type and its value.</summary>
 public sealed record StoredSetting(string Type, JsonElement Value);
 
-/// <summary>Source-generated JSON for <see cref="FileSettingsStore"/>, so it works under Native AOT.</summary>
-[JsonSourceGenerationOptions(WriteIndented = true)]
+/// <summary>
+/// Source-generated JSON for both settings stores, so they work under Native AOT: <see cref="FileSettingsStore"/>'s file
+/// and values, <see cref="LocalSettingsStore"/>'s lists.
+/// </summary>
 [JsonSerializable(typeof(Dictionary<string, StoredSetting>))]
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(int))]
@@ -127,4 +132,4 @@ public sealed record StoredSetting(string Type, JsonElement Value);
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(int[]))]
 [JsonSerializable(typeof(string[]))]
-internal sealed partial class FileSettingsJson : JsonSerializerContext;
+internal sealed partial class SettingsJson : JsonSerializerContext;

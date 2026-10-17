@@ -39,10 +39,7 @@ public sealed class CompanionNotifier : ICompanionNotifying, IDisposable
     )
     {
         this.title = title;
-        this.ui =
-            ui
-            ?? SynchronizationContext.Current
-            ?? throw new InvalidOperationException("Create the notifier on the UI thread, or pass its SynchronizationContext.");
+        this.ui = UiThread.Resolve(ui, "notifier");
         buttons = [.. actions.Select(action => new NotificationButton(action.Title, action.Id))];
         var keys = actions.ToDictionary(action => action.Id, action => action.Id);
         keys[BannerAction] = BannerAction;

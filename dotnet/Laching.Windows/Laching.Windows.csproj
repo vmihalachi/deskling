@@ -16,6 +16,8 @@
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <ProjectReference Include="../Laching.Core/Laching.Core.csproj" />
     <InternalsVisibleTo Include="Laching.Windows.Tests" />
+    <!-- The Win32 declarations both packages need (NativeMethods' POINT, RECT, cursor and foreground window), declared once. -->
+    <InternalsVisibleTo Include="Laching.Windows.Companion" />
     <!-- DispatcherQueue (tray menu commands), AppNotificationManager, AppInstance (single instance), MRT Core (.resw lookup), MarkupExtension. -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
   </ItemGroup>

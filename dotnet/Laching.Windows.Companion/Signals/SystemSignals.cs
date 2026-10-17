@@ -42,7 +42,7 @@ public sealed class SystemPowerSource : IPowerSource, IDisposable
     /// <param name="ui">Where <see cref="Changed"/> is raised; the current thread's context by default.</param>
     public SystemPowerSource(SynchronizationContext? ui = null)
     {
-        this.ui = UiContext.Resolve(ui, "power source");
+        this.ui = Shell.UiThread.Resolve(ui, "power source");
         source.Changed += () => this.ui.Post(_ => Changed?.Invoke(), null);
     }
 
@@ -67,7 +67,7 @@ public sealed class SystemAppearance : IAppearance, IDisposable
     /// <param name="ui">Where <see cref="Changed"/> is raised; the current thread's context by default.</param>
     public SystemAppearance(SynchronizationContext? ui = null)
     {
-        this.ui = UiContext.Resolve(ui, "appearance");
+        this.ui = Shell.UiThread.Resolve(ui, "appearance");
         isDark = watcher.IsDark;
         watcher.Changed += () => this.ui.Post(_ => Update(watcher.IsDark), null);
     }
@@ -86,12 +86,4 @@ public sealed class SystemAppearance : IAppearance, IDisposable
         isDark = dark;
         Changed?.Invoke(dark);
     }
-}
-
-internal static class UiContext
-{
-    public static SynchronizationContext Resolve(SynchronizationContext? ui, string what) =>
-        ui
-        ?? SynchronizationContext.Current
-        ?? throw new InvalidOperationException($"Create the {what} on the UI thread, or pass its SynchronizationContext.");
 }

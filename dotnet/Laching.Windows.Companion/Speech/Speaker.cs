@@ -30,10 +30,7 @@ public sealed class Speaker : ISpeaking, IDisposable
     public Speaker(string? language = null, SynchronizationContext? ui = null)
     {
         Language = language ?? Loc.Language;
-        this.ui =
-            ui
-            ?? SynchronizationContext.Current
-            ?? throw new InvalidOperationException("Create the speaker on the UI thread, or pass its SynchronizationContext.");
+        this.ui = Shell.UiThread.Resolve(ui, "speaker");
     }
 
     public string Language { get; }

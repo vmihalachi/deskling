@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
+using Win32 = Laching.Windows.Shell.NativeMethods;
 using XamlSize = Windows.Foundation.Size;
 
 namespace Laching.Windows.Companion.Screenshots;
@@ -34,7 +35,7 @@ namespace Laching.Windows.Companion.Screenshots;
 /// run (<see cref="IsHidden"/>) cloaks its windows: the compositor still draws them, so <c>PrintWindow</c> captures them
 /// as it would on screen, but inactive.
 /// </remarks>
-public static partial class ScreenshotCapture
+public static class ScreenshotCapture
 {
     public const string ModeVariable = "LACHING_SCREENSHOT_MODE";
     public const string DirectoryVariable = "LACHING_SCREENSHOT_DIR";
@@ -176,7 +177,7 @@ public static partial class ScreenshotCapture
         root.RequestedTheme = theme;
         var window = new Window { Content = root, ExtendsContentIntoTitleBar = true };
         window.AppWindow.TitleBar.PreferredTheme = theme == ElementTheme.Dark ? TitleBarTheme.Dark : TitleBarTheme.Light;
-        var scale = Scale(window);
+        var scale = Shell.NativeMethods.Scale(Win32Interop.GetWindowFromWindowId(window.AppWindow.Id));
         // Not ResizeClient, which adds a caption's height (3.3's outcome).
         Shell.NativeMethods.SetClientSize(window.AppWindow, new SizeInt32((int)Math.Round(size.Width * scale), (int)Math.Round(size.Height * scale)));
         Present(window);
@@ -197,9 +198,8 @@ public static partial class ScreenshotCapture
         presenter.SetBorderAndTitleBar(false, false);
         window.AppWindow.SetPresenter(presenter);
         var hwnd = Win32Interop.GetWindowFromWindowId(window.AppWindow.Id);
-        Desktop.DesktopNative.DwmSetWindowAttribute(hwnd, Desktop.DesktopNative.DWMWA_WINDOW_CORNER_PREFERENCE, Desktop.DesktopNative.DWMWCP_DONOTROUND, sizeof(uint));
-        Desktop.DesktopNative.DwmSetWindowAttribute(hwnd, Desktop.DesktopNative.DWMWA_BORDER_COLOR, Desktop.DesktopNative.DWMWA_COLOR_NONE, sizeof(uint));
-        var scale = Scale(window);
+        Shell.NativeMethods.SquareCorners(hwnd);
+        var scale = Shell.NativeMethods.Scale(hwnd);
         void Fit()
         {
             root.Measure(new XamlSize(double.PositiveInfinity, double.PositiveInfinity));
@@ -270,19 +270,12 @@ public static partial class ScreenshotCapture
             window.Activate();
     }
 
-    private static double Scale(Window window)
-    {
-        var dpi = GetDpiForWindow(Win32Interop.GetWindowFromWindowId(window.AppWindow.Id));
-        return dpi == 0 ? 1 : dpi / 96.0;
-    }
-
     /// <summary>The window's pixels as the screen composes them, cropped to its visible frame (no resize border), as a PNG.</summary>
     private static bool Write(nint hwnd, string path)
     {
-        if (hwnd == 0 || !GetWindowRect(hwnd, out var outer))
+        if (hwnd == 0 || !Win32.GetWindowRect(hwnd, out var outer))
             return false;
-        if (DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, out var visible, Marshal.SizeOf<RECT>()) != 0)
-            visible = outer;
+        var visible = Shell.NativeMethods.VisibleFrame(hwnd, outer);
         var (width, height) = (outer.Right - outer.Left, outer.Bottom - outer.Top);
         if (width <= 0 || height <= 0)
             return false;
@@ -294,7 +287,7 @@ public static partial class ScreenshotCapture
                 var hdc = graphics.GetHdc();
                 try
                 {
-                    if (!PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT))
+                    if (!Shell.NativeMethods.PrintWindow(hwnd, hdc, Shell.NativeMethods.PW_RENDERFULLCONTENT))
                         return false;
                 }
                 finally
@@ -314,30 +307,4 @@ public static partial class ScreenshotCapture
             return true;
         }
     }
-
-    private const uint PW_RENDERFULLCONTENT = 2;
-    private const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool PrintWindow(nint hwnd, nint hdc, uint flags);
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetWindowRect(nint hwnd, out RECT rect);
-
-    [LibraryImport("user32.dll")]
-    private static partial uint GetDpiForWindow(nint hwnd);
-
-    [LibraryImport("dwmapi.dll")]
-    private static partial int DwmGetWindowAttribute(nint hwnd, int attribute, out RECT value, int size);
 }

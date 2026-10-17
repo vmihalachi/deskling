@@ -1,6 +1,7 @@
 using Laching.Companion.Settings;
 using Laching.Companion.Shell.App;
 using Laching.Companion.Shell.Screenshots;
+using Laching.Core.Store;
 using Laching.Windows.Companion.Shell;
 using Microsoft.UI.Xaml;
 using IOPath = System.IO.Path;
@@ -18,7 +19,7 @@ namespace Laching.Windows.Companion.Screenshots;
 public sealed class ScreenshotScript<TWindow, TSettings>(
     CompanionAppModel<TWindow, TSettings> model,
     WindowsCompanionHost<TWindow> host,
-    FixedPriceBackend backend,
+    MockStoreBackend backend,
     Func<TWindow, string> windowName
 )
     where TWindow : notnull
