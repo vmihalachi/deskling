@@ -18,7 +18,7 @@ ids, the App Store Connect record and where release notes are kept are in the ap
 ## 2. Preflight (don't upload a build that fails these)
 
 ```sh
-scripts/verify.sh --all          # includes the Laching pin check (submodule = SwiftPM = XcodeGen = NuGet)
+scripts/verify.sh --all          # includes the Laching pin check (submodule = SwiftPM = XcodeGen; NuGet = its LachingVersion)
 laching/tools/conformance.sh && git diff --exit-code <conformance.dir>   # vectors current
 python3 laching/tools/l10n.py check
 python3 laching/tools/voice.py check

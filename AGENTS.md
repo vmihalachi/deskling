@@ -73,7 +73,7 @@ Step-by-step procedures for the multi-step changes live in `.agents/skills/` (li
 
 - `add-scheduler-behavior`: new or changed `ReminderScheduler` behavior, from config field to C# port.
 - `port-to-csharp`: mirroring any Swift change in `dotnet/`.
-- `release`: what `release.yml` does on its own, a release by hand, moving the apps.
+- `release`: cutting a release (`release.yml`, a dry run first), what ships, moving the apps.
 
 ## Conventions
 
@@ -94,10 +94,11 @@ The short form; the full rules with their examples are in `docs/conventions.md`.
 - **C# mirrors Swift** folder for folder and file for file; the deviations (the store under `Laching.Core/Store/`,
   `Laching.Testing`'s own layout, the companion shell mirrored by role) are marked in `docs/layout.md`. Source-generated
   JSON only: the apps publish with Native AOT.
-- **Versioning:** SemVer, one `vX.Y.Z` tag for every side, a CHANGELOG line per user-visible change under
-  *Unreleased* (`**Breaking.**` on a breaking one). Releases are automatic: on every push to `master`, `release.yml`
-  gives the entries the next version (`scripts/release.sh`), commits the bump, tags and publishes, so a change never
-  bumps or tags (the `release` skill has the manual ways).
+- **Versioning:** SemVer. One tag per release. Swift and Kotlin take the tag; NuGet and npm get a new version only
+  when their code changed since their last one (NuGet's is `LachingVersion`). No changelog file: the release notes come
+  from the merged pull requests' titles, so label a pull request `breaking` if it is (that makes the release a minor
+  while 0.x). Releases are made on demand by dispatching `release.yml` (`scripts/release.sh` plans, bumps and tags), so
+  a change never bumps or tags (the `release` skill).
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.
 
 ## Sessions

@@ -189,15 +189,18 @@ Coding agents: read `AGENTS.md`.
 
 ## Releases
 
-One tag versions every side, and releases are automatic: every push to master that touches `CHANGELOG.md` runs
-`release.yml`, which gives the entries under *Unreleased* the next version (`scripts/release.sh`), commits the bump and tags
-it. By hand, `git tag v0.15.0 && git push --tags` (or Actions → Release → Run workflow with the version, which creates the tag)
-on a commit that already carries the version does the same. Either way it packs the NuGet packages, pushes them to NuGet.org through
-[Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on nuget.org for
-repository `vmihalachi/laching` and workflow `release.yml`, plus the `NUGET_USER` repository variable holding the nuget.org
-username; without them it says so and attaches the packages to the release instead) and drafts a GitHub release from
-`CHANGELOG.md`. It also stages `@laching/landing` on npm through trusted publishing, which goes live when an owner
-approves it with 2FA ([`tools/landing/README.md`](tools/landing/README.md)).
+Releases are made on demand: Actions → Release → Run workflow (`release.yml`, on master), with `dry_run` first to see
+the plan. The number comes from the pull requests merged since the last tag: a patch, or a minor while 0.x (a major
+from 1.0) when one is labelled `breaking`; the `bump` input can ask for another. Once what ships has been tested and
+packed, the run commits the bump to master as `X.Y.Z: release` and tags it. One tag per release: Swift and Kotlin take the tag; NuGet and npm get a new version only
+when their code changed since their last one. When the .NET packages changed since `LachingVersion`
+(`dotnet/Directory.Build.props`), the run packs all six at X.Y.Z and pushes them to NuGet.org through
+[Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (no stored key: a policy on
+nuget.org for repository `vmihalachi/laching` and workflow `release.yml`, plus the `NUGET_USER` repository variable
+holding the nuget.org username; without them it says so and attaches the packages to the release instead). It
+publishes `@laching/landing` to npm when it changed, through trusted publishing as well
+([`tools/landing/README.md`](tools/landing/README.md)), and makes the GitHub release, its notes generated from the
+merged pull requests' titles. The latest release is `v0.15.0`.
 
 ## License
 

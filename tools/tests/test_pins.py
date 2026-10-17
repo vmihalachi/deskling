@@ -53,7 +53,7 @@ class PinsTestCase(FixtureAppTestCase):
         git(self.origin, "init", "-q")
         self.commits = {}
         for version in ("0.5.0", "0.6.0"):
-            (self.origin / "CHANGELOG.md").write_text(f"## {version}\n", "utf8")
+            (self.origin / "release.txt").write_text(f"{version}\n", "utf8")
             git(self.origin, "add", "-A")
             git(self.origin, "commit", "-q", "-m", version)
             git(self.origin, "tag", "-a", f"v{version}", "-m", f"Laching {version}")
@@ -128,6 +128,32 @@ class BumpTests(PinsTestCase):
         self.assertEqual(found["laching/kotlin/gradle.properties lachingVersion"], "0.4.0")
         self.assertFalse(companion.pins_agree(list(found.items())))
 
+    def release(self, version: str, nuget: str) -> None:
+        """Tags `version` on the origin, its NuGet packages at `nuget` (LachingVersion)."""
+        (self.origin / "dotnet" / "Directory.Build.props").write_text(
+            f"<Project><PropertyGroup><LachingVersion Condition=\"'$(LachingVersion)' == ''\">{nuget}</LachingVersion>"
+            "</PropertyGroup></Project>\n", "utf8")
+        git(self.origin, "add", "-A")
+        git(self.origin, "commit", "-q", "-m", version)
+        git(self.origin, "tag", "-a", f"v{version}", "-m", f"Laching {version}")
+
+    def test_the_nuget_pins_take_the_releases_nuget_version(self):
+        self.release("0.7.0", "0.6.0")  # the packages didn't change in 0.7.0
+        code, out = self.cli("bump", "0.7.0")
+        self.assertEqual(code, 0, out)
+        csproj = self.root / "windows/Fixture.Core/Fixture.Core.csproj"
+        text = csproj.read_text("utf8")
+        self.assertIn('"Laching.Core" Version="0.6.0"', text)
+        self.assertIn('"Laching.Companion" Version="0.6.0"', text)
+        self.assertIn("v0.7.0                   windows/Fixture.Core/Fixture.Core.csproj Laching.Companion 0.6.0 "
+                      "(NuGet's version in v0.7.0)", out)
+        self.assertTrue(companion.pins_agree(companion.pins(companion.load())))
+
+        csproj.write_text(text.replace('"Laching.Companion" Version="0.6.0"', '"Laching.Companion" Version="0.7.0"'))
+        code, out = self.cli("pins")
+        self.assertEqual(code, 1, "the NuGet pins disagree with each other")
+        self.assertIn("0.7.0, not 0.6.0", out)
+
     def test_bump_to_the_current_version_changes_nothing(self):
         before = self.files()
         code, out = self.cli("bump", "v0.5.0")
@@ -160,7 +186,7 @@ class BumpTests(PinsTestCase):
         self.assertEqual(git(self.root / "laching", "describe", "--tags"), "v0.5.0")
 
     def test_bump_refuses_a_submodule_with_changes(self):
-        (self.root / "laching" / "CHANGELOG.md").write_text("mine\n", "utf8")
+        (self.root / "laching" / "release.txt").write_text("mine\n", "utf8")
         code, out = self.cli("bump", "0.6.0")
         self.assertEqual(code, 1)
         self.assertIn("uncommitted changes", out)

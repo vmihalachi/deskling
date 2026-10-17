@@ -5,14 +5,14 @@
 #   scripts/verify.sh --staged           # staged files
 #   scripts/verify.sh --all              # every check, regardless of what changed
 #   scripts/verify.sh --fast ...         # only the checks that take seconds (no swift test, dotnet test)
-#   scripts/verify.sh --version X.Y.Z    # only release.yml's gate: the strings are X.Y.Z, CHANGELOG.md has its section
+#   scripts/verify.sh --version X.Y.Z    # only release.yml's gate: the version strings are X.Y.Z
 #
 # Path → checks:
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
 #   tools/**, Tests/Fixtures/**         the tools' Python tests, fixture art current
 #   tools/landing/**                    @laching/landing: types, lint, format, tests (Node 24)
-#   version sources, site/**, README.md  every version string agrees (always checked)
+#   version sources, site/**, README.md  every version string agrees, LachingVersion at or below it (always)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -61,47 +61,41 @@ landing_check() {
   )
 }
 
-# With an argument, the agreed version must also be that one (release.yml checks the tag's against it).
+# With an argument, the agreed version must also be that one (release.yml checks the release's against it).
 versions_agree() {
-  local expected="${1:-}" found distinct
+  local expected="${1:-}" found distinct nuget
   found="$( {
     sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/LachingCore/Laching.swift
-    sed -n 's/.*public const string Version = "\([^"]*\)".*/\1/p' dotnet/Laching.Core/LachingInfo.cs
-    sed -n 's/.*<LachingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
     sed -n 's/^lachingVersion=\(.*\)$/\1/p' kotlin/gradle.properties
-    sed -n 's/.*const val VERSION: String = "\([^"]*\)".*/\1/p' kotlin/core/src/main/kotlin/laching/core/Laching.kt
     grep -oE 'class="version"><a [^>]*>v[0-9]+\.[0-9]+\.[0-9]+|exact: (<span class="s">)?"[0-9]+\.[0-9]+\.[0-9]+"' site/index.html |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
-    grep -oE 'exact: "[0-9]+\.[0-9]+\.[0-9]+"|git tag v[0-9]+\.[0-9]+\.[0-9]+' README.md |
+    grep -oE 'exact: "[0-9]+\.[0-9]+\.[0-9]+"|latest release is `v[0-9]+\.[0-9]+\.[0-9]+' README.md |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
   } )"
-  # Laching.swift, LachingInfo.cs, Directory.Build.props, kotlin/gradle.properties, Kotlin's Laching.kt, the site's
-  # version label and two install snippets, and the README's install pin and release example.
-  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 10 ]; then
-    echo "expected 10 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
+  # Seven: Laching.swift, kotlin/gradle.properties, the site's version label and two install snippets, and the README's
+  # install pin and latest-release line (LachingInfo.Version and Laching.VERSION are generated at build time).
+  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 7 ]; then
+    echo "expected 7 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
   fi
   distinct="$(printf '%s\n' "$found" | sort -u)"
   if [ "$(printf '%s\n' "$distinct" | wc -l)" -ne 1 ]; then
-    echo "version strings disagree (Laching.swift, LachingInfo.cs, Directory.Build.props, kotlin/gradle.properties," \
-      "Laching.kt, site/index.html, README.md):"
+    echo "version strings disagree (Laching.swift, kotlin/gradle.properties, site/index.html, README.md):"
     printf '%s\n' "$found" | sort | uniq -c | sed 's/^/  /'; return 1
   fi
   if [ -n "$expected" ] && [ "$distinct" != "$expected" ]; then
-    echo "the version strings say $distinct, not $expected (Laching.swift, LachingInfo.cs, Directory.Build.props," \
-      "kotlin/gradle.properties, Laching.kt, site/index.html, README.md)"
+    echo "the version strings say $distinct, not $expected (Laching.swift, kotlin/gradle.properties, site/index.html," \
+      "README.md)"
     return 1
   fi
-}
-
-# `## X.Y.Z - date` (or `## [X.Y.Z] …`): release.yml takes the release notes from that section.
-changelog_has() {
-  local re; re="$(printf '%s' "$1" | sed 's/[.]/\\./g')"
-  grep -Eq "^## \[?$re\]? " CHANGELOG.md || { echo "CHANGELOG.md has no '## $1' section"; return 1; }
+  # LachingVersion: the NuGet packages' version, which trails the tag when they didn't change but is never ahead of it.
+  nuget="$(sed -n 's/.*<LachingVersion[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props)"
+  if [ -z "$nuget" ] || [ "$(printf '%s\n' "$nuget" "$distinct" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" != "$distinct" ]; then
+    echo "dotnet/Directory.Build.props' LachingVersion (${nuget:-none}) must be at or below $distinct"; return 1
+  fi
 }
 
 if [ -n "$version" ]; then
   check "version strings are $version" versions_agree "$version"
-  check "CHANGELOG.md has a '## $version' section" changelog_has "$version"
   finish
 fi
 check "versions agree" versions_agree

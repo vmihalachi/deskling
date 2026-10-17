@@ -1,44 +1,43 @@
 name: Release
 
-# Every push to master that touches CHANGELOG.md or the version releases what it brought, so nobody tags by hand:
-# scripts/release.sh plan decides. A change that bumped the version (Laching.swift and the seven other strings, with
-# its CHANGELOG.md section) is tagged at the commit that bumped it; otherwise entries under CHANGELOG.md's Unreleased
-# heading get the next version (a patch, or a minor while 0.x when one says **Breaking**), committed to master by
-# scripts/release.sh bump, then tagged. Merges that land while a release runs go out together in the next one (one run
-# at a time, each on master as it is when it starts). A tag pushed by hand (vX.Y.Z) or a manual run with a version tags
-# and releases that commit as before; a manual run without one does what a push does.
+# Releases are made on demand: Actions → Release → Run workflow, on master, with dry_run first: the plan job prints the
+# plan (the next version and why, whether NuGet and @laching/landing ship) and stops before anything is built or
+# written. One tag per release; the Swift package and the Kotlin build take the tag, NuGet and npm a new version only
+# when their code changed since their last one. The plan is scripts/release.sh's, the same by hand: `plan` numbers the
+# release from the pull requests merged since the last tag (a minor while 0.x, a major from 1.0, when one is labelled
+# `breaking`, else a patch; the bump input overrides it, and nothing committed since the tag releases nothing), `nuget`
+# whether the packages changed since LachingVersion (dotnet/Directory.Build.props), `landing` whether tools/landing
+# changed since npm's version.
 #
-# Then it packs the NuGet packages, pushes them to NuGet.org through Trusted Publishing (OIDC: no stored key;
-# nuget.org → your account → Trusted Publishing → a policy for repository vmihalachi/laching and workflow file
-# release.yml, plus the NUGET_USER repository variable set to your nuget.org username) and makes the GitHub release
-# with the matching CHANGELOG section. The Swift package needs nothing more than the tag itself; @laching/landing
-# (tools/landing) is staged on npm at the release's version for an owner to approve, when tools/landing changed since
-# the version npm has (see the version and npm jobs). Before it tags or packs anything, `scripts/verify.sh --version`
-# checks the version against the pinned version strings (Laching.swift, LachingInfo.cs, Directory.Build.props,
-# site/index.html, README.md) and the CHANGELOG.md section, so no package ships with a Laching.version that says
-# otherwise. Tags pushed with the workflow's token start no other workflow, so this run carries the release through.
+# Nothing remote is written until everything that ships has been tested and packed: the plan job bumps in its runner
+# and checks the version strings (scripts/verify.sh --version); core, windows and landing test and pack that same bumped
+# tree; only then does the tag job push the "X.Y.Z: release" commit and its vX.Y.Z tag, in one atomic push onto the
+# master that was planned (when master moved meanwhile it pushes nothing: dispatch again). After the push, npm publishes
+# @laching/landing and publish pushes the packages to NuGet.org and makes the GitHub release; both are re-runnable on
+# their own. NuGet through Trusted Publishing (OIDC: no stored key; nuget.org → your account → Trusted Publishing → a
+# policy for repository vmihalachi/laching and workflow release.yml, plus the NUGET_USER repository variable set to your
+# nuget.org username). The release notes are generated from the merged pull requests' titles (grouped by
+# .github/release.yml) with what shipped below them. Tags pushed with the workflow's token start no other workflow, so
+# this run starts the site's deploy itself.
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - "CHANGELOG.md"
-      - "Sources/LachingCore/Laching.swift"
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version to tag on this commit and release, without the v (needs its CHANGELOG.md section). Empty: release what master has waiting, as a push does."
-        required: false
-        type: string
+      bump:
+        description: "auto: a minor while 0.x (a major from 1.0) when a pull request merged since the last tag is labelled breaking, else a patch"
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+      dry_run:
+        description: "Only print the plan (the version and why, whether NuGet and the landing ship) and stop"
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: read
 
-# One release at a time; a run waiting behind it is replaced by a newer one, which starts from the newer master.
+# One release at a time, a run waiting behind it planned from master as it is then; a dry run never waits or cancels.
 concurrency:
-  group: release
+  group: ${{ inputs.dry_run && format('release-dry-{0}', github.run_id) || 'release' }}
   cancel-in-progress: false
 
 env:
@@ -46,143 +45,113 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  # Decides what to release and tags it (committing the bump first when there is one), and whether @laching/landing
-  # ships. release is false when nothing is waiting, and every other job skips.
-  version:
+  # Reads only. release is false when there is nothing to release or on a dry run, and every other job skips.
+  plan:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      actions: write  # queues the next release, and the site after a bump
+      contents: read
+      pull-requests: read  # the merged pull requests' labels
     outputs:
       release: ${{ steps.plan.outputs.release }}
       version: ${{ steps.plan.outputs.version }}
-      ref: ${{ steps.plan.outputs.ref }}
-      landing: ${{ steps.landing.outputs.changed }}
+      previous: ${{ steps.plan.outputs.previous }}
+      base: ${{ steps.plan.outputs.base }}
+      tree: ${{ steps.plan.outputs.tree }}
+      nuget: ${{ steps.plan.outputs.nuget }}
+      landing: ${{ steps.plan.outputs.landing }}
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # the tags, for the plan and the landing's diff
-          # A push or an empty manual run releases master as it is now, not as it was when the run was queued.
-          ref: ${{ (github.ref_type == 'branch' && inputs.version == '') && 'master' || '' }}
+          fetch-depth: 0  # the tags, for the plan
+          ref: ${{ github.ref }}  # the branch as it is when the run starts, not when it was queued
+          persist-credentials: false
 
       - id: plan
-        name: Plan, bump and tag
+        name: Plan (a dry run stops here)
         env:
-          VERSION: ${{ inputs.version }}
+          BUMP: ${{ inputs.bump }}
+          DRY_RUN: ${{ inputs.dry_run }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           out() { echo "$1=$2" >> "$GITHUB_OUTPUT"; }
-          # Tags never move: v$1 goes on $2 unless it is there already, and a v$1 elsewhere stops the release.
-          tag() {
-            local existing
-            existing=$(git ls-remote --tags origin "refs/tags/v$1^{}" | cut -f1)
-            [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$1" | cut -f1)
-            if [ -z "$existing" ]; then
-              git tag -a "v$1" -m "Laching $1" "$2" && git push origin "v$1"
-            elif [ "$existing" != "$2" ]; then
-              echo "v$1 already exists at $existing (tags are protected and never move): release the next version"
-              return 1
-            fi
-          }
-          if [ "$GITHUB_REF_TYPE" = tag ]; then
-            version=${GITHUB_REF_NAME#v} sha=$GITHUB_SHA
-            scripts/verify.sh --version "$version"
-          elif [ -n "$VERSION" ]; then
-            version=$VERSION sha=$GITHUB_SHA
-            scripts/verify.sh --version "$version"
-            tag "$version" "$sha"
-          else
-            for attempt in 1 2 3; do
-              plan=$(scripts/release.sh plan)  # set -e stops here when it fails; inside the read below it wouldn't
-              read -r action version sha <<< "$plan"
-              case $action in
-                none)
-                  echo "Nothing to release: every version is tagged and CHANGELOG.md's Unreleased section is empty." |
-                    tee -a "$GITHUB_STEP_SUMMARY"
-                  out release false
-                  exit 0 ;;
-                tag)
-                  # A change bumped the version: release the commit that did. Entries that landed after it go out
-                  # in the next run, queued here.
-                  more=false
-                  if scripts/release.sh pending; then more=true; fi
-                  git checkout -q "$sha"
-                  scripts/verify.sh --version "$version"
-                  tag "$version" "$sha"
-                  if [ "$more" = true ]; then gh workflow run release.yml --ref master; fi
-                  break ;;
-                bump)
-                  scripts/release.sh bump "$version"
-                  scripts/verify.sh --version "$version"
-                  git commit -qam "$version: release"
-                  if git push -q origin HEAD:master; then
-                    sha=$(git rev-parse HEAD)
-                    tag "$version" "$sha"
-                    gh workflow run pages.yml --ref master  # the site's version label; a push of ours starts nothing
-                    break
-                  fi
-                  # Master moved while this ran: plan again on top of it.
-                  [ "$attempt" -lt 3 ] || { echo "master kept moving; the next push releases it"; exit 1; }
-                  git fetch -q origin master && git reset -q --hard origin/master ;;
-                *)
-                  echo "scripts/release.sh plan said '$plan'"
-                  exit 1 ;;
-              esac
-            done
+          say() { echo "$1" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          if [ "$DRY_RUN" != true ] && [ "$GITHUB_REF" != refs/heads/master ]; then
+            echo "A release runs on master, not $GITHUB_REF (a dry run runs anywhere)"
+            exit 1
           fi
-          echo "Releasing $version ($sha)" | tee -a "$GITHUB_STEP_SUMMARY"
+          plan=$(scripts/release.sh plan --bump "$BUMP")  # set -e stops here when it fails; inside the read it wouldn't
+          read -r action version why <<< "$plan"
+          if [ "$action" = none ]; then
+            say "Nothing to release: $plan"
+            out release false
+            exit 0
+          fi
+          [ "$action" = release ] || { echo "scripts/release.sh plan said '$plan'"; exit 1; }
+          previous=$(sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/LachingCore/Laching.swift)
+          nuget=$(scripts/release.sh nuget "$version")
+          landing=$(scripts/release.sh landing)
+          say "Plan: $plan"
+          say "NuGet: $nuget"
+          say "@laching/landing: $landing"
+          # Tags never move: a v$version already on origin stops the release here.
+          if [ -n "$(git ls-remote --tags origin "refs/tags/v$version")" ]; then
+            echo "v$version already exists on origin (tags are protected and never move): fetch it and see what made it"
+            exit 1
+          fi
+          # The release commit's tree, bumped here (nothing is committed): every later job bumps the same commit and
+          # checks it gets this tree, so what is tested and packed is what gets tagged.
+          scripts/release.sh bump "$version"
+          scripts/verify.sh --version "$version"
+          [ "$(scripts/release.sh nuget "$version" | cut -d' ' -f1)" = "${nuget%% *}" ] ||
+            { echo "after the bump, scripts/release.sh nuget $version answers otherwise"; exit 1; }
+          git add -A
+          if [ "$DRY_RUN" = true ]; then
+            say "Dry run: nothing was built, committed, tagged or published."
+            out release false
+            exit 0
+          fi
           out release true
           out version "$version"
-          out ref "$sha"
+          out previous "$previous"
+          out base "$(git rev-parse HEAD)"
+          out tree "$(git write-tree)"
+          out nuget "$([ "${nuget%% *}" = ship ] && echo true || echo false)"
+          out landing "$([ "${landing%% *}" = yes ] && echo true || echo false)"
 
-      # @laching/landing ships only when tools/landing changed since the version npm has, so its versions skip the
-      # releases that leave it alone. Compared with npm rather than the previous tag: a release whose landing was never
-      # staged or approved is caught up by the next one, and a re-run after the approval stages nothing twice.
-      - id: landing
-        name: Whether tools/landing changed since npm's version
-        if: steps.plan.outputs.release == 'true'
-        run: |
-          published=$(npm view @laching/landing version 2>/dev/null || true)
-          if [ -z "$published" ]; then
-            changed=true; why="npm has no version of it (or didn't answer)"
-          elif ! git rev-parse -q --verify "refs/tags/v$published" >/dev/null; then
-            changed=true; why="npm's $published has no tag here"
-          elif git diff --quiet "v$published" HEAD -- tools/landing; then
-            changed=false; why="tools/landing is unchanged since $published, the version on npm: not staged"
-          else
-            changed=true; why="tools/landing changed since $published, the version on npm"
-          fi
-          echo "changed=$changed" >> "$GITHUB_OUTPUT"
-          echo "@laching/landing: $why" | tee -a "$GITHUB_STEP_SUMMARY"
-
-  # Laching.Core, Laching.Companion, Laching.Companion.Shell and Laching.Testing: tests and the packages, on Linux.
+  # The packages that build anywhere (Laching.Core, Laching.Companion, Laching.Companion.Shell, Laching.Testing): their
+  # tests and packages, on Linux, from the bumped tree. Skipped, with windows and the NuGet push, when NuGet doesn't ship.
   core:
-    needs: version
-    if: needs.version.outputs.release == 'true'
+    needs: plan
+    if: needs.plan.outputs.nuget == 'true'
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+      TREE: ${{ needs.plan.outputs.tree }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.version.outputs.ref }}
+          ref: ${{ needs.plan.outputs.base }}
+          persist-credentials: false
 
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
-      - name: Test
+      - name: Bump, as the release commit will be
         run: |
-          dotnet test dotnet/Laching.Core.Tests/Laching.Core.Tests.csproj -c Release
-          dotnet test dotnet/Laching.Companion.Tests/Laching.Companion.Tests.csproj -c Release
-          dotnet test dotnet/Laching.Companion.Shell.Tests/Laching.Companion.Shell.Tests.csproj -c Release
+          scripts/release.sh bump "$VERSION"
+          git add -A
+          [ "$(git write-tree)" = "$TREE" ] || { echo "the bump doesn't give the planned tree"; exit 1; }
 
-      - name: Pack Laching.Core, Laching.Companion, Laching.Companion.Shell, Laching.Testing
+      - name: Test and pack (each at the release's version, which NuGet doesn't have yet)
         run: |
-          for project in Laching.Core Laching.Companion Laching.Companion.Shell Laching.Testing; do
-            dotnet pack "dotnet/$project/$project.csproj" -c Release \
-              -p:LachingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+          for project in $(scripts/release.sh projects); do
+            ! grep -q '<TargetFramework>[^<]*-windows' "dotnet/$project/$project.csproj" || continue
+            tests="dotnet/$project.Tests/$project.Tests.csproj"
+            if [ -f "$tests" ]; then dotnet test "$tests" -c Release; fi
+            dotnet pack "dotnet/$project/$project.csproj" -c Release -o dotnet/artifacts
+            [ -f "dotnet/artifacts/$project.$VERSION.nupkg" ] || { ls dotnet/artifacts; echo "$project isn't $VERSION"; exit 1; }
           done
 
       - uses: actions/upload-artifact@v7
@@ -190,32 +159,45 @@ jobs:
           name: nupkg-core
           path: dotnet/artifacts/*.nupkg
 
-  # Laching.Windows and Laching.Windows.Companion need the Windows App SDK's MakePri.exe, so they test and pack on
-  # Windows.
+  # The packages with a -windows target (Laching.Windows, Laching.Windows.Companion) need the Windows App SDK's
+  # MakePri.exe, so they test and pack on Windows.
   windows:
-    needs: version
-    if: needs.version.outputs.release == 'true'
+    needs: plan
+    if: needs.plan.outputs.nuget == 'true'
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+      TREE: ${{ needs.plan.outputs.tree }}
     steps:
+      # The files as committed (LF), so release.sh runs and its bump gives the planned tree.
+      - run: git config --global core.autocrlf false
+
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.version.outputs.ref }}
+          ref: ${{ needs.plan.outputs.base }}
+          persist-credentials: false
 
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
-      - name: Test
+      - name: Bump, as the release commit will be
         run: |
-          dotnet test dotnet/Laching.Windows.Tests/Laching.Windows.Tests.csproj -c Release
-          dotnet test dotnet/Laching.Windows.Companion.Tests/Laching.Windows.Companion.Tests.csproj -c Release
+          scripts/release.sh bump "$VERSION"
+          git add -A
+          [ "$(git write-tree)" = "$TREE" ] || { echo "the bump doesn't give the planned tree"; exit 1; }
 
-      - name: Pack Laching.Windows, Laching.Windows.Companion
-        shell: bash
+      - name: Test and pack
         run: |
-          for project in Laching.Windows Laching.Windows.Companion; do
-            dotnet pack "dotnet/$project/$project.csproj" -c Release \
-              -p:LachingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+          for project in $(scripts/release.sh projects); do
+            grep -q '<TargetFramework>[^<]*-windows' "dotnet/$project/$project.csproj" || continue
+            tests="dotnet/$project.Tests/$project.Tests.csproj"
+            if [ -f "$tests" ]; then dotnet test "$tests" -c Release; fi
+            dotnet pack "dotnet/$project/$project.csproj" -c Release -o dotnet/artifacts
+            [ -f "dotnet/artifacts/$project.$VERSION.nupkg" ] || { ls dotnet/artifacts; echo "$project isn't $VERSION"; exit 1; }
           done
 
       - uses: actions/upload-artifact@v7
@@ -223,11 +205,11 @@ jobs:
           name: nupkg-windows
           path: dotnet/artifacts/*.nupkg
 
-  # @laching/landing (tools/landing) at the tag's version: tested and packed here, staged on npm by `npm`. Skipped,
-  # with `npm`, when tools/landing is unchanged since npm's version.
+  # @laching/landing (tools/landing) at the release's version: tested and packed here, published by `npm` after the
+  # tag. Skipped, with `npm`, when tools/landing is unchanged since npm's version.
   landing:
-    needs: version
-    if: needs.version.outputs.landing == 'true'
+    needs: plan
+    if: needs.plan.outputs.landing == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -235,17 +217,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.version.outputs.ref }}
+          ref: ${{ needs.plan.outputs.base }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
 
       - name: Test and pack
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
         run: |
           npm ci
           npx tsc --noEmit && npx vp test run
-          npm version "${{ needs.version.outputs.version }}" --no-git-tag-version
+          npm version "$VERSION" --no-git-tag-version
           mkdir -p "$GITHUB_WORKSPACE/npm"
           npm pack --pack-destination "$GITHUB_WORKSPACE/npm"
 
@@ -254,13 +239,62 @@ jobs:
           name: npm-landing
           path: npm/*.tgz
 
-  # @laching/landing to npm through Trusted Publishing (OIDC: no stored token), staged rather than published: nothing
-  # goes live until an owner approves it with 2FA (npmjs.com → the package → Staged, or `npm stage approve <id>`).
-  # npmjs.com holds one trusted publisher for the package: repository vmihalachi/laching, workflow release.yml,
-  # environment npm, stage publish only. Its own job, so only it can mint the token; re-run it if it fails.
+  # The first remote write, once everything that ships has been tested and packed: the release commit and its tag.
+  tag:
+    needs: [plan, core, windows, landing]
+    if: >-
+      !cancelled() && needs.plan.outputs.release == 'true' &&
+      (needs.core.result == 'success' || needs.core.result == 'skipped') &&
+      (needs.windows.result == 'success' || needs.windows.result == 'skipped') &&
+      (needs.landing.result == 'success' || needs.landing.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write  # the site's deploy
+    outputs:
+      ref: ${{ steps.tag.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.base }}
+
+      - id: tag
+        name: Commit the bump and tag it, in one push
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+          BASE: ${{ needs.plan.outputs.base }}
+          TREE: ${{ needs.plan.outputs.tree }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          scripts/release.sh bump "$VERSION"
+          git add -A
+          [ "$(git write-tree)" = "$TREE" ] || { echo "the bump doesn't give the planned tree"; exit 1; }
+          git commit -qm "$VERSION: release"
+          git tag -a "v$VERSION" -m "Laching $VERSION"
+          # Both land, on the master that was planned and tested, or neither does.
+          if ! git push -q --atomic origin HEAD:refs/heads/master "refs/tags/v$VERSION"; then
+            if [ "$(git ls-remote origin refs/heads/master | cut -f1)" != "$BASE" ]; then
+              echo "master moved since the plan: nothing was pushed; dispatch the release again"
+            else
+              echo "origin refused the release commit and v$VERSION (a branch or tag rule, or the tag exists): nothing was pushed"
+            fi
+            exit 1
+          fi
+          echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Released $VERSION: v$VERSION at $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          # The site's version label (a push of ours starts nothing); a failure here strands nothing.
+          gh workflow run pages.yml --ref master || echo "::warning::Couldn't start pages.yml: run it by hand"
+
+  # @laching/landing to npm through Trusted Publishing (OIDC: no stored token; provenance attached), published directly:
+  # the human gate is the release's dispatch. npmjs.com holds one trusted publisher for the package: repository
+  # vmihalachi/laching, workflow release.yml, environment npm. Its own job, so only it can mint the token; when it fails,
+  # re-run it.
   npm:
-    needs: [version, core, windows, landing]
-    if: needs.version.outputs.landing == 'true'
+    needs: [plan, tag, landing]
+    if: needs.landing.result == 'success' && needs.tag.result == 'success'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -277,39 +311,43 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Stage @laching/landing
+      - name: Publish @laching/landing
         env:
-          VERSION: ${{ needs.version.outputs.version }}
+          VERSION: ${{ needs.plan.outputs.version }}
         run: |
-          npm install -g npm@^11.15.0  # staged publishing
-          npm stage publish ./npm/*.tgz --access public --provenance  # ./: a bare npm/… reads as a GitHub repository
-          {
-            echo "@laching/landing@$VERSION is staged on npm. Approve it with 2FA on npmjs.com (the package's Staged tab)"
-            echo "or with \`npm stage list @laching/landing\` and \`npm stage approve <id>\`."
-          } >> "$GITHUB_STEP_SUMMARY"
+          npm install -g npm@^11.5.1  # trusted publishing
+          npm publish ./npm/*.tgz --access public --provenance  # ./: a bare npm/… reads as a GitHub repository
+          echo "@laching/landing@$VERSION is published on npm." >> "$GITHUB_STEP_SUMMARY"
 
-  # Runs when the landing was skipped as well as when it succeeded.
+  # The NuGet push and the GitHub release, after the tag. When it fails, re-run this job (or npm, then this): the push
+  # skips what NuGet has, and the release's upload replaces its assets.
   publish:
-    needs: [version, core, windows, landing]
+    needs: [plan, tag, npm]
     if: >-
-      !cancelled() && needs.core.result == 'success' && needs.windows.result == 'success' &&
-      (needs.landing.result == 'success' || needs.landing.result == 'skipped')
+      !cancelled() && needs.tag.result == 'success' &&
+      (needs.npm.result == 'success' || needs.npm.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     env:
-      LACHING_VERSION: ${{ needs.version.outputs.version }}
+      LACHING_VERSION: ${{ needs.plan.outputs.version }}
+      PREVIOUS: ${{ needs.plan.outputs.previous }}
+      REF: ${{ needs.tag.outputs.ref }}
+      NUGET: ${{ needs.plan.outputs.nuget }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.version.outputs.ref }}
+          ref: ${{ needs.tag.outputs.ref }}
+          persist-credentials: false
 
       - uses: actions/setup-dotnet@v6
+        if: needs.plan.outputs.nuget == 'true'
         with:
           dotnet-version: "10.0.x"
 
       - uses: actions/download-artifact@v7
+        if: needs.plan.outputs.nuget == 'true'
         with:
           pattern: nupkg-*
           path: dotnet/artifacts
@@ -317,15 +355,17 @@ jobs:
 
       # Trusted Publishing: GitHub's OIDC token is exchanged for a one-hour NuGet.org API key scoped to this run.
       # Without the NUGET_USER variable the packages still land on the GitHub release below; set it (and the
-      # nuget.org policy) and re-run this workflow to publish them.
+      # nuget.org policy) and re-run this job to publish them.
       - name: Log in to NuGet.org (Trusted Publishing)
-        if: vars.NUGET_USER != ''
+        if: vars.NUGET_USER != '' && needs.plan.outputs.nuget == 'true'
         id: nuget-login
         uses: NuGet/login@v1
         with:
           user: ${{ vars.NUGET_USER }}
 
       - name: Push to NuGet.org
+        id: push
+        if: needs.plan.outputs.nuget == 'true'
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
@@ -336,30 +376,57 @@ jobs:
           fi
           dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json --skip-duplicate
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
-      # The landing's tarball, when this release has one, rides along on the GitHub release.
+      # The landing's tarball, when this release published one, rides along on the GitHub release.
       - uses: actions/download-artifact@v7
-        if: needs.landing.result == 'success'
+        if: needs.npm.result == 'success'
         with:
           name: npm-landing
           path: npm
 
-      - name: Release notes from CHANGELOG.md
+      # GitHub's notes from the merged pull requests' titles since the previous tag (categories: .github/release.yml),
+      # then what shipped where.
+      - name: Release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NPM: ${{ needs.npm.result }}
+          PUSHED: ${{ steps.push.outputs.pushed }}
         run: |
-          awk -v v="$LACHING_VERSION" '
-            /^## / { on = ($2 == v || $2 == "[" v "]") ; next }
-            on { print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
-          [ -s "$RUNNER_TEMP/notes.md" ] || echo "See CHANGELOG.md." > "$RUNNER_TEMP/notes.md"
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="v$LACHING_VERSION" \
+            -f previous_tag_name="v$PREVIOUS" -f target_commitish="$REF" --jq .body > "$RUNNER_TEMP/notes.md"
+          {
+            echo
+            echo "## Packages"
+            echo
+            if [ "$PUSHED" = true ]; then
+              echo "- NuGet: the six \`Laching.*\` packages at $LACHING_VERSION"
+            elif [ "$NUGET" = true ]; then
+              echo "- NuGet: the six \`Laching.*\` packages at $LACHING_VERSION are attached here, not on NuGet.org yet"
+            else
+              at=$(sed -n 's/.*<LachingVersion[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props)
+              echo "- NuGet: unchanged, still $at"
+            fi
+            if [ "$NPM" = success ]; then
+              echo "- \`@laching/landing\` $LACHING_VERSION: published to npm"
+            else
+              echo "- \`@laching/landing\`: unchanged, not published"
+            fi
+            echo "- The Swift package and the Kotlin build: this tag"
+          } >> "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
 
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          assets=(dotnet/artifacts/*.nupkg)
+          assets=()
+          if [ -d dotnet/artifacts ]; then assets+=(dotnet/artifacts/*.nupkg); fi
           if [ -d npm ]; then assets+=(npm/*.tgz); fi
           if gh release view "v$LACHING_VERSION" >/dev/null 2>&1; then
-            gh release upload "v$LACHING_VERSION" "${assets[@]}" --clobber
+            if [ ${#assets[@]} -gt 0 ]; then gh release upload "v$LACHING_VERSION" "${assets[@]}" --clobber; fi
           else
-            gh release create "v$LACHING_VERSION" "${assets[@]}" --title "v$LACHING_VERSION" \
+            gh release create "v$LACHING_VERSION" "${assets[@]}" --title "v$LACHING_VERSION" --verify-tag \
               --notes-file "$RUNNER_TEMP/notes.md"
           fi

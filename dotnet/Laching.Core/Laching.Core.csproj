@@ -10,4 +10,25 @@
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
+  <!-- LachingInfo.Version: the packages' $(Version) (LachingVersion), written before each compile so it stays a
+       const string (what Native AOT and the apps want) and no release has to edit it. %20 keeps an indent, %3B is ;. -->
+  <Target Name="LachingInfo" BeforeTargets="CoreCompile" DependsOnTargets="PrepareForBuild">
+    <PropertyGroup>
+      <LachingInfoFile>$(IntermediateOutputPath)LachingInfo.g.cs</LachingInfoFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <LachingInfoLine Include="// &lt;auto-generated/&gt; by Laching.Core.csproj from $(Version)." />
+      <LachingInfoLine Include="namespace Laching.Core%3B" />
+      <LachingInfoLine Include="/// &lt;summary&gt;The NuGet packages' version (LachingVersion). Set by the release.&lt;/summary&gt;" />
+      <LachingInfoLine Include="public static class LachingInfo" />
+      <LachingInfoLine Include="{" />
+      <LachingInfoLine Include="%20%20%20%20public const string Version = &quot;$(Version)&quot;%3B" />
+      <LachingInfoLine Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(LachingInfoFile)" Lines="@(LachingInfoLine)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(LachingInfoFile)" />
+      <FileWrites Include="$(LachingInfoFile)" />
+    </ItemGroup>
+  </Target>
 </Project>

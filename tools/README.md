@@ -45,7 +45,8 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
 ## Adopting the tools in an app
 
-1. **Submodule, pinned to the release.** Vendor Laching at the tag the app pins in SwiftPM and NuGet:
+1. **Submodule, pinned to the release.** Vendor Laching at the tag the app pins in SwiftPM (NuGet takes that release's
+   `LachingVersion`, which can trail the tag):
 
    ```sh
    git submodule add https://github.com/vmihalachi/laching laching
@@ -55,9 +56,10 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    The submodule is tools and skills only; the Swift and .NET code still comes from the package registries (the
    Kotlin build is the exception: an Android app includes it from the submodule, see step 7). `scripts/verify.sh`
    fails whenever the submodule's tag, `laching.tag`, the core `Package.swift`'s `exact:`, the XcodeGen spec's
-   `exactVersion`, the `Laching.*` NuGet versions and, with an `android` section, the submodule's
-   `kotlin/gradle.properties` `lachingVersion` disagree (`python3 laching/tools/companion.py pins` shows them;
-   `companion.py bump` moves them all).
+   `exactVersion` and, with an `android` section, the submodule's `kotlin/gradle.properties` `lachingVersion` disagree,
+   or a `Laching.*` NuGet version isn't that package's in the release (`python3 laching/tools/companion.py pins` shows
+   them; `companion.py bump` moves them all). The NuGet packages share one version, `LachingVersion` in the
+   submodule's `dotnet/Directory.Build.props`: it moves only when they changed, so it can trail the tag.
 
 2. **`companion.json`** at the app's root, every section the app has (see the schema and the drafts in
    `tools/tests/*.companion.json`). Check it: `python3 laching/tools/companion.py validate`.
@@ -148,8 +150,8 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 ## Moving to a release, or trying one first
 
 **`bump`** moves an app to a release in one go: every pin `pins` lists (`laching.tag`, the core package's `exact:`, the
-XcodeGen spec's `exactVersion`, each `Laching.*` NuGet version; the Kotlin build's `lachingVersion` is the submodule's
-own, so it follows the submodule), the committed `Package.resolved` files, the submodule
+XcodeGen spec's `exactVersion`, each `Laching.*` NuGet version, to the release's `LachingVersion`; the Kotlin build's `lachingVersion` is the submodule's own, so it follows the submodule), the
+committed `Package.resolved` files, the submodule
 (checked out at the tag) and the landing page's `@laching/landing`; it regenerates the Xcode project and prints `pins`.
 It refuses a tag origin doesn't have, and changes nothing when the app is already there.
 
@@ -160,7 +162,7 @@ tools/bump-apps.sh 0.9.1                         # in the Laching checkout: ever
 
 - `bump-apps.sh` runs the Laching checkout's `companion.py`, so it moves an app whose submodule predates `bump`.
 - `@laching/landing` ships only when `tools/landing` changed, so the landing page gets npm's newest version at or below
-  the release (a staged version counts once approved: run `bump` again then). Its lockfile follows through the landing
+  the release. Its lockfile follows through the landing
   tool's `install` (`landing.tool`), unless the tool is missing or the landing page has uncommitted dependency changes,
   which `bump` then says.
 - The core package's `Package.resolved` is rewritten in place (its `originHash` is the SHA-256 of its manifest). The Xcode

@@ -1,0 +1,11 @@
+# The GitHub release's notes, generated from the pull requests merged since the previous tag (release.yml's publish
+# job asks for them and lists the packages below). A pull request labelled `breaking` is what makes the release a
+# minor while 0.x (a major from 1.0), so it comes first.
+changelog:
+  categories:
+    - title: Breaking
+      labels:
+        - breaking
+    - title: Changes
+      labels:
+        - "*"
