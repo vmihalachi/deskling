@@ -39,13 +39,16 @@ The complete rules (moved from `AGENTS.md`, which keeps the short form).
   and Companion test project.
   No reflection-based JSON (source-generated contexts only): the apps publish with Native AOT and warnings are errors.
 - **Strings:** the package ships none. Titles for notification actions and the like are passed in already localized.
-- **Versioning:** SemVer, one `vX.Y.Z` tag for every side; `CHANGELOG.md` gets a line per user-visible change under
-  *Unreleased*, with `**Breaking.**` in a breaking one. A change never bumps the version or tags: on every push to
-  `master`, `release.yml` runs `scripts/release.sh`, which gives the *Unreleased* entries the next version (a patch, or
-  a minor while 0.x for a breaking one), moves them under it and puts it in all five places: `Laching.version`
-  (`Sources/LachingCore/Laching.swift`), `LachingInfo.Version` (`dotnet/Laching.Core/LachingInfo.cs`),
-  the `LachingVersion` default in `dotnet/Directory.Build.props`, `site/index.html` (the `vX.Y.Z` label in the
-  header and both `exact:` install snippets) and `README.md` (the `exact:` install pin and the `git tag` example under
-  *Releases*); then it commits, tags and publishes. `scripts/verify.sh` fails when these disagree. The `release`
-  skill has the manual ways, for a number the rule gets wrong.
+- **Versioning:** SemVer, one `vX.Y.Z` tag per release for every side. There is no changelog file: the release notes
+  are GitHub's, from the merged pull requests' titles, so a pull request's title says what changed for an app, and a
+  breaking one is labelled `breaking` (`docs/issues.md`). A change never bumps the version or tags: releases are made
+  on demand by dispatching `release.yml`, which numbers the release from those labels (a patch, or a minor while 0.x
+  when one is `breaking`) with `scripts/release.sh plan`, and its `bump` puts the number in the hand-kept strings:
+  `Laching.version` (`Sources/LachingCore/Laching.swift`), `lachingVersion` (`kotlin/gradle.properties`),
+  `site/index.html` (the `vX.Y.Z` label in the header and both `exact:` install snippets) and `README.md` (the `exact:`
+  install pin and the latest release under *Releases*). `LachingInfo.Version` and Kotlin's `Laching.VERSION` are
+  generated at build time. One tag per release: Swift and Kotlin take the tag; NuGet and npm get a new version only
+  when their code changed since their last one. The six NuGet packages share `LachingVersion`
+  (`dotnet/Directory.Build.props`), which `bump` moves only then. `scripts/verify.sh` fails when the strings disagree
+  or `LachingVersion` is above the tag. The `release` skill has the details.
 - Formatting is enforced in CI: `.swift-format` (4 spaces, 140 columns) and `dotnet/.editorconfig`.

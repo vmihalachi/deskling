@@ -55,8 +55,9 @@ twice"). No logo exists yet.
 
 ## Evidence on Hand
 
-README, CHANGELOG (every release since 0.1.0), the scheduler conformance vectors in `conformance/scheduler/` and the
-companion vectors in `conformance/companion/`, mybackhurts.app, sunnysays.app, pagliacci.app.
+README, the GitHub releases' notes (every release; up to 0.13.0 also the CHANGELOG.md in the history), the scheduler
+conformance vectors in `conformance/scheduler/` and the companion vectors in `conformance/companion/`,
+mybackhurts.app, sunnysays.app, pagliacci.app.
 No testimonials, download counts, benchmarks or third-party adopters: never invent them.
 
 ## Product Principles

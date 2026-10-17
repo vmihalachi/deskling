@@ -59,5 +59,5 @@ Follow the `port-to-csharp` skill. For the scheduler that means:
 
 ## 7. Finish
 
-- `CHANGELOG.md` → *Unreleased* → *Added*: one line naming the field on both sides.
+- The pull request's title names the field (the release notes are made from it); label it `breaking` if it is.
 - `scripts/verify.sh` (runs swift-format, swift test, vectors-current, dotnet format and dotnet test as applicable).
