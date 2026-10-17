@@ -26,13 +26,18 @@ public enum LoadState
 /// <summary>
 /// Ownership of the catalog's unlockables plus tips, over an <see cref="IStoreBackend"/>. The last known
 /// <see cref="Owned"/> set is cached in the settings store under the cache key, so the UI doesn't flash locked at
-/// launch before the store answers. Needs <see cref="StartAsync"/> once; it then follows transaction updates
-/// (approvals, refunds, purchases on another device). Never shows UI of its own and never charges without
+/// launch before the store answers. With the default key, Deskling's cache under <c>deskling.ownedProducts</c> (before
+/// 0.13.0) is taken over once: its value moves there when the default key holds nothing, and the old key is removed. A
+/// key the app passes is read as it is. Needs <see cref="StartAsync"/> once; it then follows transaction updates (approvals,
+/// refunds, purchases on another device). Never shows UI of its own and never charges without
 /// <see cref="BuyAsync"/> or <see cref="TipAsync"/>. Not thread-safe: drive it from one thread (the UI thread);
 /// <see cref="Changed"/> is raised there after every change.
 /// </summary>
 public sealed class PurchaseStore
 {
+    private const string DefaultCacheKey = "laching.ownedProducts";
+    private const string DesklingCacheKey = "deskling.ownedProducts";
+
     private readonly IStoreBackend backend;
     private readonly ISettingsStore settings;
     private readonly string cacheKey;
@@ -49,7 +54,7 @@ public sealed class PurchaseStore
         ProductCatalog catalog,
         IStoreBackend backend,
         ISettingsStore settings,
-        string cacheKey = "laching.ownedProducts",
+        string cacheKey = DefaultCacheKey,
         Action<string>? log = null
     )
     {
@@ -59,7 +64,7 @@ public sealed class PurchaseStore
         this.cacheKey = cacheKey;
         this.log = log ?? (_ => { });
         // Last known state, so the UI doesn't flash at launch.
-        owned = settings.GetStrings(cacheKey)?.ToHashSet() ?? new HashSet<string>();
+        owned = Cached(settings, cacheKey).ToHashSet();
     }
 
     /// <summary>Raised after any state below changes.</summary>
@@ -226,6 +231,22 @@ public sealed class PurchaseStore
             return;
         Error = null;
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// The cache under <paramref name="key"/>. Under the default key, Deskling's cache moves over when the key holds
+    /// nothing, and is removed either way.
+    /// </summary>
+    private static IReadOnlyList<string> Cached(ISettingsStore settings, string key)
+    {
+        var owned = settings.GetStrings(key);
+        if (key != DefaultCacheKey || settings.GetStrings(DesklingCacheKey) is not { } deskling)
+            return owned ?? [];
+        settings.Remove(DesklingCacheKey);
+        if (owned is not null)
+            return owned;
+        settings.SetStrings(key, deskling);
+        return deskling;
     }
 
     private async Task PurchaseAsync(string id)

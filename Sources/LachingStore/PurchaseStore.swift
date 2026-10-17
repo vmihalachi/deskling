@@ -13,7 +13,9 @@
 
     /// Ownership of the catalog's unlockables plus tips, over a `StoreBackend`. The last known `owned` set is
     /// cached in `settings` under `cacheKey` (as strings) so the UI doesn't flash locked at launch before StoreKit
-    /// answers.
+    /// answers. With the default key, Deskling's cache under `deskling.ownedProducts` (before 0.13.0) is taken over
+    /// once: its value moves there when the default key holds nothing, and the old key is removed. A key the app
+    /// passes is read as it is.
     /// Needs `start()` once; it then follows transaction updates (Ask to Buy approvals, refunds, purchases on
     /// another device). Never shows UI of its own and never charges without `buy` or `tip`.
     @MainActor
@@ -60,7 +62,7 @@
             self.cacheKey = cacheKey
             self.logger = logger
             // Last known state, so the UI doesn't flash at launch.
-            owned = Set(settings.strings(forKey: cacheKey) ?? [])
+            owned = Set(Self.cached(in: settings, forKey: cacheKey))
         }
 
         /// Caches in a `UserDefaults` suite of your choice; the same as `settings: UserDefaultsSettingsStore(defaults:)`.
@@ -71,6 +73,20 @@
             self.init(
                 catalog: catalog, backend: backend, settings: UserDefaultsSettingsStore(defaults: defaults), cacheKey: cacheKey,
                 logger: logger)
+        }
+
+        private static let defaultCacheKey = "laching.ownedProducts"
+        private static let desklingCacheKey = "deskling.ownedProducts"
+
+        /// The cache under `key`. Under the default key, Deskling's cache moves over when the key holds nothing, and
+        /// is removed either way.
+        private static func cached(in settings: any SettingsStore, forKey key: String) -> [String] {
+            let owned = settings.strings(forKey: key)
+            guard key == defaultCacheKey, let deskling = settings.strings(forKey: desklingCacheKey) else { return owned ?? [] }
+            settings.remove(forKey: desklingCacheKey)
+            if let owned { return owned }
+            settings.set(strings: deskling, forKey: key)
+            return deskling
         }
 
         public func isOwned(_ id: String) -> Bool { owned.contains(id) }

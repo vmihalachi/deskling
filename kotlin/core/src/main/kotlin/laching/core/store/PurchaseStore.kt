@@ -20,7 +20,9 @@ public enum class LoadState {
 /**
  * The app's view of its in-app purchases: what the user owns, the listed prices, and whether a purchase or a
  * restore is under way. Pure logic over a [StoreBackend]; the same flow as `Laching.Core`'s `PurchaseStore`.
- * Ownership is cached in [settings] under [cacheKey] so the UI doesn't flash at launch. Call it from one thread;
+ * Ownership is cached in [settings] under [cacheKey] so the UI doesn't flash at launch. With the default key,
+ * Deskling's cache under `deskling.ownedProducts` (before 0.13.0) is taken over once: its value moves there when the
+ * default key holds nothing, and the old key is removed. A key the app passes is read as it is. Call it from one thread;
  * [scope] runs the re-reads that transaction updates trigger, and listeners registered with [onChanged] hear
  * about every visible change.
  */
@@ -29,13 +31,13 @@ public class PurchaseStore(
     private val backend: StoreBackend,
     private val settings: SettingsStore,
     private val scope: CoroutineScope,
-    private val cacheKey: String = "laching.ownedProducts",
+    private val cacheKey: String = DEFAULT_CACHE_KEY,
     private val log: (String) -> Unit = {},
 ) {
     private val listeners = mutableListOf<() -> Unit>()
     private var started = false
 
-    public var owned: Set<String> = settings.getStrings(cacheKey)?.toSet() ?: emptySet()
+    public var owned: Set<String> = cached(settings, cacheKey).toSet()
         private set(value) {
             field = value
             settings.setStrings(cacheKey, value.sorted())
@@ -198,5 +200,27 @@ public class PurchaseStore(
 
     private fun changed() {
         for (listener in listeners.toList()) listener()
+    }
+
+    private companion object {
+        const val DEFAULT_CACHE_KEY = "laching.ownedProducts"
+        const val DESKLING_CACHE_KEY = "deskling.ownedProducts"
+
+        /**
+         * The cache under [key]. Under the default key, Deskling's cache moves over when the key holds nothing, and is
+         * removed either way.
+         */
+        fun cached(
+            settings: SettingsStore,
+            key: String,
+        ): List<String> {
+            val owned = settings.getStrings(key)
+            if (key != DEFAULT_CACHE_KEY) return owned ?: emptyList()
+            val deskling = settings.getStrings(DESKLING_CACHE_KEY) ?: return owned ?: emptyList()
+            settings.remove(DESKLING_CACHE_KEY)
+            if (owned != null) return owned
+            settings.setStrings(key, deskling)
+            return deskling
+        }
     }
 }
