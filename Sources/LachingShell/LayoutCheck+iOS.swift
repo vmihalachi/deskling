@@ -9,24 +9,6 @@
     /// nothing and needs the main actor.
     @MainActor
     public enum LayoutCheck {
-        /// Content that needs `needed` points of height where it has `available`.
-        public struct Overflow: Equatable, Sendable, CustomStringConvertible {
-            public let needed: CGFloat
-            public let available: CGFloat
-
-            public init(needed: CGFloat, available: CGFloat) {
-                self.needed = needed
-                self.available = available
-            }
-
-            public var description: String {
-                "the content needs \(Int(needed.rounded(.up))) pt of height, the screen has \(Int(available.rounded()))"
-            }
-        }
-
-        /// Points of rounding allowed between the measurement and the screen.
-        public static let slack: CGFloat = 1
-
         /// Everything in `window` that doesn't fit, one line each: `overflows(in:)`, `offScreen(in:)`, then
         /// `truncatedText(in:)` and `truncatedLabels(in:)`.
         public static func problems(in window: UIWindow) -> [String] {

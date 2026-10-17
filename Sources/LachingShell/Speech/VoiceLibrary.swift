@@ -14,15 +14,6 @@
         public init(stringLiteral value: String) {
             self.init(rawValue: value)
         }
-
-        public init(from decoder: Decoder) throws {
-            self.init(rawValue: try decoder.singleValueContainer().decode(String.self))
-        }
-
-        public func encode(to encoder: Encoder) throws {
-            var container = encoder.singleValueContainer()
-            try container.encode(rawValue)
-        }
     }
 
     /// A character's recorded voices: `Voice/<lang>/<voice>/<clip id>.m4a` and `Voice/manifest.json` (format 1, made by

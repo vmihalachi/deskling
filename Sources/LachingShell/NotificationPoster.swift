@@ -75,15 +75,23 @@
         /// A calendar trigger on the local wall-clock time (to the second), so a reminder planned for 9:45 still
         /// comes at 9:45 after a time zone change.
         public func makeRequest(calendar: Calendar = .current) -> UNNotificationRequest {
+            let content = Self.content(title: title, body: body, categoryID: categoryID, sound: sound, userInfo: userInfo)
+            let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        }
+
+        /// A notification's content: what both a scheduled and a posted notification fill in.
+        static func content(
+            title: String, body: String, categoryID: String, sound: Bool, userInfo: [String: String] = [:]
+        ) -> UNMutableNotificationContent {
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
             content.categoryIdentifier = categoryID
             if sound { content.sound = .default }
             content.userInfo = userInfo
-            let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-            return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            return content
         }
     }
 
@@ -161,11 +169,7 @@
         /// Posts right away. Reusing an `id` replaces the notification posted with it before, so a reminder
         /// that fires again doesn't pile up in Notification Center.
         public func post(id: String, title: String, body: String, categoryID: String, sound: Bool) {
-            let content = UNMutableNotificationContent()
-            content.title = title
-            content.body = body
-            content.categoryIdentifier = categoryID
-            if sound { content.sound = .default }
+            let content = ScheduledNotification.content(title: title, body: body, categoryID: categoryID, sound: sound)
             let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
             center.add(request)
         }

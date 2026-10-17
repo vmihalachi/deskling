@@ -55,15 +55,6 @@ public struct PaintRole: RawRepresentable, Hashable, Sendable, Codable, Expressi
         self.init(rawValue: value)
     }
 
-    public init(from decoder: Decoder) throws {
-        self.init(rawValue: try decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
-    }
-
     public var description: String { rawValue }
 
     /// The glyph's only paint: the menu bar template image.

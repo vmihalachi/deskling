@@ -260,13 +260,17 @@
         /// Every 20 s: the scheduler decides, the rules judge, and a line is delivered or not.
         public func tick() {
             let snapshot = signals.snapshot()
-            if let delivery = coordinator.tick(snapshot: snapshot) { perform(delivery) }
-            refreshStatus(snapshot: snapshot)
+            deliver(coordinator.tick(snapshot: snapshot), snapshot: snapshot)
         }
 
         private func handleEvent(_ trigger: Trigger) {
-            if let delivery = coordinator.event(trigger, snapshot: signals.snapshot()) { perform(delivery) }
-            refreshStatus()
+            deliver(coordinator.event(trigger, snapshot: signals.snapshot()))
+        }
+
+        /// Performs `delivery`, if any, then refreshes the status from `snapshot` (a fresh one when nil).
+        private func deliver(_ delivery: Delivery?, snapshot: Snapshot? = nil) {
+            if let delivery { perform(delivery) }
+            refreshStatus(snapshot: snapshot)
         }
 
         private func perform(_ delivery: Delivery) {
@@ -342,8 +346,7 @@
 
         /// Ends Shh early; the character says one line about it.
         public func wake() {
-            if let delivery = coordinator.wake(snapshot: signals.snapshot()) { perform(delivery) }
-            refreshStatus()
+            deliver(coordinator.wake(snapshot: signals.snapshot()))
         }
 
         /// "Don't say that again" on the speech bubble: the line leaves the picks for good (Settings can bring muted
@@ -625,11 +628,16 @@
         }
 
         public func dismissDesktopBubble() {
+            clearDesktopBubble()
+            desktop?.hideBubble(animated: !reduceMotion)
+        }
+
+        /// Drops the bubble's words, its countdown and its timer; the window follows on its next update.
+        private func clearDesktopBubble() {
             bubbleTimer?.invalidate()
             bubbleTimer = nil
             desktopBubble = nil
             desktopCountdown = nil
-            desktop?.hideBubble(animated: !reduceMotion)
         }
 
         /// The panel row's words while the character is off the desktop for a while.
@@ -672,12 +680,7 @@
             let shown = presence.update(enabled: settings.showOnDesktop, snapshot: snapshot, now: clock.now)
             if isOnDesktop != shown { isOnDesktop = shown }
             if desktopHiddenUntil != presence.hiddenUntil { desktopHiddenUntil = presence.hiddenUntil }
-            if !shown, desktopBubble != nil {
-                bubbleTimer?.invalidate()
-                bubbleTimer = nil
-                desktopBubble = nil
-                desktopCountdown = nil
-            }
+            if !shown, desktopBubble != nil { clearDesktopBubble() }
             signals.watchForDesktop(isLaunched && settings.showOnDesktop && presence.hiddenUntil == nil)
             scheduleDesktopRecheck()
             updateDesktopWindow()

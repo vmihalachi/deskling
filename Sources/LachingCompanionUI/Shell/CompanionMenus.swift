@@ -14,9 +14,7 @@
             let menu = NSMenu()
             addTalk(to: menu, model, copy)
             menu.addItem(.separator())
-            let desktop = NSMenuItem(title: copy.desktopSubmenu, action: nil, keyEquivalent: "")
-            desktop.submenu = desktopSubmenu(model, copy)
-            menu.addItem(desktop)
+            menu.addItem(submenu(copy.desktopSubmenu) { addDesktop(to: $0, model, copy) })
             menu.addItem(.separator())
             addApp(to: menu, model, copy, support: model.isSupporter ? .thank : .ask)
             return menu
@@ -26,17 +24,12 @@
             let menu = NSMenu()
             addTalk(to: menu, model, copy)
             menu.addItem(.separator())
-            let size = NSMenuItem(title: copy.size, action: nil, keyEquivalent: "")
-            let sizes = NSMenu()
-            addSizes(to: sizes, model, copy)
-            size.submenu = sizes
-            menu.addItem(size)
-            let hide = NSMenuItem(title: copy.hide, action: nil, keyEquivalent: "")
-            let spans = NSMenu()
-            spans.addItem(ActionItem(copy.forAnHour) { model.hideDesktop(.hour) })
-            spans.addItem(ActionItem(copy.forTheRestOfToday) { model.hideDesktop(.restOfToday) })
-            spans.addItem(ActionItem(copy.untilIShowItAgain) { model.hideDesktop(.untilShown) })
-            hide.submenu = spans
+            menu.addItem(submenu(copy.size) { addSizes(to: $0, model, copy) })
+            let hide = submenu(copy.hide) { spans in
+                spans.addItem(ActionItem(copy.forAnHour) { model.hideDesktop(.hour) })
+                spans.addItem(ActionItem(copy.forTheRestOfToday) { model.hideDesktop(.restOfToday) })
+                spans.addItem(ActionItem(copy.untilIShowItAgain) { model.hideDesktop(.untilShown) })
+            }
             menu.addItem(hide)
             menu.addItem(.separator())
             addApp(to: menu, model, copy, support: model.isSupporter ? nil : .ask)
@@ -50,18 +43,25 @@
             if model.isShushed {
                 menu.addItem(ActionItem(copy.wakeUp) { model.wake() })
             } else {
-                let shh = NSMenuItem(title: copy.shh, action: nil, keyEquivalent: "")
-                let submenu = NSMenu()
-                submenu.addItem(ActionItem(copy.forAnHour) { model.shush(.hour) })
-                submenu.addItem(ActionItem(copy.forTheRestOfToday) { model.shush(.restOfToday) })
-                submenu.addItem(ActionItem(copy.untilISay) { model.shush(.untilISay) })
-                shh.submenu = submenu
+                let shh = submenu(copy.shh) { spans in
+                    spans.addItem(ActionItem(copy.forAnHour) { model.shush(.hour) })
+                    spans.addItem(ActionItem(copy.forTheRestOfToday) { model.shush(.restOfToday) })
+                    spans.addItem(ActionItem(copy.untilISay) { model.shush(.untilISay) })
+                }
                 menu.addItem(shh)
             }
         }
 
-        private static func desktopSubmenu<Window, Settings>(_ model: CompanionAppModel<Window, Settings>, _ copy: MenuCopy) -> NSMenu {
-            let menu = NSMenu()
+        /// An item titled `title` opening a submenu that `build` fills.
+        private static func submenu(_ title: String, _ build: (NSMenu) -> Void) -> NSMenuItem {
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            let submenu = NSMenu()
+            build(submenu)
+            item.submenu = submenu
+            return item
+        }
+
+        private static func addDesktop<Window, Settings>(to menu: NSMenu, _ model: CompanionAppModel<Window, Settings>, _ copy: MenuCopy) {
             let on = model.settings.showOnDesktop
             if on, model.desktopHiddenUntil != nil {
                 menu.addItem(ActionItem(copy.showNow) { model.showDesktopNow() })
@@ -79,7 +79,6 @@
             menu.autoenablesItems = false
             menu.addItem(.separator())
             addSizes(to: menu, model, copy)
-            return menu
         }
 
         private static func addSizes<Window, Settings>(to menu: NSMenu, _ model: CompanionAppModel<Window, Settings>, _ copy: MenuCopy) {
