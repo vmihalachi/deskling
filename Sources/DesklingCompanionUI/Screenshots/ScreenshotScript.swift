@@ -9,11 +9,17 @@
     extension ScreenshotCapture {
         /// What a screenshot run's model is built on, so the user's real settings and the App Store are never touched:
         /// an in-memory settings store, a clock stopped at `now` (a Tuesday at 10:30 by default, inside the default active
-        /// hours), an idle time of zero, never busy, a signal hub with no system watchers, silent channels and a store
-        /// with fixed prices.
+        /// hours), an idle time of zero, never busy, a signal hub with no system watchers, silent channels, a store with
+        /// fixed prices and a fixed `seed`.
         @MainActor
         public struct SampleEnvironment {
+            /// The seed every screenshot run's model is made with (`CompanionAppModel`'s `seed`), the same on every side:
+            /// the scheduler's jitter and the picker draw the same, so the next line's time reads the same every run.
+            public nonisolated static let sampleSeed: UInt64 = 20_261_013
+
             public let now: Date
+            /// The model's seed: `sampleSeed`.
+            public let seed: UInt64 = SampleEnvironment.sampleSeed
             public let store: InMemorySettingsStore
             public let clock: FixedClock
             public let idle: ConstantIdle
