@@ -65,13 +65,11 @@
         public func wave(for duration: TimeInterval = 1.2) {
             waveEnd?.invalidate()
             startFrames()
-            waveEnd = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.waveEnd = nil
-                    if !self.animating { self.stopFrames() }
-                    self.redraw()
-                }
+            waveEnd = Timer.main(after: duration) { [weak self] in
+                guard let self else { return }
+                self.waveEnd = nil
+                if !self.animating { self.stopFrames() }
+                self.redraw()
             }
             redraw()
         }
@@ -87,9 +85,7 @@
             frameTimer?.invalidate()
             frame = 1
             guard !reduceMotion else { return }
-            frameTimer = Timer.scheduledTimer(withTimeInterval: Self.frameInterval, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.step() }
-            }
+            frameTimer = Timer.main(after: Self.frameInterval, repeats: true) { [weak self] in self?.step() }
         }
 
         private func stopFrames() {

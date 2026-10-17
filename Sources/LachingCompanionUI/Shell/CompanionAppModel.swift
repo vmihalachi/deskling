@@ -240,9 +240,7 @@
             self.statusItem = statusItem
             refreshNotificationPermission()
             Task { await purchases.start() }
-            timer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.tick() }
-            }
+            timer = Timer.main(after: 20, repeats: true) { [weak self] in self?.tick() }
             refreshStatus()
             if !settings.hasCompletedOnboarding {
                 windows.show(roles.onboarding)
@@ -355,9 +353,7 @@
             settings.mutedPhraseIDs.insert(id)
             justMuted = id
             undoTimer?.invalidate()
-            undoTimer = Timer.scheduledTimer(withTimeInterval: 8, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.justMuted = nil }
-            }
+            undoTimer = Timer.main(after: 8) { [weak self] in self?.justMuted = nil }
         }
 
         public func undoMute() {
@@ -522,12 +518,10 @@
 
         private func timingSettingsChanged() {
             settingsDebounce?.invalidate()
-            settingsDebounce = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.coordinator.settingsChanged()
-                    self.refreshStatus()
-                }
+            settingsDebounce = Timer.main(after: 0.3) { [weak self] in
+                guard let self else { return }
+                self.coordinator.settingsChanged()
+                self.refreshStatus()
             }
         }
 
@@ -661,9 +655,7 @@
             let seconds = DesktopPresence.bubbleSeconds(for: text)
             desktopCountdown = BubbleCountdown(start: Date(), seconds: seconds)
             desktop?.setCountdown(desktopCountdown)
-            bubbleTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.dismissDesktopBubble() }
-            }
+            bubbleTimer = Timer.main(after: seconds) { [weak self] in self?.dismissDesktopBubble() }
         }
 
         /// Every poll of the busy watch: a change refreshes everything; while busy, the presence learns the moment, so
@@ -700,9 +692,7 @@
             let now = clock.now
             let moments = [presence.hiddenUntil, presence.lastBusy?.addingTimeInterval(DesktopPresence.reappearDelay)]
             guard let next = moments.compactMap({ $0 }).filter({ $0 > now }).min() else { return }
-            desktopRecheck = Timer.scheduledTimer(withTimeInterval: next.timeIntervalSince(now) + 0.1, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.refreshStatus() }
-            }
+            desktopRecheck = Timer.main(after: next.timeIntervalSince(now) + 0.1) { [weak self] in self?.refreshStatus() }
         }
 
         private var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }

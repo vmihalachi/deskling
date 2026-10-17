@@ -51,12 +51,7 @@
             self.chime = chime
             self.voices = voices
             self.post = post
-            let schedule =
-                schedule ?? { delay, work in
-                    Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                        MainActor.assumeIsolated { work() }
-                    }
-                }
+            let schedule = schedule ?? SpeechSequencer.timer
             self.schedule = schedule
             sequencer = SpeechSequencer(speaker: speaker, schedule: schedule)
             sequencer.onFinished = { [weak self] in self?.onSpeechFinished?() }
