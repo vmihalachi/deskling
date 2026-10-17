@@ -121,6 +121,20 @@ class BumpTests(PinsTestCase):
         self.assertIn("originHash", out)
         self.assertEqual(self.calls, ["regenerate_project"])
 
+    def test_an_android_app_pins_the_submodules_kotlin_build(self):
+        manifest = self.root / "companion.json"
+        data = json.loads(manifest.read_text("utf8"))
+        data["android"] = {"dir": "android"}
+        manifest.write_text(json.dumps(data), "utf8")
+        found = dict(companion.pins(companion.load()))
+        self.assertNotIn("deskling/kotlin/gradle.properties desklingVersion", found, "a release before the Kotlin side")
+        (self.root / "deskling" / "kotlin").mkdir()
+        (self.root / "deskling" / "kotlin" / "gradle.properties").write_text(
+            "org.gradle.jvmargs=-Xmx2g\ndesklingVersion=0.4.0\n", "utf8")
+        found = dict(companion.pins(companion.load()))
+        self.assertEqual(found["deskling/kotlin/gradle.properties desklingVersion"], "0.4.0")
+        self.assertFalse(companion.pins_agree(list(found.items())))
+
     def test_bump_to_the_current_version_changes_nothing(self):
         before = self.files()
         code, out = self.cli("bump", "v0.5.0")
@@ -343,6 +357,44 @@ class LinkTests(PinsTestCase):
         self.assertEqual(code, 1)
         self.assertIn("isn't a Deskling checkout", out)
         self.assertEqual(self.status(), "")
+
+    def test_link_points_the_android_build_at_the_checkouts_kotlin(self):
+        (self.checkout / "kotlin").mkdir()
+        (self.checkout / "kotlin" / "settings.gradle.kts").write_text('rootProject.name = "deskling"\n', "utf8")
+        (self.checkout / "kotlin" / "gradle.properties").write_text("desklingVersion=0.5.0\n", "utf8")
+        manifest = self.root / "companion.json"
+        data = json.loads(manifest.read_text("utf8"))
+        data["android"] = {"dir": "android"}
+        manifest.write_text(json.dumps(data), "utf8")
+        properties = self.root / "android" / "local.properties"
+        properties.parent.mkdir()
+        properties.write_text("sdk.dir=/opt/android", "utf8")  # no final newline
+        (self.root / ".gitignore").write_text("android/local.properties\n", "utf8")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-q", "-m", "android")
+
+        code, out = self.cli("link")
+        self.assertEqual(code, 0, out)
+        self.assertIn("changed  android/local.properties", out)
+        text = properties.read_text("utf8")
+        self.assertTrue(text.startswith("sdk.dir=/opt/android\n# deskling link:"), text)
+        self.assertTrue(text.endswith("\ndeskling.kotlin.dir=../../deskling/kotlin\n"), text)
+        code, out = self.cli("unlink")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(properties.read_text("utf8"), "sdk.dir=/opt/android")
+        self.assertEqual(self.status(), "")
+
+        # Without a local.properties the link writes one and unlink removes it; one left behind fails the pins.
+        properties.unlink()
+        self.cli("link")
+        text = properties.read_text("utf8")
+        self.assertTrue(text.startswith("# deskling link:"), text)
+        self.cli("unlink")
+        self.assertFalse(properties.exists())
+        properties.write_text(text, "utf8")
+        code, out = self.cli("pins")
+        self.assertEqual(code, 1)
+        self.assertIn("linked to a Deskling checkout (local.properties)", out)
 
     def test_a_link_left_in_a_committed_file_fails_the_pins(self):
         self.cli("link")

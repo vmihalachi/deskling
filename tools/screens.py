@@ -2,15 +2,15 @@
 """The same screens on every platform and in every language: captured in one run, shown side by side, and narrowed to
 what changed since the last accepted run.
 
-    deskling/tools/screens.py capture [--platforms mac,windows,ios] [--langs en,fr|all] [--only screen,…]
-                                      [--themes light,dark] [--jobs N] [--no-build]
+    deskling/tools/screens.py capture [--platforms mac,windows,ios,android] [--langs en,fr|all]
+                                      [--only screen,…] [--themes light,dark] [--jobs N] [--no-build]
     deskling/tools/screens.py compare [--langs …] [--only …] [--themes …]     # sheets and index.html
     deskling/tools/screens.py diff [--against NAME] [--threshold BITS]       # what changed since NAME was accepted
     deskling/tools/screens.py accept [NAME]                                   # the captures as they are become NAME
 
 companion.json's `screens` names the platforms and the screens (schema: companion.schema.json). Each canonical screen
 maps to each platform's shot: `{"today": {"mac": "home", "windows": "home", "ios": "today"}}`, by the platform's own
-name or its capture kind (mac, windows, ios), null where it has none. Everything goes under `screens.out`
+name or its capture kind (mac, windows, ios, android), null where it has none. Everything goes under `screens.out`
 (build/screens), which stays out of git:
 
     <platform>/<lang>/<screen>-<theme>.png    the captures, under the canonical names
@@ -25,7 +25,10 @@ Deskling's screenshots.sh), hidden, the languages `--jobs` at a time (LAYOUT_JOB
 through `windows/vm.sh check-layout` (or `vm.sh screenshots` once per language with `"vm": "screenshots"`); iOS on
 simulators of its own, one per device, side by side, each language one launch of the app in screenshot mode
 (`mac.screenshotEnv`, as check-layout-ios.py runs it), which draws its window without the status bar; shots with an
-`env` of their own get a launch of their own. Every platform checks that text fits (its problems.txt) and reports a
+`env` of their own get a launch of their own; Android on headless emulators (`avd`, one per platform, side by side;
+avd.py), each language one launch with Deskling's intent extras (`DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`,
+`DESKLING_LANG`, `DESKLING_REGION`; a shot's `env` adds extras, `camera` gives the emulator the host's webcam), the
+status bar in demo mode at 09:41. Every platform checks that text fits (its problems.txt) and reports a
 screen it didn't capture. Exits 1 when there are problems, 3 when no platform could run.
 
 `--only` takes canonical screen names; `--platforms` platform names or capture kinds. A sheet leaves out platforms
@@ -53,13 +56,14 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
+import avd  # noqa: E402
 import companion  # noqa: E402
 
 THEMES = ("light", "dark")
-KINDS = ("mac", "windows", "ios")
+KINDS = ("mac", "windows", "ios", "android")
 VM_UNAVAILABLE = 3
 DEFAULT_BASELINE = "accepted"
-LAUNCH_TIMEOUT = 600  # seconds for one iOS run; a simulator under load can hang a launch for good
+LAUNCH_TIMEOUT = 600  # seconds for one iOS or Android run; a simulator under load can hang a launch for good
 # Row heights on a sheet, in pixels: desktop windows on top, devices below.
 TOP_HEIGHT, BOTTOM_HEIGHT = 760, 960
 # The language to give the simulator's region; others get <lang>_<LANG> or the region they name.
@@ -94,14 +98,15 @@ class Platform:
 
     @property
     def landscape(self) -> bool:
-        default = "portrait" if self.capture == "ios" else "landscape"
+        default = "portrait" if self.capture in ("ios", "android") else "landscape"
         return self.settings.get("orientation", default) == "landscape"
 
 
 @dataclass(frozen=True)
 class Shot:
     name: str
-    env: tuple = ()
+    env: tuple = ()  # (name, value) pairs: iOS launch environment, Android intent extras
+    camera: bool = False  # android: the emulator gets the host's webcam
 
 
 class Screens:
@@ -124,7 +129,7 @@ class Screens:
             return None
         if isinstance(value, str):
             return Shot(value)
-        return Shot(value["shot"], tuple(sorted(value.get("env", {}).items())))
+        return Shot(value["shot"], tuple(sorted(value.get("env", {}).items())), value.get("camera", False))
 
     def pick_platforms(self, words: list[str] | None) -> list[Platform]:
         if not words:
@@ -259,6 +264,8 @@ class Capture:
             threads.append(threading.Thread(target=self.windows, args=(platform,)))
         if groups["ios"]:
             threads.append(threading.Thread(target=self.ios, args=(groups["ios"],)))
+        if groups["android"]:
+            threads.append(threading.Thread(target=self.android, args=(groups["android"],)))
         started = time.monotonic()
         for thread in threads:
             thread.start()
@@ -476,6 +483,73 @@ class Capture:
         shutil.move(str(folders[-1]), raw)
         self.problems_from(platform, language, raw, 0, log)
         return True
+
+    def android(self, platforms: list[Platform]) -> None:
+        log = self.log("android")
+        log.write_text("", "utf8")
+        config = self.screens.config
+        try:
+            if self.build:
+                self.say("android: building")
+                command, cwd = avd.gradle(config)
+                if self.sh(command, log, cwd=cwd, timeout=1800):
+                    raise RuntimeError(f"the Android build failed; see {log}")
+            apk, app_id = avd.apk(config), avd.app_id(config)
+        except (RuntimeError, companion.ConfigError) as error:
+            for platform in platforms:
+                for language in self.languages:
+                    self.problem(platform, language, str(error))
+            return
+        threads = [threading.Thread(target=self.emulator, args=(platform, apk, app_id, index))
+                   for index, platform in enumerate(platforms) if self.wanted(platform)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    def emulator(self, platform: Platform, apk: Path, app_id: str, index: int) -> None:
+        """One platform's AVD: boots it once and runs every language on it, each a launch per distinct shot env."""
+        log = self.log(platform.name)
+        log.write_text("", "utf8")
+        name = platform.settings.get("avd")
+        if not name:
+            for language in self.languages:
+                self.problem(platform, language, "no avd in screens.platforms (an AVD name, avdmanager list avd)")
+            return
+        wanted = self.wanted(platform)
+        try:
+            emulator = avd.Emulator(name, index, log, camera=any(shot.camera for _, shot in wanted))
+            self.say(f"{platform.name}: booting {name}")
+            emulator.boot()
+            emulator.install(apk)
+            component = emulator.launcher(app_id)
+        except (RuntimeError, OSError) as error:
+            for language in self.languages:
+                self.problem(platform, language, str(error))
+            if "emulator" in locals():
+                emulator.kill()
+            return
+        launches: dict[tuple, list[tuple[str, Shot]]] = {}
+        for screen, shot in wanted:
+            launches.setdefault(shot.env, []).append((screen, shot))
+        try:
+            for language in self.languages:
+                count = 0
+                for number, (env, shots) in enumerate(launches.items(), 1):
+                    raw = self.screens.out / "raw" / platform.name / language / str(number)
+                    names = list(dict.fromkeys(shot.name for _, shot in shots))
+                    try:
+                        emulator.run(app_id, component, language, region(language).partition("_")[2], names, dict(env),
+                                     raw)
+                    except (RuntimeError, OSError) as error:
+                        self.problem(platform, language, f"{error}; see {log}")
+                        continue
+                    self.problems_from(platform, language, raw, 0, log)
+                    count += self.collect(platform, language, raw, shots)
+                self.ran.add(platform.name)
+                self.say(f"{platform.name} {language}: {count} shots")
+        finally:
+            emulator.kill()
 
 
 def region(language: str) -> str:
@@ -848,7 +922,8 @@ def main(argv: list[str]) -> int:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     capture = commands.add_parser("capture", help="capture the screens on each platform, side by side")
-    capture.add_argument("--platforms", help="platform names or capture kinds (mac, windows, ios), comma-separated")
+    capture.add_argument("--platforms",
+                         help="platform names or capture kinds (mac, windows, ios, android), comma-separated")
     capture.add_argument("--langs", help="languages, comma-separated, or all (default: the source language)")
     capture.add_argument("--only", help="canonical screen names, comma-separated (default: every one)")
     capture.add_argument("--themes", default="light,dark", help="light, dark or both (default)")

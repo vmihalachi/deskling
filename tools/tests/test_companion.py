@@ -134,6 +134,31 @@ class LookupTests(unittest.TestCase):
                 self.assertRegex(path, names["RE_WINDOWS_ASSETS"])
             self.assertNotRegex("macos/Fixture/Resources/AppIcon.png.bak", names["RE_WINDOWS_ASSETS"])
 
+    def test_android_names_and_patterns(self):
+        with fixture_app() as root:
+            names = companion.derived(companion.load())
+            self.assertEqual(names["ANDROID_DIR"], "", "no Android app")
+            self.assertEqual(names["RE_ANDROID_CORE"], "^$a")
+            manifest = root / "companion.json"
+            data = json.loads(manifest.read_text("utf8"))
+            data["android"] = {"dir": "android", "strings": "android/app/src/main/res"}
+            data["hooks"]["androidUI"] = "^android/app/src/main/kotlin/app/fixture/ui/"
+            self.assertEqual(companion.validate(data), [])
+            manifest.write_text(json.dumps(data), "utf8")
+            names = companion.derived(companion.load())
+            self.assertEqual(names["ANDROID_DIR"], "android")
+            self.assertEqual((names["ANDROID_CORE"], names["ANDROID_APP"]), ("core", "app"), "the defaults")
+            self.assertEqual(names["ANDROID_APP_ID"], "app.fixture", "bundleId by default")
+            self.assertEqual(names["ANDROID_DEV_APP_ID"], "app.fixture.dev")
+            self.assertEqual(names["ANDROID_STRINGS"], "android/app/src/main/res")
+            for file in ("android/core/src/main/kotlin/A.kt", "conformance/scheduler/a.json"):
+                self.assertRegex(file, names["RE_ANDROID_CORE"])
+            self.assertNotRegex("android/app/src/main/kotlin/A.kt", names["RE_ANDROID_CORE"])
+            self.assertRegex("android/app/src/main/kotlin/A.kt", names["RE_ANDROID_APP"])
+            for file in ("android/build.gradle.kts", "android/core/src/main/kotlin/A.kt"):
+                self.assertRegex(file, names["RE_KOTLIN"])
+            self.assertNotRegex("android/gradle.properties", names["RE_KOTLIN"])
+
     def test_pins_agree_and_disagree(self):
         with fixture_app() as root:
             config = companion.load()

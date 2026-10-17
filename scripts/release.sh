@@ -11,15 +11,15 @@
 #                                         Reads the tags, so fetch them first.
 #        scripts/release.sh pending       exits 0 when the Unreleased section has entries.
 #        scripts/release.sh bump X.Y.Z    moves the Unreleased entries under "## X.Y.Z - <today, UTC>" and puts X.Y.Z in
-#                                         the eight version strings (Deskling.swift, DesklingInfo.cs,
-#                                         Directory.Build.props, site/index.html, README.md), so
+#                                         the ten version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
+#                                         site/index.html, README.md, kotlin/gradle.properties, Kotlin's Deskling.kt), so
 #                                         scripts/verify.sh --version X.Y.Z passes. Committing and tagging are the
 #                                         caller's.
 set -eu
 cd "$(dirname "$0")/.."
 
 usage() {
-  sed -n 's/^# \{0,1\}//; 4,17p' "$0" >&2
+  sed -n 's/^# \{0,1\}//; 4,18p' "$0" >&2
   exit 2
 }
 
@@ -60,10 +60,11 @@ bump() {
   pending || { echo "CHANGELOG.md's Unreleased section is empty: nothing to release" >&2; exit 1; }
   re=$(printf '%s' "$old" | sed 's/[.]/\\./g')
   # "X.Y.Z" in the sources and the install snippets, >X.Y.Z< in Directory.Build.props, vX.Y.Z in the site's label and
-  # the README's tag example.
+  # the README's tag example, desklingVersion=X.Y.Z in kotlin/gradle.properties.
   for file in Sources/DesklingCore/Deskling.swift dotnet/Deskling.Core/DesklingInfo.cs dotnet/Directory.Build.props \
-    site/index.html README.md; do
-    sed "s/\"$re\"/\"$new\"/g; s/>$re</>$new</g; s/v$re\([^0-9]\)/v$new\1/g; s/v$re\$/v$new/" "$file" > "$file.new"
+    site/index.html README.md kotlin/gradle.properties kotlin/core/src/main/kotlin/deskling/core/Deskling.kt; do
+    sed "s/\"$re\"/\"$new\"/g; s/>$re</>$new</g; s/v$re\([^0-9]\)/v$new\1/g; s/v$re\$/v$new/
+         s/^desklingVersion=$re\$/desklingVersion=$new/" "$file" > "$file.new"
     mv "$file.new" "$file"
   done
   awk -v heading="## $new - $(date -u +%Y-%m-%d)" '

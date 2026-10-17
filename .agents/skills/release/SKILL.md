@@ -12,7 +12,7 @@ touches `CHANGELOG.md` or the version runs `scripts/release.sh plan`, which pick
   that bumped it;
 - **bump X.Y.Z**: entries under `## Unreleased`: the next patch, or the next minor while `0.x` (major after) when an
   entry says `**Breaking.**`. `scripts/release.sh bump X.Y.Z` moves the entries under `## X.Y.Z - <today>` and puts the
-  number in the eight version strings; the run commits that to `master` as `X.Y.Z: release` and tags it;
+  number in the ten version strings; the run commits that to `master` as `X.Y.Z: release` and tags it;
 - **none**.
 
 So a change only writes its CHANGELOG entry under *Unreleased* (marking a breaking one `**Breaking.**`) and merges; it
@@ -21,7 +21,7 @@ time, each on `master` as it is when it starts). The run then tests, packs the s
 Trusted Publishing, stages `@deskling/landing` on npm when it changed, makes the GitHub release, and redeploys the site
 after a bump. Approving the staged npm version with 2FA (npmjs.com, or `npm stage approve <id>`) is the user's.
 
-`scripts/verify.sh --version X.Y.Z` gates every release before anything is tagged or packed: the eight version strings
+`scripts/verify.sh --version X.Y.Z` gates every release before anything is tagged or packed: the ten version strings
 must be `X.Y.Z` and `CHANGELOG.md` must have its `## X.Y.Z` section. Tags are protected and never move: a tag that fails
 is spent, so fix the commit and release the next number.
 

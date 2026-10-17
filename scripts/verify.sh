@@ -80,24 +80,27 @@ versions_agree() {
     sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/DesklingCore/Deskling.swift
     sed -n 's/.*public const string Version = "\([^"]*\)".*/\1/p' dotnet/Deskling.Core/DesklingInfo.cs
     sed -n 's/.*<DesklingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
+    sed -n 's/^desklingVersion=\(.*\)$/\1/p' kotlin/gradle.properties
+    sed -n 's/.*const val VERSION: String = "\([^"]*\)".*/\1/p' kotlin/core/src/main/kotlin/deskling/core/Deskling.kt
     grep -oE 'class="version"><a [^>]*>v[0-9]+\.[0-9]+\.[0-9]+|exact: (<span class="s">)?"[0-9]+\.[0-9]+\.[0-9]+"' site/index.html |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
     grep -oE 'exact: "[0-9]+\.[0-9]+\.[0-9]+"|git tag v[0-9]+\.[0-9]+\.[0-9]+' README.md |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
   } )"
-  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, the site's version label and two install snippets, and the
-  # README's install pin and release example.
-  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 8 ]; then
-    echo "expected 8 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
+  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, kotlin/gradle.properties, Kotlin's Deskling.kt, the site's
+  # version label and two install snippets, and the README's install pin and release example.
+  if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 10 ]; then
+    echo "expected 10 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
   fi
   distinct="$(printf '%s\n' "$found" | sort -u)"
   if [ "$(printf '%s\n' "$distinct" | wc -l)" -ne 1 ]; then
-    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, site/index.html, README.md):"
+    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, kotlin/gradle.properties," \
+      "Deskling.kt, site/index.html, README.md):"
     printf '%s\n' "$found" | sort | uniq -c | sed 's/^/  /'; return 1
   fi
   if [ -n "$expected" ] && [ "$distinct" != "$expected" ]; then
     echo "the version strings say $distinct, not $expected (Deskling.swift, DesklingInfo.cs, Directory.Build.props," \
-      "site/index.html, README.md)"
+      "kotlin/gradle.properties, Deskling.kt, site/index.html, README.md)"
     return 1
   fi
 }
