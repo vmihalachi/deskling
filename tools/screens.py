@@ -2,11 +2,11 @@
 """The same screens on every platform and in every language: captured in one run, shown side by side, and narrowed to
 what changed since the last accepted run.
 
-    deskling/tools/screens.py capture [--platforms mac,windows,ios,android] [--langs en,fr|all]
+    laching/tools/screens.py capture [--platforms mac,windows,ios,android] [--langs en,fr|all]
                                       [--only screen,…] [--themes light,dark] [--jobs N] [--no-build]
-    deskling/tools/screens.py compare [--langs …] [--only …] [--themes …]     # sheets and index.html
-    deskling/tools/screens.py diff [--against NAME] [--threshold BITS]       # what changed since NAME was accepted
-    deskling/tools/screens.py accept [NAME]                                   # the captures as they are become NAME
+    laching/tools/screens.py compare [--langs …] [--only …] [--themes …]     # sheets and index.html
+    laching/tools/screens.py diff [--against NAME] [--threshold BITS]       # what changed since NAME was accepted
+    laching/tools/screens.py accept [NAME]                                   # the captures as they are become NAME
 
 companion.json's `screens` names the platforms and the screens (schema: companion.schema.json). Each canonical screen
 maps to each platform's shot: `{"today": {"mac": "home", "windows": "home", "ios": "today"}}`, by the platform's own
@@ -21,13 +21,13 @@ name or its capture kind (mac, windows, ios, android), null where it has none. E
     baselines/<NAME>.json, changes.json       the accepted run's perceptual hashes, and what differs from them
 
 `capture` builds each platform once and runs them side by side: the Mac through `screens.platforms.<p>.script` (or
-Deskling's screenshots.sh), hidden, the languages `--jobs` at a time (LAYOUT_JOBS, 3); Windows in the Parallels VM
+Laching's screenshots.sh), hidden, the languages `--jobs` at a time (LAYOUT_JOBS, 3); Windows in the Parallels VM
 through `windows/vm.sh check-layout` (or `vm.sh screenshots` once per language with `"vm": "screenshots"`); iOS on
 simulators of its own, one per device, side by side, each language one launch of the app in screenshot mode
 (`mac.screenshotEnv`, as check-layout-ios.py runs it), which draws its window without the status bar; shots with an
 `env` of their own get a launch of their own; Android on headless emulators (`avd`, one per platform, side by side;
-avd.py), each language one launch with Deskling's intent extras (`DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`,
-`DESKLING_LANG`, `DESKLING_REGION`; a shot's `env` adds extras, `camera` gives the emulator the host's webcam), the
+avd.py), each language one launch with Laching's intent extras (`LACHING_SCREENSHOT_MODE`, `LACHING_SCREENS`,
+`LACHING_LANG`, `LACHING_REGION`; a shot's `env` adds extras, `camera` gives the emulator the host's webcam), the
 status bar in demo mode at 09:41. Every platform checks that text fits (its problems.txt) and reports a
 screen it didn't capture. Exits 1 when there are problems, 3 when no platform could run.
 
@@ -457,7 +457,7 @@ class Capture:
         """One launch in screenshot mode: moves the shots it drew and its problems.txt to `raw` and reports those
         problems; False when it drew nothing."""
         shutil.rmtree(raw, ignore_errors=True)
-        mode = self.screens.config.get("mac.screenshotEnv") or "DESKLING_SCREENSHOT_MODE"
+        mode = self.screens.config.get("mac.screenshotEnv") or "LACHING_SCREENSHOT_MODE"
         child = {f"SIMCTL_CHILD_{mode}": ",".join(dict.fromkeys(shot.name for _, shot in wanted)),
                  **{f"SIMCTL_CHILD_{name}": value for name, value in env.items()}}
         command = ["xcrun", "simctl", "launch", "--console-pty", "--terminate-running-process", udid, bundle,

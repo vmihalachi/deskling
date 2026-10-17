@@ -173,7 +173,7 @@ export function companionLanding<L extends Language>(
     const templatePath = options.templatePath ?? resolve(root, "index.html");
 
     return {
-      name: "deskling-landing-html",
+      name: "laching-landing-html",
       transformIndexHtml: {
         order: "pre",
         handler(html, ctx) {

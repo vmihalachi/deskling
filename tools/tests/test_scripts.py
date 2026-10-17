@@ -88,7 +88,7 @@ mkdir -p "$app"
 cat > "$app/Fixture" <<'APP'
 #!/bin/sh
 out=$(mktemp -d)
-echo "$DESKLING_SCREENSHOT_MODE hidden=$DESKLING_SCREENSHOT_HIDDEN $*" >> "{self.root / 'runs.log'}"
+echo "$LACHING_SCREENSHOT_MODE hidden=$LACHING_SCREENSHOT_HIDDEN $*" >> "{self.root / 'runs.log'}"
 printf png > "$out/panel-light.png"
 printf png > "$out/demo-light.png"
 echo "$out"
@@ -194,8 +194,8 @@ elif command == "launch":
     (out / "home-light.png").write_bytes(b"png")
     language = args[args.index("-AppleLocale") + 1]
     with open({str(self.log)!r}, "a") as log:
-        log.write(f"run {{language}} {{os.environ.get('SIMCTL_CHILD_DESKLING_SCREENSHOT_MODE')}} "
-                  f"{{os.environ.get('SIMCTL_CHILD_DESKLING_SCREENSHOT_ORIENTATION', '-')}}\\n")
+        log.write(f"run {{language}} {{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_MODE')}} "
+                  f"{{os.environ.get('SIMCTL_CHILD_LACHING_SCREENSHOT_ORIENTATION', '-')}}\\n")
     if language == "de":
         (out / "problems.txt").write_text("home-light.png: “Wiederholungen” is cut short\\n")
     sys.stdout.write(f"app.fixture.dev: 4242\\r\\n{{out}}\\r\\n")
@@ -235,7 +235,7 @@ elif command == "launch":
         data["screens"]["platforms"]["droid"] = {"capture": "android", "label": "Android", "avd": "Pixel_8"}
         data["screens"]["list"]["home"]["android"] = "today"
         if extra_shot:
-            data["screens"]["list"]["settings"]["droid"] = {"shot": "settings", "env": {"DESKLING_SCREENSHOT_MODE": "two"}}
+            data["screens"]["list"]["settings"]["droid"] = {"shot": "settings", "env": {"LACHING_SCREENSHOT_MODE": "two"}}
         config.write_text(json.dumps(data), "utf8")
 
     def test_check_layout_android_boots_an_emulator_and_runs_the_languages_on_it(self):
@@ -274,15 +274,15 @@ elif command == "shell":
         print("app.fixture.dev/.Main")
     elif words[:2] == ["am", "start"]:
         value = lambda key: words[words.index(key) + 1]
-        language = value("DESKLING_LANG")
-        log(f"start {{language}} {{value('DESKLING_REGION')}} {{value('DESKLING_SCREENSHOT_MODE')}} {{value('DESKLING_SCREENS')}}")
+        language = value("LACHING_LANG")
+        log(f"start {{language}} {{value('LACHING_REGION')}} {{value('LACHING_SCREENSHOT_MODE')}} {{value('LACHING_SCREENS')}}")
         screens.mkdir(parents=True, exist_ok=True)
-        for shot in value("DESKLING_SCREENS").split(","):
+        for shot in value("LACHING_SCREENS").split(","):
             for theme in ("light", "dark"):
                 (screens / f"{{shot}}-{{theme}}.png").write_bytes(b"png")
         if language == "de":
             with open(screens / "problems.txt", "a") as problems:
-                problems.write(f"{{value('DESKLING_SCREENS')}}-light.png: “Wiederholungen” is cut short\\n")
+                problems.write(f"{{value('LACHING_SCREENS')}}-light.png: “Wiederholungen” is cut short\\n")
         (screens / "done").touch()
     elif words[:1] == ["run-as"]:
         sub = words[2:]
@@ -379,7 +379,7 @@ elif command == "shell":
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(
             [line.split(None, 1)[1] for line in result.stdout.splitlines() if line.startswith("ok")],
-            ["Deskling pins agree", "phrases.py check", "voice.py check"],
+            ["Laching pins agree", "phrases.py check", "voice.py check"],
         )
         strings = self.run_script("verify.sh", "--fast", "--", "macos/Fixture/Resources/Localizable.xcstrings")
         self.assertEqual(strings.returncode, 1, "the fixture's German has gaps")
@@ -387,7 +387,7 @@ elif command == "shell":
         self.assertIn("de: app 3", strings.stdout)
         quiet = self.run_script("verify.sh", "--", "notes.md")
         self.assertEqual(quiet.returncode, 0, quiet.stdout)
-        self.assertEqual(quiet.stdout.strip(), "ok    Deskling pins agree")
+        self.assertEqual(quiet.stdout.strip(), "ok    Laching pins agree")
 
     def test_verify_all_skips_what_the_app_lacks(self):
         for tool in ("xcrun", "xcodegen", "dotnet"):
@@ -403,7 +403,7 @@ elif command == "shell":
         del data["store"]
         config.write_text(json.dumps(data), "utf8")
         result = self.run_script("verify.sh", "--all", "--fast")
-        self.assertIn("ok    Deskling pins agree", result.stdout, result.stderr)
+        self.assertIn("ok    Laching pins agree", result.stdout, result.stderr)
         self.assertEqual(store_line(result), [], "no store section: --all has no store check to run")
 
     def git(self, cwd: Path, *args: str) -> str:
@@ -413,14 +413,14 @@ elif command == "shell":
         ).stdout.strip()
 
     def commit_app(self) -> None:
-        """The fixture app as a repository, with deskling/ a checkout of its own on the pinned tag."""
-        deskling = self.root / "deskling"
-        deskling.mkdir()
-        self.git(deskling, "init", "-q")
-        self.git(deskling, "commit", "-q", "--allow-empty", "-m", "release")
-        self.git(deskling, "tag", "v0.5.0")
+        """The fixture app as a repository, with laching/ a checkout of its own on the pinned tag."""
+        laching = self.root / "laching"
+        laching.mkdir()
+        self.git(laching, "init", "-q")
+        self.git(laching, "commit", "-q", "--allow-empty", "-m", "release")
+        self.git(laching, "tag", "v0.5.0")
         self.git(self.root, "init", "-q")
-        (self.root / ".gitignore").write_text("deskling/\nfake-bin/\ncalls.log\n", "utf8")
+        (self.root / ".gitignore").write_text("laching/\nfake-bin/\ncalls.log\n", "utf8")
         self.git(self.root, "add", "-A")
         self.git(self.root, "commit", "-q", "-m", "app")
 
@@ -456,7 +456,7 @@ case "$1" in status) echo "VM $2 exist running" ;; exec) [ "$3" = --current-user
         # What git exports to a pre-commit hook in a linked worktree: absolute paths into the app's repository.
         hook = {"GIT_DIR": str(self.root / ".git"), "GIT_INDEX_FILE": str(self.root / ".git" / "index")}
         result = self.run_script("verify.sh", "--fast", "--", "notes.md", env=hook)
-        self.assertEqual(result.stdout.strip(), "ok    Deskling pins agree", result.stdout + result.stderr)
+        self.assertEqual(result.stdout.strip(), "ok    Laching pins agree", result.stdout + result.stderr)
 
     @unittest.skipUnless(sys.platform == "darwin", "verify.sh runs xcodegen on macOS only")
     def test_verify_names_a_group_named_after_the_checkout(self):

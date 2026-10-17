@@ -128,12 +128,8 @@ describe("companionLanding", () => {
   it("leaves the social cards to the app without og", () => {
     const own = { name: "own-social-assets" };
     const names = landing({ og: undefined, extraPlugins: [own as any] }).plugins.map((p) => p.name);
-    expect(names).toEqual([
-      "deskling-landing-html",
-      "deskling-landing-hosting",
-      "own-social-assets",
-    ]);
-    expect(landing().plugins.map((p) => p.name)).toContain("deskling-landing-social-assets");
+    expect(names).toEqual(["laching-landing-html", "laching-landing-hosting", "own-social-assets"]);
+    expect(landing().plugins.map((p) => p.name)).toContain("laching-landing-social-assets");
   });
 
   it("refuses locales that don't share their keys", () => {

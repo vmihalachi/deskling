@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds a Partner Center "Import listings" folder from the store listing (`store.dir`/<lang>.md) and its images.
 
-Usage (from the app's root): python3 deskling/tools/store/import.py [--out DIR] [lang ...]
+Usage (from the app's root): python3 laching/tools/store/import.py [--out DIR] [lang ...]
 Then Partner Center → the submission → Store listings → Import listings → Import folder, and pick the folder this
 prints. One import fills every language: text, screenshots, captions and the three art slots. companion.json's
 `store.microsoft` names the folders (`screenshots`/<lang>/*.png, `art`/), the number of screenshots and the publisher.

@@ -34,7 +34,7 @@ class SynthTests(unittest.TestCase):
     def test_sunnysays_recipes_render_its_shipped_files(self):
         self.assertEqual({name: hashlib.sha256(data).hexdigest() for name, data in self.rendered.items()}, SHIPPED)
 
-    @unittest.skipUnless(SUNNYSAYS_SOUNDS.exists(), "../sunnysays isn't checked out next to deskling")
+    @unittest.skipUnless(SUNNYSAYS_SOUNDS.exists(), "../sunnysays isn't checked out next to laching")
     def test_byte_for_byte_with_the_checkout(self):
         for name, data in self.rendered.items():
             self.assertEqual(data, (SUNNYSAYS_SOUNDS / f"{name}.wav").read_bytes(), name)

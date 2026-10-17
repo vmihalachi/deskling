@@ -7,8 +7,8 @@ square PNG such as the Mac's 1024-pixel app icon; `devSource` adds `Dev/AppIcon.
 DEV-banded icon. The icon is trimmed to what it draws (a Mac icon leaves a margin around its shape), then scaled and
 centred, the same layout as mybackhurts' assets. Standard library only, so it runs wherever the icon is rendered:
 
-    python3 deskling/tools/windows/assets.py            # write the images into `out`
-    python3 deskling/tools/windows/assets.py --check    # exit 1 when a committed image isn't what it would write
+    python3 laching/tools/windows/assets.py            # write the images into `out`
+    python3 laching/tools/windows/assets.py --check    # exit 1 when a committed image isn't what it would write
 
 companion.json: `"windows": {"assets": {"source": "...png", "devSource": "...png", "out": "windows/App/Assets"}}`.
 Reads 8-bit RGB or RGBA PNGs, not interlaced; downsamples by halving, then by area, in premultiplied alpha.
@@ -291,7 +291,7 @@ def main(argv: list[str]) -> int:
         path.write_bytes(data)
     if check:
         if stale:
-            print(f"{len(stale)} Windows images differ from the icon (run deskling/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
+            print(f"{len(stale)} Windows images differ from the icon (run laching/tools/windows/assets.py): {', '.join(stale)}", file=sys.stderr)
             return 1
         print(f"ok: {len(files)} Windows images match the icon")
         return 0

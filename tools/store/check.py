@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the store listings (`store.dir`/<lang>.md) against each store's field limits.
 
-Usage (from the app's root): python3 deskling/tools/store/check.py [lang ...]
+Usage (from the app's root): python3 laching/tools/store/check.py [lang ...]
 Exits 1 on any problem. Each field is a `### Heading `field.id`` followed by a ```text block. The fields are the App
 Store's, each in-app purchase's (`store.apple.iaps`), the iPhone and iPad version page's when the app has
 `store.apple.ios`, the Microsoft Store's when it has `store.microsoft`, and Google Play's (`google.*`: title 30, short

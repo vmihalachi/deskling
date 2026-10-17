@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use when a Deskling release (vX.Y.Z) is wanted sooner or differently than release.yml makes it on its own, when bumping the version by hand, or when moving the apps to a release. Releases are automatic: every push to master with CHANGELOG.md entries ships. Lists what scripts/release.sh does, the checks, and the manual ways.
+description: Use when a Laching release (vX.Y.Z) is wanted sooner or differently than release.yml makes it on its own, when bumping the version by hand, or when moving the apps to a release. Releases are automatic: every push to master with CHANGELOG.md entries ships. Lists what scripts/release.sh does, the checks, and the manual ways.
 ---
 
 # Releases
@@ -18,7 +18,7 @@ touches `CHANGELOG.md` or the version runs `scripts/release.sh plan`, which pick
 So a change only writes its CHANGELOG entry under *Unreleased* (marking a breaking one `**Breaking.**`) and merges; it
 never bumps the version or tags. Merges that land while a release runs go out together in the next one (one run at a
 time, each on `master` as it is when it starts). The run then tests, packs the six NuGet packages, pushes them through
-Trusted Publishing, stages `@deskling/landing` on npm when it changed, makes the GitHub release, and redeploys the site
+Trusted Publishing, stages `@laching/landing` on npm when it changed, makes the GitHub release, and redeploys the site
 after a bump. Approving the staged npm version with 2FA (npmjs.com, or `npm stage approve <id>`) is the user's.
 
 `scripts/verify.sh --version X.Y.Z` gates every release before anything is tagged or packed: the ten version strings
@@ -29,9 +29,9 @@ is spent, so fix the commit and release the next number.
 
 | File | What |
 |---|---|
-| `Sources/DesklingCore/Deskling.swift` | `public static let version = "X.Y.Z"` |
-| `dotnet/Deskling.Core/DesklingInfo.cs` | `public const string Version = "X.Y.Z"` |
-| `dotnet/Directory.Build.props` | the `<DesklingVersion Condition=…>` default |
+| `Sources/LachingCore/Laching.swift` | `public static let version = "X.Y.Z"` |
+| `dotnet/Laching.Core/LachingInfo.cs` | `public const string Version = "X.Y.Z"` |
+| `dotnet/Directory.Build.props` | the `<LachingVersion Condition=…>` default |
 | `site/index.html` | the `vX.Y.Z` label in the header and **both** `exact: "X.Y.Z"` install snippets |
 | `README.md` | the `exact: "X.Y.Z"` install pin and the `git tag vX.Y.Z` example under *Releases* |
 
@@ -41,12 +41,12 @@ Only when the automatic number is wrong (a minor without a breaking entry, say) 
 
 - Bump in the change itself: `scripts/release.sh bump X.Y.Z`, `scripts/verify.sh --version X.Y.Z`, commit as
   `X.Y.Z: <headline change>`. When it reaches `master` the run tags that commit (*tag X.Y.Z* above).
-- Or tag a commit whose strings and CHANGELOG already say `X.Y.Z`: `git tag -a vX.Y.Z -m "Deskling X.Y.Z" && git push
+- Or tag a commit whose strings and CHANGELOG already say `X.Y.Z`: `git tag -a vX.Y.Z -m "Laching X.Y.Z" && git push
   origin vX.Y.Z`, or dispatch `release.yml` with `version: X.Y.Z` (it tags the commit it runs on). Dispatching it with
   no version does what a push does.
 
-The NuGet packages ship at every release, changed or not: an app pins one Deskling version everywhere (`companion.py
-pins`). `@deskling/landing` ships only when `tools/landing` changed since the version on npm (the run's summary says
+The NuGet packages ship at every release, changed or not: an app pins one Laching version everywhere (`companion.py
+pins`). `@laching/landing` ships only when `tools/landing` changed since the version on npm (the run's summary says
 which), so its versions skip the releases that leave it alone. A breaking change to it still counts toward the release
 number (a minor bump while `0.x`).
 
@@ -60,5 +60,5 @@ tools/bump-apps.sh X.Y.Z   # companion.py bump in every app next to this checkou
 ```
 
 It commits nothing: read each app's diff, build what the release touched, and commit there (the landing page's
-`@deskling/landing` change inside its own repository first). A change that spans Deskling and the apps is tried before
+`@laching/landing` change inside its own repository first). A change that spans Laching and the apps is tried before
 the release with `companion.py link` in each app (`tools/README.md`, *Moving to a release, or trying one first*).

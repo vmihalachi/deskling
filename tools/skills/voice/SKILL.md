@@ -1,6 +1,6 @@
 ---
 name: voice
-description: Record, re-record or audition a Deskling companion's voices with ElevenLabs (deskling/tools/voice.py), see which lines and joke parts are pending a voice, add a voiced language, pick a voice, fix a clip that sounds wrong, or promote a language from testing to shipping. Use after adding or changing a phrase or its translation, or when asked about the character's voice, speech quality, ElevenLabs, voice design or the Voice Library.
+description: Record, re-record or audition a Laching companion's voices with ElevenLabs (laching/tools/voice.py), see which lines and joke parts are pending a voice, add a voiced language, pick a voice, fix a clip that sounds wrong, or promote a language from testing to shipping. Use after adding or changing a phrase or its translation, or when asked about the character's voice, speech quality, ElevenLabs, voice design or the Voice Library.
 ---
 
 # The character's voices
@@ -17,7 +17,7 @@ The voices' names, the rubric for choosing one and the voices chosen so far are 
 ## Rules
 
 - **Never read the voice manifest or edit anything under `<voice.dir>/Voice/`** (the hook refuses). Use
-  `python3 deskling/tools/voice.py status`.
+  `python3 laching/tools/voice.py status`.
 - **Pending lines are fine; users never see them.** A clip is *voiced* when it exists and its `textHash` matches the
   current catalog text; otherwise it's *pending* (*missing* or *stale*) and the app never picks the phrase in that
   voice (a joke is pending while any part is). Debug builds can fall back to the system voice instead
@@ -40,7 +40,7 @@ The voices' names, the rubric for choosing one and the voices chosen so far are 
 
 ## After a phrase or translation changes
 
-1. `python3 deskling/tools/voice.py status` lists the clip as *missing* or *stale* per voiced language and voice. If
+1. `python3 laching/tools/voice.py status` lists the clip as *missing* or *stale* per voiced language and voice. If
    the text isn't final yet, stop: the phrase simply waits, unheard.
 2. Delivery tags where they help (`[whispers]`, `[softly]`…) and `gain_db` go in `voice.direction`.
 3. Per voiced language and voice: `voice.py render --lang <lang> --voice <voice> --dry-run`, state the credits, then

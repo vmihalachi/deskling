@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for companion.py's `bump`, `link` and `unlink`, over the fixture app and a Deskling origin made here (git
+"""Tests for companion.py's `bump`, `link` and `unlink`, over the fixture app and a Laching origin made here (git
 repositories in a temporary folder; xcodegen, xcodebuild and npm are stood in for)."""
 
 from __future__ import annotations
@@ -32,29 +32,29 @@ def git(cwd: Path, *args: str) -> str:
 
 
 def resolved(revision: str, version: str, origin_hash: str) -> str:
-    """A Package.resolved as SwiftPM writes it, pinning Deskling."""
+    """A Package.resolved as SwiftPM writes it, pinning Laching."""
     return (
         "{\n"
         f'  "originHash" : "{origin_hash}",\n'
-        '  "pins" : [\n    {\n      "identity" : "deskling",\n      "kind" : "remoteSourceControl",\n'
-        '      "location" : "https://github.com/vmihalachi/deskling",\n      "state" : {\n'
+        '  "pins" : [\n    {\n      "identity" : "laching",\n      "kind" : "remoteSourceControl",\n'
+        '      "location" : "https://github.com/vmihalachi/laching",\n      "state" : {\n'
         f'        "revision" : "{revision}",\n        "version" : "{version}"\n'
         "      }\n    }\n  ],\n  \"version\" : 3\n}\n"
     )
 
 
 class PinsTestCase(unittest.TestCase):
-    """The fixture app at `self.root` and a Deskling origin next to it, tagged v0.5.0 and v0.6.0. xcodegen and xcodebuild
+    """The fixture app at `self.root` and a Laching origin next to it, tagged v0.5.0 and v0.6.0. xcodegen and xcodebuild
     are stood in for (`self.calls` records them), and npm has the versions in `self.npm`."""
 
     def setUp(self):
         stack = ExitStack()
         self.addCleanup(stack.close)
         self.root = stack.enter_context(fixture_app())
-        self.origin = self.root.parent / "deskling-origin"
+        self.origin = self.root.parent / "laching-origin"
         self.origin.mkdir()
-        (self.origin / "Package.swift").write_text('let package = Package(name: "Deskling")\n', "utf8")
-        for name in ("Deskling.Core", "Deskling.Companion", "Deskling.Core.Tests"):
+        (self.origin / "Package.swift").write_text('let package = Package(name: "Laching")\n', "utf8")
+        for name in ("Laching.Core", "Laching.Companion", "Laching.Core.Tests"):
             project = self.origin / "dotnet" / name / f"{name}.csproj"
             project.parent.mkdir(parents=True)
             packable = "" if name.endswith("Tests") else "<IsPackable>true</IsPackable>"
@@ -65,7 +65,7 @@ class PinsTestCase(unittest.TestCase):
             (self.origin / "CHANGELOG.md").write_text(f"## {version}\n", "utf8")
             git(self.origin, "add", "-A")
             git(self.origin, "commit", "-q", "-m", version)
-            git(self.origin, "tag", "-a", f"v{version}", "-m", f"Deskling {version}")
+            git(self.origin, "tag", "-a", f"v{version}", "-m", f"Laching {version}")
             self.commits[version] = git(self.origin, "rev-parse", "HEAD")
         self.calls: list[str] = []
         self.npm: list[str] = []
@@ -90,8 +90,8 @@ class PinsTestCase(unittest.TestCase):
 class BumpTests(PinsTestCase):
     def setUp(self):
         super().setUp()
-        git(self.root.parent, "clone", "-q", str(self.origin), str(self.root / "deskling"))
-        git(self.root / "deskling", "checkout", "-q", "v0.5.0")
+        git(self.root.parent, "clone", "-q", str(self.origin), str(self.root / "laching"))
+        git(self.root / "laching", "checkout", "-q", "v0.5.0")
         manifest = (self.root / "macos/FixtureCore/Package.swift").read_bytes()
         (self.root / RESOLVED).write_text(
             resolved(self.commits["0.5.0"], "0.5.0", hashlib.sha256(manifest).hexdigest()), "utf8")
@@ -105,8 +105,8 @@ class BumpTests(PinsTestCase):
         config = companion.load()
         self.assertTrue(companion.pins_agree(companion.pins(config)))
         self.assertEqual({version.removeprefix("v") for _, version in companion.pins(config)}, {"0.6.0"})
-        self.assertEqual(git(self.root / "deskling", "describe", "--tags"), "v0.6.0")
-        self.assertEqual(config.get("deskling.tag"), "v0.6.0")
+        self.assertEqual(git(self.root / "laching", "describe", "--tags"), "v0.6.0")
+        self.assertEqual(config.get("laching.tag"), "v0.6.0")
         after = self.files()
         # Only the versions changed: each file differs from its old self by the version strings alone.
         for path in ("companion.json", "macos/project.yml", "macos/FixtureCore/Package.swift",
@@ -127,12 +127,12 @@ class BumpTests(PinsTestCase):
         data["android"] = {"dir": "android"}
         manifest.write_text(json.dumps(data), "utf8")
         found = dict(companion.pins(companion.load()))
-        self.assertNotIn("deskling/kotlin/gradle.properties desklingVersion", found, "a release before the Kotlin side")
-        (self.root / "deskling" / "kotlin").mkdir()
-        (self.root / "deskling" / "kotlin" / "gradle.properties").write_text(
-            "org.gradle.jvmargs=-Xmx2g\ndesklingVersion=0.4.0\n", "utf8")
+        self.assertNotIn("laching/kotlin/gradle.properties lachingVersion", found, "a release before the Kotlin side")
+        (self.root / "laching" / "kotlin").mkdir()
+        (self.root / "laching" / "kotlin" / "gradle.properties").write_text(
+            "org.gradle.jvmargs=-Xmx2g\nlachingVersion=0.4.0\n", "utf8")
         found = dict(companion.pins(companion.load()))
-        self.assertEqual(found["deskling/kotlin/gradle.properties desklingVersion"], "0.4.0")
+        self.assertEqual(found["laching/kotlin/gradle.properties lachingVersion"], "0.4.0")
         self.assertFalse(companion.pins_agree(list(found.items())))
 
     def test_bump_to_the_current_version_changes_nothing(self):
@@ -164,14 +164,14 @@ class BumpTests(PinsTestCase):
             self.assertEqual(code, 1)
             self.assertIn("release it first" if version == "0.7.0" else "isn't a version", out)
         self.assertEqual(self.files(), before)
-        self.assertEqual(git(self.root / "deskling", "describe", "--tags"), "v0.5.0")
+        self.assertEqual(git(self.root / "laching", "describe", "--tags"), "v0.5.0")
 
     def test_bump_refuses_a_submodule_with_changes(self):
-        (self.root / "deskling" / "CHANGELOG.md").write_text("mine\n", "utf8")
+        (self.root / "laching" / "CHANGELOG.md").write_text("mine\n", "utf8")
         code, out = self.cli("bump", "0.6.0")
         self.assertEqual(code, 1)
         self.assertIn("uncommitted changes", out)
-        self.assertEqual(companion.load().get("deskling.tag"), "v0.5.0")
+        self.assertEqual(companion.load().get("laching.tag"), "v0.5.0")
 
     def test_bump_keeps_crlf_line_endings(self):
         csproj = self.root / "windows/Fixture.Core/Fixture.Core.csproj"
@@ -182,10 +182,10 @@ class BumpTests(PinsTestCase):
         self.assertEqual(text.count(b"\n"), text.count(b"\r\n"))
 
     def landing(self, tool: str | None = None) -> Path:
-        """A landing page on @deskling/landing 0.4.0, its lockfile and, with `tool`, a landing tool at that path."""
+        """A landing page on @laching/landing 0.4.0, its lockfile and, with `tool`, a landing tool at that path."""
         landing = self.root / "landing"
         landing.mkdir()
-        (landing / "package.json").write_text('{\n  "devDependencies": {\n    "@deskling/landing": "0.4.0"\n  }\n}\n')
+        (landing / "package.json").write_text('{\n  "devDependencies": {\n    "@laching/landing": "0.4.0"\n  }\n}\n')
         (landing / "package-lock.json").write_text('{ "lock": "0.4.0" }\n', "utf8")
         data = json.loads((self.root / "companion.json").read_text("utf8"))
         data["landing"] = {"dir": "landing", **({"tool": tool} if tool else {})}
@@ -197,12 +197,12 @@ class BumpTests(PinsTestCase):
         self.npm = ["0.0.0-stage", "0.4.0", "0.5.0", "0.5.1", "0.7.0"]
         code, out = self.cli("bump", "0.6.0")
         self.assertEqual(code, 0, out)
-        self.assertIn('"@deskling/landing": "0.5.1"', (landing / "package.json").read_text("utf8"))
+        self.assertIn('"@laching/landing": "0.5.1"', (landing / "package.json").read_text("utf8"))
         self.assertIn("`npm install` in landing", out, "no landing tool: the lockfile is left to you")
-        self.assertIn("0.5.1                    landing/package.json @deskling/landing", out)
+        self.assertIn("0.5.1                    landing/package.json @laching/landing", out)
         self.npm = ["0.4.0"]
         code, out = self.cli("bump", "0.6.0")
-        self.assertIn("@deskling/landing stays at 0.5.1", out)
+        self.assertIn("@laching/landing stays at 0.5.1", out)
 
     @unittest.skipIf(WINDOWS, NO_SHEBANG)
     def test_the_landing_tool_updates_the_lockfile_or_everything_goes_back(self):
@@ -225,15 +225,15 @@ class BumpTests(PinsTestCase):
 
         self.cli("bump", "0.5.0")  # npm has 0.4.0 at or below it, older than the page's: it stays
         self.assertIn('"0.6.0"', (landing / "package.json").read_text("utf8"))
-        (landing / "package.json").write_text('{ "devDependencies": { "@deskling/landing": "0.4.0" } }\n', "utf8")
+        (landing / "package.json").write_text('{ "devDependencies": { "@laching/landing": "0.4.0" } }\n', "utf8")
         (landing / "package-lock.json").write_text('{ "lock": "0.4.0" }\n', "utf8")
         tool.write_text("#!/bin/sh\necho 'no network' >&2\nexit 1\n", "utf8")
         code, out = self.cli("bump", "0.6.0")
         self.assertIn("landing has uncommitted dependency changes, so the lockfile is yours", out)
-        (landing / "package.json").write_text('{ "devDependencies": { "@deskling/landing": "0.4.0" } }\n', "utf8")
+        (landing / "package.json").write_text('{ "devDependencies": { "@laching/landing": "0.4.0" } }\n', "utf8")
         git(landing, "commit", "-q", "-am", "back to 0.4.0")
         code, out = self.cli("bump", "0.6.0")
-        self.assertIn("failed, so @deskling/landing stays at 0.4.0", out)
+        self.assertIn("failed, so @laching/landing stays at 0.4.0", out)
         self.assertIn('"0.4.0"', (landing / "package.json").read_text("utf8"))
         self.assertIn('"0.4.0"', (landing / "package-lock.json").read_text("utf8"))
 
@@ -248,7 +248,7 @@ class BumpTests(PinsTestCase):
         self.assertIn("bump failed    app", failing.stdout)
         passing = self.bump_apps("0.5.0", str(self.root))
         self.assertEqual(passing.returncode, 0, passing.stdout + passing.stderr)
-        self.assertIn("ok    Deskling pins agree", passing.stdout)
+        self.assertIn("ok    Laching pins agree", passing.stdout)
         self.assertIn("ok             app", passing.stdout)
         self.assertEqual(self.bump_apps().returncode, 2)
 
@@ -269,11 +269,11 @@ class BumpTests(PinsTestCase):
 
 
 class LinkTests(PinsTestCase):
-    """The app is a git repository (committed) and the Deskling checkout sits next to it, at ../deskling."""
+    """The app is a git repository (committed) and the Laching checkout sits next to it, at ../laching."""
 
     def setUp(self):
         super().setUp()
-        self.checkout = self.root.parent / "deskling"
+        self.checkout = self.root.parent / "laching"
         git(self.root.parent, "clone", "-q", str(self.origin), str(self.checkout))
         for path, text in ((RESOLVED, resolved(self.commits["0.5.0"], "0.5.0", "c" * 64)),
                            (PBXPROJ, "// the project XcodeGen wrote\n")):
@@ -289,14 +289,14 @@ class LinkTests(PinsTestCase):
     def test_link_switches_every_side_and_unlink_puts_back_every_byte(self):
         code, out = self.cli("link")
         self.assertEqual(code, 0, out)
-        self.assertIn("path: ../../deskling", (self.root / "macos/project.yml").read_text("utf8"))
+        self.assertIn("path: ../../laching", (self.root / "macos/project.yml").read_text("utf8"))
         self.assertNotIn("exactVersion", (self.root / "macos/project.yml").read_text("utf8"))
-        self.assertIn('.package(path: "../../../deskling")',
+        self.assertIn('.package(path: "../../../laching")',
                       (self.root / "macos/FixtureCore/Package.swift").read_text("utf8"))
         targets = (self.root / "windows/Directory.Build.targets").read_text("utf8")
-        self.assertIn('<_DesklingLinkable Include="Deskling.Companion;Deskling.Core" />', targets)
-        self.assertIn("$(MSBuildThisFileDirectory)../../deskling/dotnet/", targets)
-        self.assertEqual(companion.linked_dotnet(companion.load(self.root)), "../../deskling/dotnet/", "for vm.sh")
+        self.assertIn('<_LachingLinkable Include="Laching.Companion;Laching.Core" />', targets)
+        self.assertIn("$(MSBuildThisFileDirectory)../../laching/dotnet/", targets)
+        self.assertEqual(companion.linked_dotnet(companion.load(self.root)), "../../laching/dotnet/", "for vm.sh")
         self.assertEqual(self.calls, ["regenerate_project"])
 
         code, out = self.cli("pins")
@@ -317,7 +317,7 @@ class LinkTests(PinsTestCase):
         code, out = self.cli("unlink")
         self.assertEqual(code, 0, out)
         self.assertEqual(self.status(), "")
-        self.assertFalse((self.root / ".git" / "deskling-link").exists())
+        self.assertFalse((self.root / ".git" / "laching-link").exists())
         self.assertEqual(self.calls, ["regenerate_project", "regenerate_project"])
         self.assertEqual(self.cli("pins")[0], 0)
         self.assertIsNone(companion.linked_dotnet(companion.load(self.root)))
@@ -341,27 +341,27 @@ class LinkTests(PinsTestCase):
         git(self.root, "commit", "-q", "-m", "targets")
         self.cli("link")
         text = targets.read_bytes().decode("utf8")
-        self.assertTrue(text.startswith("<Project>\r\n  <PropertyGroup />\r\n  <!-- deskling link"))
+        self.assertTrue(text.startswith("<Project>\r\n  <PropertyGroup />\r\n  <!-- laching link"))
         self.assertTrue(text.endswith("</ItemGroup>\r\n</Project>\r\n"))
         self.assertEqual(text.count("\n"), text.count("\r\n"), "the file's own line endings")
         self.cli("unlink")
         self.assertEqual(self.status(), "")
 
     def test_link_takes_another_checkout_and_refuses_what_isnt_one(self):
-        code, out = self.cli("link", str(self.root.parent / "deskling-origin"))
+        code, out = self.cli("link", str(self.root.parent / "laching-origin"))
         self.assertEqual(code, 0, out)
-        self.assertIn("path: ../../deskling-origin", (self.root / "macos/project.yml").read_text("utf8"))
-        self.assertIn("named deskling, not deskling-origin", out)
+        self.assertIn("path: ../../laching-origin", (self.root / "macos/project.yml").read_text("utf8"))
+        self.assertIn("named laching, not laching-origin", out)
         self.cli("unlink")
         code, out = self.cli("link", str(self.root / "macos"))
         self.assertEqual(code, 1)
-        self.assertIn("isn't a Deskling checkout", out)
+        self.assertIn("isn't a Laching checkout", out)
         self.assertEqual(self.status(), "")
 
     def test_link_points_the_android_build_at_the_checkouts_kotlin(self):
         (self.checkout / "kotlin").mkdir()
-        (self.checkout / "kotlin" / "settings.gradle.kts").write_text('rootProject.name = "deskling"\n', "utf8")
-        (self.checkout / "kotlin" / "gradle.properties").write_text("desklingVersion=0.5.0\n", "utf8")
+        (self.checkout / "kotlin" / "settings.gradle.kts").write_text('rootProject.name = "laching"\n', "utf8")
+        (self.checkout / "kotlin" / "gradle.properties").write_text("lachingVersion=0.5.0\n", "utf8")
         manifest = self.root / "companion.json"
         data = json.loads(manifest.read_text("utf8"))
         data["android"] = {"dir": "android"}
@@ -377,8 +377,8 @@ class LinkTests(PinsTestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("changed  android/local.properties", out)
         text = properties.read_text("utf8")
-        self.assertTrue(text.startswith("sdk.dir=/opt/android\n# deskling link:"), text)
-        self.assertTrue(text.endswith("\ndeskling.kotlin.dir=../../deskling/kotlin\n"), text)
+        self.assertTrue(text.startswith("sdk.dir=/opt/android\n# laching link:"), text)
+        self.assertTrue(text.endswith("\nlaching.kotlin.dir=../../laching/kotlin\n"), text)
         code, out = self.cli("unlink")
         self.assertEqual(code, 0, out)
         self.assertEqual(properties.read_text("utf8"), "sdk.dir=/opt/android")
@@ -388,13 +388,13 @@ class LinkTests(PinsTestCase):
         properties.unlink()
         self.cli("link")
         text = properties.read_text("utf8")
-        self.assertTrue(text.startswith("# deskling link:"), text)
+        self.assertTrue(text.startswith("# laching link:"), text)
         self.cli("unlink")
         self.assertFalse(properties.exists())
         properties.write_text(text, "utf8")
         code, out = self.cli("pins")
         self.assertEqual(code, 1)
-        self.assertIn("linked to a Deskling checkout (local.properties)", out)
+        self.assertIn("linked to a Laching checkout (local.properties)", out)
 
     def test_a_link_left_in_a_committed_file_fails_the_pins(self):
         self.cli("link")
@@ -403,7 +403,7 @@ class LinkTests(PinsTestCase):
         (self.root / "windows/Directory.Build.targets").write_text(targets, "utf8")
         code, out = self.cli("pins")
         self.assertEqual(code, 1)
-        self.assertIn("linked to a Deskling checkout (Directory.Build.targets)", out)
+        self.assertIn("linked to a Laching checkout (Directory.Build.targets)", out)
 
 
 if __name__ == "__main__":

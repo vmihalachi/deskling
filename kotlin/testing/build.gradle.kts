@@ -1,5 +1,5 @@
-// deskling.testing: the mocks (clock, idle, busy, random, store backend) and the conformance vector loader, as
-// Deskling.Testing on .NET. For the apps' test source sets; JVM only.
+// laching.testing: the mocks (clock, idle, busy, random, store backend) and the conformance vector loader, as
+// Laching.Testing on .NET. For the apps' test source sets; JVM only.
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)

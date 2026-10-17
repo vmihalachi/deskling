@@ -17,7 +17,7 @@ public static class FixtureSounds
     /// <summary>Writes every sound into a folder of the fixture's own under the temp folder; returns its path.</summary>
     public static string Write()
     {
-        var folder = Path.Combine(Path.GetTempPath(), "Deskling fixture", "Sounds");
+        var folder = Path.Combine(Path.GetTempPath(), "Laching fixture", "Sounds");
         Directory.CreateDirectory(folder);
         WriteTones(folder, Blip, [(880, 0.08)]);
         WriteTones(folder, Shh, [(523, 0.12), (392, 0.18)]);

@@ -1,4 +1,4 @@
-using Deskling.Companion.Shell.App;
+using Laching.Companion.Shell.App;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 

@@ -2,7 +2,7 @@
 # Renders the Mac app's windows in each language and fails when one doesn't fit: content taller than its window, a
 # window that couldn't be drawn, a shot that wasn't written (the checks screenshots.sh fails on). Longer translations
 # are where a window runs out of room, so run it after changing text or a window's layout.
-# Usage: deskling/tools/check-layout.sh [--only name,name] [language ...]   (default: every language in languages.all)
+# Usage: laching/tools/check-layout.sh [--only name,name] [language ...]   (default: every language in languages.all)
 # Shots go to <mac.dir>/build/layout-check/<language>, to look at what failed. It builds once, then runs the languages
 # side by side (LAYOUT_JOBS at a time, default 4) with the windows hidden (screenshots.sh --hidden): you can keep
 # working meanwhile, and the shots show the windows inactive.

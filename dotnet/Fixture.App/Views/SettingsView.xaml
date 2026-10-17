@@ -2,8 +2,8 @@
     x:Class="FixtureApp.Views.SettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ds="using:Deskling.Windows.Companion.Settings"
-    xmlns:dv="using:Deskling.Windows.Companion.Views"
+    xmlns:ds="using:Laching.Windows.Companion.Settings"
+    xmlns:dv="using:Laching.Windows.Companion.Views"
     xmlns:views="using:FixtureApp.Views">
     <ScrollViewer>
         <StackPanel Margin="{x:Bind dv:WindowInset.Content}" Spacing="24">

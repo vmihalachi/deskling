@@ -1,6 +1,6 @@
 ---
 name: add-phrase
-description: Add, change or retire one of the character's lines, two-part jokes or tunes in a Deskling companion app (the Swift PhraseBank, tags, weights, flavors, skins and languages, the catalog keys, translations, recordings and the conformance vectors the Windows port replays). Use when asked for new phrases, lines, jokes, greetings, reactions or tunes, or to change when a phrase can play.
+description: Add, change or retire one of the character's lines, two-part jokes or tunes in a Laching companion app (the Swift PhraseBank, tags, weights, flavors, skins and languages, the catalog keys, translations, recordings and the conformance vectors the Windows port replays). Use when asked for new phrases, lines, jokes, greetings, reactions or tunes, or to change when a phrase can play.
 ---
 
 # Add a phrase
@@ -18,7 +18,7 @@ the app's `DESIGN.md` and `.agents/notes/add-phrase.md`: read them before writin
   `.2`, …, each recorded as its own clip (`<id>.1`, `<id>.2`). The app speaks part 1, waits a beat
   (`PhraseTiming.partBeat`), then part 2; the bubble follows the parts, the notification shows both lines. Recents,
   muting and the quiet rules treat the joke as one phrase. Keep each part speakable on its own and the punchline last.
-- `.tune(sound: "…")`: a sound file from `deskling/tools/synth.py` (the app's `sounds.recipes`); chime channel only,
+- `.tune(sound: "…")`: a sound file from `laching/tools/synth.py` (the app's `sounds.recipes`); chime channel only,
   no flavor, no text.
 
 ## Steps
@@ -30,10 +30,10 @@ the app's `DESIGN.md` and `.agents/notes/add-phrase.md`: read them before writin
    **Who can say it:** leave `skins` empty when every skin could say it; list the skins whose body or nature it
    names. **Where it exists:** leave `languages` empty for a phrase that works in every language; list base codes
    (`["it"]`) for one that only works in some (a pun): write its source text in that language.
-2. **Vectors**: `deskling/tools/conformance.sh` (or the app's Regenerate vectors workflow) regenerates
+2. **Vectors**: `laching/tools/conformance.sh` (or the app's Regenerate vectors workflow) regenerates
    `phrases.json` and the picker and quiet vectors that drew the changed lines. Commit them with the change, then run
    the Windows Core tests (the port reads the new bank automatically).
-3. **Catalog keys**: `python3 deskling/tools/phrases.py sync` adds the missing keys (a joke's parts as separate keys
+3. **Catalog keys**: `python3 laching/tools/phrases.py sync` adds the missing keys (a joke's parts as separate keys
    with "Part n of m" comments; a scoped phrase's comment names its languages), updates changed source text (dropping
    that key's translations) and removes retired keys. `phrases.py check` runs in `verify.sh` and CI.
 4. **Tests**: a new tag or rule gets a `PhrasePicker` test in the app; otherwise the vectors cover it. If the app runs

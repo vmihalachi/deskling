@@ -13,7 +13,7 @@
 # Path → checks:
 #   mac.app/tests Swift, mac.projectSpec   xcodegen (fails if project.pbxproj was stale), swift-format lint, xcodebuild test
 #   mac.core                               swift test on the core package
-#   mac.core sources and Conformance/      deskling/tools/conformance.sh (fails if the vectors were stale)
+#   mac.core sources and Conformance/      laching/tools/conformance.sh (fails if the vectors were stale)
 #   strings (app Swift, .xcstrings, landing i18n)   l10n.py check, phrases.py check, the .resw and Android strings exports are current
 #   voices, voice config, catalog, phrases.json     voice.py check, the voices pointer is pushed
 #   windows/**/*.cs                        dotnet format whitespace, dotnet test (windows.coreTests)
@@ -23,7 +23,7 @@
 #   android.dir/**/*.kt(s)                 ktlint; ./gradlew :<android.core>:test for android.core and conformance/
 #   landing/, phrases/settings vectors     <landing.tool> check and build
 #   store.dir/*.md                         store/check.py (the listing's field limits)
-#   always                                 the Deskling pins agree (submodule tag = deskling.tag = SwiftPM = XcodeGen = NuGet)
+#   always                                 the Laching pins agree (submodule tag = laching.tag = SwiftPM = XcodeGen = NuGet)
 #
 # Prints one line per check and the tail of the log for failures. Exit 1 if anything failed.
 set -uo pipefail
@@ -145,7 +145,7 @@ voices_pointer_pushed() {
   [ -e "$VOICE_DIR/.git" ] || { echo "$VOICE_DIR/ isn't checked out: git submodule update --init"; return 1; }
   subgit "$VOICE_DIR" fetch -q origin 2>/dev/null || true
   if [ -z "$(subgit "$VOICE_DIR" branch -r --contains "$sha" 2>/dev/null)" ]; then
-    echo "$VOICE_DIR pointer ${sha:0:7} isn't pushed: run python3 $DESKLING_PATH/tools/voice.py publish -m \"…\""
+    echo "$VOICE_DIR pointer ${sha:0:7} isn't pushed: run python3 $LACHING_PATH/tools/voice.py publish -m \"…\""
     return 1
   fi
 }
@@ -213,7 +213,7 @@ csharp_format() {
 
 # --- always ------------------------------------------------------------------------------------
 
-check "Deskling pins agree" python3 "$TOOLS/companion.py" pins
+check "Laching pins agree" python3 "$TOOLS/companion.py" pins
 
 # --- fast checks -------------------------------------------------------------------------------
 

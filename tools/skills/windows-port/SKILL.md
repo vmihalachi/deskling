@@ -1,21 +1,21 @@
 ---
 name: windows-port
-description: Work on a Deskling companion app's Windows port (companion.json `windows.*`; C# .NET 10, WinUI 3). Use before changing or reading anything under the Windows folder, porting Swift behavior to C#, fixing failing `dotnet test` conformance replays, adding a Windows window, view, service or string, or building the WinUI app.
+description: Work on a Laching companion app's Windows port (companion.json `windows.*`; C# .NET 10, WinUI 3). Use before changing or reading anything under the Windows folder, porting Swift behavior to C#, fixing failing `dotnet test` conformance replays, adding a Windows window, view, service or string, or building the WinUI app.
 ---
 
 # Windows port
 
-The Windows app mirrors the Mac app on Deskling's .NET packages: `Deskling.Core` (scheduler, settings store, store),
-`Deskling.Companion` (phrases, picker, cadence, quiet rules, settings, coordinator, desktop presence, skins, the rig),
-`Deskling.Windows` (tray, idle, busy, startup, notifications, single instance, `.resw` lookup), since 0.8 the
-companion shell (`Deskling.Companion.Shell` and `Deskling.Windows.Companion`, below) and, in tests, `Deskling.Testing`
+The Windows app mirrors the Mac app on Laching's .NET packages: `Laching.Core` (scheduler, settings store, store),
+`Laching.Companion` (phrases, picker, cadence, quiet rules, settings, coordinator, desktop presence, skins, the rig),
+`Laching.Windows` (tray, idle, busy, startup, notifications, single instance, `.resw` lookup), since 0.8 the
+companion shell (`Laching.Companion.Shell` and `Laching.Windows.Companion`, below) and, in tests, `Laching.Testing`
 (fakes, fixture loaders, the conformance replay bodies, the shell's `FakeHost`). The app's own core (`windows.core`)
 holds what's app-specific; its tests (`windows.coreTests`) replay the app's vectors. Platform differences and the
 folder map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
 
 - Core and model tests run anywhere with the .NET 10 SDK: `dotnet test <windows.dir>/<windows.coreTests>` and
   `<windows.appTests>`. The WinUI app's XAML compiler needs Windows. On a Mac with the Parallels Windows VM, build it
-  there from your working tree, uncommitted changes included: `deskling/tools/windows/vm.sh build` (x64 and ARM64;
+  there from your working tree, uncommitted changes included: `laching/tools/windows/vm.sh build` (x64 and ARM64;
   `verify.sh` does it too), `vm.sh screenshots <folder>` to look at the windows you changed (the PNGs land in the Mac
   folder), `vm.sh smoke` for the Native AOT package. `vm.sh status` says whether the VM is there. Without it (Linux, a
   cloud session), build on Windows or push and run the app's Windows workflow, and say so.
@@ -27,15 +27,15 @@ folder map are in the app's `.agents/notes/windows-port.md` (or its parity doc).
 
 ## The companion shell (0.8)
 
-The Mac app's `DesklingCompanionUI` has a Windows twin in two packages, with the same type and member names, mirrored
-by role (Deskling's `plans/0.8/README.md`, *The map*):
+The Mac app's `LachingCompanionUI` has a Windows twin in two packages, with the same type and member names, mirrored
+by role (Laching's `plans/0.8/README.md`, *The map*):
 
-- `Deskling.Companion.Shell` (any OS): `CompanionAppModel<TWindow, TSettings>`, which the app subclasses as on the
+- `Laching.Companion.Shell` (any OS): `CompanionAppModel<TWindow, TSettings>`, which the app subclasses as on the
   Mac (the tick, channels, Shh and wake, the bubble, previews, the status line, the desktop character, the menus as
   `MenuItem` data), the copy records (`StatusCopy`, `MenuCopy`, `DesktopCopy`, `CompanionAppConfiguration`), speech
   in beats and recorded voices, `DeliveryPerformer`, `SignalHub`, `DesktopLayout`, `SampleEnvironment`. Test the app's
-  model with `Deskling.Testing`'s `FakeHost`, `ManualTimers` and fakes.
-- `Deskling.Windows.Companion` (WinUI 3): `CompanionApp` (the app's `Application`; `Program.Main` is one
+  model with `Laching.Testing`'s `FakeHost`, `ManualTimers` and fakes.
+- `Laching.Windows.Companion` (WinUI 3): `CompanionApp` (the app's `Application`; `Program.Main` is one
   `CompanionApp.Start` call), `WindowsCompanionHost<TWindow>` over the app's `CompanionViews` (window specs and
   content, the tray panel, the desktop character), `Speaker`, `ChimePlayer`, `CompanionNotifier`, the system signals,
   and the controls: `CharacterCanvas`, `SpeechBubble`, `StatusPill`, `ActionBar`, `PanelRow`, `Pointer`,
@@ -45,7 +45,7 @@ by role (Deskling's `plans/0.8/README.md`, *The map*):
 What stays in the app: the words (`.resw`, passed in as copy records), the look (`Theme/*.xaml`; the controls paint
 from `CompanionLook.Current`, set first in `MakeCompanion`, whose `CompanionPalette` can read the app's theme
 dictionaries through `ThemedColor.Resource`), Home, onboarding, the panel's layout, the app's own settings and
-windows, `Program.cs`, `App.xaml` (a `CompanionApp` root) and the MSIX manifest. Deskling's `dotnet/Fixture.App` is a
+windows, `Program.cs`, `App.xaml` (a `CompanionApp` root) and the MSIX manifest. Laching's `dotnet/Fixture.App` is a
 whole companion on these packages.
 
 - `{x:Bind}` to `WindowInset`'s static properties (`Content`, `ContentOverActionBar`, `PanelPadding`): a function
@@ -56,23 +56,23 @@ whole companion on these packages.
 
 ## The app project and its tools (0.8.1)
 
-The `.csproj` imports `deskling/tools/windows/companion.targets` last (Deskling's `tools/README.md`, *Windows apps*):
+The `.csproj` imports `laching/tools/windows/companion.targets` last (Laching's `tools/README.md`, *Windows apps*):
 x64 and ARM64, Debug unpackaged and every other configuration an MSIX with Native AOT, the voices, sounds and fonts
 linked from the Mac's folders.
 
 - **Run**: `dotnet run --project <windows.dir>/<windows.app> -p:Platform=x64` (or ARM64): the Debug app, unpackaged,
   over a mock store when `PackageIdentity.IsPackaged` is false; its settings in `LocalSettingsStore.ForApp`'s JSON file.
-- **Shoot**: `deskling/tools/windows/screenshots.ps1 [-Only home] [-Language it] [-Configuration Release]` (or the
+- **Shoot**: `laching/tools/windows/screenshots.ps1 [-Only home] [-Language it] [-Configuration Release]` (or the
   app's `windows/scripts/` wrapper). Look at every shot you touched, light and dark; `-Only` runs hidden and fast, with
   the windows inactive (`-Front` for active ones), and `-Configuration Release` shoots the Native AOT build, which is
-  where untyped XAML casts fail. After changing text or a window's layout, `deskling/tools/windows/check-layout.ps1
+  where untyped XAML casts fail. After changing text or a window's layout, `laching/tools/windows/check-layout.ps1
   [-Only settings]` shoots every language side by side and names the ones whose text doesn't fit.
 - **Package**: `dotnet publish <app> -c Release -p:Platform=x64 -p:GenerateAppxPackageOnBuild=true
   -p:AppxPackageSigningEnabled=false`, then `smoke-package.ps1 -Package <.msix> -CheckOnly` (native, no
   `runtimeconfig.json`) and, with Developer Mode, without `-CheckOnly` (it installs, starts and removes it; `-Keep` for
   the hand checks a package needs: the startup task, a notification click after the app quit).
-- **Lint**: `python3 deskling/tools/windows/check-winui.py [files]`; `verify.sh` runs it on the changed app files.
-- **Images**: `python3 deskling/tools/windows/assets.py` after the Mac icon changes; never edit `Assets/` by hand.
+- **Lint**: `python3 laching/tools/windows/check-winui.py [files]`; `verify.sh` runs it on the changed app files.
+- **Images**: `python3 laching/tools/windows/assets.py` after the Mac icon changes; never edit `Assets/` by hand.
 - **The model's tests** (`windows.appTests`, `net10.0`): the model, its copy, the window list, the products and the
   notification actions compile into the tests by `<Compile Include="..\App\…" Link="…" />`, so they use no WinUI type
   and no `Loc`; their words come through `IStrings` (`LocStrings.Shared` in the app, `ReswStrings.Load(<en .resw>)` in
@@ -108,5 +108,5 @@ Traps that cost a day each:
   `Path.Combine(AppContext.BaseDirectory, "Voice")`. Never write into it from Windows code or by hand.
 - Native AOT: no reflection-based `JsonSerializer` (source-generated contexts only), `x:Bind` over `{Binding}`;
   warnings are errors.
-- No third-party code beyond Deskling and CommunityToolkit.Mvvm. No `internetClient`, `webcam` or `microphone`
+- No third-party code beyond Laching and CommunityToolkit.Mvvm. No `internetClient`, `webcam` or `microphone`
   capability in `Package.appxmanifest`, ever.

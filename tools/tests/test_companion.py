@@ -29,11 +29,11 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(self.check(FIXTURE_APP / "companion.json"), [])
         self.assertEqual(self.check(HERE / "sunnysays.companion.json"), [])
 
-    @unittest.skipUnless(PAGLIACCI.exists(), "../pagliacci isn't checked out next to deskling")
+    @unittest.skipUnless(PAGLIACCI.exists(), "../pagliacci isn't checked out next to laching")
     def test_pagliacci_validates(self):
         self.assertEqual(self.check(PAGLIACCI), [])
 
-    @unittest.skipUnless(MYBACKHURTS.exists(), "../mybackhurts isn't checked out next to deskling")
+    @unittest.skipUnless(MYBACKHURTS.exists(), "../mybackhurts isn't checked out next to laching")
     def test_mybackhurts_validates(self):
         self.assertEqual(self.check(MYBACKHURTS), [])
 
@@ -165,17 +165,17 @@ class LookupTests(unittest.TestCase):
             found = dict(companion.pins(config))
             self.assertEqual(found["macos/FixtureCore/Package.swift"], "0.5.0")
             self.assertEqual(found["macos/project.yml"], "0.5.0")
-            self.assertEqual(found["windows/Fixture.Core/Fixture.Core.csproj Deskling.Companion"], "0.5.0")
+            self.assertEqual(found["windows/Fixture.Core/Fixture.Core.csproj Laching.Companion"], "0.5.0")
             self.assertTrue(companion.pins_agree(list(found.items())))
             csproj = root / "windows/Fixture.Core/Fixture.Core.csproj"
-            csproj.write_text(csproj.read_text("utf8").replace('Deskling.Core" Version="0.5.0"', 'Deskling.Core" Version="0.4.0"'), "utf8")
+            csproj.write_text(csproj.read_text("utf8").replace('Laching.Core" Version="0.5.0"', 'Laching.Core" Version="0.4.0"'), "utf8")
             out = io.StringIO()
             with redirect_stdout(out):
                 self.assertEqual(companion.main(["pins"]), 1)
             self.assertIn("must be the same everywhere", out.getvalue())
             self.assertIn("0.4.0", out.getvalue())
             spec = root / "macos/project.yml"
-            spec.write_text(spec.read_text("utf8").replace("exactVersion: 0.5.0", "path: ../deskling"), "utf8")
+            spec.write_text(spec.read_text("utf8").replace("exactVersion: 0.5.0", "path: ../laching"), "utf8")
             self.assertIn(("macos/project.yml", "(not pinned to a version)"), companion.pins(config))
 
     def test_an_invalid_file_stops_the_tools(self):

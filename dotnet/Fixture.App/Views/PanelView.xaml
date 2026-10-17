@@ -2,7 +2,7 @@
     x:Class="FixtureApp.Views.PanelView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:dv="using:Deskling.Windows.Companion.Views"
+    xmlns:dv="using:Laching.Windows.Companion.Views"
     xmlns:views="using:FixtureApp.Views"
     Width="320">
     <StackPanel Padding="{x:Bind dv:WindowInset.PanelPadding}" Spacing="12">

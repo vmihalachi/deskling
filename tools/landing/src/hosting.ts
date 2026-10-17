@@ -76,7 +76,7 @@ export function hostingConfigPlugin(
 ): Plugin {
   let outDir = "dist";
   return {
-    name: "deskling-landing-hosting",
+    name: "laching-landing-hosting",
     apply: "build",
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);

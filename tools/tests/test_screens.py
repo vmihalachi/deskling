@@ -93,7 +93,7 @@ class ManifestTests(unittest.TestCase):
         launches = []
 
         def run(command, env=None, **_):
-            mode = env["SIMCTL_CHILD_DESKLING_SCREENSHOT_MODE"]
+            mode = env["SIMCTL_CHILD_LACHING_SCREENSHOT_MODE"]
             launches.append((mode, env.get("SIMCTL_CHILD_FIXTURE_TWO"), command[-4:]))
             folder = drawn / str(len(launches))
             folder.mkdir(parents=True)
@@ -122,14 +122,14 @@ class ManifestTests(unittest.TestCase):
         data["screens"]["platforms"]["droid"] = {"capture": "android", "avd": "Pixel_8"}
         data["screens"]["list"]["home"]["android"] = "today"
         data["screens"]["list"]["settings"]["droid"] = {
-            "shot": "settings", "env": {"DESKLING_SCREENSHOT_MODE": "two"}, "camera": True}
+            "shot": "settings", "env": {"LACHING_SCREENSHOT_MODE": "two"}, "camera": True}
         path.write_text(json.dumps(data), "utf8")
         manifest_ = manifest(self.root)
         droid = manifest_.platforms[-1]
         self.assertEqual(manifest_.pick_platforms(["android"]), [droid])
         self.assertFalse(droid.landscape)
         self.assertEqual(manifest_.shot("settings", droid),
-                         screens.Shot("settings", (("DESKLING_SCREENSHOT_MODE", "two"),), True))
+                         screens.Shot("settings", (("LACHING_SCREENSHOT_MODE", "two"),), True))
         apk = self.root / "android" / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
         apk.parent.mkdir(parents=True)
         apk.write_bytes(b"apk")
@@ -167,9 +167,9 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(calls, [
             ("boot", "Pixel_8", 0, True, "droid.log"), ("install", "app-debug.apk"),
             ("run", "app.fixture.dev/.Main", "en", "US", ["today"], {}),
-            ("run", "app.fixture.dev/.Main", "en", "US", ["settings"], {"DESKLING_SCREENSHOT_MODE": "two"}),
+            ("run", "app.fixture.dev/.Main", "en", "US", ["settings"], {"LACHING_SCREENSHOT_MODE": "two"}),
             ("run", "app.fixture.dev/.Main", "de", "DE", ["today"], {}),
-            ("run", "app.fixture.dev/.Main", "de", "DE", ["settings"], {"DESKLING_SCREENSHOT_MODE": "two"}),
+            ("run", "app.fixture.dev/.Main", "de", "DE", ["settings"], {"LACHING_SCREENSHOT_MODE": "two"}),
             ("kill",)])
         self.assertEqual(sorted(p.name for p in (manifest_.out / "droid" / "en").iterdir()),
                          ["home-light.png", "settings-light.png"])

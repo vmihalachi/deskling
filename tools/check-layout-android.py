@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Renders the Android app's screens in each language on headless emulators and fails when one doesn't fit: content
 taller than the screen outside a scroll view, text cut short or pushed off the screen, a screen that couldn't be drawn
-(ScreenshotRun's checks, `deskling.android`). The Android twin of check-layout-ios.py.
+(ScreenshotRun's checks, `laching.android`). The Android twin of check-layout-ios.py.
 
-    python3 deskling/tools/check-layout-android.py [--devices AVD,AVD] [--only shot,shot] [--jobs N]
+    python3 laching/tools/check-layout-android.py [--devices AVD,AVD] [--only shot,shot] [--jobs N]
         [--font-scale 2.0] [--mode MODE] [--apk PATH] [--out DIR] [language ...]
 
 Defaults: the AVDs of the `screens.platforms` entries captured on android (their `avd`), every language in
@@ -11,8 +11,8 @@ languages.all, LAYOUT_JOBS (else 2) emulators at a time. Shots and problems go t
 android-<avd>/<language> (problems.txt as the app wrote it; the emulator's log beside the languages). It builds the
 Debug APK once (`./gradlew :<android.app>:assembleDebug` in `android.dir`; --apk runs one already built), boots each
 AVD without a window (avd.py), installs the APK and runs the languages on it, each one launch per distinct shot env in
-screenshot mode with Deskling's intent extras (`DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`, `DESKLING_LANG`,
-`DESKLING_REGION`): no reboot between languages. The shots are the ones `screens.list` names for the AVD's platform,
+screenshot mode with Laching's intent extras (`LACHING_SCREENSHOT_MODE`, `LACHING_SCREENS`, `LACHING_LANG`,
+`LACHING_REGION`): no reboot between languages. The shots are the ones `screens.list` names for the AVD's platform,
 each with its `env` (--only names other shots, in one launch); --mode is the screenshot mode of shots whose env sets
 none ("screens"). --font-scale sets the system font scale for the run (`settings put system font_scale`; 2.0 is the
 largest a user can pick) to see what the largest text breaks. The emulators are killed at the end.
@@ -95,7 +95,7 @@ def main() -> int:
     parser.add_argument("--only", default="", help="just these shots (comma-separated), in one launch")
     parser.add_argument("--jobs", type=int, default=int(os.environ.get("LAYOUT_JOBS", "2")), help="emulators at a time")
     parser.add_argument("--font-scale", type=float, help="the system font scale for the run, e.g. 2.0")
-    parser.add_argument("--mode", default=avd.DEFAULT_MODE, help="DESKLING_SCREENSHOT_MODE for shots whose env sets none")
+    parser.add_argument("--mode", default=avd.DEFAULT_MODE, help="LACHING_SCREENSHOT_MODE for shots whose env sets none")
     parser.add_argument("--apk", type=Path, help="a Debug APK to run instead of building one")
     parser.add_argument("--out", type=Path, help="default: <work dir>/layout-check")
     args = parser.parse_args()

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Deskling's releases. release.yml runs it on every push to master, so whatever lands there ships; it works the same
+# Laching's releases. release.yml runs it on every push to master, so whatever lands there ships; it works the same
 # by hand.
 # Usage: scripts/release.sh plan          what is waiting, on one line:
 #                                           tag X.Y.Z <commit>  the version strings name X.Y.Z and it has no tag yet (a
@@ -11,8 +11,8 @@
 #                                         Reads the tags, so fetch them first.
 #        scripts/release.sh pending       exits 0 when the Unreleased section has entries.
 #        scripts/release.sh bump X.Y.Z    moves the Unreleased entries under "## X.Y.Z - <today, UTC>" and puts X.Y.Z in
-#                                         the ten version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
-#                                         site/index.html, README.md, kotlin/gradle.properties, Kotlin's Deskling.kt), so
+#                                         the ten version strings (Laching.swift, LachingInfo.cs, Directory.Build.props,
+#                                         site/index.html, README.md, kotlin/gradle.properties, Kotlin's Laching.kt), so
 #                                         scripts/verify.sh --version X.Y.Z passes. Committing and tagging are the
 #                                         caller's.
 set -eu
@@ -23,7 +23,7 @@ usage() {
   exit 2
 }
 
-current() { sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/DesklingCore/Deskling.swift; }
+current() { sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/LachingCore/Laching.swift; }
 
 # CHANGELOG.md's Unreleased section, without its heading.
 unreleased() { awk '/^## / { on = ($2 == "Unreleased"); next } on' CHANGELOG.md; }
@@ -42,7 +42,7 @@ next() {
 plan() {
   version=$(current)
   if [ -z "$(git tag -l "v$version")" ]; then
-    commit=$(git log -1 --format=%H -S "version = \"$version\"" -- Sources/DesklingCore/Deskling.swift)
+    commit=$(git log -1 --format=%H -S "version = \"$version\"" -- Sources/LachingCore/Laching.swift)
     echo "tag $version ${commit:-$(git rev-parse HEAD)}"
   elif pending; then
     breaking=0
@@ -60,11 +60,11 @@ bump() {
   pending || { echo "CHANGELOG.md's Unreleased section is empty: nothing to release" >&2; exit 1; }
   re=$(printf '%s' "$old" | sed 's/[.]/\\./g')
   # "X.Y.Z" in the sources and the install snippets, >X.Y.Z< in Directory.Build.props, vX.Y.Z in the site's label and
-  # the README's tag example, desklingVersion=X.Y.Z in kotlin/gradle.properties.
-  for file in Sources/DesklingCore/Deskling.swift dotnet/Deskling.Core/DesklingInfo.cs dotnet/Directory.Build.props \
-    site/index.html README.md kotlin/gradle.properties kotlin/core/src/main/kotlin/deskling/core/Deskling.kt; do
+  # the README's tag example, lachingVersion=X.Y.Z in kotlin/gradle.properties.
+  for file in Sources/LachingCore/Laching.swift dotnet/Laching.Core/LachingInfo.cs dotnet/Directory.Build.props \
+    site/index.html README.md kotlin/gradle.properties kotlin/core/src/main/kotlin/laching/core/Laching.kt; do
     sed "s/\"$re\"/\"$new\"/g; s/>$re</>$new</g; s/v$re\([^0-9]\)/v$new\1/g; s/v$re\$/v$new/
-         s/^desklingVersion=$re\$/desklingVersion=$new/" "$file" > "$file.new"
+         s/^lachingVersion=$re\$/lachingVersion=$new/" "$file" > "$file.new"
     mv "$file.new" "$file"
   done
   awk -v heading="## $new - $(date -u +%Y-%m-%d)" '

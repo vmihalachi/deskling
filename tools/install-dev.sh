@@ -2,7 +2,7 @@
 # Copies a finished Debug build to ~/Applications/<mac.devAppName>.app, replacing the previous copy, so there's one
 # current Dev app next to the TestFlight/App Store one (bundle ID devBundleId).
 #
-# Runs as the app scheme's build post-action (after signing): `"$PROJECT_DIR/../deskling/tools/install-dev.sh"` (or the
+# Runs as the app scheme's build post-action (after signing): `"$PROJECT_DIR/../laching/tools/install-dev.sh"` (or the
 # app's two-line wrapper), so Xcode, xcodebuild, verify.sh and screenshots.sh all refresh it. Release builds and CI are
 # skipped. A running Dev app keeps running the old copy until you quit and reopen it.
 set -euo pipefail

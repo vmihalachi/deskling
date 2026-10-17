@@ -1,11 +1,11 @@
 {
-  "name": "@deskling/landing",
+  "name": "@laching/landing",
   "version": "0.0.0",
   "description": "A desk companion's landing page as Vite plugins: localized pages, legal pages, sitemap, CSP headers and social cards.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vmihalachi/deskling.git",
+    "url": "git+https://github.com/vmihalachi/laching.git",
     "directory": "tools/landing"
   },
   "files": [

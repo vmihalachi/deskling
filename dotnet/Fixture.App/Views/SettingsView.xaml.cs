@@ -1,6 +1,6 @@
-using Deskling.Companion.Rules;
-using Deskling.Companion.Settings;
-using Deskling.Windows.Companion.Settings;
+using Laching.Companion.Rules;
+using Laching.Companion.Settings;
+using Laching.Windows.Companion.Settings;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FixtureApp.Views;

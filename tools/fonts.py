@@ -11,8 +11,8 @@ modification is noted in each font's description. Outputs, in `fonts.out`: `<fam
 `{"family", "font": [url, sha256], "weights"}`; `required`, `compose` and `dropSpaceKerning` apply to every face.
 
     python3 -m venv /tmp/fontenv && /tmp/fontenv/bin/pip install fonttools
-    /tmp/fontenv/bin/python deskling/tools/fonts.py            # write the files
-    /tmp/fontenv/bin/python deskling/tools/fonts.py --check    # exit 1 when a committed file lacks a glyph
+    /tmp/fontenv/bin/python laching/tools/fonts.py            # write the files
+    /tmp/fontenv/bin/python laching/tools/fonts.py --check    # exit 1 when a committed file lacks a glyph
 
 `fonts.compose` maps a character to `[base glyph, mark glyph, "above" | "below", alias characters…]`: the mark goes
 over the base as far above it as it sits over a lowercase "a" ("above"), or 80 % size under its foot ("below", like the
@@ -228,7 +228,7 @@ def check(plan: Plan) -> int:
     if not (plan.out / plan.license_file).exists():
         print(f"missing {plan.license_file}")
         status = 1
-    print("ok" if status == 0 else "fonts need regenerating: python3 deskling/tools/fonts.py")
+    print("ok" if status == 0 else "fonts need regenerating: python3 laching/tools/fonts.py")
     return status
 
 

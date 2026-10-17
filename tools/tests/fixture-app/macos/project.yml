@@ -1,7 +1,7 @@
 name: Fixture
 packages:
-  Deskling:
-    url: https://github.com/vmihalachi/deskling
+  Laching:
+    url: https://github.com/vmihalachi/laching
     exactVersion: 0.5.0
   FixtureCore:
     path: FixtureCore

@@ -1,7 +1,7 @@
-using Deskling.Companion.Rules;
-using Deskling.Windows.Companion.Support;
-using Deskling.Windows.Companion.Views;
-using Deskling.Windows.Shell;
+using Laching.Companion.Rules;
+using Laching.Windows.Companion.Support;
+using Laching.Windows.Companion.Views;
+using Laching.Windows.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;

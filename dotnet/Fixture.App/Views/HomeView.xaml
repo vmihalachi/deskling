@@ -2,13 +2,13 @@
     x:Class="FixtureApp.Views.HomeView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:dv="using:Deskling.Windows.Companion.Views"
+    xmlns:dv="using:Laching.Windows.Companion.Views"
     xmlns:views="using:FixtureApp.Views">
     <ScrollViewer>
         <StackPanel Margin="{x:Bind dv:WindowInset.Content}" Spacing="16">
             <StackPanel Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Deskling fixture" />
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Laching fixture" />
                     <!-- The tray glyph in the window, talking while a line is heard (the apps' Home pictures the tray with it). -->
                     <dv:GlyphWave
                         VerticalAlignment="Center"

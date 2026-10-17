@@ -34,9 +34,9 @@ jobs:
 
       - name: Restore the test projects
         run: |
-          dotnet restore dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj
-          dotnet restore dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj
-          dotnet restore dotnet/Deskling.Testing.Tests/Deskling.Testing.Tests.csproj
+          dotnet restore dotnet/Laching.Core.Tests/Laching.Core.Tests.csproj
+          dotnet restore dotnet/Laching.Companion.Tests/Laching.Companion.Tests.csproj
+          dotnet restore dotnet/Laching.Testing.Tests/Laching.Testing.Tests.csproj
 
       - uses: actions/setup-java@v5
         with:

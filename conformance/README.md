@@ -1,20 +1,20 @@
 # Conformance vectors
 
 Language-neutral test data that keeps the Swift package, the .NET port and the Kotlin side behaving the same. The Swift code
-is the reference: every file here is **generated** by `Tests/DesklingCoreTests/Conformance` (`scheduler/`) and
-`Tests/DesklingCompanionTests/Conformance` (`companion/`), and replayed by `dotnet/Deskling.Core.Tests/Conformance`,
-`dotnet/Deskling.Companion.Tests` (from sequence 3) and, for `scheduler/`, `kotlin/core`'s `SchedulerConformanceTests`
+is the reference: every file here is **generated** by `Tests/LachingCoreTests/Conformance` (`scheduler/`) and
+`Tests/LachingCompanionTests/Conformance` (`companion/`), and replayed by `dotnet/Laching.Core.Tests/Conformance`,
+`dotnet/Laching.Companion.Tests` (from sequence 3) and, for `scheduler/`, `kotlin/core`'s `SchedulerConformanceTests`
 (no Companion in Kotlin yet).
 
 **Never edit a vector by hand.** Change the Swift code, then regenerate:
 
 ```sh
-scripts/conformance.sh        # DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'
+scripts/conformance.sh        # LACHING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'
 ```
 
 Each target's `ConformanceTests` fails whenever the committed files differ from what the Swift code generates, and
 replays every committed vector. To add a case, add it to the `cases` list in
-`Tests/DesklingCoreTests/Conformance/SchedulerVectors.swift` or `Tests/DesklingCompanionTests/Conformance/CompanionCases.swift`
+`Tests/LachingCoreTests/Conformance/SchedulerVectors.swift` or `Tests/LachingCompanionTests/Conformance/CompanionCases.swift`
 and regenerate. `companion/characters/<skin>.json` is also what `tools/character.py` writes from
 `Tests/Fixtures/characters/` (`scripts/fixture-art.sh`); the Swift generator writes the same bytes.
 
@@ -60,9 +60,9 @@ the code it was extracted from. The `jitter-*` vectors add the one new behavior.
 
 ## `companion/`
 
-The companion layer (`DesklingCompanion`) over the fixtures in `DesklingTesting`: `PhraseBank.fixture`,
+The companion layer (`LachingCompanion`) over the fixtures in `LachingTesting`: `PhraseBank.fixture`,
 `CompanionDefaults.fixture` (skin `fixture-vector`, flavors `a`/`b`/`c`) and the two fixture skins. These pin the
-mechanism; each app keeps its own content vectors in the same formats, written by `DesklingTesting`'s generators
+mechanism; each app keeps its own content vectors in the same formats, written by `LachingTesting`'s generators
 (`PhrasesVector`, `PickerVector`, `QuietTimeline`, `CharacterPoseVector`, `SettingsVector.base(defaults:)`…) over its
 own bank and art. The formats are sunnysays' (its `conformance/README.md`), with the additions marked **new**; a new
 field is written only when it isn't the default, so sunnysays' files read the same.

@@ -1,10 +1,10 @@
 <#
 Renders a companion app's windows to PNGs, in light and dark (or in the contrast theme alone, while Windows is in one):
-the app's screenshot run (Deskling.Windows.Companion's ScreenshotCapture) over sample state, never the user's
+the app's screenshot run (Laching.Windows.Companion's ScreenshotCapture) over sample state, never the user's
 settings. Windows only. Reads companion.json (found from the current folder up, then from this script's, or
 $env:COMPANION_ROOT) for the app's project (windows.dir + windows.app) and where the shots go (windows.screenshots).
 
-Usage: deskling/tools/windows/screenshots.ps1 [-Only name,name] [-Hidden|-Front] [-Out folder] [-Language tag]
+Usage: laching/tools/windows/screenshots.ps1 [-Only name,name] [-Hidden|-Front] [-Out folder] [-Language tag]
                                               [-Platform x64|ARM64] [-Configuration Debug|Release] [-NoBuild|-BuildOnly]
                                               [-Project path\to\App.csproj]
   -Only           just the shots whose file names start with one of the names (home, settings, onboarding, …), for
@@ -12,7 +12,7 @@ Usage: deskling/tools/windows/screenshots.ps1 [-Only name,name] [-Hidden|-Front]
                   with a scratch -Out so the committed screenshots stay as they are. Implies -Hidden.
   -Hidden         the windows open cloaked (drawn and captured, never on screen) and never take the focus, so you can
                   keep working, and each is shot once it has drawn rather than after a fixed wait; the shots show them
-                  inactive (grey caption buttons). For checks, never the committed shots. An app on a Deskling.Windows.Companion
+                  inactive (grey caption buttons). For checks, never the committed shots. An app on a Laching.Windows.Companion
                   older than 0.10.5 opens its windows in front, as before.
   -Front          the windows come forward and are shot active, as in use (the default without -Only); leave the PC alone.
   -Language       the language to shoot in ("it"); the app's own choice otherwise.
@@ -20,13 +20,13 @@ Usage: deskling/tools/windows/screenshots.ps1 [-Only name,name] [-Hidden|-Front]
                   package identity) is registered from its build output as a development package, as Visual Studio's F5
                   does (Developer Mode; other development registrations of it are removed first, a Store install never),
                   and started in it; since that start passes no environment, the run's settings arrive as arguments
-                  instead (DESKLING_SCREENSHOT_DIR=<folder> and so on), which ScreenshotCapture reads too. Release publishes the Native AOT app
+                  instead (LACHING_SCREENSHOT_DIR=<folder> and so on), which ScreenshotCapture reads too. Release publishes the Native AOT app
                   unpackaged with screenshot mode compiled in (-p:ScreenshotMode=true), so the shots come from the build
                   that ships: Native AOT breaks some things a JIT build hides. It builds from scratch in
                   <project>\obj\screenshots\<platform>, emptied first, never in the obj\ and bin\ a packaged build uses.
   -NoBuild        run the last build (check-layout.ps1 builds once, then runs the languages side by side).
   -BuildOnly      just build.
-  -Project        another WinUI project than companion.json's (Deskling's fixture app).
+  -Project        another WinUI project than companion.json's (Laching's fixture app).
 Fails, after copying the shots, when the run reports problems (problems.txt, left next to the shots): a window that
 didn't open or couldn't be drawn, a shot that wasn't written, text that doesn't fit (LayoutCheck); or when the app
 didn't finish the run (it crashed or was closed partway, so some windows have no shot). check-layout.ps1 runs it per
@@ -127,10 +127,10 @@ if ($BuildOnly) { exit 0 }
 # packaged app's new files under AppData go to its own private copy, so its run writes under the project's obj\ instead.
 $work = if ($packaged) { Join-Path (Split-Path $Project) "obj\screenshots-$PID.run" } else { Join-Path ([IO.Path]::GetTempPath()) "$name-screenshots-$PID.run" }
 $settings = [ordered]@{
-    DESKLING_SCREENSHOT_MODE     = if ($Only) { $Only } else { "all" }
-    DESKLING_SCREENSHOT_DIR      = $work
-    DESKLING_SCREENSHOT_LANGUAGE = $Language
-    DESKLING_SCREENSHOT_HIDDEN   = if ($hide) { "1" } else { "0" }
+    LACHING_SCREENSHOT_MODE     = if ($Only) { $Only } else { "all" }
+    LACHING_SCREENSHOT_DIR      = $work
+    LACHING_SCREENSHOT_LANGUAGE = $Language
+    LACHING_SCREENSHOT_HIDDEN   = if ($hide) { "1" } else { "0" }
 }
 if ($packaged) {
     # A copy already running from this build would take the launch (an app is usually single-instance), and the

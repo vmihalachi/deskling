@@ -1,4 +1,4 @@
-# Deskling 0.5: the companion layer
+# Laching 0.5: the companion layer
 
 > The design for the 0.5.0 release, agreed with the owner on 2026-10-11. The six sequences in this folder (`1-…` to
 > `6-…`) are self-contained briefs, one per working session, in order; `3` and `4` can run in parallel with `2`.
@@ -9,7 +9,7 @@
 
 ## Why
 
-sunnysays (`../sunnysays`) built a desk companion on Deskling: a character that says lines on a cadence, knows when
+sunnysays (`../sunnysays`) built a desk companion on Laching: a character that says lines on a cadence, knows when
 to be quiet, stands on the desktop, speaks with recorded voices, and is mirrored on Windows through vectors. A second
 app, Mister Pagliacci (`../pagliacci`: a realistic clown that tells jokes, with a Supporter purchase that unlocks skins),
 needs the same skeleton. Everything under sunnysays' character is generic, so it moves here: the phrase bank and
@@ -26,7 +26,7 @@ and Pagliacci is bootstrapped on it.
   through the migration. The C# loaders treat an absent field as the default.
 - **Package code never names an app.** No `Skin.sunflower`, no `PhraseBank.standard`, no "Sunny" in a doc comment, no
   product ids, no strings. Apps inject their bank, defaults, skins, palette and voices.
-- **Mechanism vectors live here, content vectors in each app.** Deskling pins the picker, cadence, rules, coordinator,
+- **Mechanism vectors live here, content vectors in each app.** Laching pins the picker, cadence, rules, coordinator,
   desktop presence and rig over fixture data; each app pins its own bank, defaults, picks and poses.
 - **Breaking is allowed** (0.x) with a CHANGELOG entry per change and the migration written down.
 
@@ -34,17 +34,17 @@ and Pagliacci is bootstrapped on it.
 
 | Swift product (platforms) | Depends on | .NET package | Contents |
 |---|---|---|---|
-| `DesklingCore` (macOS 14, iOS 17) | – | `Deskling.Core` | Today's, plus `Settings/SettingsStore.swift` (the typed protocol, `InMemorySettingsStore`, `UserDefaultsSettingsStore`). .NET: `ISettingsStore` becomes the typed interface; `LocalSettingsStore` implements it (`double` added). |
-| `DesklingCompanion` (new; macOS 14, iOS 17) | Core | `Deskling.Companion` (new, net10.0, AOT) | `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Skins/`, `Coordination/`, `Desktop/`, `Figures/`. Foundation + Observation only. |
-| `DesklingSystem` | Core | `Deskling.Windows` | Unchanged. |
-| `DesklingShell` | Core | `Deskling.Windows` | Plus `StatusItemController` (Mood-free), `Speech/` (`Speaker`, `SpeechSequencer`, `VoiceLibrary`, `ChimePlayer`). Shell keeps depending only on Core (mybackhurts uses it). |
-| `DesklingCompanionUI` (new, macOS) | Companion, Core, System, Shell | – (with sunnysays' M3) | `SignalHub`, `GlyphRenderer`, `CharacterView` (vector and image parts), `DesktopCompanion`, `DeliveryPerformer`, `CompanionNotifier`, `VoiceLibrary+Bank`, `Theme/` (`CompanionPalette`, `Space`, `SpeechBubble`, `StatusPill`), `ScreenshotCapture`. The brand kit (buttons, chips, cards, Windowsill, fonts, the hours and shortcut editors) stays in the apps until 0.6. |
-| `DesklingStore` | Core (new) | `Deskling.Core/Store` | `PurchaseStore` caches owned ids through a `SettingsStore` (`UserDefaults` convenience kept). |
-| `DesklingTesting` | Core, Store, Companion | `Deskling.Testing` (new) | Mocks as today, plus `Fixtures/` (a fixture bank, vector and raster fixture rigs, fixture defaults), `Conformance/` (`ConformanceRoot`, `ConformanceSuite`, codecs, the generators parameterized by bank/defaults/character/cases, `BankAudit`). .NET: mocks, conformance helpers, replay bodies, fixture loaders. |
+| `LachingCore` (macOS 14, iOS 17) | – | `Laching.Core` | Today's, plus `Settings/SettingsStore.swift` (the typed protocol, `InMemorySettingsStore`, `UserDefaultsSettingsStore`). .NET: `ISettingsStore` becomes the typed interface; `LocalSettingsStore` implements it (`double` added). |
+| `LachingCompanion` (new; macOS 14, iOS 17) | Core | `Laching.Companion` (new, net10.0, AOT) | `Phrases/`, `Cadence/`, `Rules/`, `Settings/`, `Skins/`, `Coordination/`, `Desktop/`, `Figures/`. Foundation + Observation only. |
+| `LachingSystem` | Core | `Laching.Windows` | Unchanged. |
+| `LachingShell` | Core | `Laching.Windows` | Plus `StatusItemController` (Mood-free), `Speech/` (`Speaker`, `SpeechSequencer`, `VoiceLibrary`, `ChimePlayer`). Shell keeps depending only on Core (mybackhurts uses it). |
+| `LachingCompanionUI` (new, macOS) | Companion, Core, System, Shell | – (with sunnysays' M3) | `SignalHub`, `GlyphRenderer`, `CharacterView` (vector and image parts), `DesktopCompanion`, `DeliveryPerformer`, `CompanionNotifier`, `VoiceLibrary+Bank`, `Theme/` (`CompanionPalette`, `Space`, `SpeechBubble`, `StatusPill`), `ScreenshotCapture`. The brand kit (buttons, chips, cards, Windowsill, fonts, the hours and shortcut editors) stays in the apps until 0.6. |
+| `LachingStore` | Core (new) | `Laching.Core/Store` | `PurchaseStore` caches owned ids through a `SettingsStore` (`UserDefaults` convenience kept). |
+| `LachingTesting` | Core, Store, Companion | `Laching.Testing` (new) | Mocks as today, plus `Fixtures/` (a fixture bank, vector and raster fixture rigs, fixture defaults), `Conformance/` (`ConformanceRoot`, `ConformanceSuite`, codecs, the generators parameterized by bank/defaults/character/cases, `BankAudit`). .NET: mocks, conformance helpers, replay bodies, fixture loaders. |
 
-Test targets: `DesklingCompanionTests` (runs on Linux; its `Conformance/` generates `conformance/companion/`),
-`DesklingCompanionUITests` (macOS), `dotnet/Deskling.Companion.Tests`. `swift.yml` gains an ubuntu job (Core +
-Companion + Testing) and an iOS Simulator build of `DesklingCompanion` (sequence 6, droppable).
+Test targets: `LachingCompanionTests` (runs on Linux; its `Conformance/` generates `conformance/companion/`),
+`LachingCompanionUITests` (macOS), `dotnet/Laching.Companion.Tests`. `swift.yml` gains an ubuntu job (Core +
+Companion + Testing) and an iOS Simulator build of `LachingCompanion` (sequence 6, droppable).
 
 Two renames before the API goes public: the `Character` protocol becomes `DrawableCharacter` (it shadows
 `Swift.Character` for every importer) and `Shape` becomes `PathShape` (SwiftUI's `Shape` is in scope in every view).
@@ -116,9 +116,9 @@ Sequence 1 spiked cross-module `@Observable` subclassing first: it passed (macOS
 class design above is what shipped and the `CompanionSettingsProviding` fallback was not needed.
 Sequence 2 (2026-10-11) shipped `Figures/`, `Skins/`, the generators and `conformance/companion/`; the moved
 generators rewrote sunnysays' picker, quiet, cadence, desktop, phrases and settings vectors byte for byte.
-Sequence 3 (2026-10-11) shipped `Deskling.Companion`, `Deskling.Testing` and `Deskling.Companion.Tests`; every
+Sequence 3 (2026-10-11) shipped `Laching.Companion`, `Laching.Testing` and `Laching.Companion.Tests`; every
 companion vector replays on .NET.
-Sequence 4 (2026-10-11) shipped the Shell status item and speech and `DesklingCompanionUI`.
+Sequence 4 (2026-10-11) shipped the Shell status item and speech and `LachingCompanionUI`.
 Sequence 5 (2026-10-11) shipped `tools/`: `companion.json` and its schema, the moved scripts, the hook and the skills.
 
 ### Skins/ (`SkinCatalog.swift`)
@@ -181,15 +181,15 @@ never shears. In the JSON a vector part is an array of shapes (today's format) a
 ## Shell and CompanionUI (macOS)
 
 ```swift
-// DesklingShell/StatusItemController.swift (from APP/Shell/StatusItemController.swift; Mood-free)
+// LachingShell/StatusItemController.swift (from APP/Shell/StatusItemController.swift; Mood-free)
 @MainActor public final class StatusItemController: NSObject {
     public var menu: (() -> NSMenu)?
     public init(panel: AnyView, tooltip: String, accessibilityLabel: String, image: @escaping @MainActor (_ animating: Bool, _ frame: Int) -> NSImage)
     public func setAnimating(_ on: Bool); public func redraw(); public func wave(for duration: TimeInterval = 1.2)
     public func togglePanel(); openPanel(); closePanel()
 }
-// DesklingShell/Speech/Speaker.swift: `Speaking` + `Speaker` from APP/Channels/Speaker.swift (AVSpeechSynthesizer or an AVAudioPlayer clip; rate maps)
-// DesklingShell/Speech/SpeechSequencer.swift (new)
+// LachingShell/Speech/Speaker.swift: `Speaking` + `Speaker` from APP/Channels/Speaker.swift (AVSpeechSynthesizer or an AVAudioPlayer clip; rate maps)
+// LachingShell/Speech/SpeechSequencer.swift (new)
 public struct SpeechPart: Sendable { text: String; clip: URL? }
 @MainActor public final class SpeechSequencer {
     public init(speaker: Speaking)
@@ -199,7 +199,7 @@ public struct SpeechPart: Sendable { text: String; clip: URL? }
     public func speak(_ parts: [SpeechPart], beat: TimeInterval, voiceIdentifier: String?, rate: Double, volume: Double)
     public func stop()                       // cancels a pending beat too
 }
-// DesklingShell/Speech/VoiceLibrary.swift (from APP/Channels/VoiceLibrary.swift; the manifest format is unchanged, format 1)
+// LachingShell/Speech/VoiceLibrary.swift (from APP/Channels/VoiceLibrary.swift; the manifest format is unchanged, format 1)
 @MainActor public final class VoiceLibrary {
     public init(folder: URL?, language: String, allowTesting: Bool, fallbackToSystemVoice: Bool = false)
     public var availableVoices: [VoiceID]; public var isVoiced: Bool; public let mouthFPS: Double
@@ -209,9 +209,9 @@ public struct SpeechPart: Sendable { text: String; clip: URL? }
     public func pendingClipIDs(_ clips: [(id: String, text: String)], voice: VoiceID) -> Set<String>
     public static func hash(_ text: String) -> String
 }
-// DesklingShell/Speech/ChimePlayer.swift: `ChimePlaying` + `ChimePlayer(bundle:)`
+// LachingShell/Speech/ChimePlayer.swift: `ChimePlaying` + `ChimePlayer(bundle:)`
 
-// DesklingCompanionUI
+// LachingCompanionUI
 @MainActor public final class SignalHub { /* APP/Signals/SignalHub.swift; lowBatteryPercent injected */ }
 @MainActor public enum GlyphRenderer { static func image(character:mood:frame:size: 18, accessibilityDescription:) -> NSImage }   // APP/Shell/SunnyGlyph.swift
 extension StatusItemController { public func show(glyph character: RiggedCharacter, mood: Mood, talking: Bool, accessibilityDescription: String) }
@@ -233,7 +233,7 @@ public struct CompanionPalette: Sendable { paper, paper2, card, ink, inkSoft, li
 extension EnvironmentValues { public var companionPalette: CompanionPalette }
 public enum Space { … }   // APP/Theme/Spacing.swift
 public struct SpeechBubble: View; public struct BubbleShape: SwiftUI.Shape; public struct BubbleCountdown: View; public struct StatusPill: View   // APP/Theme/Styles.swift
-public enum ScreenshotCapture { … }   // the generic half of APP/App/ScreenshotMode.swift: DESKLING_SCREENSHOT_MODE / _DIR, in-process capture, make-key retry, fakes
+public enum ScreenshotCapture { … }   // the generic half of APP/App/ScreenshotMode.swift: LACHING_SCREENSHOT_MODE / _DIR, in-process capture, make-key retry, fakes
 ```
 
 ## Two-part jokes end to end
@@ -263,8 +263,8 @@ sunnysays' phrases all have `languages = []`, so nothing changes for it.
 
 ## Vectors: mechanism here, content in the apps
 
-`conformance/companion/`, generated by `Tests/DesklingCompanionTests/Conformance` (flag `DESKLING_WRITE_CONFORMANCE`)
-and replayed by `dotnet/Deskling.Companion.Tests`, over the fixtures in `DesklingTesting`:
+`conformance/companion/`, generated by `Tests/LachingCompanionTests/Conformance` (flag `LACHING_WRITE_CONFORMANCE`)
+and replayed by `dotnet/Laching.Companion.Tests`, over the fixtures in `LachingTesting`:
 
 | File | Over | Content |
 |---|---|---|
@@ -278,10 +278,10 @@ and replayed by `dotnet/Deskling.Companion.Tests`, over the fixtures in `Desklin
 | `characters/fixture-raster.json`, `fixture-raster-poses.json` | `FixtureArt.raster` | image parts; the poses pin `layers[]` (name, the six affine numbers, content kind) |
 
 Each app keeps its content vectors (`phrases.json`, `settings.json`, `picker/`, `quiet/`, `characters/<skin>.json` and
-`-poses.json`, `plurals.json`), generated by its own tests through `DesklingTesting`'s generators (case lists) and
-`ConformanceSuite`, replayed through `Deskling.Testing`. sunnysays' `cadence/` and `desktop.json` retire in its M9.
+`-poses.json`, `plurals.json`), generated by its own tests through `LachingTesting`'s generators (case lists) and
+`ConformanceSuite`, replayed through `Laching.Testing`. sunnysays' `cadence/` and `desktop.json` retire in its M9.
 
-The fixture bank (`Sources/DesklingTesting/Fixtures/FixtureBank.swift`, ~32 phrases with placeholder texts such as
+The fixture bank (`Sources/LachingTesting/Fixtures/FixtureBank.swift`, ~32 phrases with placeholder texts such as
 "Fixture line, general, flavor a"): `general-a1…a3` (weights 1, 3, 5), `general-b1`, `general-c1`, one line per daypart
 and weekday tag, one per event tag plus a second `welcomeBack`, `tune-1`, `skin-raster-only` (skins `["fixture-raster"]`),
 `it-only` (languages `["it"]`), `joke-1` (sequence, buttonPress + general), `joke-it` (sequence, `["it"]`). Flavors
@@ -293,12 +293,12 @@ and weekday tag, one per event tag plus a second `welcomeBack`, `tune-1`, `skin-
 `tools/store-screenshots.py`, `tools/dev-icon.swift`, `tools/hooks/hook.py`, `tools/companion.schema.json`, `tools/tests/`
 (each script's tests over a fixture app), `tools/skills/{localization,add-phrase,add-setting,conformance,voice,windows-port,release-mac,review-invariants}/SKILL.md`.
 Every script reads `companion.json` at the app root (found by walking up from the current directory, or
-`$COMPANION_ROOT`; `python3 deskling/tools/companion.py get mac.scheme`). Each app vendors this repo as a git submodule
-at `deskling/` pinned to the release tag it also pins in SwiftPM and NuGet (the submodule is tools and skills only; the
+`$COMPANION_ROOT`; `python3 laching/tools/companion.py get mac.scheme`). Each app vendors this repo as a git submodule
+at `laching/` pinned to the release tag it also pins in SwiftPM and NuGet (the submodule is tools and skills only; the
 code still comes from the package registries), keeps two-line wrappers so its documented commands keep working, and
 symlinks the generic skills. `verify.sh` fails when the submodule commit, the SwiftPM pin and the NuGet pins disagree.
 
-`companion.json` sections: `name`, `displayName`, `character`, `bundleId`, `devBundleId`, `domain`; `deskling.{tag,path}`;
+`companion.json` sections: `name`, `displayName`, `character`, `bundleId`, `devBundleId`, `domain`; `laching.{tag,path}`;
 `mac.{dir,project,projectSpec,scheme,app,core,coreModule,tests,devAppName,screenshotEnv,derivedData}`;
 `windows.{dir,core,coreTests,app,sln,strings}`; `languages.{source,all}`; `l10n.{catalog,plist,landing,glossaryKeys,keepNames,rulesFile,pluralCategories,linuxPo}`;
 `conformance.{dir,writeFlag,corePackagePath}`; `characters.{design,swiftOut,swiftModule,assets,windowsAssets,moods,paletteFile,mode}`;
@@ -309,8 +309,8 @@ The schema (`tools/companion.schema.json`) is the source of truth from sequence 
 
 ## The 0.5.0 changelog, in advance
 
-Breaking: `SettingsStore` (typed) in `DesklingCore` and `ISettingsStore` typed in `Deskling.Core` (mybackhurts'
+Breaking: `SettingsStore` (typed) in `LachingCore` and `ISettingsStore` typed in `Laching.Core` (mybackhurts'
 Windows port adapts `AppSettings` when it bumps; it stays on 0.4.0 until then); `PurchaseStore` caches through a
-`SettingsStore` (the `UserDefaults` convenience stays); `DesklingStore` depends on `DesklingCore`; `Character` →
-`DrawableCharacter`, `Shape` → `PathShape`. Added: `DesklingCompanion` / `Deskling.Companion`, `DesklingCompanionUI`,
-`Deskling.Testing`, the Shell speech and status item, `tools/`, iOS 17 in `platforms` (if sequence 6 keeps it).
+`SettingsStore` (the `UserDefaults` convenience stays); `LachingStore` depends on `LachingCore`; `Character` →
+`DrawableCharacter`, `Shape` → `PathShape`. Added: `LachingCompanion` / `Laching.Companion`, `LachingCompanionUI`,
+`Laching.Testing`, the Shell speech and status item, `tools/`, iOS 17 in `platforms` (if sequence 6 keeps it).

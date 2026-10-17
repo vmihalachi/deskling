@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/vmihalachi/deskling/tools/companion.schema.json",
+  "$id": "https://github.com/vmihalachi/laching/tools/companion.schema.json",
   "title": "companion.json",
-  "description": "A Deskling companion app's facts for tools/*: names, paths (relative to the file), languages and the tool settings. tools/companion.py validates it with the subset of JSON Schema used here (type, required, properties, additionalProperties, items, enum, pattern, minItems).",
+  "description": "A Laching companion app's facts for tools/*: names, paths (relative to the file), languages and the tool settings. tools/companion.py validates it with the subset of JSON Schema used here (type, required, properties, additionalProperties, items, enum, pattern, minItems).",
   "type": "object",
-  "required": ["name", "displayName", "bundleId", "deskling", "mac", "languages", "l10n"],
+  "required": ["name", "displayName", "bundleId", "laching", "mac", "languages", "l10n"],
   "additionalProperties": false,
   "properties": {
     "$comment": { "type": "string" },
@@ -14,13 +14,13 @@
     "bundleId": { "type": "string" },
     "devBundleId": { "type": "string" },
     "domain": { "type": "string" },
-    "deskling": {
+    "laching": {
       "type": "object",
       "required": ["tag", "path"],
       "additionalProperties": false,
       "properties": {
-        "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "The Deskling release the app pins everywhere." },
-        "path": { "type": "string", "description": "The Deskling submodule (tools and skills)." }
+        "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "The Laching release the app pins everywhere." },
+        "path": { "type": "string", "description": "The Laching submodule (tools and skills)." }
       }
     },
     "mac": {
@@ -70,7 +70,7 @@
     },
     "android": {
       "type": "object",
-      "description": "The Android app (Kotlin), a Gradle build that includes Deskling's kotlin/ (includeBuild). Absent for an app without one.",
+      "description": "The Android app (Kotlin), a Gradle build that includes Laching's kotlin/ (includeBuild). Absent for an app without one.",
       "required": ["dir"],
       "additionalProperties": false,
       "properties": {
@@ -139,7 +139,7 @@
       "additionalProperties": false,
       "properties": {
         "design": { "type": "string", "description": "The folder of skin folders (<skin>/<skin>.rig.json); character.py compiles each." },
-        "swiftOut": { "type": "string", "description": "The folder that gets <Skin>Art.swift for each skin (it imports DesklingCompanion)." },
+        "swiftOut": { "type": "string", "description": "The folder that gets <Skin>Art.swift for each skin (it imports LachingCompanion)." },
         "swiftModule": { "type": "string", "description": "The app module those Swift files are compiled into, for reference." },
         "assets": { "type": "string", "description": "Raster: the asset catalog folder that gets an imageset per layer." },
         "windowsAssets": { "type": "string", "description": "Raster: the folder that gets the scale-200/300 PNGs." },
@@ -260,7 +260,7 @@
             "properties": {
               "capture": { "enum": ["mac", "windows", "ios", "android"] },
               "label": { "type": "string", "description": "The name on the sheets (the platform name)." },
-              "script": { "type": "string", "description": "mac: the screenshot script, relative to the root, with screenshots.sh's options (Deskling's)." },
+              "script": { "type": "string", "description": "mac: the screenshot script, relative to the root, with screenshots.sh's options (Laching's)." },
               "vm": { "enum": ["check-layout", "screenshots"], "description": "windows: vm.sh check-layout, every language side by side (the default), or vm.sh screenshots once per language, for a script without -Only." },
               "device": { "type": "string", "description": "ios: the simulator's device type, by name or identifier." },
               "avd": { "type": "string", "description": "android: the Android Virtual Device's name (avdmanager list avd)." },
@@ -280,7 +280,7 @@
               "additionalProperties": false,
               "properties": {
                 "shot": { "type": "string" },
-                "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "ios: more launch environment for this shot; android: more intent extras (DESKLING_SCREENSHOT_MODE names the app's mode, \"screens\" when absent)." },
+                "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "ios: more launch environment for this shot; android: more intent extras (LACHING_SCREENSHOT_MODE names the app's mode, \"screens\" when absent)." },
                 "camera": { "type": "boolean", "description": "android: the shot needs the front camera, so the emulator gets the host's webcam (-camera-front webcam0)." }
               }
             }

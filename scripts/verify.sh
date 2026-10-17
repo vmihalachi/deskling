@@ -11,7 +11,7 @@
 #   Package.swift, Sources/, Tests/     swift-format lint, swift build + test (macOS), vectors current
 #   dotnet/**, conformance/**           dotnet format whitespace, dotnet build + test
 #   tools/**, Tests/Fixtures/**         the tools' Python tests, fixture art current
-#   tools/landing/**                    @deskling/landing: types, lint, format, tests (Node 24)
+#   tools/landing/**                    @laching/landing: types, lint, format, tests (Node 24)
 #   version sources, site/**, README.md  every version string agrees (always checked)
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -53,7 +53,7 @@ finish() {
 }
 
 swift='^Package\.swift$|^Sources/|^Tests/|^\.swift-format$'
-dotnet='^dotnet/|^conformance/|^Tests/DesklingCompanionTests/Resources/|^Tests/DesklingShellTests/Resources/'
+dotnet='^dotnet/|^conformance/|^Tests/LachingCompanionTests/Resources/|^Tests/LachingShellTests/Resources/'
 tools='^tools/|^Tests/Fixtures/'
 
 vectors_current() {
@@ -77,30 +77,30 @@ landing_check() {
 versions_agree() {
   local expected="${1:-}" found distinct
   found="$( {
-    sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/DesklingCore/Deskling.swift
-    sed -n 's/.*public const string Version = "\([^"]*\)".*/\1/p' dotnet/Deskling.Core/DesklingInfo.cs
-    sed -n 's/.*<DesklingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
-    sed -n 's/^desklingVersion=\(.*\)$/\1/p' kotlin/gradle.properties
-    sed -n 's/.*const val VERSION: String = "\([^"]*\)".*/\1/p' kotlin/core/src/main/kotlin/deskling/core/Deskling.kt
+    sed -n 's/.*public static let version = "\([^"]*\)".*/\1/p' Sources/LachingCore/Laching.swift
+    sed -n 's/.*public const string Version = "\([^"]*\)".*/\1/p' dotnet/Laching.Core/LachingInfo.cs
+    sed -n 's/.*<LachingVersion Condition=[^>]*>\([^<]*\)<.*/\1/p' dotnet/Directory.Build.props
+    sed -n 's/^lachingVersion=\(.*\)$/\1/p' kotlin/gradle.properties
+    sed -n 's/.*const val VERSION: String = "\([^"]*\)".*/\1/p' kotlin/core/src/main/kotlin/laching/core/Laching.kt
     grep -oE 'class="version"><a [^>]*>v[0-9]+\.[0-9]+\.[0-9]+|exact: (<span class="s">)?"[0-9]+\.[0-9]+\.[0-9]+"' site/index.html |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
     grep -oE 'exact: "[0-9]+\.[0-9]+\.[0-9]+"|git tag v[0-9]+\.[0-9]+\.[0-9]+' README.md |
       grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
   } )"
-  # Deskling.swift, DesklingInfo.cs, Directory.Build.props, kotlin/gradle.properties, Kotlin's Deskling.kt, the site's
+  # Laching.swift, LachingInfo.cs, Directory.Build.props, kotlin/gradle.properties, Kotlin's Laching.kt, the site's
   # version label and two install snippets, and the README's install pin and release example.
   if [ "$(printf '%s\n' "$found" | grep -c .)" -ne 10 ]; then
     echo "expected 10 version strings, found:"; printf '%s\n' "$found" | sed 's/^/  /'; return 1
   fi
   distinct="$(printf '%s\n' "$found" | sort -u)"
   if [ "$(printf '%s\n' "$distinct" | wc -l)" -ne 1 ]; then
-    echo "version strings disagree (Deskling.swift, DesklingInfo.cs, Directory.Build.props, kotlin/gradle.properties," \
-      "Deskling.kt, site/index.html, README.md):"
+    echo "version strings disagree (Laching.swift, LachingInfo.cs, Directory.Build.props, kotlin/gradle.properties," \
+      "Laching.kt, site/index.html, README.md):"
     printf '%s\n' "$found" | sort | uniq -c | sed 's/^/  /'; return 1
   fi
   if [ -n "$expected" ] && [ "$distinct" != "$expected" ]; then
-    echo "the version strings say $distinct, not $expected (Deskling.swift, DesklingInfo.cs, Directory.Build.props," \
-      "kotlin/gradle.properties, Deskling.kt, site/index.html, README.md)"
+    echo "the version strings say $distinct, not $expected (Laching.swift, LachingInfo.cs, Directory.Build.props," \
+      "kotlin/gradle.properties, Laching.kt, site/index.html, README.md)"
     return 1
   fi
 }
@@ -134,8 +134,8 @@ if touched "$tools"; then
   else skip "tools tests: needs python3"; fi
 fi
 if touched '^tools/landing/'; then
-  if has npm; then check "@deskling/landing (types, lint, tests)" landing_check
-  else skip "@deskling/landing: needs Node 24 and npm"; fi
+  if has npm; then check "@laching/landing (types, lint, tests)" landing_check
+  else skip "@laching/landing: needs Node 24 and npm"; fi
 fi
 if [ "$fast" = 0 ]; then
   if touched "$swift|^conformance/"; then
@@ -146,10 +146,10 @@ if [ "$fast" = 0 ]; then
   fi
   if touched "$dotnet"; then
     if has dotnet; then
-      check "dotnet build + test (Core)" dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -v q --nologo
-      check "dotnet build + test (Companion)" dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -v q --nologo
-      check "dotnet build + test (Companion.Shell)" dotnet test dotnet/Deskling.Companion.Shell.Tests/Deskling.Companion.Shell.Tests.csproj -v q --nologo
-      check "dotnet build + test (Testing)" dotnet test dotnet/Deskling.Testing.Tests/Deskling.Testing.Tests.csproj -v q --nologo
+      check "dotnet build + test (Core)" dotnet test dotnet/Laching.Core.Tests/Laching.Core.Tests.csproj -v q --nologo
+      check "dotnet build + test (Companion)" dotnet test dotnet/Laching.Companion.Tests/Laching.Companion.Tests.csproj -v q --nologo
+      check "dotnet build + test (Companion.Shell)" dotnet test dotnet/Laching.Companion.Shell.Tests/Laching.Companion.Shell.Tests.csproj -v q --nologo
+      check "dotnet build + test (Testing)" dotnet test dotnet/Laching.Testing.Tests/Laching.Testing.Tests.csproj -v q --nologo
     else skip "dotnet test: needs the .NET SDK"; fi
   fi
 fi

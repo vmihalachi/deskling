@@ -101,7 +101,7 @@ class CheckWinUITests(unittest.TestCase):
         self.assertEqual(self.lint(fine).returncode, 0)
 
     def test_the_app_xaml_sits_next_to_the_project(self):
-        app = '<shell:CompanionApp x:Class="Fixture.App" xmlns:shell="using:Deskling.Windows.Companion">\n</shell:CompanionApp>\n'
+        app = '<shell:CompanionApp x:Class="Fixture.App" xmlns:shell="using:Laching.Windows.Companion">\n</shell:CompanionApp>\n'
         self.write("Proj/Proj.csproj", "<Project />\n")
         nested = self.write("Proj/App/App.xaml", app)
         done = self.lint(nested)

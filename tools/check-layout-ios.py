@@ -3,7 +3,7 @@
 content taller than the screen outside a scroll view, text cut short or pushed off the screen, a screen that couldn't
 be drawn (ScreenshotCapture's checks, `LayoutCheck+iOS.swift`). The iOS twin of check-layout.sh.
 
-    python3 deskling/tools/check-layout-ios.py [--devices se,promax,...] [--only name,name] [--jobs N]
+    python3 laching/tools/check-layout-ios.py [--devices se,promax,...] [--only name,name] [--jobs N]
         [--text-size SIZE] [--app PATH] [--out DIR] [--keep] [language ...]
 
 Defaults: every device below, every language in languages.all, LAYOUT_JOBS (else 4; at least one per device type)
@@ -150,9 +150,9 @@ def run_language(udid: str, bundle: str, device: str, language: str, only: str, 
     env = dict(os.environ)
     env[f"SIMCTL_CHILD_{env_name}"] = only or "all"
     if orientation := DEVICES[device].get("orientation"):
-        env["SIMCTL_CHILD_DESKLING_SCREENSHOT_ORIENTATION"] = orientation
+        env["SIMCTL_CHILD_LACHING_SCREENSHOT_ORIENTATION"] = orientation
     if width := DEVICES[device].get("width"):
-        env["SIMCTL_CHILD_DESKLING_SCREENSHOT_WIDTH"] = str(width)
+        env["SIMCTL_CHILD_LACHING_SCREENSHOT_WIDTH"] = str(width)
     command = ["xcrun", "simctl", "launch", "--console-pty", "--terminate-running-process", udid, bundle,
                "-AppleLanguages", f"({language})", "-AppleLocale", language]
     try:

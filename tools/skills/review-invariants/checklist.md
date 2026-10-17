@@ -1,6 +1,6 @@
 # Review checklist
 
-The rules a Deskling companion app's diff can break without a test failing: the generic part, shared by every app.
+The rules a Laching companion app's diff can break without a test failing: the generic part, shared by every app.
 Each app continues the list in `.agents/review-appendix.md` (its monetization rules, words its copy never uses, its
 palette and type tokens, its parity doc). Paths and names come from `companion.json`. Report only what the diff
 actually breaks. Tooling and docs are out of scope except item 13.
@@ -9,7 +9,7 @@ actually breaks. Tooling and docs are out of scope except item 13.
 
 1. **No camera or microphone, ever.** Nothing starts an `AVCaptureSession`, calls `requestAccess`, uses
    `AVAudioEngine` input or `MediaCapture`, and the entitlements and `Package.appxmanifest` gain no camera,
-   microphone or network capability. Call detection only reads whether devices are in use (Deskling's
+   microphone or network capability. Call detection only reads whether devices are in use (Laching's
    `SystemBusyStateProvider`). Check: added lines matching `AVCapture|requestAccess|AVAudioEngine|MediaCapture|
    device\.camera|device\.microphone|webcam|microphone`.
 2. **No network.** No `URLSession`, `URLRequest`, `NWConnection`, `WKWebView` loading remote URLs, `HttpClient` (C#)
@@ -29,7 +29,7 @@ actually breaks. Tooling and docs are out of scope except item 13.
 5. The core package (`mac.core`) and the Windows core gain no `Date()`, `Timer`, `DispatchQueue`, `NSApp`, SwiftUI,
    AVFoundation, speech, WinUI or `UserDefaults.standard`. Time, randomness and system state come in through
    `PhraseContext`/`Snapshot` values, the `SettingsStore` and injected clocks, providers and random sources.
-6. Cadence numbers, daypart boundaries and the no-repeat window stay in Deskling's constants, not literals in views or
+6. Cadence numbers, daypart boundaries and the no-repeat window stay in Laching's constants, not literals in views or
    the app model.
 7. Behavior the vectors pin (bank, picker cases, quiet timelines, settings, character poses, plurals) changed → the
    vectors are regenerated in the same change and the Windows core follows (`conformance` skill).
@@ -56,9 +56,9 @@ actually breaks. Tooling and docs are out of scope except item 13.
 ## Repo hygiene
 
 13. Generated files change only through their generator: `project.pbxproj` with the XcodeGen spec, the vectors with
-    the Swift code (`deskling/tools/conformance.sh`), `.resw` with the String Catalog (`l10n.py export-windows`), the
-    phrase keys with `phrases.py sync`, sounds with `deskling/tools/synth.py`, the dev icon with `dev-icon.swift`,
-    character art with `deskling/tools/character.py`, the voices folder with `voice.py render`.
+    the Swift code (`laching/tools/conformance.sh`), `.resw` with the String Catalog (`l10n.py export-windows`), the
+    phrase keys with `phrases.py sync`, sounds with `laching/tools/synth.py`, the dev icon with `dev-icon.swift`,
+    character art with `laching/tools/character.py`, the voices folder with `voice.py render`.
 14. Concurrency: code touching the app model, window manager, speaker, `DeliveryPerformer` or `SignalHub` stays on
     `@MainActor`.
 

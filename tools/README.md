@@ -1,14 +1,14 @@
-# Deskling tools
+# Laching tools
 
 Python tools (standard library only, unless noted), shell scripts and agent skills for companion apps built on
-Deskling: localization, phrase sync, recorded voices, character art, sounds, fonts, screenshots, verification and the
+Laching: localization, phrase sync, recorded voices, character art, sounds, fonts, screenshots, verification and the
 agent hook. Every tool reads the app's `companion.json` at its root (found by walking up from the current directory,
 or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.json). No tool names an app.
 
 | Tool | What |
 |---|---|
-| `companion.py` | Loads and validates `companion.json`; `get`, `path`, `root`, `validate`, `env` (paths and path patterns for shell), `pins` (the Deskling version everywhere it's pinned), `bump` (every pin to a release), `link`/`unlink` (build against a Deskling checkout): below, *Moving to a release, or trying one first*. |
-| `bump-apps.sh` | `companion.py bump` in every app checked out next to this Deskling checkout (or the ones named), then each one's `verify.sh --fast`; commits nothing. |
+| `companion.py` | Loads and validates `companion.json`; `get`, `path`, `root`, `validate`, `env` (paths and path patterns for shell), `pins` (the Laching version everywhere it's pinned), `bump` (every pin to a release), `link`/`unlink` (build against a Laching checkout): below, *Moving to a release, or trying one first*. |
+| `bump-apps.sh` | `companion.py bump` in every app checked out next to this Laching checkout (or the ones named), then each one's `verify.sh --fast`; commits nothing. |
 | `l10n.py` | String Catalog gaps, work files for translators, apply with validation, `.resw`/`.po` exports; language-scoped phrases. |
 | `phrases.py` | Keeps the catalog's `phrase.<id>` (and `.n` for jokes) keys in step with `phrases.json`; `check` also reports a phrase whose weight is under 1. |
 | `voice.py`, `voice-review.html` | Records, reviews and publishes the character's voices with ElevenLabs; a clip per joke part. |
@@ -17,7 +17,7 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `fonts.py` | Builds the display faces from pinned variable fonts (`fonts`, plus `fonts.faces` for an upright beside an italic; needs fontTools). |
 | `screenshots.sh`, `store-screenshots.sh`, `store-screenshots.py` | Window captures in light and dark (failing on the problems `ScreenshotCapture` reports: content taller than its window, a shot not drawn or written; `--only` runs hidden, so the Mac stays usable, with `--front` for key windows); App Store images, and Google Play's from the Android captures (`--canvas android-phone` 1080 × 1920 with the caption above the screen, `android-tablet` 2560 × 1600; Play's size limits checked) (needs Pillow). |
 | `check-layout.sh` | `screenshots.sh` in every language (or the ones named), side by side and hidden, naming the languages whose windows don't fit. |
-| `check-layout-android.py`, `avd.py` | The Android app's screens in light and dark (`ScreenshotRun` in `deskling.android`), in every language (or the ones named) on the AVDs of the `screens.platforms` entries captured on android (or `--devices`): each AVD boots once, headless (`avd.py`: `emulator -no-window`, the status bar in demo mode at 09:41), installs the Debug APK (built once, or `--apk`) and runs every language on it, one launch per distinct shot env in screenshot mode with Deskling's intent extras (`DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`, `DESKLING_LANG`, `DESKLING_REGION`), naming the AVD and language of each screen that doesn't fit; `--jobs` emulators at a time (`LAYOUT_JOBS`), `--font-scale 2.0` for the largest text. |
+| `check-layout-android.py`, `avd.py` | The Android app's screens in light and dark (`ScreenshotRun` in `laching.android`), in every language (or the ones named) on the AVDs of the `screens.platforms` entries captured on android (or `--devices`): each AVD boots once, headless (`avd.py`: `emulator -no-window`, the status bar in demo mode at 09:41), installs the Debug APK (built once, or `--apk`) and runs every language on it, one launch per distinct shot env in screenshot mode with Laching's intent extras (`LACHING_SCREENSHOT_MODE`, `LACHING_SCREENS`, `LACHING_LANG`, `LACHING_REGION`), naming the AVD and language of each screen that doesn't fit; `--jobs` emulators at a time (`LAYOUT_JOBS`), `--font-scale 2.0` for the largest text. |
 | `check-layout-ios.py` | The iPhone and iPad app's screens in light and dark (`ScreenshotCapture` on iOS), in every language (or the ones named) on iPhone SE, the largest iPhone, iPad Pro 13" upright, turned and in a Split View third, and the iPhone Duo closed: one launch per language on cloned Simulators side by side (`--jobs`, `LAYOUT_JOBS`), naming the device and language of each screen that doesn't fit (content taller than the screen, text cut short or pushed off it). `--text-size` for Dynamic Type. |
 | `screens.py` | The same screens on the Mac, Windows, iOS and Android in any languages, from one manifest (`screens` in `companion.json`: each canonical screen's shot on each platform): `capture` builds each platform once and runs them side by side (the Mac hidden, `--jobs` languages at a time; Windows in the Parallels VM through `vm.sh check-layout`; iOS on simulators of its own on the newest runtime that runs each device, each language one launch of the app in screenshot mode, as `check-layout-ios.py` runs it; Android on a headless emulator per platform (its `avd`), as `check-layout-android.py` runs it, a shot's `camera` giving the emulator the host's webcam) into `build/screens/<platform>/<lang>/<screen>-<theme>.png`, with every platform's problems in one `problems.txt`; `compare` makes one sheet per screen, language and theme (desktops on top, devices below, one height per row) and an `index.html` to flip through them; `diff --against NAME` and `accept NAME` keep a perceptual hash per image, so a review looks only at what changed. Needs Pillow (re-runs under `/usr/bin/python3` when this Python lacks it). |
 | `install-dev.sh`, `dev-icon.swift` | The Debug build in `~/Applications/<devAppName>.app`; its DEV-banded icon. |
@@ -25,9 +25,9 @@ or `$COMPANION_ROOT`); the schema is [`companion.schema.json`](companion.schema.
 | `verify.sh` | Runs the checks that apply to the changed paths, plus the pin check. |
 | `setup-linux.sh` | Prepares a Linux container (cloud agents): submodules, .NET, landing dependencies, and for an app with an `android` section a JDK 17 and ktlint. |
 | `store/check.py`, `store/push.py`, `store/import.py` | The store listing (`store` in `companion.json`): each field against the stores' limits (with `store.apple.ios`, the iPhone and iPad version page's too; with `store.google`, Google Play's `google.*` fields: title 30, short description 80, full description 4000, each product's name 55 and description 200; no Google side in `push.py`); App Store Connect (text, in-app purchases, screenshots, previews, review notes, and a universal app's iOS page and iPhone and iPad screenshots; `--status` reads only); a Partner Center import folder. |
-| `landing/` | `@deskling/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
+| `landing/` | `@laching/landing`, an npm package (Node 24): a landing page's localized pages, legal pages, sitemap, `_headers` and social cards as Vite plugins. Published to npm by `release.yml`; the app's landing repository depends on it by version. |
 | `windows/companion.targets` | What every companion's WinUI project imports, last: below, *Windows apps*. |
-| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. `-Only` runs hidden (cloaked windows, shot as soon as they have drawn), so the PC stays usable, with `-Front` for active windows, and copies only the shots it names. A Debug build that is packaged (`WindowsPackageType` MSIX, for an app that needs package identity) is registered from its build output as a development package (Developer Mode) and started in it, its settings passed as `DESKLING_SCREENSHOT_…=value` arguments (`ScreenshotCapture.Setting`). |
+| `windows/screenshots.ps1` | The WinUI app's windows in light and dark (`ScreenshotCapture`), in one language (`-Language`), from the Debug build or the Native AOT one (`-Configuration Release`); fails on the problems the run reports, or when the app stops before the end of it. `-Only` runs hidden (cloaked windows, shot as soon as they have drawn), so the PC stays usable, with `-Front` for active windows, and copies only the shots it names. A Debug build that is packaged (`WindowsPackageType` MSIX, for an app that needs package identity) is registered from its build output as a development package (Developer Mode) and started in it, its settings passed as `LACHING_SCREENSHOT_…=value` arguments (`ScreenshotCapture.Setting`). |
 | `windows/check-layout.ps1` | `screenshots.ps1` in every language (or the ones named), side by side (a packaged app's one at a time) and hidden after one build, naming the languages whose text doesn't fit; each language's shots and `problems.txt` in `build/layout-check/<lang>` (or `-Out <folder>`). |
 | `windows/smoke-package.ps1` | Installs a built `.msix` the way a customer gets it and checks it starts (`-Keep` leaves it for the hand checks, `-SideBySide` next to a Store copy); `-CheckOnly` only checks the package is native. |
 | `windows/check-winui.py` | WinUI code that runs in Debug but breaks the Native AOT build or the XAML compiler (each rule in its docstring). |
@@ -45,32 +45,32 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
 ## Adopting the tools in an app
 
-1. **Submodule, pinned to the release.** Vendor Deskling at the tag the app pins in SwiftPM and NuGet:
+1. **Submodule, pinned to the release.** Vendor Laching at the tag the app pins in SwiftPM and NuGet:
 
    ```sh
-   git submodule add https://github.com/vmihalachi/deskling deskling
-   git -C deskling checkout vX.Y.Z && git add deskling
+   git submodule add https://github.com/vmihalachi/laching laching
+   git -C laching checkout vX.Y.Z && git add laching
    ```
 
    The submodule is tools and skills only; the Swift and .NET code still comes from the package registries (the
    Kotlin build is the exception: an Android app includes it from the submodule, see step 7). `scripts/verify.sh`
-   fails whenever the submodule's tag, `deskling.tag`, the core `Package.swift`'s `exact:`, the XcodeGen spec's
-   `exactVersion`, the `Deskling.*` NuGet versions and, with an `android` section, the submodule's
-   `kotlin/gradle.properties` `desklingVersion` disagree (`python3 deskling/tools/companion.py pins` shows them;
+   fails whenever the submodule's tag, `laching.tag`, the core `Package.swift`'s `exact:`, the XcodeGen spec's
+   `exactVersion`, the `Laching.*` NuGet versions and, with an `android` section, the submodule's
+   `kotlin/gradle.properties` `lachingVersion` disagree (`python3 laching/tools/companion.py pins` shows them;
    `companion.py bump` moves them all).
 
 2. **`companion.json`** at the app's root, every section the app has (see the schema and the drafts in
-   `tools/tests/*.companion.json`). Check it: `python3 deskling/tools/companion.py validate`.
+   `tools/tests/*.companion.json`). Check it: `python3 laching/tools/companion.py validate`.
 
 3. **Two-line wrappers**, so the documented commands keep working, e.g. `scripts/verify.sh`:
 
    ```sh
    #!/bin/sh
-   exec "$(dirname "$0")/../deskling/tools/verify.sh" "$@"
+   exec "$(dirname "$0")/../laching/tools/verify.sh" "$@"
    ```
 
    and the same for `setup-linux.sh`, `conformance.sh`, `screenshots.sh`, `check-layout.sh`, `install-dev.sh` (the scheme's post-action);
-   Python tools are called directly (`python3 deskling/tools/l10n.py status`).
+   Python tools are called directly (`python3 laching/tools/l10n.py status`).
 
 4. **The hook.** Claude Code, `.claude/settings.json`:
 
@@ -78,11 +78,11 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
    {
      "hooks": {
        "PreToolUse": [{ "matcher": "Read|Edit|MultiEdit|Write|NotebookEdit|Grep|Bash", "hooks": [
-         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/deskling/tools/hooks/hook.py\" pre", "timeout": 10 }] }],
+         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/laching/tools/hooks/hook.py\" pre", "timeout": 10 }] }],
        "PostToolUse": [{ "matcher": "Edit|MultiEdit|Write|NotebookEdit|Bash", "hooks": [
-         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/deskling/tools/hooks/hook.py\" post", "timeout": 60 }] }],
+         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/laching/tools/hooks/hook.py\" post", "timeout": 60 }] }],
        "Stop": [{ "hooks": [
-         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/deskling/tools/hooks/hook.py\" stop", "timeout": 180 }] }],
+         { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/laching/tools/hooks/hook.py\" stop", "timeout": 180 }] }],
        "SessionStart": [{ "matcher": "startup", "hooks": [
          { "type": "command", "command": "[ \"$CLAUDE_CODE_REMOTE\" != true ] || \"$CLAUDE_PROJECT_DIR/scripts/setup-linux.sh\"", "timeout": 600 }] }]
      }
@@ -91,8 +91,8 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
    Codex, `.codex/config.toml` (`[features] hooks = true`): `PreToolUse`/`PostToolUse` with matcher
    `^(Bash|apply_patch)$` and `Stop`, each running
-   `python3 "$(git rev-parse --show-toplevel)/deskling/tools/hooks/hook.py" <pre|post|stop>`. GitHub Copilot,
-   `.github/hooks/<app>.json`: `PreToolUse` and `PostToolUse` running `python3 deskling/tools/hooks/hook.py pre|post`,
+   `python3 "$(git rev-parse --show-toplevel)/laching/tools/hooks/hook.py" <pre|post|stop>`. GitHub Copilot,
+   `.github/hooks/<app>.json`: `PreToolUse` and `PostToolUse` running `python3 laching/tools/hooks/hook.py pre|post`,
    and for Copilot's cloud coding agent `agentStop` running `hook.py cloud-stop` (the app's `verify.sh` on the branch,
    inside GitHub Actions only). The hook reads the guards, the slow-check table and the parity patterns (`hooks.*`) from `companion.json`, and
    fails open when the file is missing or invalid. It also refuses to load any text file over `hooks.bigFileLines`
@@ -105,7 +105,7 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
    ```sh
    for s in localization add-phrase add-setting conformance voice windows-port release-mac review-invariants; do
-     ln -s "../../deskling/tools/skills/$s" ".agents/skills/$s"
+     ln -s "../../laching/tools/skills/$s" ".agents/skills/$s"
    done
    ```
 
@@ -127,17 +127,17 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
        val file = rootDir.resolve("local.properties")
        if (file.isFile) file.inputStream().use { load(it) }
    }
-   val desklingKotlin = localProperties.getProperty("deskling.kotlin.dir") ?: "../deskling/kotlin"
-   includeBuild(desklingKotlin) {
+   val lachingKotlin = localProperties.getProperty("laching.kotlin.dir") ?: "../laching/kotlin"
+   includeBuild(lachingKotlin) {
        dependencySubstitution {
-           substitute(module("deskling:core")).using(project(":core"))
-           substitute(module("deskling:android")).using(project(":android"))
-           substitute(module("deskling:testing")).using(project(":testing"))
+           substitute(module("laching:core")).using(project(":core"))
+           substitute(module("laching:android")).using(project(":android"))
+           substitute(module("laching:testing")).using(project(":testing"))
        }
    }
    ```
 
-   and `implementation("deskling:core")`, `implementation("deskling:android")`, `testImplementation("deskling:testing")`
+   and `implementation("laching:core")`, `implementation("laching:android")`, `testImplementation("laching:testing")`
    in the modules that use them. `companion.json` gets an `android` section (`dir`, `core`, `app`, `applicationId`,
    `devApplicationId`, `strings`, the `.xml` folder `l10n.py export-android` writes); the hook then runs ktlint over the
    Kotlin files an agent edits (`brew install ktlint`, or `setup-linux.sh` on Linux, which also installs a JDK 17) and
@@ -147,19 +147,19 @@ An app without a phrase bank or a character (a reminder app, say) leaves `charac
 
 ## Moving to a release, or trying one first
 
-**`bump`** moves an app to a release in one go: every pin `pins` lists (`deskling.tag`, the core package's `exact:`, the
-XcodeGen spec's `exactVersion`, each `Deskling.*` NuGet version; the Kotlin build's `desklingVersion` is the submodule's
+**`bump`** moves an app to a release in one go: every pin `pins` lists (`laching.tag`, the core package's `exact:`, the
+XcodeGen spec's `exactVersion`, each `Laching.*` NuGet version; the Kotlin build's `lachingVersion` is the submodule's
 own, so it follows the submodule), the committed `Package.resolved` files, the submodule
-(checked out at the tag) and the landing page's `@deskling/landing`; it regenerates the Xcode project and prints `pins`.
+(checked out at the tag) and the landing page's `@laching/landing`; it regenerates the Xcode project and prints `pins`.
 It refuses a tag origin doesn't have, and changes nothing when the app is already there.
 
 ```sh
-python3 deskling/tools/companion.py bump 0.9.1   # in an app
-tools/bump-apps.sh 0.9.1                         # in the Deskling checkout: every app next to it, then each verify.sh --fast
+python3 laching/tools/companion.py bump 0.9.1   # in an app
+tools/bump-apps.sh 0.9.1                         # in the Laching checkout: every app next to it, then each verify.sh --fast
 ```
 
-- `bump-apps.sh` runs the Deskling checkout's `companion.py`, so it moves an app whose submodule predates `bump`.
-- `@deskling/landing` ships only when `tools/landing` changed, so the landing page gets npm's newest version at or below
+- `bump-apps.sh` runs the Laching checkout's `companion.py`, so it moves an app whose submodule predates `bump`.
+- `@laching/landing` ships only when `tools/landing` changed, so the landing page gets npm's newest version at or below
   the release (a staged version counts once approved: run `bump` again then). Its lockfile follows through the landing
   tool's `install` (`landing.tool`), unless the tool is missing or the landing page has uncommitted dependency changes,
   which `bump` then says.
@@ -168,46 +168,46 @@ tools/bump-apps.sh 0.9.1                         # in the Deskling checkout: eve
   without Xcode, `bump` says what's left.
 - Nothing is staged or committed: commit the app's paths, and the landing page's change inside its own repository.
 
-**`link`** builds an app against a Deskling checkout instead of the release, so a change that spans Deskling and the
+**`link`** builds an app against a Laching checkout instead of the release, so a change that spans Laching and the
 apps can be tried in each of them before one tag covers the batch:
 
 ```sh
-python3 deskling/tools/companion.py link     # ../deskling, next to the app (or: link PATH)
+python3 laching/tools/companion.py link     # ../laching, next to the app (or: link PATH)
 # build and test as usual: xcodebuild, swift test, dotnet build and test
-python3 deskling/tools/companion.py unlink   # before committing
+python3 laching/tools/companion.py unlink   # before committing
 ```
 
-- **Swift:** the XcodeGen spec's and the core package's Deskling become `path:` packages, and the project is
-  regenerated. SwiftPM names a local package after its folder, so keep the checkout's folder named `deskling`.
+- **Swift:** the XcodeGen spec's and the core package's Laching become `path:` packages, and the project is
+  regenerated. SwiftPM names a local package after its folder, so keep the checkout's folder named `laching`.
 - **.NET:** a `Directory.Build.targets` in the Windows folder (created, or added to before its `</Project>`) swaps each
-  `Deskling.*` PackageReference for a ProjectReference to the checkout's `dotnet/<Package>/<Package>.csproj`: no feed,
+  `Laching.*` PackageReference for a ProjectReference to the checkout's `dotnet/<Package>/<Package>.csproj`: no feed,
   no version, nothing to pack, and every build compiles the checkout as it is. The WinUI packages build on Windows
   only, as before.
-- **Kotlin:** `link` writes `deskling.kotlin.dir=<checkout>/kotlin` into the Android folder's git-ignored
+- **Kotlin:** `link` writes `laching.kotlin.dir=<checkout>/kotlin` into the Android folder's git-ignored
   `local.properties` (the line the `settings.gradle.kts` above reads), so the included build is the checkout; `unlink`
   takes the line out again.
 - **While linked, `pins` fails**, and with it `verify.sh` and the pre-commit hook, so a linked app can't be committed;
   `bump` refuses too.
 - **`unlink`** puts back every file `link` changed, byte for byte, and the `Package.resolved` files and the project the
   linked builds rewrote, then regenerates the project. A file edited meanwhile keeps that edit: only the link's own
-  change comes out. The record of the link is in the repository's git folder (`.git/deskling-link`, one per worktree).
-- The tools stay the submodule's: `link` switches the packages, not `deskling/tools`.
+  change comes out. The record of the link is in the repository's git folder (`.git/laching-link`, one per worktree).
+- The tools stay the submodule's: `link` switches the packages, not `laching/tools`.
 
 ## Windows apps
 
-A companion's WinUI 3 app (`windows.app`, on `Deskling.Windows.Companion`) takes its build from the submodule, so every
+A companion's WinUI 3 app (`windows.app`, on `Laching.Windows.Companion`) takes its build from the submodule, so every
 app builds, packages and checks the same way. Its `.csproj` sets its own properties, then imports the targets last:
 
 ```xml
 <PropertyGroup>
-  <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>  <!-- Windows 11, as the Deskling.Windows packages -->
+  <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>  <!-- Windows 11, as the Laching.Windows packages -->
   <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>  <!-- the MSIX's MinVersion -->
   <AssemblyName>MyApp</AssemblyName>
   <CompanionVoiceFolder>..\..\voices\Voice</CompanionVoiceFolder>           <!-- → Voice\<lang>\<voice>\<id>.m4a -->
   <CompanionSoundsFolder>..\..\macos\MyApp\Resources\Sounds</CompanionSoundsFolder>  <!-- → Sounds\*.wav -->
   <CompanionFontsFolder>..\..\macos\MyApp\Resources\Fonts</CompanionFontsFolder>      <!-- → Fonts\*.ttf -->
 </PropertyGroup>
-<Import Project="..\..\deskling\tools\windows\companion.targets" />
+<Import Project="..\..\laching\tools\windows\companion.targets" />
 ```
 
 - **Debug is unpackaged** (`dotnet run --project windows/MyApp.App -p:Platform=x64`): no Developer Mode, no
@@ -222,9 +222,9 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
   WinUI half sits under `#if WINDOWS` (defined for `-windows` target frameworks only). A `net10.0` test project
   (`windows.appTests`) compiles those files by link and reads the app's English `.resw` through `ReswStrings`, so its
   assertions read the real words; `verify.sh` runs it when the app or it changes.
-- **The images** come from the Mac's app icon: `python3 deskling/tools/windows/assets.py` after the icon changes
+- **The images** come from the Mac's app icon: `python3 laching/tools/windows/assets.py` after the icon changes
   (`windows.assets`), and `verify.sh` checks them.
-- **On a Mac, in the Parallels VM.** `deskling/tools/windows/vm.sh build` mirrors the working tree (what git sees,
+- **On a Mac, in the Parallels VM.** `laching/tools/windows/vm.sh build` mirrors the working tree (what git sees,
   uncommitted changes and submodules included) into a Windows VM in Parallels Desktop and builds the app there, Debug,
   for x64 and ARM64, so a Mac change is ported and built in the same session. `screenshots <folder>` runs the
   screenshot script there and copies the PNGs into the Mac folder, `check-layout [lang…]` runs `check-layout.ps1`
@@ -235,12 +235,12 @@ app builds, packages and checks the same way. Its `.csproj` sets its own propert
   is incremental (only changed files travel, `bin` and `obj` stay), and `verify.sh` builds through it when the VM is
   there. The VM needs the .NET SDK, the Visual Studio Build Tools with the x64 and ARM64 C++ tools (Native AOT),
   Developer Mode (screenshots and smoke install packages), Parallels Tools, a user signed in, and the Mac's files
-  shared (Parallels' "All Files", `\\Mac\AllFiles`). `DESKLING_VM`, `DESKLING_VM_SHARE` and `DESKLING_VM_DIR` change the
-  VM's name, the share and the folder the copies go in (`%USERPROFILE%\deskling-vm`).
+  shared (Parallels' "All Files", `\\Mac\AllFiles`). `LACHING_VM`, `LACHING_VM_SHARE` and `LACHING_VM_DIR` change the
+  VM's name, the share and the folder the copies go in (`%USERPROFILE%\laching-vm`).
 - **Wrappers**, as for the shell scripts: `windows/scripts/screenshots.ps1` and `smoke-package.ps1`, e.g.
 
   ```powershell
-  & "$PSScriptRoot/../../deskling/tools/windows/screenshots.ps1" @args
+  & "$PSScriptRoot/../../laching/tools/windows/screenshots.ps1" @args
   exit $LASTEXITCODE
   ```
 

@@ -4,8 +4,8 @@ package that crashes at launch never reaches the Store (mybackhurts' 1.0.1-1.0.3
 first launch while Debug runs were fine). Run it on every package before uploading; the app's windows.yml runs it too.
 Everything app-specific comes from the package's own manifest (its identity, its executable), so it works for any app.
 
-Usage: deskling/tools/windows/smoke-package.ps1 -Package <path to .msix> [-Seconds 20] [-SideBySide] [-Keep]
-       deskling/tools/windows/smoke-package.ps1 -Package <path to .msix> -CheckOnly
+Usage: laching/tools/windows/smoke-package.ps1 -Package <path to .msix> [-Seconds 20] [-SideBySide] [-Keep]
+       laching/tools/windows/smoke-package.ps1 -Package <path to .msix> -CheckOnly
 
 -CheckOnly installs nothing: it fails unless the package holds its executable and no runtimeconfig.json (a Native AOT
 package needs no .NET runtime; a runtimeconfig.json means the packaging took the JIT build's files).

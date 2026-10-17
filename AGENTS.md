@@ -1,10 +1,10 @@
-# AGENTS.md — Deskling
+# AGENTS.md — Laching
 
 Guide for coding agents (Claude Code reads it through `CLAUDE.md`). Humans start at `README.md`.
 
 **What it is:** an MIT Swift package plus .NET packages with the generic parts of a menu bar / tray app:
-pure scheduling (`DesklingCore` / `Deskling.Core`), permission-free system signals, app-shell plumbing, a
-StoreKit store, and the layer a desk companion app is built on (`DesklingCompanion` / `Deskling.Companion`, its UI
+pure scheduling (`LachingCore` / `Laching.Core`), permission-free system signals, app-shell plumbing, a
+StoreKit store, and the layer a desk companion app is built on (`LachingCompanion` / `Laching.Companion`, its UI
 and `tools/`). Used by mybackhurts, sunnysays and Mister Pagliacci. The Swift code is the reference; the C# port replays its
 conformance vectors.
 
@@ -21,9 +21,9 @@ conformance vectors.
 
 ## Where things live
 
-`Sources/Deskling{Core,System,Shell,Companion,CompanionUI,Store,Testing}/` are the Swift products, one folder each,
-with `Tests/<Product>Tests/`; `dotnet/` holds their C# mirrors (`Deskling.Core`, `Deskling.Companion`,
-`Deskling.Companion.Shell`, `Deskling.Testing`, `Deskling.Windows`, `Deskling.Windows.Companion`, their tests and
+`Sources/Laching{Core,System,Shell,Companion,CompanionUI,Store,Testing}/` are the Swift products, one folder each,
+with `Tests/<Product>Tests/`; `dotnet/` holds their C# mirrors (`Laching.Core`, `Laching.Companion`,
+`Laching.Companion.Shell`, `Laching.Testing`, `Laching.Windows`, `Laching.Windows.Companion`, their tests and
 `Fixture.App`); `conformance/` the generated vectors (never hand-edit); `tools/` the companion apps' tools;
 `scripts/` the repo's own scripts; `plans/` the released designs' record. The folder-by-folder map, with what each
 product imports and what runs where, is `docs/layout.md`.
@@ -31,17 +31,17 @@ product imports and what runs where, is `docs/layout.md`.
 ## Commands
 
 ```sh
-swift build && swift test                      # needs macOS (DesklingSystem/Shell/Store import AppKit, CoreAudio, StoreKit)
-DESKLING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'   # or scripts/conformance.sh
+swift build && swift test                      # needs macOS (LachingSystem/Shell/Store import AppKit, CoreAudio, StoreKit)
+LACHING_WRITE_CONFORMANCE=1 swift test --filter 'ConformanceTests/testWriteVectors'   # or scripts/conformance.sh
 xcrun swift-format lint -r --strict --configuration .swift-format Sources Tests
-cd dotnet && dotnet test Deskling.Core.Tests   # anywhere with the .NET 10 SDK (Deskling.Windows builds on Windows only)
-cd dotnet && dotnet test Deskling.Companion.Tests   # the companion vectors, the same anywhere
-cd dotnet && dotnet test Deskling.Companion.Shell.Tests   # the companion shell's logic, the same anywhere
-cd dotnet && dotnet test Deskling.Testing.Tests   # the mocks, the conformance helpers and the fixtures, the same anywhere
-cd dotnet && dotnet test Deskling.Windows.Companion.Tests   # Windows only: the speaker, the chime and the Windows shell's services
+cd dotnet && dotnet test Laching.Core.Tests   # anywhere with the .NET 10 SDK (Laching.Windows builds on Windows only)
+cd dotnet && dotnet test Laching.Companion.Tests   # the companion vectors, the same anywhere
+cd dotnet && dotnet test Laching.Companion.Shell.Tests   # the companion shell's logic, the same anywhere
+cd dotnet && dotnet test Laching.Testing.Tests   # the mocks, the conformance helpers and the fixtures, the same anywhere
+cd dotnet && dotnet test Laching.Windows.Companion.Tests   # Windows only: the speaker, the chime and the Windows shell's services
 dotnet run --project dotnet/Fixture.App        # Windows only: the fixture app, for the checks by hand
 scripts/fixture-screenshots.ps1 [-Only home]   # Windows only: the fixture's windows to PNGs, light and dark; fails on layout problems (-Only runs hidden; -NoBuild to repeat)
-python3 tools/windows/check-winui.py dotnet/Fixture.App dotnet/Deskling.Windows.Companion   # the WinUI traps under Native AOT
+python3 tools/windows/check-winui.py dotnet/Fixture.App dotnet/Laching.Windows.Companion   # the WinUI traps under Native AOT
 dotnet format whitespace dotnet --folder       # C# style (dotnet/.editorconfig)
 python3 tools/tests/run.py                     # the tools' tests
 scripts/verify.sh                              # runs what applies to your changes; --all for everything
@@ -56,7 +56,7 @@ change reaches `master` only through a pull request.
 
 ## Planned work
 
-Planned work lives in [GitHub Issues](https://github.com/vmihalachi/deskling/issues), not in files (`gh issue list`,
+Planned work lives in [GitHub Issues](https://github.com/vmihalachi/laching/issues), not in files (`gh issue list`,
 `gh issue view N`). Read the issue before starting and work only on what it says; a `decision` issue waits for the
 owner's choice. Comment what you found as you go, tick the checkboxes, close it from the commit (`Fixes #N`).
 Something found along the way is a new issue, not a note in a file. The labels and the shape of an issue:
@@ -81,9 +81,9 @@ The short form; the full rules with their examples are in `docs/conventions.md`.
 
 - **Public API is deliberate:** every public type gets a doc comment (what it does, needs and never does); keep the
   type names mybackhurts already uses.
-- **Swift 6, strict concurrency, macOS 14+, no dependencies.** `DesklingCore` is Foundation-only and
-  `DesklingCompanion` Foundation and Observation only (both build on Linux); AppKit, SwiftUI, CoreAudio,
-  AVFoundation, IOKit and Carbon stay in `DesklingSystem`, `DesklingShell` or `DesklingCompanionUI`.
+- **Swift 6, strict concurrency, macOS 14+, no dependencies.** `LachingCore` is Foundation-only and
+  `LachingCompanion` Foundation and Observation only (both build on Linux); AppKit, SwiftUI, CoreAudio,
+  AVFoundation, IOKit and Carbon stay in `LachingSystem`, `LachingShell` or `LachingCompanionUI`.
 - **Package code never names an app** and ships no strings: apps inject their bank, defaults, skins, palette,
   voices and every label (`Text`, string or copy struct); `tools/` reads everything app-specific from `companion.json`.
 - **No permission prompts, no network.**
@@ -91,8 +91,8 @@ The short form; the full rules with their examples are in `docs/conventions.md`.
   byte-identical, a unit test, a vector case and the C# port in the same change. `conformance/companion` pins
   mechanism over fixtures; each app pins its own content.
 - **Rasters never shear:** rotation, translation and uniform scale only; pose vectors pin affines, never pixels.
-- **C# mirrors Swift** folder for folder and file for file; the deviations (the store under `Deskling.Core/Store/`,
-  `Deskling.Testing`'s own layout, the companion shell mirrored by role) are marked in `docs/layout.md`. Source-generated
+- **C# mirrors Swift** folder for folder and file for file; the deviations (the store under `Laching.Core/Store/`,
+  `Laching.Testing`'s own layout, the companion shell mirrored by role) are marked in `docs/layout.md`. Source-generated
   JSON only: the apps publish with Native AOT.
 - **Versioning:** SemVer, one `vX.Y.Z` tag for every side, a CHANGELOG line per user-visible change under
   *Unreleased* (`**Breaking.**` on a breaking one). Releases are automatic: on every push to `master`, `release.yml`

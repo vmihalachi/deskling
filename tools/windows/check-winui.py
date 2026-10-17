@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Fails on WinUI code that builds and runs in Debug but breaks a companion app's Store build or its XAML compiler.
-Each rule cost an app a release or a day (mybackhurts first, then Deskling's fixture and the companions):
+Each rule cost an app a release or a day (mybackhurts first, then Laching's fixture and the companions):
 
 - Casting an untyped XAML object: `(Style)Application.Current.Resources[key]`, `GetTemplateChild(...) as T`,
   `VisualTreeHelper.GetParent(...) is T`, `AppWindow.Presenter is OverlappedPresenter`, `(Brush)e.NewValue` or
   `(Brush?)GetValue(...)` for a property holding a XAML object. Under Native AOT (every Store package) the object can
-  arrive wrapped as a base type, so the cast throws and `as`/`is` quietly fail. Use `XamlCast.As<T>` (Deskling.Windows).
+  arrive wrapped as a base type, so the cast throws and `as`/`is` quietly fail. Use `XamlCast.As<T>` (Laching.Windows).
 - A Style setting a shape's Data, Points or StrokeDashArray: the value is one object that WinUI uses for one element
   only, so repeated shapes come out blank. Set it on each element.
 - An element named `Language` (it hides FrameworkElement.Language in the generated code), and an `x:Bind` function
@@ -14,7 +14,7 @@ Each rule cost an app a release or a day (mybackhurts first, then Deskling's fix
   the ApplicationDefinition, and elsewhere the app starts without its XAML type information and stops at the first
   custom type (XamlParseException 0x802B000A, no message).
 
-Usage: python3 deskling/tools/windows/check-winui.py [files or folders...]
+Usage: python3 laching/tools/windows/check-winui.py [files or folders...]
        (none: the app in companion.json's windows.dir/windows.app)
 Silence a line that is fine with a trailing `winui-check: ok` comment saying why.
 """
@@ -86,7 +86,7 @@ def main(args: list[str]) -> int:
     for problem in problems:
         print(problem)
     if problems:
-        print(f"{len(problems)} WinUI problem(s); deskling/tools/windows/check-winui.py says why.")
+        print(f"{len(problems)} WinUI problem(s); laching/tools/windows/check-winui.py says why.")
         return 1
     print(f"ok: {len(files)} WinUI files")
     return 0

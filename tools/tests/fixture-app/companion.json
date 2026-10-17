@@ -6,7 +6,7 @@
   "bundleId": "app.fixture",
   "domain": "fixture.example",
   "devBundleId": "app.fixture.dev",
-  "deskling": { "tag": "v0.5.0", "path": "deskling" },
+  "laching": { "tag": "v0.5.0", "path": "laching" },
   "mac": {
     "dir": "macos",
     "project": "Fixture.xcodeproj",
@@ -17,7 +17,7 @@
     "coreModule": "FixtureCore",
     "tests": "FixtureTests",
     "devAppName": "Fixture Dev",
-    "screenshotEnv": "DESKLING_SCREENSHOT_MODE",
+    "screenshotEnv": "LACHING_SCREENSHOT_MODE",
     "derivedData": "macos/build/dd.noindex"
   },
   "windows": {

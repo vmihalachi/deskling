@@ -1,4 +1,4 @@
-using Deskling.Windows.Companion.Views;
+using Laching.Windows.Companion.Views;
 using Microsoft.UI.Xaml.Controls;
 
 namespace FixtureApp.Views;

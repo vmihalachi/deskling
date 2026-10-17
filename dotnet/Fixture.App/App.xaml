@@ -2,7 +2,7 @@
     x:Class="FixtureApp.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:shell="using:Deskling.Windows.Companion.Shell">
+    xmlns:shell="using:Laching.Windows.Companion.Shell">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

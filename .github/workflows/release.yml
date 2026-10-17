@@ -1,7 +1,7 @@
 name: Release
 
 # Every push to master that touches CHANGELOG.md or the version releases what it brought, so nobody tags by hand:
-# scripts/release.sh plan decides. A change that bumped the version (Deskling.swift and the seven other strings, with
+# scripts/release.sh plan decides. A change that bumped the version (Laching.swift and the seven other strings, with
 # its CHANGELOG.md section) is tagged at the commit that bumped it; otherwise entries under CHANGELOG.md's Unreleased
 # heading get the next version (a patch, or a minor while 0.x when one says **Breaking**), committed to master by
 # scripts/release.sh bump, then tagged. Merges that land while a release runs go out together in the next one (one run
@@ -9,13 +9,13 @@ name: Release
 # and releases that commit as before; a manual run without one does what a push does.
 #
 # Then it packs the NuGet packages, pushes them to NuGet.org through Trusted Publishing (OIDC: no stored key;
-# nuget.org → your account → Trusted Publishing → a policy for repository vmihalachi/deskling and workflow file
+# nuget.org → your account → Trusted Publishing → a policy for repository vmihalachi/laching and workflow file
 # release.yml, plus the NUGET_USER repository variable set to your nuget.org username) and makes the GitHub release
-# with the matching CHANGELOG section. The Swift package needs nothing more than the tag itself; @deskling/landing
+# with the matching CHANGELOG section. The Swift package needs nothing more than the tag itself; @laching/landing
 # (tools/landing) is staged on npm at the release's version for an owner to approve, when tools/landing changed since
 # the version npm has (see the version and npm jobs). Before it tags or packs anything, `scripts/verify.sh --version`
-# checks the version against the pinned version strings (Deskling.swift, DesklingInfo.cs, Directory.Build.props,
-# site/index.html, README.md) and the CHANGELOG.md section, so no package ships with a Deskling.version that says
+# checks the version against the pinned version strings (Laching.swift, LachingInfo.cs, Directory.Build.props,
+# site/index.html, README.md) and the CHANGELOG.md section, so no package ships with a Laching.version that says
 # otherwise. Tags pushed with the workflow's token start no other workflow, so this run carries the release through.
 on:
   push:
@@ -23,7 +23,7 @@ on:
       - master
     paths:
       - "CHANGELOG.md"
-      - "Sources/DesklingCore/Deskling.swift"
+      - "Sources/LachingCore/Laching.swift"
     tags:
       - "v*"
   workflow_dispatch:
@@ -46,7 +46,7 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  # Decides what to release and tags it (committing the bump first when there is one), and whether @deskling/landing
+  # Decides what to release and tags it (committing the bump first when there is one), and whether @laching/landing
   # ships. release is false when nothing is waiting, and every other job skips.
   version:
     runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
             existing=$(git ls-remote --tags origin "refs/tags/v$1^{}" | cut -f1)
             [ -n "$existing" ] || existing=$(git ls-remote --tags origin "refs/tags/v$1" | cut -f1)
             if [ -z "$existing" ]; then
-              git tag -a "v$1" -m "Deskling $1" "$2" && git push origin "v$1"
+              git tag -a "v$1" -m "Laching $1" "$2" && git push origin "v$1"
             elif [ "$existing" != "$2" ]; then
               echo "v$1 already exists at $existing (tags are protected and never move): release the next version"
               return 1
@@ -138,14 +138,14 @@ jobs:
           out version "$version"
           out ref "$sha"
 
-      # @deskling/landing ships only when tools/landing changed since the version npm has, so its versions skip the
+      # @laching/landing ships only when tools/landing changed since the version npm has, so its versions skip the
       # releases that leave it alone. Compared with npm rather than the previous tag: a release whose landing was never
       # staged or approved is caught up by the next one, and a re-run after the approval stages nothing twice.
       - id: landing
         name: Whether tools/landing changed since npm's version
         if: steps.plan.outputs.release == 'true'
         run: |
-          published=$(npm view @deskling/landing version 2>/dev/null || true)
+          published=$(npm view @laching/landing version 2>/dev/null || true)
           if [ -z "$published" ]; then
             changed=true; why="npm has no version of it (or didn't answer)"
           elif ! git rev-parse -q --verify "refs/tags/v$published" >/dev/null; then
@@ -156,9 +156,9 @@ jobs:
             changed=true; why="tools/landing changed since $published, the version on npm"
           fi
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
-          echo "@deskling/landing: $why" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "@laching/landing: $why" | tee -a "$GITHUB_STEP_SUMMARY"
 
-  # Deskling.Core, Deskling.Companion, Deskling.Companion.Shell and Deskling.Testing: tests and the packages, on Linux.
+  # Laching.Core, Laching.Companion, Laching.Companion.Shell and Laching.Testing: tests and the packages, on Linux.
   core:
     needs: version
     if: needs.version.outputs.release == 'true'
@@ -174,15 +174,15 @@ jobs:
 
       - name: Test
         run: |
-          dotnet test dotnet/Deskling.Core.Tests/Deskling.Core.Tests.csproj -c Release
-          dotnet test dotnet/Deskling.Companion.Tests/Deskling.Companion.Tests.csproj -c Release
-          dotnet test dotnet/Deskling.Companion.Shell.Tests/Deskling.Companion.Shell.Tests.csproj -c Release
+          dotnet test dotnet/Laching.Core.Tests/Laching.Core.Tests.csproj -c Release
+          dotnet test dotnet/Laching.Companion.Tests/Laching.Companion.Tests.csproj -c Release
+          dotnet test dotnet/Laching.Companion.Shell.Tests/Laching.Companion.Shell.Tests.csproj -c Release
 
-      - name: Pack Deskling.Core, Deskling.Companion, Deskling.Companion.Shell, Deskling.Testing
+      - name: Pack Laching.Core, Laching.Companion, Laching.Companion.Shell, Laching.Testing
         run: |
-          for project in Deskling.Core Deskling.Companion Deskling.Companion.Shell Deskling.Testing; do
+          for project in Laching.Core Laching.Companion Laching.Companion.Shell Laching.Testing; do
             dotnet pack "dotnet/$project/$project.csproj" -c Release \
-              -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+              -p:LachingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
           done
 
       - uses: actions/upload-artifact@v7
@@ -190,7 +190,7 @@ jobs:
           name: nupkg-core
           path: dotnet/artifacts/*.nupkg
 
-  # Deskling.Windows and Deskling.Windows.Companion need the Windows App SDK's MakePri.exe, so they test and pack on
+  # Laching.Windows and Laching.Windows.Companion need the Windows App SDK's MakePri.exe, so they test and pack on
   # Windows.
   windows:
     needs: version
@@ -207,15 +207,15 @@ jobs:
 
       - name: Test
         run: |
-          dotnet test dotnet/Deskling.Windows.Tests/Deskling.Windows.Tests.csproj -c Release
-          dotnet test dotnet/Deskling.Windows.Companion.Tests/Deskling.Windows.Companion.Tests.csproj -c Release
+          dotnet test dotnet/Laching.Windows.Tests/Laching.Windows.Tests.csproj -c Release
+          dotnet test dotnet/Laching.Windows.Companion.Tests/Laching.Windows.Companion.Tests.csproj -c Release
 
-      - name: Pack Deskling.Windows, Deskling.Windows.Companion
+      - name: Pack Laching.Windows, Laching.Windows.Companion
         shell: bash
         run: |
-          for project in Deskling.Windows Deskling.Windows.Companion; do
+          for project in Laching.Windows Laching.Windows.Companion; do
             dotnet pack "dotnet/$project/$project.csproj" -c Release \
-              -p:DesklingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
+              -p:LachingVersion=${{ needs.version.outputs.version }} -o dotnet/artifacts
           done
 
       - uses: actions/upload-artifact@v7
@@ -223,7 +223,7 @@ jobs:
           name: nupkg-windows
           path: dotnet/artifacts/*.nupkg
 
-  # @deskling/landing (tools/landing) at the tag's version: tested and packed here, staged on npm by `npm`. Skipped,
+  # @laching/landing (tools/landing) at the tag's version: tested and packed here, staged on npm by `npm`. Skipped,
   # with `npm`, when tools/landing is unchanged since npm's version.
   landing:
     needs: version
@@ -254,9 +254,9 @@ jobs:
           name: npm-landing
           path: npm/*.tgz
 
-  # @deskling/landing to npm through Trusted Publishing (OIDC: no stored token), staged rather than published: nothing
+  # @laching/landing to npm through Trusted Publishing (OIDC: no stored token), staged rather than published: nothing
   # goes live until an owner approves it with 2FA (npmjs.com → the package → Staged, or `npm stage approve <id>`).
-  # npmjs.com holds one trusted publisher for the package: repository vmihalachi/deskling, workflow release.yml,
+  # npmjs.com holds one trusted publisher for the package: repository vmihalachi/laching, workflow release.yml,
   # environment npm, stage publish only. Its own job, so only it can mint the token; re-run it if it fails.
   npm:
     needs: [version, core, windows, landing]
@@ -277,15 +277,15 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Stage @deskling/landing
+      - name: Stage @laching/landing
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           npm install -g npm@^11.15.0  # staged publishing
           npm stage publish ./npm/*.tgz --access public --provenance  # ./: a bare npm/… reads as a GitHub repository
           {
-            echo "@deskling/landing@$VERSION is staged on npm. Approve it with 2FA on npmjs.com (the package's Staged tab)"
-            echo "or with \`npm stage list @deskling/landing\` and \`npm stage approve <id>\`."
+            echo "@laching/landing@$VERSION is staged on npm. Approve it with 2FA on npmjs.com (the package's Staged tab)"
+            echo "or with \`npm stage list @laching/landing\` and \`npm stage approve <id>\`."
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Runs when the landing was skipped as well as when it succeeded.
@@ -299,7 +299,7 @@ jobs:
       contents: write
       id-token: write
     env:
-      DESKLING_VERSION: ${{ needs.version.outputs.version }}
+      LACHING_VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -331,7 +331,7 @@ jobs:
         run: |
           ls -l dotnet/artifacts
           if [ -z "$NUGET_API_KEY" ]; then
-            echo "::warning::Not pushed to NuGet.org: set the NUGET_USER repository variable to your nuget.org username and add a Trusted Publishing policy there for vmihalachi/deskling, workflow release.yml."
+            echo "::warning::Not pushed to NuGet.org: set the NUGET_USER repository variable to your nuget.org username and add a Trusted Publishing policy there for vmihalachi/laching, workflow release.yml."
             exit 0
           fi
           dotnet nuget push "dotnet/artifacts/*.nupkg" --api-key "$NUGET_API_KEY" \
@@ -346,7 +346,7 @@ jobs:
 
       - name: Release notes from CHANGELOG.md
         run: |
-          awk -v v="$DESKLING_VERSION" '
+          awk -v v="$LACHING_VERSION" '
             /^## / { on = ($2 == v || $2 == "[" v "]") ; next }
             on { print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
           [ -s "$RUNNER_TEMP/notes.md" ] || echo "See CHANGELOG.md." > "$RUNNER_TEMP/notes.md"
@@ -357,9 +357,9 @@ jobs:
         run: |
           assets=(dotnet/artifacts/*.nupkg)
           if [ -d npm ]; then assets+=(npm/*.tgz); fi
-          if gh release view "v$DESKLING_VERSION" >/dev/null 2>&1; then
-            gh release upload "v$DESKLING_VERSION" "${assets[@]}" --clobber
+          if gh release view "v$LACHING_VERSION" >/dev/null 2>&1; then
+            gh release upload "v$LACHING_VERSION" "${assets[@]}" --clobber
           else
-            gh release create "v$DESKLING_VERSION" "${assets[@]}" --title "v$DESKLING_VERSION" \
+            gh release create "v$LACHING_VERSION" "${assets[@]}" --title "v$LACHING_VERSION" \
               --notes-file "$RUNNER_TEMP/notes.md"
           fi

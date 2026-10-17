@@ -93,7 +93,7 @@ export function socialAssets(options: OgOptions) {
 export function socialAssetsPlugin(options: OgOptions): Plugin {
   let assets: Map<string, Buffer> | undefined;
   return {
-    name: "deskling-landing-social-assets",
+    name: "laching-landing-social-assets",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const name = req.url?.split("?")[0]?.replace(/^\//, "");

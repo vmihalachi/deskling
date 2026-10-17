@@ -1,10 +1,12 @@
 # Changelog
 
-All notable changes to Deskling. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+All notable changes to Laching. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses [Semantic Versioning](https://semver.org/). One tag (`vX.Y.Z`) versions the Swift
 package and the NuGet packages together.
 
 ## Unreleased
+
+- **Breaking.** Rename the project and all packages to Laching.
 
 ## 0.12.6 - 2026-10-17
 
@@ -25,7 +27,7 @@ package and the NuGet packages together.
 
 ## 0.12.4 - 2026-10-17
 
-- **Kotlin (`deskling.core`)**: `ReminderScheduler.upcomingReminders(from, until, limit)`, the Swift projection an
+- **Kotlin (`laching.core`)**: `ReminderScheduler.upcomingReminders(from, until, limit)`, the Swift projection an
   app that doesn't run between reminders schedules ahead from (vmihalachi/mybackhurts#51): the dates `tick()` would
   fire with no idle or busy input, through quiet hours, inactive hours and days and a pause that ends in the range,
   leaving the scheduler as it was. `UpcomingRemindersTests` ports the Swift cases.
@@ -41,25 +43,25 @@ package and the NuGet packages together.
 
 - **Kotlin (`kotlin/`)**: the third implementation, for Android (vmihalachi/mybackhurts#54): a Gradle build of its
   own (`:core`, `:android`, `:testing`; Gradle 9, AGP 9.4, Kotlin 2.4 on a JDK 17, `gradle.properties` carrying
-  `desklingVersion`, ktlint for the style) that an app includes with `includeBuild` and dependency substitution
-  (`deskling:core`, `deskling:android`, `deskling:testing`; `tools/README.md` step 7). Nothing is published. No
+  `lachingVersion`, ktlint for the style) that an app includes with `includeBuild` and dependency substitution
+  (`laching:core`, `laching:android`, `laching:testing`; `tools/README.md` step 7). Nothing is published. No
   Companion in Kotlin until a companion app goes to Android (`docs/layout.md`).
-- **Kotlin (`deskling.core`)**: pure JVM (kotlinx-serialization-json): `ReminderScheduler` with `SchedulerConfig`,
+- **Kotlin (`laching.core`)**: pure JVM (kotlinx-serialization-json): `ReminderScheduler` with `SchedulerConfig`,
   `SchedulerState`, `Clock`, the idle and busy providers and the decisions, ported file by file from
-  `Deskling.Core/Scheduling` and checked against the Swift; `SplitMix64`; `LocalizedKey`, `PluralRules` and
+  `Laching.Core/Scheduling` and checked against the Swift; `SplitMix64`; `LocalizedKey`, `PluralRules` and
   `ResourceNames`; `SettingsStore`; `PurchaseStore`, `StoreBackend`, `ProductCatalog` and `MockStoreBackend`; the
   drawing math (`SvgPath`, `Wobble`, `Keyframes`, `Geometry`), which returns point lists the app draws.
-- **Kotlin (`deskling.core` tests)**: `SchedulerConformanceTests` replays every `conformance/scheduler` vector
-  (walking up from the working directory to `conformance/`, as `Deskling.Testing` does); the SplitMix64, plural,
+- **Kotlin (`laching.core` tests)**: `SchedulerConformanceTests` replays every `conformance/scheduler` vector
+  (walking up from the working directory to `conformance/`, as `Laching.Testing` does); the SplitMix64, plural,
   settings, store and drawing tests ported from the Swift and C# suites.
-- **Kotlin (`deskling.android`)**: an Android library (minSdk 26, compileSdk 36): `PlayBillingBackend` (a
+- **Kotlin (`laching.android`)**: an Android library (minSdk 26, compileSdk 36): `PlayBillingBackend` (a
   `StoreBackend` on Play Billing), `SharedPreferencesSettingsStore`, `ReminderAlarms` (exact when allowed, else
   inexact, both while idle), `ReminderNotifications` (channel, builder over injected copy and actions, the delete
   intent), `ReduceMotion`, and `ScreenshotRun` with `LaunchContext`: the Android `ScreenshotCapture`, driven by the
-  intent extras `DESKLING_SCREENSHOT_MODE`, `DESKLING_SCREENS`, `DESKLING_LANG` and `DESKLING_REGION` (the Mac's env
+  intent extras `LACHING_SCREENSHOT_MODE`, `LACHING_SCREENS`, `LACHING_LANG` and `LACHING_REGION` (the Mac's env
   names), drawing each screen in light and dark into `files/screens/` with `problems.txt` and `done`.
-- **Kotlin (`deskling.testing`)**: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `MockStoreBackend` and
-  `ConformanceRoot`, as `Deskling.Testing`.
+- **Kotlin (`laching.testing`)**: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `MockStoreBackend` and
+  `ConformanceRoot`, as `Laching.Testing`.
 - **Tools (`companion.schema.json`)**: an `android` section (`dir`, `core`, `app`, `applicationId` defaulting to
   `bundleId`, `devApplicationId` to `devBundleId`, `strings`: where `export-android` writes, replacing
   `l10n.androidStrings`, kept as an alias), `hooks.androidUI`, `store.google` (`screenshotCount`, `locales`),
@@ -93,11 +95,11 @@ package and the NuGet packages together.
   (2560 × 1600, the landscape layout), into `<store.out>/<canvas>/<language>`; `screenshots.store.canvases` overrides
   a size, and every Android image is checked against Play's limits (each side 320–3840 px, no side more than twice
   the other).
-- **Tools (`companion.py`)**: `link` writes `deskling.kotlin.dir=<checkout>/kotlin` into `<android.dir>/local.properties`
+- **Tools (`companion.py`)**: `link` writes `laching.kotlin.dir=<checkout>/kotlin` into `<android.dir>/local.properties`
   (git-ignored; the app's `settings.gradle.kts` reads it before the submodule's build) and `unlink` removes it;
   `pins` reads the submodule's `kotlin/gradle.properties` too.
 - **Scripts (`release.sh`, `verify.sh`)**: the version places gain `kotlin/gradle.properties` and
-  `kotlin/core/src/main/kotlin/deskling/core/Deskling.kt`.
+  `kotlin/core/src/main/kotlin/laching/core/Laching.kt`.
 - **Tools (`README.md`)**: step 7, Android apps: the `includeBuild` snippet, the `local.properties` override, ktlint
   in the hook; the Android rows of the tool table.
 - **CI (`kotlin.yml`)**: on push and PR touching `kotlin/**` or `conformance/**`: ktlint, `:core:test`,
@@ -121,7 +123,7 @@ package and the NuGet packages together.
 
 ## 0.12.0 - 2026-10-16
 
-- **CompanionUI (`ScreenshotCapture`)**: on iOS, `DESKLING_SCREENSHOT_HOLD` names a Darwin notification: after
+- **CompanionUI (`ScreenshotCapture`)**: on iOS, `LACHING_SCREENSHOT_HOLD` names a Darwin notification: after
   drawing each shot, the run prints `hold <file name>` and waits for it (`xcrun simctl spawn <device> notifyutil -p
   <name>`, at most `holdTimeout`, 2 minutes), so a script can take the Simulator's own screenshot of the settled screen,
   status bar included, in the same launch: App Store screenshots without one launch per screen.
@@ -138,8 +140,8 @@ package and the NuGet packages together.
   moves to `ScreenshotCapture+macOS.swift`. On iOS, `capture(_:to:timeout:)` draws the key window (sheets and covers
   included) once it has settled, comparing small drawings a frame apart instead of sleeping, and returns whether it
   had; `setAppearance(_:)` turns every window light or dark; `prepareWindow()` turns the window to landscape
-  (`DESKLING_SCREENSHOT_ORIENTATION`; on an iPad, whose windowed multitasking won't turn an app, the window takes the
-  turned screen's size) or narrows it to a Split View width (`DESKLING_SCREENSHOT_WIDTH`, compact under 678 pt).
+  (`LACHING_SCREENSHOT_ORIENTATION`; on an iPad, whose windowed multitasking won't turn an app, the window takes the
+  turned screen's size) or narrows it to a Split View width (`LACHING_SCREENSHOT_WIDTH`, compact under 678 pt).
   `LayoutCheck` on iOS reports SwiftUI content taller than its screen outside a scroll view (`overflows(in:)`), what
   is pushed past the safe area outside one (`offScreen(in:)`, from the accessibility frames, for screens built on a
   `GeometryReader`), SwiftUI text cut short (`truncatedText(in:)`: each static text measured in the font
@@ -169,7 +171,7 @@ package and the NuGet packages together.
   the app renders more. `windows/screenshots.ps1` runs a packaged Debug build (`WindowsPackageType` MSIX, for an app
   that needs package identity): it registers the build output as a development package (removing the app's other
   development registrations, never a Store install), starts the app in it and passes the run's settings as
-  `DESKLING_SCREENSHOT_…=value` arguments, since a start in a package carries no environment. It finds `companion.json`
+  `LACHING_SCREENSHOT_…=value` arguments, since a start in a package carries no environment. It finds `companion.json`
   above its own folder too, so an app's wrapper runs from anywhere, gives a run 10 minutes instead of 5, and shows
   the build's errors when it fails instead of only saying so.
 - **Windows.Companion (`ScreenshotCapture`)**: a run's settings come from the environment or, for a packaged app, from
@@ -251,10 +253,10 @@ package and the NuGet packages together.
 ## 0.11.4 - 2026-10-16
 
 - **Tools (`vm.sh`)**: `vm.sh` builds an app linked with `companion.py link`. The link's Directory.Build.targets points
-  the Windows projects at `../../deskling/dotnet/`, which the VM's copy of the app lacked, so `vm.sh build` stopped
+  the Windows projects at `../../laching/dotnet/`, which the VM's copy of the app lacked, so `vm.sh build` stopped
   with CS0246 errors; now every command also mirrors the linked checkout (what git sees there, the README and test
-  resources too) to the VM folder that path resolves to, `%USERPROFILE%\deskling-vm\deskling` beside the app's copy, in
-  the same incremental way. A link the VM can't follow (an absolute path, or one that leaves `DESKLING_VM_DIR`) stops
+  resources too) to the VM folder that path resolves to, `%USERPROFILE%\laching-vm\laching` beside the app's copy, in
+  the same incremental way. A link the VM can't follow (an absolute path, or one that leaves `LACHING_VM_DIR`) stops
   with what to do. `companion.linked_dotnet` reads the link's reference.
 
 ## 0.11.3 - 2026-10-16
@@ -269,7 +271,7 @@ package and the NuGet packages together.
 ## 0.11.2 - 2026-10-16
 
 - **Tools (Windows)**: the tools work in a Windows checkout, where `core.autocrlf` gives text files CRLF line endings.
-  `companion.py link` finds the Deskling package in a CRLF `project.yml` (it stopped with "no Deskling package with a
+  `companion.py link` finds the Laching package in a CRLF `project.yml` (it stopped with "no Laching package with a
   url and a version to switch"), and `character.py --check` (so `scripts/fixture-art.sh --check`) takes a text output
   that differs only by CRLFs as current; the PNGs still compare byte for byte. The git output `companion.py`, `l10n.py`
   and `voice.py` read is decoded as UTF-8 whatever the locale, so `l10n.py`'s reads from git keep "Dì" under cp1252.
@@ -282,7 +284,7 @@ package and the NuGet packages together.
   couldn't start the script there and skipped the checks without a word; now it goes through Git for Windows' bash
   (the new `companion.shell_command` and `companion.git_bash`: `bash` on PATH unless it's System32's, which is WSL's,
   else the one beside git.exe), and without that bash it says the checks were skipped. The checks' output is read as
-  UTF-8, so a byte the locale's code page lacks no longer drops the report. Deskling's own Stop hook
+  UTF-8, so a byte the locale's code page lacks no longer drops the report. Laching's own Stop hook
   (`.claude/hooks/validate.py`) does the same.
 
 ## 0.11.1 - 2026-10-16
@@ -307,7 +309,7 @@ fixes: the tray panel focuses its first row on every open and takes the arrow ke
 menu cancelled from the keyboard gives the focus back, and the windows, the character and the hours editors are named in
 the app's words; apps can mark their own tray menu access keys.
 
-- **Windows**: `Deskling.Windows` and `Deskling.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
+- **Windows**: `Laching.Windows` and `Laching.Windows.Companion` require Windows 11: `TargetPlatformMinVersion` goes
   from 10.0.17763.0 (Windows 10 1809) to 10.0.22000.0, and the target framework from `net10.0-windows10.0.19041.0` to
   `net10.0-windows10.0.22000.0`, since the SDK refuses a minimum above the version built against. The companion shell
   has only ever run on Windows 11, and Windows 10's consumer extended security updates ended on 2026-10-13. A
@@ -333,8 +335,8 @@ the app's words; apps can mark their own tray menu access keys.
 - **Windows.Companion**: the language row works without package identity. There the override
   (`ApplicationLanguages.PrimaryLanguageOverride`) lasts only for the process and refuses `""`, so the pick was lost
   on restart and "Same as Windows" couldn't clear it (the note stayed, and Settings opened again showed the old
-  language). `LanguageRow` now stores the tag in the app's settings under `deskling.language`, through the new
-  `LanguageSetting` (`Deskling.Windows`), and the new optional `language` argument of `CompanionApp.Start` sets it
+  language). `LanguageRow` now stores the tag in the app's settings under `laching.language`, through the new
+  `LanguageSetting` (`Laching.Windows`), and the new optional `language` argument of `CompanionApp.Start` sets it
   again before `Application.Start`: as the override, so `Loc.Choose` picks it, and as the process's preferred UI
   language (`SetProcessPreferredUILanguages`), since WinUI's own words don't follow the override unpackaged. "Same as
   Windows" removes the key; a stored tag the app no longer has is ignored; screenshot runs read none. The row keeps
@@ -349,7 +351,7 @@ the app's words; apps can mark their own tray menu access keys.
   for a null entry (a settings file edited by hand), instead of throwing, as its contract says. The language is now
   read in `Main`, where a throw would stop every launch.
 - **Fixture app**: calls `Loc.UseLanguage(Loc.Choose(...))` as the apps do, so its dates follow the pick, keeps the
-  pick in `%LOCALAPPDATA%\Deskling Fixture\settings.json` (its other settings stay in memory), and sets
+  pick in `%LOCALAPPDATA%\Laching Fixture\settings.json` (its other settings stay in memory), and sets
   `RestartRefused`.
 - **Windows.Companion (`SpeechBubble`)**: `Announces` (off by default) raises a polite UI Automation notification
   with each new line while the bubble is on screen, under one activity id for every bubble, so only the latest is
@@ -391,7 +393,7 @@ the app's words; apps can mark their own tray menu access keys.
 - **C# (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs, as the Mac's. `WindowManager.OpensHidden` opens
   windows cloaked (the compositor draws them, so `PrintWindow` still captures them, but never on screen), out of the
   taskbar and Alt+Tab, behind the others and without taking the focus, and `ScreenshotCapture.IsHidden`
-  (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it, also for the windows `CaptureWindow` and `CaptureFitting` make. A hidden
+  (`LACHING_SCREENSHOT_HIDDEN=1`) sets it, also for the windows `CaptureWindow` and `CaptureFitting` make. A hidden
   run shoots each window once its content has loaded, its images have decoded and no layout pass has run for 0.15 s
   (5 s at most) instead of after the fixed 1.2 s, so the fixture's 16 shots take 10 s instead of 27; a run in front
   waits as before. `ScreenshotCapture.OutputDirectory` defaults to a folder per process (`screenshots-<pid>`).
@@ -406,7 +408,7 @@ the app's words; apps can mark their own tray menu access keys.
 
 - **Swift (`WindowManager`, `ScreenshotCapture`)**: hidden screenshot runs. `WindowManager.opensHidden` opens windows
   transparent, click-through and behind the others without activating the app or turning it regular, and
-  `ScreenshotCapture.isHidden` (`DESKLING_SCREENSHOT_HIDDEN=1`) sets it and skips the wait for a key window, so a run
+  `ScreenshotCapture.isHidden` (`LACHING_SCREENSHOT_HIDDEN=1`) sets it and skips the wait for a key window, so a run
   leaves the Mac to whoever is using it; the shots show the windows inactive. `ScreenshotCapture.outputDirectory`
   defaults to a folder per process (`screenshots-<pid>`), so several runs can go at once.
 - **Tools (`screenshots.sh`, `check-layout.sh`)**: `screenshots.sh --only` runs hidden (`--front` for key windows, as
@@ -441,7 +443,7 @@ the app's words; apps can mark their own tray menu access keys.
 - **Swift, .NET (`ReminderScheduler`)**: `reminderDelivered()` / `ReminderDelivered()` marks a reminder the system
   delivered on its own as unanswered, so `snooze` reminds again in its minutes as after one `tick()` fired. New vector
   `scheduler/reminder-delivered-snooze.json` (op `reminderDelivered`).
-- **Swift (`DesklingShell`)**: `NotificationPoster` builds on iOS too (`openSystemSettings` opens the app's page in
+- **Swift (`LachingShell`)**: `NotificationPoster` builds on iOS too (`openSystemSettings` opens the app's page in
   Settings there). `replacePending(prefix:with:)` schedules `ScheduledNotification`s ahead on a calendar trigger at
   their local wall-clock time, removing the stale ones and adding only new or changed ones; `pending(prefix:)` lists
   them. `onAnswer` reports a `NotificationAnswer` (request id, category, action, `userInfo`) next to `onAction`, and
@@ -451,12 +453,12 @@ the app's words; apps can mark their own tray menu access keys.
 
 ## 0.10.1 - 2026-10-15
 
-iOS 17+ support for `DesklingCore`, `DesklingStore`, `DesklingTesting`, and the SwiftUI drawing and font helpers in
-`DesklingShell`. In `tools/`: shared `apple/{Shared,macOS,iOS,Tests}` XcodeGen layouts, `l10n.py export-android`, and
+iOS 17+ support for `LachingCore`, `LachingStore`, `LachingTesting`, and the SwiftUI drawing and font helpers in
+`LachingShell`. In `tools/`: shared `apple/{Shared,macOS,iOS,Tests}` XcodeGen layouts, `l10n.py export-android`, and
 Copilot `view_range` support in `hook.py`.
 
-- **Swift**: `Package.swift` declares `.iOS(.v17)` alongside `.macOS(.v14)`. `DesklingCore`, `DesklingStore`, and
-  `DesklingTesting` build on iOS; `DesklingShell`'s `Geometry`, `Keyframes`, `SVGPath`, `Wobble`, and
+- **Swift**: `Package.swift` declares `.iOS(.v17)` alongside `.macOS(.v14)`. `LachingCore`, `LachingStore`, and
+  `LachingTesting` build on iOS; `LachingShell`'s `Geometry`, `Keyframes`, `SVGPath`, `Wobble`, and
   `FontRegistration` also build on iOS when imported or compiled there, while the AppKit status item and windows stay
   macOS-only.
 - **Tools (`l10n.py`, `companion.schema.json`)**: `l10n.py export-android` (configured by `l10n.androidStrings` in
@@ -471,7 +473,7 @@ Copilot `view_range` support in `hook.py`.
 ## 0.10.0 - 2026-10-15
 
 `LocalizedKey.Argument.type` is an enum instead of a string, so a bank that builds or compares the type as a string
-changes; the JSON is the same. **Breaking.** Two contract fixes in `DesklingCore` / `Deskling.Core`: a typed
+changes; the JSON is the same. **Breaking.** Two contract fixes in `LachingCore` / `Laching.Core`: a typed
 settings read never coerces another type, and a jittered interval never drops below a second. Two sharper contracts:
 a `Phrase`'s weight is at least 1, and Reset removes the stored keys. The test kit gets tests of its own, and the
 companion apps' hook gets a `resume` mode that restores an agent's place after a compaction. Every file format
@@ -499,7 +501,7 @@ and every vector is unchanged.
 - **Companion**: `Phrase` refuses a weight under 1 (a precondition in Swift, `ArgumentOutOfRangeException` in C#).
   With every candidate at 0 the picker always drew the first line, and a negative weight hid the last candidates.
 - **Tools**: `phrases.py check` reports, by id, a phrase whose weight is under 1, before the app traps on it.
-- **Testing**: a `DesklingTestingTests` target and a `Deskling.Testing.Tests` project test the test kit itself: each
+- **Testing**: a `LachingTestingTests` target and a `Laching.Testing.Tests` project test the test kit itself: each
   mock's contract, `MockStoreBackend`'s purchase, restore and failure paths, `JSONValue`'s round trip and key order,
   `BankAudit`, the conformance suite and root, `ManualTimers` and the fixture loaders. `CompanionStateTests` has one
   test per `Mood` plus the precedence between them; `PhraseTimingTests` covers the first part, a shown part followed
@@ -529,7 +531,7 @@ packages are unchanged.
   outline command to run first, then the range to read. Most of an agent's oversized reads were 1,000–3,000-line
   source files loaded whole several times per session.
 - **Tools**: `companion.py bump` names every landing file the landing tool's `install` rewrote, not only the lockfile
-  (pnpm adds a fresh `@deskling/landing` to `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude`).
+  (pnpm adds a fresh `@laching/landing` to `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude`).
 - **Tools**: `windows/screenshots.ps1 -Configuration Release` builds from scratch in a folder of its own,
   `<project>\obj\screenshots\<platform>` (restore, intermediate, output and publish, through `--artifacts-path`),
   emptied first. It built in the project's `obj\` and `bin\`, so after a packaged publish (`GenerateAppxPackageOnBuild`,
@@ -556,12 +558,12 @@ packages are unchanged.
   build`, `screenshots` or `smoke`, or a `dotnet build`/`publish` of the app, satisfies; `vm.sh test` counts as the
   dotnet tests. An app's own `hooks.slow` entry for the WinUI build takes the name `winui-build`, or it's reminded
   twice.
-- **Tools**: `bump-apps.sh` skips a linked git worktree next to the Deskling checkout (its main checkout is the
+- **Tools**: `bump-apps.sh` skips a linked git worktree next to the Laching checkout (its main checkout is the
   app); name it to move it.
 
 ## 0.9.1 - 2026-10-14
 
-Moving the apps to a release takes one command, and a change that spans Deskling and the apps can be tried in them
+Moving the apps to a release takes one command, and a change that spans Laching and the apps can be tried in them
 before it's tagged, so one release covers a batch. The packages are unchanged.
 
 - **Tools**: `voice.py` writes the review pages' clip URLs with forward slashes on every OS. On Windows they came out
@@ -569,39 +571,39 @@ before it's tagged, so one release covers a batch. The packages are unchanged.
   site generated on a Mac stale.
 - **Tools**: `companion.py bump X.Y.Z` moves an app to a release in one go: every pin `pins` lists, the committed
   `Package.resolved` files (the Xcode project's through `xcodebuild -resolvePackageDependencies`), the submodule (at the
-  tag) and the landing page's `@deskling/landing` (npm's newest version at or below the release, and its lockfile). It
-  refuses a tag that isn't on origin. `tools/bump-apps.sh X.Y.Z` runs it in every app next to the Deskling checkout,
+  tag) and the landing page's `@laching/landing` (npm's newest version at or below the release, and its lockfile). It
+  refuses a tag that isn't on origin. `tools/bump-apps.sh X.Y.Z` runs it in every app next to the Laching checkout,
   then each app's `verify.sh --fast`, and commits nothing.
-- **Tools**: `companion.py link [PATH]` builds an app against a Deskling checkout (`../deskling`) before a release: the
-  Swift packages become `path:` packages, and a `Directory.Build.targets` in the Windows folder turns the `Deskling.*`
+- **Tools**: `companion.py link [PATH]` builds an app against a Laching checkout (`../laching`) before a release: the
+  Swift packages become `path:` packages, and a `Directory.Build.targets` in the Windows folder turns the `Laching.*`
   package references into references to the checkout's projects. While linked, `pins` fails, and with it `verify.sh`
   and the pre-commit hook; `unlink` puts every file back byte for byte. `pins` also shows the landing page's
-  `@deskling/landing` version, which it doesn't compare.
+  `@laching/landing` version, which it doesn't compare.
 
 
 ## 0.9.0 - 2026-10-14
 
-The global shortcut is gone. None of the apps on Deskling keeps one, so the package stops carrying it. **Breaking.**
+The global shortcut is gone. None of the apps on Laching keeps one, so the package stops carrying it. **Breaking.**
 
-- **Removed**: `KeyShortcut` (`DesklingCore` / `Deskling.Core`), `GlobalHotKey` and `ShortcutCapture`
-  (`DesklingShell`; `Deskling.Windows`' `GlobalHotKey` and its `RegisterHotKey` imports), and `ShortcutRecorder`
-  (`DesklingCompanionUI`; `Deskling.Windows.Companion`, with `ShortcutCopy`).
+- **Removed**: `KeyShortcut` (`LachingCore` / `Laching.Core`), `GlobalHotKey` and `ShortcutCapture`
+  (`LachingShell`; `Laching.Windows`' `GlobalHotKey` and its `RegisterHotKey` imports), and `ShortcutRecorder`
+  (`LachingCompanionUI`; `Laching.Windows.Companion`, with `ShortcutCopy`).
 - **Removed**: the `sayShortcut` setting. `CompanionDefaults(skin:phraseFlavors:)` (C#: `CompanionDefaults(skin,
   phraseFlavors)`) states the two product choices, and `SettingsKeys.all` has 22 keys. A value stored under
   `sayShortcut` by an earlier version is ignored and left where it is; the key is retired, never to be reused.
   `settings.json` loses `defaults.sayShortcut` and the key: regenerate the app's vectors.
 - **Removed**: in the companion shell, `CompanionAppConfiguration.hotKeySignature`, `registerHotKey()`,
   `suspendHotKey()` and `shortcutUnavailable` (C#: `RegisterHotKey`, `SuspendHotKey`, `ShortcutUnavailable`,
-  `ICompanionHost.HotKey`, `IHotKey`, `HotKey`; `Deskling.Testing`'s `FakeHotKey`). `CompanionReplay.Settings` and
+  `ICompanionHost.HotKey`, `IHotKey`, `HotKey`; `Laching.Testing`'s `FakeHotKey`). `CompanionReplay.Settings` and
   `SettingsReplay.Verify` lose `compareShortcut`.
 - **Tools**: `companion.json` loses `mac.hotkeySignature` (the schema no longer allows it).
-- **Release**: `@deskling/landing` is staged on npm only when `tools/landing` changed since the version npm has, at the
+- **Release**: `@laching/landing` is staged on npm only when `tools/landing` changed since the version npm has, at the
   tag's version as before, so its versions skip the releases that leave it alone (and there's nothing to approve). The
   NuGet packages still ship at every tag.
 
 ## 0.8.1 - 2026-10-14
 
-What the first app on the Windows companion shell (Mister Pagliacci) needed, in Deskling instead of the app: launch-time
+What the first app on the Windows companion shell (Mister Pagliacci) needed, in Laching instead of the app: launch-time
 fixes, two controls both apps draw, model tests on any OS, and the tools that build, shoot, lint and package a WinUI
 companion app (`tools/README.md`, *Windows apps*). Nothing breaks.
 
@@ -638,7 +640,7 @@ companion app (`tools/README.md`, *Windows apps*). Nothing breaks.
 - **Windows.Companion**: `SpeechBubble.Header`, something above the words in the same card (a joke's setup over its
   punchline), and `OutlineThickness`. `GlyphWave`, the tray glyph inside a window (Home's picture of the notification
   area), stepping its talking frames while active. `HoldGesture`, press and hold on an element, touch, pen and mouse.
-  `ScreenshotCapture.Language` (`DESKLING_SCREENSHOT_LANGUAGE`), so one machine shoots every language.
+  `ScreenshotCapture.Language` (`LACHING_SCREENSHOT_LANGUAGE`), so one machine shoots every language.
 - **Windows.Companion**: `ThemedColor.Resource` reads the app's theme dictionaries through `XamlCast`; under Native
   AOT the `is` checks it used could miss and throw at launch.
 - **Companion.Shell**: `CompanionAppModel` raises `IsSupporter` when a purchase changes and `DesktopBackLine` when the
@@ -646,12 +648,12 @@ companion app (`tools/README.md`, *Windows apps*). Nothing breaks.
 
 ## 0.8.0 - 2026-10-13
 
-The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 half over `Deskling.Companion.Shell`
+The Windows companion shell: `Laching.Windows.Companion` is new, the WinUI 3 half over `Laching.Companion.Shell`
 (on NuGet.org since 0.7.7), so a companion app on Windows is its model, its views and its words, as on the Mac
 (`README.md`, *A companion app on Windows*). The Swift side is unchanged.
 
 - **Windows.Companion** (new .NET package, `net10.0-windows`, code only): the Windows half of a companion app's shell,
-  over `Deskling.Companion.Shell` and `Deskling.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
+  over `Laching.Companion.Shell` and `Laching.Windows`. `Speaker` (`ISpeaking`): a recorded clip, or the text through
   Windows' speech synthesizer with the chosen voice or the language's (`Speaker.Voices(language)` for a voice picker),
   played through a `MediaPlayer` kept out of the system media controls; the clip's rate keeps its pitch and
   `ClipTime` is the clip's own position; a clip that can't play ends the line. `ChimePlayer` (`IChimePlaying`): the app's
@@ -722,7 +724,7 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
   - `ScreenshotScript<TWindow, TSettings>` takes the shot list (windows, views at a size or their fitting size, the
     supporter sequence, the app's own) over a model on a `SampleEnvironment`; `CompanionApp.RunScreenshots` starts it.
 - **Fixture app**: `scripts/fixture-screenshots.ps1` renders its windows.
-- **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Deskling.Windows.Companion` and the fixture bank,
+- **Fixture app** (`dotnet/Fixture.App`, not packed): a WinUI app over `Laching.Windows.Companion` and the fixture bank,
   for checking the Windows shell by hand; also the smallest example of a companion app on it.
 - **Tools**: the `windows-port` skill covers the companion shell: what each package holds, what stays in the app, and
   the XAML compiler's traps.
@@ -735,7 +737,7 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
 - **Windows**: `TrayMenuItem.Command` takes `IsChecked` (a check mark), and `TrayIconHost.MenuOpening` is raised before
   the menu opens, so its owner can rebuild it from the current state. Both additive.
 - **Companion.Shell** (new .NET package, `net10.0`): the platform-free half of a companion app's shell, the C# twin of
-  `DesklingCompanionUI`'s logic, tested on any OS. `SpeechSequencer` and `VoiceLibrary` (with `VoiceId`, `SpeechPart`,
+  `LachingCompanionUI`'s logic, tested on any OS. `SpeechSequencer` and `VoiceLibrary` (with `VoiceId`, `SpeechPart`,
   `SpeechRates.ClipRate`) over `ISpeaking`, `IChimePlaying` and `ITimers`; `DeliveryPerformer`, `PhraseLocalization`
   (`LocalizedParts`, `LocalizedText` through the app's lookup) and `VoiceLibraryBank.PendingIds`; `SignalHub` over
   `IIdleTimeProvider`, `IBusyStateProvider` and the new `IAudioOutputState`, `IScreenLock`, `IPowerSource`, `IAppearance`;
@@ -748,7 +750,7 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
   `DesktopCopy`, `MenuCopy`, `CompanionSounds`, `CompanionAppConfiguration`, `NotificationPermission`,
   `BubbleCountdown`; `CompanionMenus` building `MenuItem` data for the tray's and the desktop character's menus;
   `SampleEnvironment` (with `FixedClock`, `ConstantIdle`, `SilentNotifier`, `FixedPriceBackend`) for screenshot runs.
-- **Testing**: `Deskling.Testing` depends on `Deskling.Companion.Shell` and adds `ManualTimers` (timers a test runs by
+- **Testing**: `Laching.Testing` depends on `Laching.Companion.Shell` and adds `ManualTimers` (timers a test runs by
   hand, moving a `MockClock`), `FakeSpeaker`, `FakeChime`, `FakeNotifier` and `FakeHost<TWindow>` (with
   `FakeStatusItem`, `FakeWindowHost`, `FakeDesktopCompanion`, `FakeHotKey`).
 
@@ -791,9 +793,9 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
 ## 0.7.3 - 2026-10-12
 
 - **Tools**: the pre-commit hook's `verify.sh --staged` passes in a linked worktree (`git worktree add`,
-  `.claude/worktrees/<name>/`). git in a submodule (the `deskling/` tag the pin check reads, the voices and landing
+  `.claude/worktrees/<name>/`). git in a submodule (the `laching/` tag the pin check reads, the voices and landing
   checks, `voice.py publish`) runs without the `GIT_DIR`, `GIT_INDEX_FILE`… a git hook exports for the app's repository
-  (`companion.git_env`), which pointed `git -C deskling describe` back at the app. The xcodegen check says when a group
+  (`companion.git_env`), which pointed `git -C laching describe` back at the app. The xcodegen check says when a group
   is named after the checkout's folder: a source outside `mac.dir` (`../voices/Voice`) needs a `group:` in the spec,
   or every checkout generates another project.
 - **Landing**: the padded icons find the icon's root `<svg>` tag by index, not by regex, so an SVG with many unclosed
@@ -816,11 +818,11 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
     the hook's.
   - `store/push.py`: an in-app purchase without `reviewNote` or `reviewShot`, and an app without the review notes
     file, leave App Store Connect's own alone (the schema no longer requires `reviewNote`).
-  - `@deskling/landing`: `og` is optional, for an app that renders its own social cards in `extraPlugins`.
+  - `@laching/landing`: `og` is optional, for an app that renders its own social cards in `extraPlugins`.
 
 ## 0.7.2 - 2026-10-12
 
-0.7.1 with `@deskling/landing` on npm: 0.7.1 reached NuGet and GitHub, but its npm job passed the tarball as
+0.7.1 with `@laching/landing` on npm: 0.7.1 reached NuGet and GitHub, but its npm job passed the tarball as
 `npm/….tgz`, which npm reads as a GitHub repository. The same code as 0.7.1; use 0.7.2.
 
 - **Release**: the npm job stages `./npm/….tgz`, and the Tools workflow dry-runs that same command on every push.
@@ -828,7 +830,7 @@ The Windows companion shell: `Deskling.Windows.Companion` is new, the WinUI 3 ha
 ## 0.7.1 - 2026-10-12
 
 0.7.0 as it was meant to ship: its tag exists (SwiftPM sees it), but its release stopped at packing
-`@deskling/landing`, before NuGet, npm and the GitHub release. Use 0.7.1 everywhere 0.7.0 is named; nothing else
+`@laching/landing`, before NuGet, npm and the GitHub release. Use 0.7.1 everywhere 0.7.0 is named; nothing else
 changes.
 
 - **Release**: the landing job creates the folder it packs into, and the Tools workflow packs the same way on every
@@ -838,7 +840,7 @@ changes.
 
 The companion shell: what sunnysays and Mister Pagliacci still repeated on top of 0.6 (the app model, its delegate
 and menus, the Settings rows, the Support window, the window chrome, the screenshot run, the vector case lists, the
-landing page's plumbing and the store tools) is Deskling's now. Every word and the look stay the apps'.
+landing page's plumbing and the store tools) is Laching's now. Every word and the look stay the apps'.
 
 ### Migration
 - **One name collides.** An app that defines its own `View.windowPadding(bottom:)` (both companion apps do) deletes
@@ -860,7 +862,7 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
   `FloatingWindow.setFrame(_:)` lays the content out at the new size before it shows.
 
 ### Added
-- **The companion shell (`DesklingCompanionUI/Shell/`)**: what every companion app's model, delegate and menus repeated.
+- **The companion shell (`LachingCompanionUI/Shell/`)**: what every companion app's model, delegate and menus repeated.
   `CompanionAppModel<Window, Settings>` is an `@Observable open class` with the 20 s tick, the channels, the status
   item, the desktop presence and bubble, the windows by role (`WindowRoles`), the hotkey, the store's start, mute with
   Undo, previews (`say(_:)` clears `bubblePhraseID`) and the status pill's words; the app subclasses it and supplies its
@@ -871,29 +873,29 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
   product). `observe(_:then:)` watches the app's own preferences. `CompanionNotifying` is the notification it drives
   (actions by raw id). `CompanionAppDelegate` (subclassed, hands over `companion`; `runScreenshots()`),
   `CompanionMenus` over `MenuCopy`, a public `ActionItem`, `DesktopHide`.
-- **Settings rows and editors (`DesklingCompanionUI/Settings/`)**: `ActiveHoursEditor`, `QuietHoursEditor`,
+- **Settings rows and editors (`LachingCompanionUI/Settings/`)**: `ActiveHoursEditor`, `QuietHoursEditor`,
   `ShortcutRecorder`, `LaunchAtLoginToggle`, `LanguageRow`, `NotificationPermissionNote`, `SettingsFooter`, each taking
   every label as a `Text` and its chip or button style as a generic parameter; `CompanionSettings` channel and flavor
   bindings and `mutedCount(in:)`.
-- **`SupportWindow` (`DesklingCompanionUI/Support/`)**: the supporter purchase, the tips and the thank-yous over
+- **`SupportWindow` (`LachingCompanionUI/Support/`)**: the supporter purchase, the tips and the thank-yous over
   `PurchaseStore`, with every word in `SupportCopy`, the products in `SupportProducts` and the app's look in
   `SupportLook`; `SupportWindow.stage(...)` is its state machine.
 - **The chrome (`Theme/`)**: `WindowInset` and `windowPadding(bottom:)`, `ActionBar`, `PanelRowStyle`, `Pointer`,
-  `companionWindowRoot(palette:displayFont:tint:bodySize:)`, `DisplayWeight`; **`FontRegistration`** (DesklingShell)
+  `companionWindowRoot(palette:displayFont:tint:bodySize:)`, `DisplayWeight`; **`FontRegistration`** (LachingShell)
   registers an app's bundled fonts once.
 - **`DesktopCompanion.stand(character:layout:)`** (`CompanionStand`, what the desktop window draws) and
   **`bubblePreview(text:tail:countdown:layout:)`**, for screenshot sheets; **`DesktopLayout.shadowWidthRatio`** (0.42 by
   default).
-- **`ScreenshotScript` (`DesklingCompanionUI/Screenshots/`)**: an app's screenshot run as a list of shots in light and
+- **`ScreenshotScript` (`LachingCompanionUI/Screenshots/`)**: an app's screenshot run as a list of shots in light and
   dark over its model; `ScreenshotCapture.SampleEnvironment` (what the run's model is built on) and `SilentNotifier`.
-- **Standard case lists (`DesklingTesting`)**: `QuietTimeline.standardCases(base:dst:)` (the 17 timelines every app
+- **Standard case lists (`LachingTesting`)**: `QuietTimeline.standardCases(base:dst:)` (the 17 timelines every app
   pins, the DST one named and zoned by the app) and `PickerVector.standardCases(bank:skin:language:single:pair:
   leftEmpty:excluded:recent:)` (the 15 shared picker cases); **`CompanionVectors`** and
   **`ConformanceSuite.companion(_:root:regenerateHint:)`**, an app's whole suite from its content. sunnysays' and
   Pagliacci's committed vectors come out of them byte for byte.
-- **`CompanionReplay` (Deskling.Testing)**: one call per vector kind over an app's vectors folder, so its replay test is
+- **`CompanionReplay` (Laching.Testing)**: one call per vector kind over an app's vectors folder, so its replay test is
   theories and one assertion each.
-- **`@deskling/landing` (`tools/landing`)**: a landing page's localized pages, legal pages, sitemap, CSP `_headers` and
+- **`@laching/landing` (`tools/landing`)**: a landing page's localized pages, legal pages, sitemap, CSP `_headers` and
   social cards as Vite plugins, from `companionLanding(options)`; the app keeps its data, placeholders, JSON-LD, brand
   and page. An npm package (the landing pages are their own repositories): `release.yml` stages it on npm at the tag's
   version through trusted publishing (no stored token), and an owner approves it with 2FA. sunnysays' and Pagliacci's
@@ -912,7 +914,7 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
 ## 0.6.5 - 2026-10-12
 
 ### Fixed
-- **`LayoutCheck.TextProblems` (Deskling.Windows) measures the real text**: it flagged hundreds of false problems in
+- **`LayoutCheck.TextProblems` (Laching.Windows) measures the real text**: it flagged hundreds of false problems in
   French. A detached probe rounds each line to whole DIPs (so a line wrapped at its own width), copied letter spacing
   that a button's label reads back but never applies, and counted a label's `MinWidth` as text. Lines are now measured
   on the real TextBlock with its width limits lifted for the measure (restored after), and the word probe takes the
@@ -922,7 +924,7 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
 ## 0.6.4 - 2026-10-12
 
 ### Added
-- **`LayoutCheck` (DesklingShell)** finds SwiftUI content taller than its window: it measures the content's ideal
+- **`LayoutCheck` (LachingShell)** finds SwiftUI content taller than its window: it measures the content's ideal
   height at the window's width and skips windows that scroll. `overflow(in:)` for a window, `overflow(of:in:)` for a
   view on its own, `contentRoom(forWindowOfSize:)` for the room below a `WindowManager` window's title bar.
 - **`ScreenshotCapture` checks every shot**: a window that couldn't be drawn, a PNG that wasn't written, or content
@@ -931,7 +933,7 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
 - **`tools/screenshots.sh` fails on `problems.txt`** (after copying the shots), and **`tools/check-layout.sh`** renders
   the windows in every language (or the ones named) into `<mac.dir>/build/layout-check/` and names the languages that
   don't fit. Apps add a two-line wrapper like `screenshots.sh`'s.
-- **`LayoutCheck` (Deskling.Windows)** finds WinUI text that doesn't fit its box: `TextProblems(root)` lists every
+- **`LayoutCheck` (Laching.Windows)** finds WinUI text that doesn't fit its box: `TextProblems(root)` lists every
   visible TextBlock cut off with an ellipsis, wider than its room, breaking a word across lines or cut off at the
   bottom. **`XamlCast.As<T>`** reads an untyped XAML object as a type under Native AOT, where a cast throws and
   `as`/`is` quietly fail.
@@ -974,7 +976,7 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
 ### Fixed
 - `Formats.WeekdayMonthDay` and `Formats.Hour` (Windows) threw in apps built with Native AOT (`PublishAot`, Debug runs
   included): the language list was a collection expression the projection couldn't marshal, so a window that formatted
-  a date never opened. `Deskling.Windows.Tests` now builds with `PublishAot` too, so its tests catch this kind of interop.
+  a date never opened. `Laching.Windows.Tests` now builds with `PublishAot` too, so its tests catch this kind of interop.
 
 ## 0.5.1 - 2026-10-12
 
@@ -987,26 +989,26 @@ landing page's plumbing and the store tools) is Deskling's now. Every word and t
 ## 0.5.0 - 2026-10-11
 
 The companion layer: everything under sunnysays' character, made generic so a second companion app can be built on
-it. A typed settings store, `DesklingCompanion` / `Deskling.Companion` (phrases, cadence, quiet rules, settings,
-coordinator, desktop presence, vector and raster character rigs, skins), `DesklingCompanionUI`, speech and a status
-item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 14 and Windows, as before.
+it. A typed settings store, `LachingCompanion` / `Laching.Companion` (phrases, cadence, quiet rules, settings,
+coordinator, desktop presence, vector and raster character rigs, skins), `LachingCompanionUI`, speech and a status
+item in `LachingShell`, `Laching.Testing`, and `tools/`. Desktop only: macOS 14 and Windows, as before.
 
 ### Migration
 - **Apps on 0.4 without the companion layer** (mybackhurts): only the settings store is breaking. Swift: drop an
-  app-local `SettingsStore` protocol for `DesklingCore`'s; `PurchaseStore(…defaults:)` keeps working. .NET: move
+  app-local `SettingsStore` protocol for `LachingCore`'s; `PurchaseStore(…defaults:)` keeps working. .NET: move
   `ISettingsStore` callers to the typed getters and setters (below). Staying on 0.4.0 until then is fine.
-- **Moving a companion app onto it** (sunnysays): import `DesklingCompanion` in place of the app's own copies. The raw
+- **Moving a companion app onto it** (sunnysays): import `LachingCompanion` in place of the app's own copies. The raw
   values, settings keys and vector formats are unchanged, so committed vectors stay byte-identical. Renames: `Character`
   → `DrawableCharacter`, `Shape` → `PathShape`, `PaletteRole` → `PaintRole`, `Phrase.Kind.line(english:)` →
   `line(source:)`, a mood's `cheeks`/`zz` flags → `headExtras`/`overlays` (the rig JSON still accepts the flags), and
   in C# `PartContent.Vector` for Swift's `.shapes`. The app now injects what the package no longer names: its
   `PhraseBank`, `CompanionDefaults(skin:phraseFlavors:sayShortcut:)`, `SkinCatalog`, `CompanionPalette` and voices.
-  App-only preferences go in a `CompanionSettings` subclass. Content vectors are generated with `DesklingTesting`'s
-  generators and replayed with `Deskling.Testing`; the app's `cadence/` and `desktop.json` vectors retire (they are
-  pinned here now). `tools/README.md` has the steps for the `deskling/` submodule and `companion.json`.
+  App-only preferences go in a `CompanionSettings` subclass. Content vectors are generated with `LachingTesting`'s
+  generators and replayed with `Laching.Testing`; the app's `cadence/` and `desktop.json` vectors retire (they are
+  pinned here now). `tools/README.md` has the steps for the `laching/` submodule and `companion.json`.
 
 ### Added
-- Swift: `DesklingCompanion`, the pure core of a desk companion (Foundation and Observation only; builds and tests
+- Swift: `LachingCompanion`, the pure core of a desk companion (Foundation and Observation only; builds and tests
   on Linux, now a job in `swift.yml`). `Phrases/`: `Tag`, `FlavorID` and `SkinID` (app-named string ids), `Phrase`
   (a line, a tune, or a `sequence` of two or more parts with keys `phrase.<id>.1`, `.2`…; `languages` scopes a
   phrase to the languages it exists in), `PhraseBank` (a container: the app injects its lines), `PhraseContext`
@@ -1019,7 +1021,7 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   `Delivery`, `CompanionCoordinator` (bank and language injected). `Desktop/`: `DesktopPresence`. `PhraseTiming`
   spaces the parts of a sequence. Moved from sunnysays with the same raw values and keys;
   `Phrase.Kind.line(english:)` is now `line(source:)`.
-- Swift: `DesklingTesting` depends on `DesklingCompanion` and has `Fixtures/`: `PhraseBank.fixture`, `FixtureIDs`
+- Swift: `LachingTesting` depends on `LachingCompanion` and has `Fixtures/`: `PhraseBank.fixture`, `FixtureIDs`
   (flavors a/b/c, skins `fixture-vector` and `fixture-raster`) and `CompanionDefaults.fixture`.
 - `tools/character.py`: compiles a skin's art and rig into the `CharacterArt` JSON and Swift source, from
   arguments (`--design --skin --out --swift-out --module --mode vector|raster --assets --windows-assets --check`)
@@ -1027,7 +1029,7 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   require `bubble: {pivot, tuck}`. Raster skins draw parts from `layers/<part>@2x.png` (+ `@3x`), sized frame ×
   scale, and get an imageset per layer and Windows `scale-200`/`scale-300` PNGs. Tests in `tools/tests/`, run by
   the new `tools.yml`; fixture skins in `Tests/Fixtures/characters/`.
-- Swift: `DesklingCompanion` `Figures/`: `Point`, `Size`, `Rect`, `PaintRole` (an app-named string; `ink` for
+- Swift: `LachingCompanion` `Figures/`: `Point`, `Size`, `Rect`, `PaintRole` (an app-named string; `ink` for
   glyphs), `PathCommand`, `PathShape`, `PartContent` (shapes, or an image asset placed in a frame), `Transform` (with
   `affine`), `Pose` (`headExtras`, `overlays`), `CharacterArt` (`bubblePoint`), `Rig`, `RigGroup`, `Blink`,
   `BubbleAnchor`, `MoodRig`, the `DrawableCharacter` protocol with `PlacedPart`, `RiggedCharacter` (`layers(for:)`;
@@ -1035,45 +1037,45 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   rig naming missing parts). `Skins/`: `SkinEntry`, `SkinCatalog` (a locked, refunded or unknown skin draws the
   default). Moved from sunnysays: `Shape` is now `PathShape`, `PaletteRole` is now `PaintRole`, `Character` is now
   `DrawableCharacter`, and a mood's `cheeks`/`zz` flags are `headExtras`/`overlays` lists.
-- Swift: `DesklingTesting` `FixtureArt.vector`/`.raster` (compiled by `scripts/fixture-art.sh`) and
+- Swift: `LachingTesting` `FixtureArt.vector`/`.raster` (compiled by `scripts/fixture-art.sh`) and
   `SkinCatalog.fixture`.
-- Swift: `DesklingTesting` `Conformance/`: `ConformanceRoot.find(markerFile:from:)`, `ConformanceSuite` (`checkUpToDate`,
+- Swift: `LachingTesting` `Conformance/`: `ConformanceRoot.find(markerFile:from:)`, `ConformanceSuite` (`checkUpToDate`,
   `replayCommitted`, `checkDeterministic`, `writeIfAsked(flag:)`, each returning its problems so the library never
   links XCTest), `JSONValue`, `SnapshotData`, and the companion generators parameterized by bank, defaults, character
   and cases: `PhrasesVector`, `PickerVector`, `CadenceVector`, `QuietTimeline`, `CharacterPoseVector`,
   `DesktopVector`, `SettingsVector.base(defaults:)` (a tree the app adds its keys to) and
   `BankAudit.floors(bank:languages:skins:minimumPerTag:)`. Apps generate their content vectors with these.
   `ConformanceSupport` moved into the folder; the Core `ConformanceTests` runs on `ConformanceSuite`.
-- .NET: `Deskling.Companion` (net10.0, AOT-compatible), the C# mirror of `DesklingCompanion` file for file: the same
+- .NET: `Laching.Companion` (net10.0, AOT-compatible), the C# mirror of `LachingCompanion` file for file: the same
   types with `FlavorId`, `SkinId` and `PaintRole` as string record structs, `PhraseKind.Sequence`, `Phrase.Languages`,
   `PhraseTiming`, `CompanionDefaults` (a record; skin, flavors and shortcut required), `CompanionSettings`
   (`INotifyPropertyChanged`, non-sealed, `virtual ResetToDefaults()` and protected `SetProperty`/`SetOrRemove` for an
   app's own keys), `CompanionCoordinator` (bank, language and a `TimeZoneInfo` injected), `SkinCatalog`,
   `PartContent.Vector`/`.Image`, `IDrawableCharacter.Layers`. Loaders: `PhraseBank.Parse(Stream)` (phrases.json,
   strict) and `CharacterArt.Parse(Stream)` (`characters/<skin>.json`, refusing a rig that names missing parts).
-- .NET: `Deskling.Testing`: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `CountingRandom`;
+- .NET: `Laching.Testing`: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `CountingRandom`;
   `ConformanceRoot.Find(markerFile)`/`Files(folder)`, `ConformanceSupport`, `VectorSupport`; the companion replays
   `PhrasesReplay`, `SettingsReplay` (generic keys only, so an app's own keys and `skins` sit beside them),
   `PickerReplay`, `CadenceReplay`, `QuietReplay`, `CharacterReplay` and `DesktopReplay`, each
   `Verify(Stream, file, …)` returning its problems; fixtures `FixtureIds`, `FixtureDefaults.Value`,
-  `FixtureBank.Load(root)`, `FixtureArt.Load(root, skin)` and `FixtureArt.Catalog(root)`. `Deskling.Core.Tests` uses
-  it in place of its own copies. `release.yml` packs both packages beside `Deskling.Core`; `dotnet.yml` tests the
+  `FixtureBank.Load(root)`, `FixtureArt.Load(root, skin)` and `FixtureArt.Catalog(root)`. `Laching.Core.Tests` uses
+  it in place of its own copies. `release.yml` packs both packages beside `Laching.Core`; `dotnet.yml` tests the
   Core and Companion vectors on Linux and Windows.
-- Swift: `DesklingShell` `StatusItemController` (a status item with a popover panel, a right-click menu and a glyph the
+- Swift: `LachingShell` `StatusItemController` (a status item with a popover panel, a right-click menu and a glyph the
   app draws through `image(animating:frame:)`; 8 fps frames, a wave, Reduce Motion) and `Speech/`: `Speaking` and
   `Speaker` (system voice or a recorded clip; `appLanguage(bundle:)`), `SpeechPart` and `SpeechSequencer` (parts with
   a beat between; `isActive` through the beat, `isVoicing`, `stop()` cancels the pending part), `VoiceID` and
   `VoiceLibrary` (manifest format 1; `pendingClipIDs`, `fallbackToSystemVoice`), `ChimePlaying` and `ChimePlayer(bundle:)`.
-- Swift: `DesklingCompanionUI` (macOS; depends on Companion, Core, System, Shell and Store): `SignalHub`
+- Swift: `LachingCompanionUI` (macOS; depends on Companion, Core, System, Shell and Store): `SignalHub`
   (`lowBatteryPercent` injected), `GlyphRenderer` and `StatusItemController.show(glyph:mood:talking:accessibilityDescription:)`,
   `CharacterView` (vector parts in the palette's paints, image parts from `artBundle` under the rig's transform),
   `DesktopLayout`, `DesktopCompanion`, `DeliveryPerformer` (jokes in beats, one two-line banner at the punchline,
   `unavailableIDs(voice:)`), `VoiceLibrary.pendingIDs(in:voice:text:)`, `CompanionNotifier`, `NotificationPermission`,
   `Theme/`: `CompanionPalette` (`EnvironmentValues.companionPalette`, `.companionDisplayFont`), `Space`, `SpeechBubble`,
-  `BubbleShape`, `BubbleCountdown`, `StatusPill`; and `ScreenshotCapture` (`DESKLING_SCREENSHOT_MODE`/`_DIR`) with
+  `BubbleShape`, `BubbleCountdown`, `StatusPill`; and `ScreenshotCapture` (`LACHING_SCREENSHOT_MODE`/`_DIR`) with
   `FixedClock`, `ConstantIdle`, `SilentSpeaker`, `SilentChime` and `FixedPriceBackend`. During a capture run
   `CharacterView` holds the still pose, so the same build shoots the same pixels every time.
-- `tools/` for companion apps (vendored as a `deskling/` submodule pinned to the release): `companion.py` and
+- `tools/` for companion apps (vendored as a `laching/` submodule pinned to the release): `companion.py` and
   `companion.schema.json` (each app's `companion.json`: names, paths, languages, tool settings; `env`, `pins`),
   `l10n.py` and `phrases.py` (language-scoped phrases; a joke's parts as `phrase.<id>.n` keys), `voice.py` and
   `voice-review.html` (a clip per joke part, any voice names), `synth.py`, `fonts.py`, `screenshots.sh`,
@@ -1082,12 +1084,12 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
   sunnysays and parameterized; tests over a fixture app in `tools/tests/` (`run.py`).
 - Vectors: `conformance/companion/` over the fixtures (`phrases.json`, `settings.json`, `picker/`, `cadence/`,
   `quiet/`, `desktop.json` with `partDelays`, `characters/` for both fixture skins), generated by
-  `Tests/DesklingCompanionTests/Conformance` (`scripts/conformance.sh` regenerates both folders).
+  `Tests/LachingCompanionTests/Conformance` (`scripts/conformance.sh` regenerates both folders).
 
 ### Changed (breaking)
 - Swift: `SettingsStore` (typed: `bool`/`integer`/`double`/`string`/`strings`/`integers(forKey:)`, the matching
   `set(…:forKey:)` and `remove(forKey:)`), `InMemorySettingsStore` and `UserDefaultsSettingsStore` are in
-  `DesklingCore`. `DesklingStore` now depends on `DesklingCore`, and `PurchaseStore` caches owned ids through a
+  `LachingCore`. `LachingStore` now depends on `LachingCore`, and `PurchaseStore` caches owned ids through a
   `SettingsStore`: `PurchaseStore(catalog:backend:settings:cacheKey:logger:)`, `UserDefaultsSettingsStore()` by
   default. `PurchaseStore(catalog:backend:defaults:…)` stays as a convenience and reads the same cache key. Migration:
   none unless you passed `defaults:` without a value; apps that had their own `SettingsStore` protocol can drop it.
@@ -1101,7 +1103,7 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
 ## 0.4.0 - 2026-10-10
 
 ### Added
-- Swift (macOS): `FloatingWindow` in `DesklingShell`, a small borderless window that floats above other apps' windows
+- Swift (macOS): `FloatingWindow` in `LachingShell`, a small borderless window that floats above other apps' windows
   on every Space but full-screen ones, for a desktop pet or a sticky note. It never becomes key and never activates
   the app (no Dock icon for an `LSUIElement` app; it isn't one of `WindowManager`'s windows). It stands on an anchor
   (the middle of its bottom edge) so a size change grows it upward in place, stays wholly on a screen when displays
@@ -1122,11 +1124,11 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
 ## 0.3.0 - 2026-10-09
 
 ### Added
-- .NET: the purchase store, mirroring `DesklingStore`. `Deskling.Core.Store` has `ProductCatalog`, `PurchaseStore`
+- .NET: the purchase store, mirroring `LachingStore`. `Laching.Core.Store` has `ProductCatalog`, `PurchaseStore`
   (owned set cached in an `ISettingsStore`, load state, prices, purchasing/restoring/pending, tip thanks, errors,
-  one `Changed` event), `IStoreBackend` and `MockStoreBackend`. The mock ships in `Deskling.Core` (the Swift one is in
-  `DesklingTesting`) because apps use it in Debug screenshot and preview modes as well as tests.
-- .NET: `Deskling.Windows.Shell.StoreContextBackend`, the Microsoft Store backend over `Windows.Services.Store`.
+  one `Changed` event), `IStoreBackend` and `MockStoreBackend`. The mock ships in `Laching.Core` (the Swift one is in
+  `LachingTesting`) because apps use it in Debug screenshot and preview modes as well as tests.
+- .NET: `Laching.Windows.Shell.StoreContextBackend`, the Microsoft Store backend over `Windows.Services.Store`.
   Matches add-ons by Partner Center Product ID (`InAppOfferToken`), parents the purchase dialog to a window you name,
   reports consumables fulfilled right after purchase so they can be bought again, and turns `OfflineLicensesChanged`
   into a transaction update on the UI thread. Needs no manifest capability.
@@ -1145,7 +1147,7 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
 - The Swift package builds in the Swift 6 language mode (`swift-tools-version: 6.0`), with strict concurrency checking.
   Apps in either language mode can use it; Swift 6 apps no longer need `@preconcurrency import` for its types.
 - `NotificationActionSpec`, `NotificationCategorySpec`, `SystemClock`, `NeverBusy`, `SystemRandom`,
-  `SystemIdleTimeProvider`, `SystemBusyStateProvider` and the `DesklingTesting` helpers `ScriptedRandom`,
+  `SystemIdleTimeProvider`, `SystemBusyStateProvider` and the `LachingTesting` helpers `ScriptedRandom`,
   `MockStoreBackend.Failure` and `ConformanceSupport.VectorError` are `Sendable`.
 - `NotificationPoster` answers `willPresent` through the async delegate method; behavior is unchanged.
 - **Breaking:** `ScreenLockWatcher` is `@MainActor` (its callback always ran on the main queue). Create and read it
@@ -1162,31 +1164,31 @@ item in `DesklingShell`, `Deskling.Testing`, and `tools/`. Desktop only: macOS 1
 The first release: the generic parts of mybackhurts, extracted and generalized, for mybackhurts and sunnysays.
 
 ### Added
-- `DesklingCore`: `ReminderScheduler`, `SchedulerConfig`, `Clock`, `IdleTimeProvider`, `BusyStateProvider` and the
+- `LachingCore`: `ReminderScheduler`, `SchedulerConfig`, `Clock`, `IdleTimeProvider`, `BusyStateProvider` and the
   `BusyReason`s, moved from mybackhurts with the same names and behavior (its 37 scheduler vectors replay byte for
   byte), plus one addition: `SchedulerConfig.intervalJitter`, a whole-second random offset on every interval drawn
   from an injected `RandomSource`; zero by default.
-- `DesklingCore`: `RandomSource`, `SystemRandom` and `SplitMix64` (specified bit for bit for the .NET port),
+- `LachingCore`: `RandomSource`, `SystemRandom` and `SplitMix64` (specified bit for bit for the .NET port),
   `KeyShortcut`, `LocalizedKey`.
-- `DesklingTesting`: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `CountingRandom`, `ConformanceSupport`.
-- `DesklingSystem`: `SystemIdleTimeProvider` and `SystemBusyStateProvider` from mybackhurts, the latter with
+- `LachingTesting`: `MockClock`, `MockIdle`, `MockBusy`, `ScriptedRandom`, `CountingRandom`, `ConformanceSupport`.
+- `LachingSystem`: `SystemIdleTimeProvider` and `SystemBusyStateProvider` from mybackhurts, the latter with
   `init(cameraCheck:)` (`.avFoundation`, `.coreMediaIO` for sandboxed apps without the camera entitlement, `.off`);
   new permission-free signals `PowerStateProvider` / `SystemPowerSource` (battery, charging, level, change callback),
   `AudioOutputStateProvider` / `SystemAudioOutput` (muted, route), `AppearanceWatcher` and `ScreenLockWatcher`.
-- `DesklingShell`: `WindowManager<ID: WindowID>` (activation-policy dance, exclusive windows, placement, "Bigger"),
+- `LachingShell`: `WindowManager<ID: WindowID>` (activation-policy dance, exclusive windows, placement, "Bigger"),
   `GlobalHotKey` with several ids per signature, `ShortcutCapture`, `NotificationPoster` with injected categories and
   titles, `LoginItem`, `LaunchContext`, and the drawing helpers `SVGPath` (now also relative commands, `H`/`V`, `T` and
   arcs), `Keyframes`, `Wobble`, `Polyline.circle`, `CGAffineTransform.rotation(degrees:about:)`.
-- `DesklingStore`: `ProductCatalog`, `PurchaseStore` (`owned`, `isOwned`, `error: PurchaseError?`, injected cache key
+- `LachingStore`: `ProductCatalog`, `PurchaseStore` (`owned`, `isOwned`, `error: PurchaseError?`, injected cache key
   and logger), `StoreBackend`, `StoreKitBackend`.
-- `DesklingTesting`: `MockStoreBackend`.
-- `Deskling.Core` (.NET): the file-for-file mirror of `DesklingCore` plus `Localization/PluralRules`, `ReswName` and
-  `Settings/ISettingsStore` from mybackhurts; `Deskling.Core.Tests` replays every scheduler vector.
-- `Deskling.Windows` (.NET): `SystemIdleTimeProvider`, `SystemBusyStateProvider`, `TrayIconHost`, `TrayMenuItem`,
+- `LachingTesting`: `MockStoreBackend`.
+- `Laching.Core` (.NET): the file-for-file mirror of `LachingCore` plus `Localization/PluralRules`, `ReswName` and
+  `Settings/ISettingsStore` from mybackhurts; `Laching.Core.Tests` replays every scheduler vector.
+- `Laching.Windows` (.NET): `SystemIdleTimeProvider`, `SystemBusyStateProvider`, `TrayIconHost`, `TrayMenuItem`,
   `GlobalHotKey` (Carbon masks mapped onto `MOD_*`), `StartupService`, `LocalSettingsStore`, `WavPlayer`,
   `AppNotifier<TAction>`, `SingleInstance`, `Loc` / `LocExtension` / `Formats` with injected `FormatKeys`, a shared
   `MessageWindow`, and the new signals `PowerSource`, `OutputMute`, `AppearanceWatcher`, `SessionLockWatcher`.
-- Repository: Swift package layout (`DesklingCore`, `DesklingSystem`, `DesklingShell`, `DesklingStore`,
-  `DesklingTesting`), .NET solution (`Deskling.Core`, `Deskling.Windows`, `Deskling.Core.Tests`), conformance
+- Repository: Swift package layout (`LachingCore`, `LachingSystem`, `LachingShell`, `LachingStore`,
+  `LachingTesting`), .NET solution (`Laching.Core`, `Laching.Windows`, `Laching.Core.Tests`), conformance
   vectors, CI (`swift.yml` on macOS, `dotnet.yml` on Ubuntu and Windows, `regenerate-vectors.yml`) and the
   release workflow.
