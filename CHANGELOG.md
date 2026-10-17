@@ -6,6 +6,8 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+## 0.13.1 - 2026-10-17
+
 - **Companion (`CharacterArt.Parse`)**: reads `characters/<skin>.json` through a source-generated `JsonSerializerContext`
   instead of walking a `JsonDocument` by hand (#85). Art that parsed before parses to the same values; a missing member
   (or a null where a value belongs) now fails with the serializer's message, which names the member, instead of
