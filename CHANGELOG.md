@@ -6,6 +6,13 @@ package and the NuGet packages together.
 
 ## Unreleased
 
+- **Companion (`CompanionCoordinator`)**: a held line comes back as `afterCall` only when it was held for a call; one
+  held for full screen comes back as a plain `due` line (#35). `conformance/companion/quiet/full-screen-hushed` changes
+  to match.
+- **Core (`SchedulerConfig.busyGrace`), Companion (`ChatterCadence.busyGrace`)**: the docs say what the grace really
+  gives: it counts from the last tick that saw the user busy, so with 20 s ticks a held reminder comes 20 to 40 s after
+  the busy ended (#35). No behavior change.
+
 ## 0.12.5 - 2026-10-17
 
 - **CompanionUI (`ScreenshotCapture.SampleEnvironment`), Companion.Shell (`SampleEnvironment`)**: a fixed `seed`

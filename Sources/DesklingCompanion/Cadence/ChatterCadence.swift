@@ -7,7 +7,8 @@ import Foundation
 public enum ChatterCadence {
     /// Being idle this long counts as away: nothing is said to an empty room, and the interval restarts.
     public static let idleThreshold: TimeInterval = 5 * 60
-    /// After a call or a full-screen app ends, wait this long before a held line is said.
+    /// After a call or a full-screen app ends, wait about this long before a held line is said (20–40 s with the
+    /// shell's 20 s ticks: `SchedulerConfig.busyGrace`).
     public static let busyGrace: TimeInterval = 30
 
     /// What "Shh" can mean.

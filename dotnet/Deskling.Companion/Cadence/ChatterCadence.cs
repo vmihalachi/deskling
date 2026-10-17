@@ -13,7 +13,10 @@ public static class ChatterCadence
     /// <summary>Being idle this long counts as away: nothing is said to an empty room, and the interval restarts.</summary>
     public const double IdleThresholdSeconds = 5 * 60;
 
-    /// <summary>After a call or a full-screen app ends, wait this long before a held line is said.</summary>
+    /// <summary>
+    /// After a call or a full-screen app ends, wait about this long before a held line is said (20–40 s with the shell's
+    /// 20 s ticks: <see cref="SchedulerConfig.BusyGraceSeconds"/>).
+    /// </summary>
     public const double BusyGraceSeconds = 30;
 
     /// <summary>What "Shh" can mean. The raw values (<see cref="Shushes.RawValue"/>) are in the vectors; never rename one.</summary>

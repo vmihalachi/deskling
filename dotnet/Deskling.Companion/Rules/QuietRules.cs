@@ -12,7 +12,7 @@ public enum Trigger
     /// <summary>The user pressed Say something.</summary>
     ButtonPress,
 
-    /// <summary>A line held during a call is released.</summary>
+    /// <summary>A line held during a call is released (one held for full screen comes back as <see cref="Due"/>).</summary>
     AfterCall,
     WelcomeBack,
     ShushEnd,

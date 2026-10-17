@@ -104,7 +104,7 @@
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="Skips the clock to the next line. Go full screen within the 10 s: the line waits until 30 s after you leave it."
+                    Text="Skips the clock to the next line. Go full screen within the 10 s: the line waits until 20 to 40 s after you leave it."
                     TextWrapping="Wrap" />
             </StackPanel>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">

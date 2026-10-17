@@ -18,7 +18,10 @@ public data class SchedulerConfig(
     val idleThresholdSeconds: Double = 5.0 * 60,
     val postponeDuringCalls: Boolean = true,
     val postponeDuringFullScreen: Boolean = true,
-    /** How long a held reminder waits after the user stops being busy before it fires. */
+    /**
+     * About how long a held reminder waits after the user stops being busy before it fires: counted from the last
+     * tick that saw the user busy, so with ticks every 20 s it fires 20–40 s after being busy really ended.
+     */
     val busyGraceSeconds: Double = 30.0,
     /** When the user asks to be reminded after a call that never ends, remind after this many seconds anyway. */
     val afterCallFallbackSeconds: Double = 15.0 * 60,

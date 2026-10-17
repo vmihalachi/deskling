@@ -26,7 +26,11 @@ public sealed record SchedulerConfig
     /// <summary>Hold a due reminder while the frontmost app is full screen.</summary>
     public bool PostponeDuringFullScreen { get; init; } = true;
 
-    /// <summary>After being busy ends, wait this long before the held reminder fires.</summary>
+    /// <summary>
+    /// After being busy ends, wait about this long before the held reminder fires: the grace is counted from the last
+    /// tick that saw the user busy, so with ticks every 20 s it fires 20–40 s after being busy really ended
+    /// (<see cref="ReminderScheduler.Tick"/> learns about busy only when it runs).
+    /// </summary>
     public double BusyGraceSeconds { get; init; } = 30;
 
     /// <summary>"After this call" fires at the latest this long after snoozing if no call starts.</summary>

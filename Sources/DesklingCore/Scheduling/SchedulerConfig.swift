@@ -15,7 +15,9 @@ public struct SchedulerConfig: Equatable, Sendable {
     /// Hold a due reminder while in a call / a full-screen app.
     public var postponeDuringCalls = true
     public var postponeDuringFullScreen = true
-    /// After being busy ends, wait this long before the held reminder fires.
+    /// After being busy ends, wait about this long before the held reminder fires: the grace is counted from the
+    /// last tick that saw the user busy, so with ticks every 20 s it fires 20–40 s after being busy really ended
+    /// (`tick()` learns about busy only when it runs).
     public var busyGrace: TimeInterval = 30
     /// "After this call" fires at the latest this long after snoozing if no call starts.
     public var afterCallFallback: TimeInterval = 15 * 60

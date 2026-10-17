@@ -61,7 +61,8 @@ public final class CompanionCoordinator {
         let now = clock.now
         // The stored pause, not `isShushed`: the clock may already be past the end before this tick clears it.
         let wasShushed = scheduler.pausedUntil != nil
-        let wasHolding = scheduler.isHolding
+        // A line held for a call comes back as the after-call line; one held for full screen, as a plain due line.
+        let heldForCall = scheduler.status == .postponed(.call)
         let cameBack = cameBack(from: lastSnapshot, to: snapshot)
         lastSnapshot = snapshot
 
@@ -72,7 +73,7 @@ public final class CompanionCoordinator {
         }
         switch decision {
         case .remind:
-            return deliver(wasHolding ? .afterCall : .due, snapshot: snapshot, now: now)
+            return deliver(heldForCall ? .afterCall : .due, snapshot: snapshot, now: now)
         case .postpone:
             return nil
         case .none:

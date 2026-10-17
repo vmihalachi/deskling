@@ -126,6 +126,17 @@ final class CompanionCoordinatorTests: XCTestCase {
         XCTAssertEqual(released.first?.1.phrase.tags, [.afterCall])
     }
 
+    func testFullScreenHoldsTheLineAndReleasesItAsAPlainLine() {
+        let c = makeCoordinator(start: monday(10))
+        _ = run(c, minutes: 15)
+        let held = run(c, minutes: 40, snapshot: Snapshot(busy: [.fullScreen]))
+        XCTAssertEqual(held.count, 0)
+        XCTAssertEqual(c.scheduler.status, .postponed(.fullScreen))
+        let released = run(c, minutes: 3)
+        XCTAssertEqual(released.map(\.1.trigger), [.due])
+        XCTAssertEqual(released.first?.1.phrase.hasEventTag, false)
+    }
+
     func testWelcomeBackAfterBeingAwayWithACooldown() {
         let c = makeCoordinator(start: monday(10))
         _ = run(c, minutes: 1)
