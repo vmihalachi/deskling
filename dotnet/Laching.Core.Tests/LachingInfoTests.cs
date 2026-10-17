@@ -11,6 +11,13 @@ public class LachingInfoTests
     }
 
     [Fact]
+    public void VersionIsThePackagesOwn()
+    {
+        // Generated from $(Version) (LachingVersion), which also versions the assembly.
+        Assert.Equal(LachingInfo.Version, typeof(LachingInfo).Assembly.GetName().Version!.ToString(3));
+    }
+
+    [Fact]
     public void ConformanceFolderIsFound()
     {
         Assert.True(File.Exists(Path.Combine(ConformanceRoot.Find(), "README.md")));
