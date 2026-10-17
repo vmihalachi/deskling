@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 import Observation
 
 /// Every generic companion preference, observable, written through `store` under `SettingsKeys` as soon as it

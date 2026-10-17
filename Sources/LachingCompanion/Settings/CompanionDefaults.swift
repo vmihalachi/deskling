@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// Every generic preference's value on first launch. The package's numbers are the defaults; the two product
 /// choices (the default skin, the flavors on) have none, so every app states them.

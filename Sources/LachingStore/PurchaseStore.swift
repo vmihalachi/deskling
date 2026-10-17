@@ -1,6 +1,6 @@
 #if os(macOS) || os(iOS)
-    import LachingCore
     import Foundation
+    import LachingCore
     import os
 
     /// Why a purchase or restore didn't go through. The app maps these to its own localized text.

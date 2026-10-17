@@ -1,8 +1,8 @@
 #if os(macOS)
+    import Foundation
     import LachingCompanion
     import LachingCore
     import LachingSystem
-    import Foundation
 
     /// Builds the companion's `Snapshot` from Laching's permission-free system signals, and raises the events the shell
     /// notices on its own (battery, charger, appearance). While a line is spoken or the character stands on the desktop it

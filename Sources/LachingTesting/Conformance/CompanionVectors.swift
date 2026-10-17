@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 
 /// A companion app's pinned content, for `ConformanceSuite.companion`: the bank and its flavors, the defaults, the
 /// characters, `settings.json`'s tree and the case lists (usually `PickerVector.standardCases` and

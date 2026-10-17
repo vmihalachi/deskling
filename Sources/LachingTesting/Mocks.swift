@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// A clock tests move by hand.
 public final class MockClock: Clock {

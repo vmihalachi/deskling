@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 
 /// Checks an app's phrase bank has enough lines for the picker in every language and skin, so no moment falls back
 /// to silence. Tunes don't count (they need the chime channel).

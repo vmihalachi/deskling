@@ -1,7 +1,7 @@
 #if os(macOS)
+    import Foundation
     import LachingCompanion
     import LachingCompanionUI
-    import Foundation
     import XCTest
 
     final class DesktopLayoutTests: XCTestCase {

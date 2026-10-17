@@ -1,10 +1,10 @@
 #if os(macOS)
+    import Foundation
     import LachingCompanion
     import LachingCompanionUI
     import LachingCore
     import LachingShell
     import LachingTesting
-    import Foundation
     import XCTest
 
     /// A voice that records what it says and finishes when the test says so (`SilentSpeaker` finishes at once).

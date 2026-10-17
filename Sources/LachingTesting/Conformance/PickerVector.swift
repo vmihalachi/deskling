@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 
 /// `picker/*.json`: a `PhraseContext`, the candidates it yields in bank order, and the id a few uniform draws pick.
 /// Pins `PhrasePicker` against a bank; the app supplies the cases.

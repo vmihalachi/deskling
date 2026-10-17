@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// The pure composition root: runs the scheduler on each tick, turns what happened into a trigger, asks the
 /// rules, picks a line and hands the shell a `Delivery`. Time comes from the clock, system state from the

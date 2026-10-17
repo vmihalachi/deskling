@@ -1,6 +1,6 @@
 #if os(macOS)
-    import LachingShell
     import Foundation
+    import LachingShell
     import XCTest
 
     /// A voice that speaks nothing: it records each line and finishes when the test says so.

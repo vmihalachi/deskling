@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 import XCTest
 
 final class LocalizedKeyTests: XCTestCase {

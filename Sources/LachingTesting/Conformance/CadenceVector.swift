@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 /// `cadence/*.json`: a frequency preset plus the timing settings → the `SchedulerConfig` `ChatterCadence` builds, and
 /// the minutes at which a scheduler seeded with `seed` fires when ticked once a minute from `start` with nobody busy

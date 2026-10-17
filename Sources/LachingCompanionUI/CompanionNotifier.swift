@@ -1,6 +1,6 @@
 #if os(macOS)
-    import LachingShell
     import Foundation
+    import LachingShell
     import UserNotifications
 
     /// Whether the app may show notifications.

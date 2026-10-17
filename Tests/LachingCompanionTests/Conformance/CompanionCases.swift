@@ -1,7 +1,7 @@
+import Foundation
 import LachingCompanion
 import LachingCore
 import LachingTesting
-import Foundation
 
 /// The cases behind `conformance/companion/`, over the fixtures. Cadence, desktop and the quiet timelines carry no app
 /// data, so their lists are sunnysays' own; the picker and quiet cases are the standard ones (`PickerVector.standardCases`,

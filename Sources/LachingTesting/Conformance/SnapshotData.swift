@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 /// A `Snapshot` as the vectors write it (`quiet/`, `desktop.json`): busy reasons by name, sorted; whole idle seconds;
 /// `isOutputMuted` written as `null` rather than left out, so ports see the field.

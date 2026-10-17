@@ -1,5 +1,5 @@
-import LachingCore
 import Foundation
+import LachingCore
 
 /// Turns the user's timing settings into the scheduler's config. The scheduler itself (active hours, idle
 /// reset, busy hold, pause) is `ReminderScheduler`, pinned by `conformance/scheduler`;

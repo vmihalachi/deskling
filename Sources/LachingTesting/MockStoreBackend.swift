@@ -1,6 +1,6 @@
 #if os(macOS) || os(iOS)
-    import LachingStore
     import Foundation
+    import LachingStore
 
     /// A `StoreBackend` for tests: every product in the catalog is listed (priced "€" plus its id's length),
     /// buying an unlockable makes it owned, buying a tip doesn't, and switches make loading, buying or

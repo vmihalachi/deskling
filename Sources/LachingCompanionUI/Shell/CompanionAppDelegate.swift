@@ -1,7 +1,7 @@
 #if os(macOS)
     import AppKit
-    import LachingShell
     import Foundation
+    import LachingShell
 
     /// What `CompanionAppDelegate` starts: a `CompanionAppModel` (any of them).
     @MainActor

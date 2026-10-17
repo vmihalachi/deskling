@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingTesting
-import Foundation
 import XCTest
 
 /// `CharacterArtJSON` writes what `tools/character.py` writes, byte for byte, and reads it back.

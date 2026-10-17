@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 
 /// `characters/<skin>.json` (the art, `CharacterArtJSON`) and `characters/<skin>-poses.json`: what `RiggedCharacter`
 /// makes of the art. The pose for every mood at a few moments, the still poses, every glyph frame and, for a few

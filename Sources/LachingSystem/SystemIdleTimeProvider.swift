@@ -1,7 +1,7 @@
 #if os(macOS)
     import CoreGraphics
-    import LachingCore
     import Foundation
+    import LachingCore
 
     /// Seconds since the last keyboard or mouse event, from the HID event source. Needs nothing: the combined
     /// session state is readable by every app, so it never prompts for Accessibility or Input Monitoring.

@@ -4,8 +4,8 @@
     import CoreAudio
     import CoreGraphics
     import CoreMediaIO
-    import LachingCore
     import Foundation
+    import LachingCore
 
     /// Detects calls (camera or microphone in use by another app) and full-screen apps.
     ///

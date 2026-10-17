@@ -1,5 +1,5 @@
-import LachingCompanion
 import Foundation
+import LachingCompanion
 
 /// `phrases.json`: a phrase bank as data. The Windows bank loads it; the localization tool syncs its source lines into
 /// the String Catalog. Lines carry `key` and `english` (the catalog's source text, whatever its language: the field

@@ -1,6 +1,6 @@
+import Foundation
 import LachingCompanion
 import LachingCore
-import Foundation
 
 /// `quiet/*.json`: a timeline driven through `CompanionCoordinator` (ticks, pokes, Shh, wake, events) with a snapshot
 /// per step, and what came out of each: the deliveries (phrase id, trigger, channel plan), the mood and whether the
